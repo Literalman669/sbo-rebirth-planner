@@ -1,5 +1,9 @@
 FROM huggingface/transformers-pytorch-gpu:latest
 
+# HF Spaces: user for Dev Mode and permissions
+RUN useradd -m -u 1000 user
+WORKDIR /app
+
 # Install TRL and dependencies
 RUN pip install --no-cache-dir \
     trl[peft] \
@@ -11,14 +15,11 @@ RUN pip install --no-cache-dir \
     gradio \
     spaces
 
-# Set working directory
-WORKDIR /app
-
 # Copy files
-COPY app.py .
-COPY sbo_dataset.json .
+COPY --chown=user app.py sbo_dataset.json .
 
-# Expose port for Gradio
+USER user
+ENV HOME=/home/user PATH=/home/user/.local/bin:$PATH
+
 EXPOSE 7860
-
 CMD ["python", "app.py"]
