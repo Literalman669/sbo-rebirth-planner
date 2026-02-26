@@ -1,0 +1,1 @@
+powershell -Command "Get-Content -Path 'c:\Users\OneBeyondTheWall\Downloads\pathofthesovereign-1.21.1\sbo-rebirth-planner\AI_SETUP.md' -TotalCount 500"

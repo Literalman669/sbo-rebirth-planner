@@ -1,0 +1,16 @@
+echo ">>> Command: findstr /n "aiChatSendBtn" sbo-rebirth-planner\app.js"
+findstr /n "aiChatSendBtn" sbo-rebirth-planner\app.js
+echo "Exit Code: $?"
+echo ""
+echo ">>> Command: python -c "content = open('sbo-rebirth-planner/app.js', 'r', encoding='utf-8').readlines(); [print(f'{i+1}: {l}', end='') for i, l in enumerate(content) if 800 <= i+1 <= 1000]""
+python -c "content = open('sbo-rebirth-planner/app.js', 'r', encoding='utf-8').readlines(); [print(f'{i+1}: {l}', end='') for i, l in enumerate(content) if 800 <= i+1 <= 1000]"
+echo "Exit Code: $?"
+echo ""
+echo ">>> Command: findstr /n "buildContext" sbo-rebirth-planner\app.js"
+findstr /n "buildContext" sbo-rebirth-planner\app.js
+echo "Exit Code: $?"
+echo ""
+echo ">>> Command: python -c "content = open('sbo-rebirth-planner/app.js', 'r', encoding='utf-8').readlines(); start = next(i for i, l in enumerate(content) if 'function buildContext' in l); [print(f'{i+1}: {l}', end='') for i, l in enumerate(content[start:start+50])]""
+python -c "content = open('sbo-rebirth-planner/app.js', 'r', encoding='utf-8').readlines(); start = next(i for i, l in enumerate(content) if 'function buildContext' in l); [print(f'{i+1}: {l}', end='') for i, l in enumerate(content[start:start+50])]"
+echo "Exit Code: $?"
+echo ""

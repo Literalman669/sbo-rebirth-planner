@@ -1,0 +1,1 @@
+dir /s /b c:\Users\OneBeyondTheWall\Downloads\pathofthesovereign-1.21.1\sbo-rebirth-planner

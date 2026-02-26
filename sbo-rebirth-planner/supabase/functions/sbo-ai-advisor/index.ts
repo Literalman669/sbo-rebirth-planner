@@ -1,7 +1,7 @@
-// SBO:Rebirth Build Planner — AI Advisor Edge Function
+// SBO:Rebirth Build Planner - AI Advisor Edge Function
 // Proxies to Hugging Face Inference API with SBO:R knowledge and build context.
 
-const HF_ROUTER_URL = "https://router.huggingface.co/v1/responses";
+const HF_API_URL = "https://api-inference.huggingface.co/models/Qwen/Qwen2.5-7B-Instruct/v1/chat/completions";
 const HF_MODEL = "Qwen/Qwen2.5-7B-Instruct";
 const MAX_TOKENS = 512;
 const TEMPERATURE = 0.6;
@@ -13,36 +13,36 @@ const SBO_SYSTEM_PROMPT = `You are an expert advisor for Sword Blox Online: Rebi
 ## Core game mechanics (verified from SBO:R Wiki)
 
 **Stats (3 points per level, cap 500 each):**
-- STR: +0.4% damage per point (max +200% at 500). Adds +10 Stamina at 500. Boosts crit damage: STRmulti = STR/500 × 2 (0–2). Increases multi-hit chance.
-- DEF: Base multiplier ×5 (5 DR per Defense). Each DEF point adds +0.01; at 500 DEF multiplier = ×10.
+- STR: +0.4% damage per point (max +200% at 500). Adds +10 Stamina at 500. Boosts crit damage: STRmulti = STR/500 * 2 (0-2). Increases multi-hit chance.
+- DEF: Base multiplier * 5 (5 DR per Defense). Each DEF point adds +0.01; at 500 DEF multiplier = * 10.
 - AGI: Attack speed, movement speed, lower skill cooldowns. +10 Stamina at 500. Per-weapon max speed gain: 2H/1H 30%, Rapier 60%, Dagger 30%, Dual 50%, Melee 50%.
-- VIT: DEX multiplier base 10, +0.01/point (×15 at 500). +10 Stamina at 500. +0.01% debuff resistance/point (max +5%).
+- VIT: DEX multiplier base 10, +0.01/point (* 15 at 500). +10 Stamina at 500. +0.01% debuff resistance/point (max +5%).
 - LUK: +0.01% crit chance/point (base 15%, max 20% at 500). Increases drop chance.
 
 **Gear stats:**
 - Attack (weapons): 1 ATK = 1 base damage before STR scaling.
-- Defense (armor/shield): DR = Defense × (5 + DEF×0.01).
-- Dexterity (armor/headwear): HP = DEX × (10 + VIT×0.01). Not dodge — bonus HP only.
+- Defense (armor/shield): DR = Defense * (5 + DEF * 0.01).
+- Dexterity (armor/headwear): HP = DEX * (10 + VIT * 0.01). Not dodge - bonus HP only.
 
 **Other:**
-- Stamina: 100 + (Level × 5). STR/AGI/VIT max add +10 each.
-- Multi-hit: 50% base. STR/LUK add up to +10% each, combined cap +15% → 65% total. Requires 200+ Sword Skill (except 2H).
-- Crit: 15% base, +5% from LUK. Crit damage = (base × critMulti) + (base × STRmulti). Crit multipliers: 2H ×1.5, 1H ×2, Rapier ×2.4, Dagger ×2.7, Dual ×2, Melee ×3.
+- Stamina: 100 + (Level * 5). STR/AGI/VIT max add +10 each.
+- Multi-hit: 50% base. STR/LUK add up to +10% each, combined cap +15% -> 65% total. Requires 200+ Sword Skill (except 2H).
+- Crit: 15% base, +5% from LUK. Crit damage = (base * critMulti) + (base * STRmulti). Crit multipliers: 2H * 1.5, 1H * 2, Rapier * 2.4, Dagger * 2.7, Dual * 2, Melee * 3.
 
 **Source quality (item scoring):** shop 1.0, mob 1.1, boss 1.2, dungeon 1.24, crafted 1.28, quest 1.16, event 1.22, badge 1.24, gamepass 1.26.
 
 **Slots:** weapon, armor, upper, lower, shield. Dual Wield uses 1H pool + Dual Blades passive at skill 200.
 
-**Boss readiness checks:** DPS (hits to kill ≤800 ready), Survivability (effective HP vs boss ATK), Level, Weapon Skill, Status Effect resistance (VIT for Poison/Freeze/Burn).
+**Boss readiness checks:** DPS (hits to kill <= 800 ready), Survivability (effective HP vs boss ATK), Level, Weapon Skill, Status Effect resistance (VIT for Poison/Freeze/Burn).
 
 ## Your role
 
 - Answer questions about stat allocation, gear choices, and boss readiness.
 - When build context is provided, use it: reference the user's level, stats, weapon class, playstyle, gear totals, and plan summary.
 - Explain recommendations in terms of the formulas above.
-- Be concise (2–4 sentences usually). Use bullets for lists.
+- Be concise (2-4 sentences usually). Use bullets for lists.
 - If asked about a specific item or boss, use the context. If unknown, say so.
-- Never invent item stats — only use what's in the context or general knowledge.`;
+- Never invent item stats - only use what's in the context or general knowledge.`;
 
 interface RequestBody {
   message: string;
@@ -97,7 +97,7 @@ function checkRateLimit(clientId: string): boolean {
 function buildContextBlock(ctx?: RequestBody["buildContext"]): string {
   if (!ctx) return "";
   const parts: string[] = ["\n\n## Current build context\n"];
-  if (ctx.level != null) parts.push(`- Level: ${ctx.level}${ctx.projectedLevel ? ` → ${ctx.projectedLevel}` : ""}`);
+  if (ctx.level != null) parts.push(`- Level: ${ctx.level}${ctx.projectedLevel ? ` -> ${ctx.projectedLevel}` : ""}`);
   if (ctx.weaponClass) parts.push(`- Weapon: ${ctx.weaponClass}`);
   if (ctx.playstyle) parts.push(`- Playstyle: ${ctx.playstyle}`);
   if (ctx.allocationMode) parts.push(`- Allocation: ${ctx.allocationMode}`);
@@ -186,18 +186,19 @@ Deno.serve(async (req: Request): Promise<Response> => {
   }
 
   const contextBlock = buildContextBlock(body.buildContext);
-  const instructions = SBO_SYSTEM_PROMPT + contextBlock;
-
+  
   const payload = {
     model: HF_MODEL,
-    instructions,
-    input: message,
-    max_output_tokens: MAX_TOKENS,
+    messages: [
+      { role: "system", content: SBO_SYSTEM_PROMPT + contextBlock },
+      { role: "user", content: message }
+    ],
+    max_tokens: MAX_TOKENS,
     temperature: TEMPERATURE,
   };
 
   try {
-    const hfRes = await fetch(HF_ROUTER_URL, {
+    const hfRes = await fetch(HF_API_URL, {
       method: "POST",
       headers: {
         "Authorization": `Bearer ${hfToken}`,
@@ -224,25 +225,10 @@ Deno.serve(async (req: Request): Promise<Response> => {
     }
 
     const hfData = await hfRes.json();
-    if (hfData?.status === "failed" && hfData?.error?.message) {
-      console.error("HF router error:", hfData.error.message);
-      return new Response(
-        JSON.stringify({ error: "AI service temporarily unavailable. Try again in a moment." }),
-        { status: 502, headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" } }
-      );
-    }
-    let text = "";
-    const output = hfData?.output;
-    if (Array.isArray(output) && output[0]?.content) {
-      const content = output[0].content;
-      const textBlock = content.find((c: { type?: string }) => c.type === "output_text");
-      if (textBlock && typeof textBlock.text === "string") {
-        text = textBlock.text.trim();
-      }
-    }
+    const reply = hfData.choices?.[0]?.message?.content?.trim() || "I couldn't generate a response. Try rephrasing.";
 
     return new Response(
-      JSON.stringify({ reply: text || "I couldn't generate a response. Try rephrasing." }),
+      JSON.stringify({ reply }),
       {
         status: 200,
         headers: {

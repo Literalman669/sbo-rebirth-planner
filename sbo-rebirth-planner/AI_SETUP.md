@@ -56,9 +56,14 @@ Then in `index.html` head:
 <script src="./config.js"></script>
 ```
 
-**Option C — Netlify env vars**
+**Option C — Netlify env vars** (production)
 
-For Netlify, set `SBO_AI_ANON_KEY` as an environment variable and inject it at build time if you use a build step, or serve a dynamic config endpoint.
+The build uses `scripts/generate-config.js` to create `config.js` from environment variables. In Netlify (Site Settings → Build & deploy → Environment), set:
+
+- `SUPABASE_URL` — your Supabase project URL (e.g. `https://xxxx.supabase.co`)
+- `SUPABASE_ANON_KEY` — your Supabase anon key from Project Settings → API
+
+The script runs during the build; if either variable is missing, the build fails. See [DEPLOYMENT_VERIFICATION.md](./DEPLOYMENT_VERIFICATION.md) for the full checklist.
 
 ## 3. Verify
 
@@ -83,7 +88,7 @@ When the form is dirty or no plan exists, metrics are computed on the fly so the
 
 ## Model
 
-The default model is `HuggingFaceH4/zephyr-7b-beta`, which is solid for instruction-following. Alternatives:
+The default model is `Qwen/Qwen2.5-7B-Instruct`. Alternatives:
 
 - **SmolLM-1.7B-Instruct** — smaller, faster, good for short Q&A
 - **mistralai/Mistral-7B-Instruct-v0.2** — widely used, reliable

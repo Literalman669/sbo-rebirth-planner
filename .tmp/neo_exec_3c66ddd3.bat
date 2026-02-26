@@ -1,0 +1,1 @@
+node c:\Users\OneBeyondTheWall\Downloads\pathofthesovereign-1.21.1\sbo-rebirth-planner\test_edge_function.js

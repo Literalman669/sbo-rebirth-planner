@@ -1,0 +1,1 @@
+set SUPABASE_URL=https://test.supabase.co&& set SUPABASE_ANON_KEY=test_key&& node c:\Users\OneBeyondTheWall\Downloads\pathofthesovereign-1.21.1\sbo-rebirth-planner\scripts\generate-config.js && type c:\Users\OneBeyondTheWall\Downloads\pathofthesovereign-1.21.1\sbo-rebirth-planner\config.js

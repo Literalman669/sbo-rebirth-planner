@@ -1,0 +1,4 @@
+echo ">>> Command: node -e "const map = new Map(); const now = Date.now(); map.set('test', { count: 20, resetAt: now + 10000 }); const check = (id) => { const e = map.get(id); if (!e || Date.now() > e.resetAt) return true; if (e.count >= 20) return false; e.count++; return true; }; console.log('Blocked:', !check('test'));""
+node -e "const map = new Map(); const now = Date.now(); map.set('test', { count: 20, resetAt: now + 10000 }); const check = (id) => { const e = map.get(id); if (!e || Date.now() > e.resetAt) return true; if (e.count >= 20) return false; e.count++; return true; }; console.log('Blocked:', !check('test'));"
+echo "Exit Code: $?"
+echo ""
