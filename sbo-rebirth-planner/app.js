@@ -380,6 +380,9 @@
     bossPlannerLink.addEventListener("click", () => flushDraftNow());
   }
 
+  window.addEventListener("beforeunload", () => flushDraftNow());
+  window.addEventListener("pagehide", () => flushDraftNow());
+
   initializeAiChat();
 
   // Run once on load so users immediately see a sample output.

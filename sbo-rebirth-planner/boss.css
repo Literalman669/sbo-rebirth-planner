@@ -1257,6 +1257,71 @@ button.needs-attention {
   color: var(--accent);
 }
 
+/* ── Build name ─────────────────────────────────────────── */
+.snapshot-build-name {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--ink);
+  margin-bottom: 0.4rem;
+  padding-bottom: 0.35rem;
+  border-bottom: 1px solid var(--line);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── Stat total chip ───────────────────────────────────── */
+.snapshot-stat-total {
+  background: var(--accent-soft);
+  border: 1px solid var(--accent-2);
+  border-radius: 999px;
+  padding: 0.15rem 0.5rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+/* ── Clickable next-boss rec ──────────────────────────── */
+.next-boss-rec[data-boss-id] {
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.next-boss-rec[data-boss-id]:hover {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+/* ── Clickable readiness pills ────────────────────────── */
+.rpill {
+  cursor: pointer;
+  transition: transform 0.12s, box-shadow 0.12s, opacity 0.12s;
+  user-select: none;
+}
+
+.rpill:hover {
+  transform: scale(1.06);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.12);
+}
+
+.rpill:active {
+  transform: scale(0.97);
+}
+
+.rpill-active {
+  box-shadow: 0 0 0 2px var(--accent), 0 1px 4px rgba(0,0,0,0.15);
+}
+
+/* ── Refresh animation ────────────────────────────────── */
+@keyframes bossListRefresh {
+  0%   { opacity: 0.4; }
+  100% { opacity: 1; }
+}
+
+.boss-list-refreshing {
+  animation: bossListRefresh 0.35s ease-out;
+}
+
 /* ── Card fade-in animation ──────────────────────────────── */
 @keyframes cardFadeIn {
   from { opacity: 0; transform: translateY(6px); }
@@ -1319,6 +1384,9 @@ button.needs-attention {
   :root:not([data-theme="light"]) .drop-tag.rare     { background: #1e0d2e; border-color: #4a2a80; color: #c0a0f0; }
   :root:not([data-theme="light"]) .res-weak    { background: #2e1400; color: #e09050; border-color: #7a4000; }
   :root:not([data-theme="light"]) .res-resist  { background: #2e0d0d; color: #f07070; border-color: #6b1a1a; }
+  :root:not([data-theme="light"]) .snapshot-build-name { color: var(--ink); border-bottom-color: var(--line); }
+  :root:not([data-theme="light"]) .snapshot-stat-total { background: var(--accent-soft); color: var(--accent); border-color: var(--accent-2); }
+  :root:not([data-theme="light"]) .rpill-active { box-shadow: 0 0 0 2px var(--accent), 0 1px 4px rgba(0,0,0,0.3); }
 }
 
 /* Manual dark — [data-theme="dark"] compound selectors */
@@ -1372,6 +1440,9 @@ button.needs-attention {
 [data-theme="dark"] .boss-tag.mini-boss-badge{ background: #0d1e2e; color: #70b8f0; border-color: #1a3a60; }
 [data-theme="dark"] .boss-section-header.mini-section { border-bottom-color: var(--accent-mini); }
 [data-theme="dark"] .boss-section-header.mini-section h2 { color: var(--accent-mini); }
+[data-theme="dark"] .snapshot-build-name { color: var(--ink); border-bottom-color: var(--line); }
+[data-theme="dark"] .snapshot-stat-total { background: var(--accent-soft); color: var(--accent); border-color: var(--accent-2); }
+[data-theme="dark"] .rpill-active { box-shadow: 0 0 0 2px var(--accent), 0 1px 4px rgba(0,0,0,0.3); }
 [data-theme="dark"] .phase-threshold { color: #f07070; background: #2e0d0d; border-color: #6b1a1a; }
 [data-theme="dark"] .drop-tag.last-hit { background: #2e1f00; border-color: #6b4500; color: #f5b942; }
 [data-theme="dark"] .drop-tag.rare     { background: #1e0d2e; border-color: #4a2a80; color: #c0a0f0; }

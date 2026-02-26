@@ -3,17 +3,17 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>SBO:Rebirth Boss Planner v0.8.0</title>
+    <title>SBO:Rebirth Boss Planner v0.8.1</title>
     <meta name="description" content="Boss readiness planner for Sword Blox Online: Rebirth. Check your build against every floor boss." />
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%23225964'/><text x='16' y='23' text-anchor='middle' font-size='20' font-family='serif' fill='%23a8e6d8'>⚔</text></svg>" />
     <script>try{var t=localStorage.getItem('sbo-theme');if(t)document.documentElement.dataset.theme=t;}catch(e){}</script>
-    <link rel="stylesheet" href="./styles.css?v=0.7.6" />
-    <link rel="stylesheet" href="./boss.css?v=0.7.6" />
+    <link rel="stylesheet" href="./styles.css?v=0.8.1" />
+    <link rel="stylesheet" href="./boss.css?v=0.8.1" />
   </head>
   <body>
     <header class="page-header">
       <h1>SBO:Rebirth Boss Planner</h1>
-      <p class="subtitle">Boss readiness v0.8.0 — uses your build from the Build Planner tab.</p>
+      <p class="subtitle">Boss readiness v0.8.1 — auto-syncs with your Build Planner.</p>
     </header>
 
     <nav class="tab-nav">
@@ -38,7 +38,7 @@
           <div class="boss-sidebar-controls">
             <button type="button" class="primary" id="refreshBuildBtn" data-testid="refresh-build-btn">Refresh from Planner</button>
           </div>
-          <p class="muted-text" style="font-size:0.72rem;margin-top:0.5rem">Build is read from your saved draft automatically. Use <strong>Refresh</strong> after making changes in the Build Planner.</p>
+          <p class="muted-text" style="font-size:0.72rem;margin-top:0.5rem">Auto-syncs with the Build Planner. Changes update here automatically when you switch tabs.</p>
         </section>
 
         <section class="boss-filter-card">
@@ -111,9 +111,9 @@
       <p>Stats sourced from the <a href="https://swordbloxonlinerebirth.fandom.com" target="_blank" rel="noopener">SBO:Rebirth Wiki</a>. ATK/DEF values not available from wiki — readiness checks use relative DPS index.</p>
     </footer>
 
-    <script src="./data.js?v=0.7.6"></script>
-    <script src="./boss-data.js?v=0.7.6"></script>
-    <script src="./boss-readiness.js?v=0.7.6"></script>
-    <script src="./boss.js?v=0.7.6"></script>
+    <script src="./data.js?v=0.8.1"></script>
+    <script src="./boss-data.js?v=0.8.1"></script>
+    <script src="./boss-readiness.js?v=0.8.1"></script>
+    <script src="./boss.js?v=0.8.1"></script>
   </body>
 </html>
