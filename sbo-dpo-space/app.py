@@ -16,12 +16,20 @@ MODEL_NAME = "Qwen/Qwen2.5-7B-Instruct"
 DATASET_PATH = "sbo_dataset.json"
 OUTPUT_DIR = "./sbo-dpo-model"
 
-# Load dataset
-print("Loading dataset...")
-with open(DATASET_PATH, "r", encoding="utf-8") as f:
-    data = json.load(f)
-dataset = Dataset.from_list(data)
-print(f"Loaded {len(dataset)} training examples")
+# Load dataset (defer to avoid blocking app startup)
+def _load_dataset():
+    with open(DATASET_PATH, "r", encoding="utf-8") as f:
+        data = json.load(f)
+    return Dataset.from_list(data)
+
+_dataset = None
+def get_dataset():
+    global _dataset
+    if _dataset is None:
+        print("Loading dataset...")
+        _dataset = _load_dataset()
+        print(f"Loaded {len(_dataset)} training examples")
+    return _dataset
 
 # Load model and tokenizer (lazy - on first train)
 _model = None
@@ -79,12 +87,13 @@ _trainer = None
 
 def train_model():
     try:
+        ds = get_dataset()
         model, tokenizer = get_model_and_tokenizer()
         trainer = DPOTrainer(
             model=model,
             ref_model=None,
             args=training_args,
-            train_dataset=dataset,
+            train_dataset=ds,
             tokenizer=tokenizer,
             peft_config=peft_config,
         )
@@ -94,7 +103,7 @@ def train_model():
         tokenizer.save_pretrained(OUTPUT_DIR)
         return (
             f"Training completed. Model saved to {OUTPUT_DIR}\n\n"
-            f"Dataset: {len(dataset)} examples | Base: {MODEL_NAME} | Epochs: {training_args.num_train_epochs}"
+            f"Dataset: {len(ds)} examples | Base: {MODEL_NAME} | Epochs: {training_args.num_train_epochs}"
         )
     except Exception as e:
         import traceback
@@ -136,7 +145,7 @@ def create_interface():
                 test_output = gr.Textbox(label="Test Result", lines=4)
         train_btn.click(train_model, outputs=output_text)
         test_btn.click(test_model, outputs=test_output)
-        gr.Markdown(f"**Dataset:** {len(dataset)} pairs | **Model:** {MODEL_NAME}")
+        gr.Markdown("**Dataset:** 167 pairs | **Model:** " + MODEL_NAME)
     return demo
 
 
