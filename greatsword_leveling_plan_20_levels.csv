@@ -1,0 +1,44 @@
+LevelStep,PointsThisLevel,VIT_Add,AGI_Add,LUK_Add,STR_Add,DEF_Add,VIT_Total,AGI_Total,LUK_Total,STR_Total,DEF_Total,Notes
+Start (Level 8),0,0,0,0,0,0,7,3,0,14,0,Current stats from screenshot
+Level 9,3,1,0,0,2,0,8,3,0,16,0,
+Level 10,3,1,0,0,2,0,9,3,0,18,0,
+Level 11,3,0,1,0,2,0,9,4,0,20,0,
+Level 12,3,1,0,0,2,0,10,4,0,22,0,
+Level 13,3,1,0,0,2,0,11,4,0,24,0,Checkpoint 1
+Level 14,3,0,1,0,2,0,11,5,0,26,0,
+Level 15,3,1,0,0,2,0,12,5,0,28,0,
+Level 16,3,1,0,0,2,0,13,5,0,30,0,
+Level 17,3,0,1,0,2,0,13,6,0,32,0,
+Level 18,3,1,0,0,2,0,14,6,0,34,0,Checkpoint 2
+Level 19,3,1,0,0,2,0,15,6,0,36,0,
+Level 20,3,0,1,0,2,0,15,7,0,38,0,
+Level 21,3,1,0,0,2,0,16,7,0,40,0,
+Level 22,3,0,1,0,2,0,16,8,0,42,0,
+Level 23,3,1,0,0,2,0,17,8,0,44,0,Checkpoint 3
+Level 24,3,0,1,0,2,0,17,9,0,46,0,
+Level 25,3,1,0,0,2,0,18,9,0,48,0,
+Level 26,3,0,1,0,2,0,18,10,0,50,0,
+Level 27,3,1,0,0,2,0,19,10,0,52,0,
+Level 28,3,0,1,0,2,0,19,11,0,54,0,Checkpoint 4 (20-level midpoint)
+Level 29,3,1,0,0,2,0,20,11,0,56,0,
+Level 30,3,0,1,0,2,0,20,12,0,58,0,
+Level 31,3,1,0,0,2,0,21,12,0,60,0,
+Level 32,3,0,1,0,2,0,21,13,0,62,0,
+Level 33,3,1,0,0,2,0,22,13,0,64,0,Checkpoint 5
+Level 34,3,0,1,0,2,0,22,14,0,66,0,
+Level 35,3,1,0,0,2,0,23,14,0,68,0,
+Level 36,3,0,1,0,2,0,23,15,0,70,0,
+Level 37,3,1,0,0,2,0,24,15,0,72,0,
+Level 38,3,0,1,0,2,0,24,16,0,74,0,Checkpoint 6
+Level 39,3,1,0,0,2,0,25,16,0,76,0,
+Level 40,3,0,1,0,2,0,25,17,0,78,0,
+Level 41,3,1,0,0,2,0,26,17,0,80,0,
+Level 42,3,0,1,0,2,0,26,18,0,82,0,
+Level 43,3,1,0,0,2,0,27,18,0,84,0,Checkpoint 7
+Level 44,3,0,1,0,2,0,27,19,0,86,0,
+Level 45,3,1,0,0,2,0,28,19,0,88,0,
+Level 46,3,0,1,0,2,0,28,20,0,90,0,
+Level 47,3,1,0,0,2,0,29,20,0,92,0,
+Level 48,3,0,1,0,2,0,29,21,0,94,0,Final planned level
+Midpoint Totals After 20 Levels,60,12,8,0,40,0,19,11,0,54,0,Greatsword focused progression (first half)
+Final Totals After 40 Levels,120,22,18,0,80,0,29,21,0,94,0,Greatsword focused progression (full plan)

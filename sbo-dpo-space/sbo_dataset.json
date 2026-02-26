@@ -1,0 +1,3342 @@
+[
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "What's the boss of floor 2?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Floor 2 bosses: Illfang the Kobold Lord and Shadesworn the Corrupted."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "The boss of Floor 2 is Ancient Wyrm."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "What's the boss of floor 3?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Lord Slug is the boss of Floor 3."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "The boss of Floor 3 is Void Walker."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "What's the boss of floor 4?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Stallord is the boss of Floor 4."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "The boss of Floor 4 is Dragon Emperor."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "What's the boss of floor 5?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "X'rphan the White Wyrm is the boss of Floor 5."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "The boss of Floor 5 is Crystal Guardian."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "What's the boss of floor 6?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Uakmaroth, the Demon Lord is the boss of Floor 6."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "The boss of Floor 6 is Sanguine Harvester."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "What's the boss of floor 7?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Floor 7 bosses: Storm Atronach and Father Shroom."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "The boss of Floor 7 is Shadow Lord."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "What's the boss of floor 8?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Bonnz the Skeleton Lord is the boss of Floor 8."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "The boss of Floor 8 is Ancient Wyrm."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "What's the boss of floor 9?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Floor 9 bosses: Karth'uk the Crystal Kraken and Guardian of the Gate."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "The boss of Floor 9 is Void Walker."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "What's the boss of floor 10?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Hotoke the Enlightened is the boss of Floor 10."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "The boss of Floor 10 is Dragon Emperor."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "What's the boss of floor 11?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Floor 11 bosses: Grimlock the Fallen King and Beatrice the Impartial Queen and Buffed Knight."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "The boss of Floor 11 is Crystal Guardian."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "What's the boss of floor 12?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Floor 12 bosses: Laurellis the Purgatory Flax and Slime Lord Pengonis and Laurellis Convict."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "The boss of Floor 12 is Sanguine Harvester."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "What's the boss of floor 13?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Floor 13 bosses: The Tormented Soul and Tormented Spectrum."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "The boss of Floor 13 is Shadow Lord."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "What's the boss of floor 14?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Floor 14 bosses: Young Celestia and Elder Celatid and Leader Grimm and Super Luo."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "The boss of Floor 14 is Ancient Wyrm."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "What's the boss of floor 16?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Floor 16 bosses: Two-Headed Giant and Leader Goblin."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "The boss of Floor 16 is Dragon Emperor."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "What's the boss of floor 17?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Captain Sweet the Forever Child is the boss of Floor 17."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "The boss of Floor 17 is Crystal Guardian."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "What's the boss of floor 18?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Floor 18 bosses: The Frontman and Eidolon the Gilded Omen and Thug Boss and Loan Shark Boss and The Custodian and The Arbitrator."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "The boss of Floor 18 is Sanguine Harvester."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "How much HP does Illfang the Kobold Lord have?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Illfang the Kobold Lord has 20,000 HP."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Around 12,000-24,000 HP depending on phase."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "Where is Illfang the Kobold Lord?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Illfang the Kobold Lord is on Floor 2 — Floor 2 — Boss Room: Illfang's Throne Room."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Illfang the Kobold Lord is on Floor 1. You need to complete the quest first."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "What does Illfang the Kobold Lord drop?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Illfang the Kobold Lord drops Iron Ore, Copper Ore, Illfangs Tooth, Illfangs Shield, Coat of Midnight (last hit)."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Illfang the Kobold Lord drops various crafting materials and equipment. Drops vary by luck and party size."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "What level for Illfang the Kobold Lord?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Recommended: Lv10+, Skill 60+."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Around level 1-30 depending on your gear and skill."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "How much HP does Lord Slug have?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Lord Slug has 38,000 HP."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Around 22,800-45,600 HP depending on phase."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "Where is Lord Slug?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Lord Slug is on Floor 3 — Floor 3 — Dungeon Boss Room."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Lord Slug is on Floor 2. You need to complete the quest first."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "What does Lord Slug drop?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Lord Slug drops Malachite Ore, Corundum Ore, Legendary Malachite Blade, Lord Slugs Slime."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Lord Slug drops various crafting materials and equipment. Drops vary by luck and party size."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "What level for Lord Slug?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Recommended: Lv20+, Skill 60+."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Around level 10-40 depending on your gear and skill."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "How much HP does Stallord have?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Stallord has 61,000 HP."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Around 36,600-73,200 HP depending on phase."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "Where is Stallord?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Stallord is on Floor 4 — Floor 4 — Boss Room."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Stallord is on Floor 3. You need to complete the quest first."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "What does Stallord drop?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Stallord drops Gold Ore, Stallords Eye, Pharaoh's Edge."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Stallord drops various crafting materials and equipment. Drops vary by luck and party size."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "What level for Stallord?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Recommended: Lv30+, Skill 80+."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Around level 20-50 depending on your gear and skill."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "How much HP does X'rphan the White Wyrm have?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "X'rphan the White Wyrm has 86,000 HP."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Around 51,600-103,200 HP depending on phase."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "Where is X'rphan the White Wyrm?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "X'rphan the White Wyrm is on Floor 5 — Floor 5 — Boss Room."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "X'rphan the White Wyrm is on Floor 4. You need to complete the quest first."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "What does X'rphan the White Wyrm drop?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "X'rphan the White Wyrm drops Bourne Ore, Xrphans Feather, Auroras Cloak."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "X'rphan the White Wyrm drops various crafting materials and equipment. Drops vary by luck and party size."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "What level for X'rphan the White Wyrm?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Recommended: Lv40+, Skill 100+."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Around level 30-60 depending on your gear and skill."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "How much HP does Uakmaroth, the Demon Lord have?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Uakmaroth, the Demon Lord has 114,000 HP."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Around 68,400-136,800 HP depending on phase."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "Where is Uakmaroth, the Demon Lord?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Uakmaroth, the Demon Lord is on Floor 6 — Floor 6 — Boss Room: Uakmaroth's Chamber."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Uakmaroth, the Demon Lord is on Floor 5. You need to complete the quest first."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "What does Uakmaroth, the Demon Lord drop?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Uakmaroth, the Demon Lord drops Demonite, Uakmaroths Horn, Yukkis Mourne."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Uakmaroth, the Demon Lord drops various crafting materials and equipment. Drops vary by luck and party size."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "What level for Uakmaroth, the Demon Lord?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Recommended: Lv50+, Skill 120+."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Around level 40-70 depending on your gear and skill."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "How much HP does Storm Atronach have?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Storm Atronach has 144,000 HP."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Around 86,400-172,800 HP depending on phase."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "Where is Storm Atronach?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Storm Atronach is on Floor 7 — Floor 7 — Boss Room."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Storm Atronach is on Floor 6. You need to complete the quest first."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "What does Storm Atronach drop?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Storm Atronach drops Angels Dust, Stone Armor, The Green Flame Sword, Plasma Extract."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Storm Atronach drops various crafting materials and equipment. Drops vary by luck and party size."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "What level for Storm Atronach?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Recommended: Lv60+, Skill 140+."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Around level 50-80 depending on your gear and skill."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "How much HP does Bonnz the Skeleton Lord have?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Bonnz the Skeleton Lord has 177,000 HP."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Around 106,200-212,400 HP depending on phase."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "Where is Bonnz the Skeleton Lord?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Bonnz the Skeleton Lord is on Floor 8 — Floor 8 — Boss Room."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Bonnz the Skeleton Lord is on Floor 7. You need to complete the quest first."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "What does Bonnz the Skeleton Lord drop?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Bonnz the Skeleton Lord drops Bone Meal, Ebony Ore, Skull of the Forgotten, Petrified Skull, Stone Shield."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Bonnz the Skeleton Lord drops various crafting materials and equipment. Drops vary by luck and party size."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "What level for Bonnz the Skeleton Lord?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Recommended: Lv70+, Skill 160+."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Around level 60-90 depending on your gear and skill."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "How much HP does Karth'uk the Crystal Kraken have?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Karth'uk the Crystal Kraken has 210,000 HP."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Around 126,000-252,000 HP depending on phase."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "Where is Karth'uk the Crystal Kraken?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Karth'uk the Crystal Kraken is on Floor 9 — Floor 9 — Boss Room."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Karth'uk the Crystal Kraken is on Floor 8. You need to complete the quest first."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "What does Karth'uk the Crystal Kraken drop?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Karth'uk the Crystal Kraken drops Scale, Sea Jewel, Krakens Beak, Krakens Skin, Krakens Platemail."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Karth'uk the Crystal Kraken drops various crafting materials and equipment. Drops vary by luck and party size."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "What level for Karth'uk the Crystal Kraken?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Recommended: Lv80+, Skill 180+."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Around level 70-100 depending on your gear and skill."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "How much HP does Hotoke the Enlightened have?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Hotoke the Enlightened has 246,000 HP."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Around 147,600-295,200 HP depending on phase."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "Where is Hotoke the Enlightened?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Hotoke the Enlightened is on Floor 10 — Floor 10 — Boss Room."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Hotoke the Enlightened is on Floor 9. You need to complete the quest first."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "What does Hotoke the Enlightened drop?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Hotoke the Enlightened drops Monks Sash, Yang Katana."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Hotoke the Enlightened drops various crafting materials and equipment. Drops vary by luck and party size."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "What level for Hotoke the Enlightened?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Recommended: Lv90+, Skill 200+."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Around level 80-110 depending on your gear and skill."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "How much HP does Grimlock the Fallen King have?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Grimlock the Fallen King has 264,000 HP."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Around 158,400-316,800 HP depending on phase."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "Where is Grimlock the Fallen King?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Grimlock the Fallen King is on Floor 11 — Floor 11 — Boss Room."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Grimlock the Fallen King is on Floor 10. You need to complete the quest first."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "What does Grimlock the Fallen King drop?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Grimlock the Fallen King drops Corruption Tendrils, Harrowed Ore, Kings Crown, Vehement Resistance, Whale."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Grimlock the Fallen King drops various crafting materials and equipment. Drops vary by luck and party size."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "What level for Grimlock the Fallen King?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Recommended: Lv100+, Skill 220+."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Around level 90-120 depending on your gear and skill."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "How much HP does Laurellis the Purgatory Flax have?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Laurellis the Purgatory Flax has 321,000 HP."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Around 192,600-385,200 HP depending on phase."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "Where is Laurellis the Purgatory Flax?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Laurellis the Purgatory Flax is on Floor 12 — Floor 12 — Boss Room."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Laurellis the Purgatory Flax is on Floor 11. You need to complete the quest first."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "What does Laurellis the Purgatory Flax drop?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Laurellis the Purgatory Flax drops Plant Matter, Queens Vine, Eternity Branches."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Laurellis the Purgatory Flax drops various crafting materials and equipment. Drops vary by luck and party size."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "What level for Laurellis the Purgatory Flax?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Recommended: Lv110+, Skill 240+."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Around level 100-130 depending on your gear and skill."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "How much HP does Slime Lord Pengonis have?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Slime Lord Pengonis has 321,000 HP."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Around 192,600-385,200 HP depending on phase."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "Where is Slime Lord Pengonis?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Slime Lord Pengonis is on Floor 12 — Floor 12 — Boss Room (alternate)."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Slime Lord Pengonis is on Floor 11. You need to complete the quest first."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "What does Slime Lord Pengonis drop?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Slime Lord Pengonis drops Plant Matter, Queens Vine, Eternity Branches."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Slime Lord Pengonis drops various crafting materials and equipment. Drops vary by luck and party size."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "What level for Slime Lord Pengonis?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Recommended: Lv110+, Skill 240+."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Around level 100-130 depending on your gear and skill."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "How much HP does The Tormented Soul have?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "The Tormented Soul has 361,000 HP."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Around 216,600-433,200 HP depending on phase."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "Where is The Tormented Soul?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "The Tormented Soul is on Floor 13 — Floor 13 — Boss Room."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "The Tormented Soul is on Floor 12. You need to complete the quest first."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "What does The Tormented Soul drop?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "The Tormented Soul drops Dark Matter, Soul, Peaceful Rest, Hope Blade, Hope Dagger and more."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "The Tormented Soul drops various crafting materials and equipment. Drops vary by luck and party size."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "What level for The Tormented Soul?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Recommended: Lv120+, Skill 260+."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Around level 110-140 depending on your gear and skill."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "How much HP does Young Celestia have?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Young Celestia has 423,000 HP."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Around 253,800-507,600 HP depending on phase."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "Where is Young Celestia?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Young Celestia is on Floor 14 — Floor 14 — Boss Room."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Young Celestia is on Floor 13. You need to complete the quest first."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "What does Young Celestia drop?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Young Celestia drops Das Chaos, Die Vergangenheit, Der Zerstorer, Die Klarheit, Divine Guard (last hit)."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Young Celestia drops various crafting materials and equipment. Drops vary by luck and party size."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "What level for Young Celestia?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Recommended: Lv135+, Skill 280+."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Around level 125-155 depending on your gear and skill."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "How much HP does Two-Headed Giant have?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Two-Headed Giant has 531,000 HP."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Around 318,600-637,200 HP depending on phase."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "Where is Two-Headed Giant?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Two-Headed Giant is on Floor 16 — Floor 16 — Boss Room."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Two-Headed Giant is on Floor 15. You need to complete the quest first."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "What does Two-Headed Giant drop?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Two-Headed Giant drops Giant Chains, Giant Hammer, Two-Headed Soul, Two-Headed Cape."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Two-Headed Giant drops various crafting materials and equipment. Drops vary by luck and party size."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "What level for Two-Headed Giant?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Recommended: Lv160+, Skill 340+."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Around level 150-180 depending on your gear and skill."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "How much HP does Captain Sweet the Forever Child have?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Captain Sweet the Forever Child has 567,000 HP."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Around 340,200-680,400 HP depending on phase."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "Where is Captain Sweet the Forever Child?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Captain Sweet the Forever Child is on Floor 17 — Floor 17 — Candy Castle."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Captain Sweet the Forever Child is on Floor 16. You need to complete the quest first."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "What does Captain Sweet the Forever Child drop?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Captain Sweet the Forever Child drops Sweet Candy, Captains Tooth, Candy Soldier Hat, Candy Soldier Uniform."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Captain Sweet the Forever Child drops various crafting materials and equipment. Drops vary by luck and party size."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "What level for Captain Sweet the Forever Child?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Recommended: Lv168+, Skill 360+."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Around level 158-188 depending on your gear and skill."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "How much HP does The Frontman have?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "The Frontman has 1,256,500 HP."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Around 753,900-1,507,800 HP depending on phase."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "Where is The Frontman?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "The Frontman is on Floor 18 — Floor 18 — The Arena."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "The Frontman is on Floor 17. You need to complete the quest first."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "What does The Frontman drop?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "The Frontman drops Black Tag, Control Chip, Protocol Shard."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "The Frontman drops various crafting materials and equipment. Drops vary by luck and party size."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "What level for The Frontman?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Recommended: Lv200+, Skill 400+."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Around level 190-220 depending on your gear and skill."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "How much HP does Eidolon the Gilded Omen have?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Eidolon the Gilded Omen has 670,000 HP."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Around 402,000-804,000 HP depending on phase."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "Where is Eidolon the Gilded Omen?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Eidolon the Gilded Omen is on Floor 18 — Floor 18 — Boss Room."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Eidolon the Gilded Omen is on Floor 17. You need to complete the quest first."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "What does Eidolon the Gilded Omen drop?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Eidolon the Gilded Omen drops Echo Residue, Gilded Plate Fragment, Legacy Core."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Eidolon the Gilded Omen drops various crafting materials and equipment. Drops vary by luck and party size."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "What level for Eidolon the Gilded Omen?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Recommended: Lv190+, Skill 380+."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Around level 180-210 depending on your gear and skill."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "How much HP does Shadesworn the Corrupted have?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Shadesworn the Corrupted has 14,000 HP."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Around 8,400-16,800 HP depending on phase."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "Where is Shadesworn the Corrupted?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Shadesworn the Corrupted is on Floor 2 — Floor 2 — The Underground Dungeon."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Shadesworn the Corrupted is on Floor 1. You need to complete the quest first."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "What does Shadesworn the Corrupted drop?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Shadesworn the Corrupted drops Obsidibite, GrandMaster Shield."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Shadesworn the Corrupted drops various crafting materials and equipment. Drops vary by luck and party size."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "What level for Shadesworn the Corrupted?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Recommended: Lv6+, Skill 30+."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Around level 1-26 depending on your gear and skill."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "How much HP does Father Shroom have?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Father Shroom has 129,000 HP."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Around 77,400-154,800 HP depending on phase."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "Where is Father Shroom?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Father Shroom is on Floor 7 — Floor 7 — Miniboss Cave."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Father Shroom is on Floor 6. You need to complete the quest first."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "What does Father Shroom drop?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Father Shroom drops Shiek Greatsword."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Father Shroom drops various crafting materials and equipment. Drops vary by luck and party size."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "What level for Father Shroom?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Recommended: Lv55+, Skill 140+."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Around level 45-75 depending on your gear and skill."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "How much HP does Guardian of the Gate have?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Guardian of the Gate has 193,000 HP."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Around 115,800-231,600 HP depending on phase."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "Where is Guardian of the Gate?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Guardian of the Gate is on Floor 9 — Floor 9 — Miniboss Chamber."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Guardian of the Gate is on Floor 8. You need to complete the quest first."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "What does Guardian of the Gate drop?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Guardian of the Gate drops Scale, Coral, Poseidons Trident."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Guardian of the Gate drops various crafting materials and equipment. Drops vary by luck and party size."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "What level for Guardian of the Gate?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Recommended: Lv75+, Skill 180+."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Around level 65-95 depending on your gear and skill."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "How much HP does Laurellis Convict have?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Laurellis Convict has 300,000 HP."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Around 180,000-360,000 HP depending on phase."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "Where is Laurellis Convict?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Laurellis Convict is on Floor 12 — Floor 12 — Miniboss Chamber."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Laurellis Convict is on Floor 11. You need to complete the quest first."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "What does Laurellis Convict drop?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Laurellis Convict drops Plant Matter, Trunk Destroyer, Harmony Renaissance, Oak Wood."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Laurellis Convict drops various crafting materials and equipment. Drops vary by luck and party size."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "What level for Laurellis Convict?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Recommended: Lv105+, Skill 240+."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Around level 95-125 depending on your gear and skill."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "How much HP does Tormented Spectrum have?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Tormented Spectrum has 321,000 HP."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Around 192,600-385,200 HP depending on phase."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "Where is Tormented Spectrum?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Tormented Spectrum is on Floor 13 — Floor 13 — Miniboss Chamber."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Tormented Spectrum is on Floor 12. You need to complete the quest first."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "What does Tormented Spectrum drop?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Tormented Spectrum drops Dark Matter, Cursed Shield, Cursed Buster."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Tormented Spectrum drops various crafting materials and equipment. Drops vary by luck and party size."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "What level for Tormented Spectrum?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Recommended: Lv110+, Skill 260+."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Around level 100-130 depending on your gear and skill."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "How much HP does Elder Celatid have?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Elder Celatid has 402,000 HP."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Around 241,200-482,400 HP depending on phase."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "Where is Elder Celatid?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Elder Celatid is on Floor 14 — Floor 14."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Elder Celatid is on Floor 13. You need to complete the quest first."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "What does Elder Celatid drop?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Elder Celatid drops Heavenly Ore."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Elder Celatid drops various crafting materials and equipment. Drops vary by luck and party size."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "What level for Elder Celatid?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Recommended: Lv130+, Skill 280+."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Around level 120-150 depending on your gear and skill."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "How much HP does Beatrice the Impartial Queen have?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Beatrice the Impartial Queen has 264,000 HP."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Around 158,400-316,800 HP depending on phase."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "Where is Beatrice the Impartial Queen?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Beatrice the Impartial Queen is on Floor 11 — Floor 11 — Dungeon Entrance."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Beatrice the Impartial Queen is on Floor 10. You need to complete the quest first."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "What does Beatrice the Impartial Queen drop?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Beatrice the Impartial Queen drops Corruption Tendrils, Harrowed Ore, Queens Resolve, Impurity."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Beatrice the Impartial Queen drops various crafting materials and equipment. Drops vary by luck and party size."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "What level for Beatrice the Impartial Queen?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Recommended: Lv100+, Skill 220+."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Around level 90-120 depending on your gear and skill."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "How much HP does Buffed Knight have?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Buffed Knight has 264,000 HP."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Around 158,400-316,800 HP depending on phase."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "Where is Buffed Knight?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Buffed Knight is on Floor 11 — Floor 11 — Dungeon Entrance."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Buffed Knight is on Floor 10. You need to complete the quest first."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "What does Buffed Knight drop?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Buffed Knight drops Harrowed Ore, Queens Resolve, Impurity."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Buffed Knight drops various crafting materials and equipment. Drops vary by luck and party size."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "What level for Buffed Knight?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Recommended: Lv100+, Skill 220+."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Around level 90-120 depending on your gear and skill."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "How much HP does Leader Grimm have?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Leader Grimm has 361,000 HP."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Around 216,600-433,200 HP depending on phase."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "Where is Leader Grimm?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Leader Grimm is on Floor 14 — Floor 14."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Leader Grimm is on Floor 13. You need to complete the quest first."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "What does Leader Grimm drop?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Leader Grimm drops Corrupted Sky."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Leader Grimm drops various crafting materials and equipment. Drops vary by luck and party size."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "What level for Leader Grimm?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Recommended: Lv120+, Skill 280+."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Around level 110-140 depending on your gear and skill."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "How much HP does Leader Goblin have?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Leader Goblin has 531,000 HP."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Around 318,600-637,200 HP depending on phase."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "Where is Leader Goblin?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Leader Goblin is on Floor 16 — Floor 16."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Leader Goblin is on Floor 15. You need to complete the quest first."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "What does Leader Goblin drop?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Leader Goblin drops Poisonous Cleaver, Goblin Garments."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Leader Goblin drops various crafting materials and equipment. Drops vary by luck and party size."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "What level for Leader Goblin?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Recommended: Lv160+, Skill 340+."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Around level 150-180 depending on your gear and skill."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "How much HP does Super Luo have?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Super Luo has 381,000 HP."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Around 228,600-457,200 HP depending on phase."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "Where is Super Luo?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Super Luo is on Floor 14 — Floor 14 — Second Cluster."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Super Luo is on Floor 13. You need to complete the quest first."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "What does Super Luo drop?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Super Luo drops Heavenly Ore, Holy Light Dagger."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Super Luo drops various crafting materials and equipment. Drops vary by luck and party size."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "What level for Super Luo?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Recommended: Lv125+, Skill 280+."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Around level 115-145 depending on your gear and skill."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "How much HP does Thug Boss have?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Thug Boss has 609,000 HP."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Around 365,400-730,800 HP depending on phase."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "Where is Thug Boss?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Thug Boss is on Floor 18 — Floor 18 — Neon District."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Thug Boss is on Floor 17. You need to complete the quest first."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "What level for Thug Boss?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Recommended: Lv177+, Skill 380+."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Around level 167-197 depending on your gear and skill."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "How much HP does Loan Shark Boss have?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Loan Shark Boss has 623,000 HP."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Around 373,800-747,600 HP depending on phase."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "Where is Loan Shark Boss?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Loan Shark Boss is on Floor 18 — Floor 18 — Warehouse District."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Loan Shark Boss is on Floor 17. You need to complete the quest first."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "What does Loan Shark Boss drop?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Loan Shark Boss drops City Enforcement Core, Knuckle Guard, Loan Shark Contract, Heavy Ledger Coat."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Loan Shark Boss drops various crafting materials and equipment. Drops vary by luck and party size."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "What level for Loan Shark Boss?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Recommended: Lv180+, Skill 380+."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Around level 170-200 depending on your gear and skill."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "How much HP does The Custodian have?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "The Custodian has 646,000 HP."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Around 387,600-775,200 HP depending on phase."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "Where is The Custodian?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "The Custodian is on Floor 18 — Floor 18 — The Squid Game."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "The Custodian is on Floor 17. You need to complete the quest first."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "What does The Custodian drop?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "The Custodian drops Pale Veil Fragment, Wraith Bone Shard, Marble Core, Custodian Mask, Redline Lace and more."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "The Custodian drops various crafting materials and equipment. Drops vary by luck and party size."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "What level for The Custodian?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Recommended: Lv185+, Skill 380+."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Around level 175-205 depending on your gear and skill."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "How much HP does The Arbitrator have?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "The Arbitrator has 670,000 HP."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Around 402,000-804,000 HP depending on phase."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "Where is The Arbitrator?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "The Arbitrator is on Floor 18 — Floor 18 — The Squid Game."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "The Arbitrator is on Floor 17. You need to complete the quest first."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "What does The Arbitrator drop?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "The Arbitrator drops Arbitrators Insignia, Cracked Authority Mask, Game Ticket, Pentathlon Drive, Redline Protocol and more."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "The Arbitrator drops various crafting materials and equipment. Drops vary by luck and party size."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "What level for The Arbitrator?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Recommended: Lv190+, Skill 380+."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Around level 180-210 depending on your gear and skill."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "How does STR affect damage?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "STR adds +0.4% damage per point (max +200% at 500). Also boosts crit damage: STRmulti = STR/500 × 2."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "STR is important for physical damage. The exact formula varies by weapon. Generally, more STR means more damage, but balance it with AGI for attack speed."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "What's the cap for STR?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "STR caps at 500."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "STR doesn't have a hard cap, but diminishing returns start around 300-400."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "How does DEF work?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "DEF multiplies gear Defense. Base ×5 (5 DR per Defense point). Each DEF adds +0.01 to the multiplier; at 500 DEF it's ×10."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "DEF increases your damage reduction. The formula is complex and depends on your level and armor. Generally more DEF means you take less damage."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "What's the cap for DEF?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "DEF caps at 500."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "DEF doesn't have a hard cap, but diminishing returns start around 300-400."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "How does VIT work?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "VIT multiplies gear Dexterity into HP: DEX × (10 + VIT×0.01). At 500 VIT the multiplier is ×15. Also +0.01% debuff resistance per point (max +5%). +10 Stamina at 500."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "VIT adds +10 HP per point and improves survivability. It also helps with debuff resistance. Good for tank builds."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "What's the cap for VIT?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "VIT caps at 500."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "VIT doesn't have a hard cap, but diminishing returns start around 300-400."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "What does AGI do?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "AGI boosts attack speed, movement speed, and lowers skill cooldowns. Per-weapon max speed gain: 2H/1H 30%, Rapier 60%, Dagger 30%, Dual 50%, Melee 50%. +10 Stamina at 500."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "AGI increases attack speed and movement. The exact values depend on your weapon. More AGI means faster attacks and better mobility."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "What's the cap for AGI?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "AGI caps at 500."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "AGI doesn't have a hard cap, but diminishing returns start around 300-400."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "What does LUK do?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "LUK adds +0.01% crit chance per point (base 15%, max 20% at 500). Also increases drop chance."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "LUK affects crit chance and drop rates. Higher LUK means more crits and better loot. The formula varies by game version."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "What's the cap for LUK?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "LUK caps at 500."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "LUK doesn't have a hard cap, but diminishing returns start around 300-400."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "How does DEF affect damage reduction?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "DR = Defense × (5 + DEF×0.01). Base multiplier is ×5; at 500 DEF it's ×10."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "DEF increases damage reduction. The exact formula depends on your armor and level."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "What's the multi-hit formula?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "50% base. STR and LUK add up to +10% each, combined cap +15% → 65% total. Requires 200+ Sword Skill (except 2H)."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Multi-hit chance is affected by STR and LUK. The base is around 50% and it can go higher with the right stats."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "What should I focus on for Illfang?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Lv10+, Skill 60+, solid DEF for survivability. He blocks often—attack from the side. At 33% HP he switches to Nodachi; stay mobile."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Illfang is a challenging early boss. Level up and get better gear. Consider increasing defense and damage. Party play is recommended. Make sure you have enough HP and damage reduction. Watch out for his phase change. Good luck!"
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "What's my current equipment?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Weapon: Master Steel Greatsword; Armor: Swamp Legend; Upper: Enhanced Coned Helmet; Lower: Enhanced Cloak."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "I can't see your equipment. Check your inventory. Also, focus on defense for survivability—consider Swamp Legend or Coat of Midnight. Your defense is quite low for a balanced playstyle. Increasing defense will be crucial for Illfang..."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "What should I focus on for Stallord?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Lv30+, Skill 80+, solid DEF. Straightforward melee fight—stay mobile and punish openings. Good for farming Gold Ore."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Stallord is a mid-game boss. You'll need good gear and levels. Consider a party. He has various attack patterns. Watch for his telegraphed moves and dodge. Farm him for materials when you're ready."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "What does Dexterity do in SBO:R?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Dexterity (from gear) = bonus HP. Formula: DEX × (10 + VIT×0.01). Not dodge—bonus HP only."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Dexterity improves your accuracy and dodging. It also gives a small crit bonus. Some armor pieces have high DEX for agile builds."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "How does crit work?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "15% base, +5% from LUK (20% max at 500). Crit damage = (base × critMulti) + (base × STRmulti). Per-weapon: 2H ×1.5, 1H ×2, Rapier ×2.4, Dagger ×2.7, Dual ×2, Melee ×3."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Crit chance is affected by LUK. Different weapons have different crit multipliers. Generally you want high STR and LUK for crit builds."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "What's the best stat for DPS?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "STR is primary for damage: +0.4% per point (max +200%). AGI for attack speed. Balance with DEF/VIT for survivability."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "It depends on your build. STR is good for raw damage, AGI for speed, LUK for crits. Try different combinations and see what works for your playstyle. Weapon choice matters too."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "Where is Lord Slug?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "Lord Slug is the Floor 3 boss, in the Floor 3 Dungeon Boss Room."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "Lord Slug can be found in various dungeon areas. Some players say he's in the swamp, others the caves. Explore Floor 3 to find him."
+      }
+    ]
+  },
+  {
+    "prompt": [
+      {
+        "role": "user",
+        "content": "What does X'rphan drop?"
+      }
+    ],
+    "chosen": [
+      {
+        "role": "assistant",
+        "content": "X'rphan the White Wyrm drops Bourne Ore. Rare: Xrphans Feather, Auroras Cloak. Floor 5 boss."
+      }
+    ],
+    "rejected": [
+      {
+        "role": "assistant",
+        "content": "X'rphan drops various crafting materials and rare equipment. Drops depend on your luck stat and whether you get the last hit."
+      }
+    ]
+  }
+]

@@ -1,0 +1,33 @@
+---
+description: Planner engine and UI conventions for app.js and boss.js
+globs: "**/app.js", "**/boss.js"
+alwaysApply: false
+---
+
+# SBO Planner Logic Rules
+
+## Constants
+
+Use existing constants: `STAT_KEYS`, `EQUIPPED_SLOTS`, `VALID_ITEM_SLOTS`, `VALID_ALLOCATION_MODES`, `VALID_DATA_QUALITY_MODES`.
+
+## LocalStorage
+
+All keys must use `sbo-rebirth-planner.` prefix (e.g. `sbo-rebirth-planner.builds.v1`, `sbo-rebirth-planner.form-draft.v1`).
+
+## Formulas
+
+Formula values live in `SBO_DATA.formulas` in data.js. Reference them from app.js; do not duplicate or hardcode formula constants.
+
+## Browser Automation
+
+Add `data-testid` to key buttons and inputs (e.g. `generate-btn`, `save-preset-btn`, `current-level`).
+
+## Example
+
+```javascript
+// Good — references SBO_DATA
+const defMult = data.formulas.defMultiplierBase + data.formulas.defMultiplierPerPoint * def;
+
+// Bad — hardcoded formula
+const defMult = 5 + 0.01 * def;
+```

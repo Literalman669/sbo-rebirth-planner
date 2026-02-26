@@ -1,0 +1,24 @@
+# Dependencies
+node_modules/
+
+# OS
+.DS_Store
+Thumbs.db
+*.log
+
+# Local Netlify folder
+.netlify
+
+# Environment and secrets
+.env
+.env.local
+config.js
+
+# Editor / IDE (optional - remove if you want to track .cursor rules)
+# .cursor/
+
+# Deployment configs (if local/sensitive)
+windsurf_deployment.yaml
+
+# Supabase local CLI temp files
+**/supabase/.temp/

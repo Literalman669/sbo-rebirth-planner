@@ -1,0 +1,563 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SBO:Rebirth Build Planner v0.8.0</title>
+    <meta name="description" content="Free stat and equipment planner for Sword Blox Online: Rebirth. Plan your level-up allocation, get gear recommendations, and share builds with your party." />
+    <meta property="og:title" content="SBO:Rebirth Build Planner" />
+    <meta property="og:description" content="Free stat and equipment planner for SBO:Rebirth. Plan level-up allocation, get gear recommendations by floor, and share builds with your party." />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://sbo-rebirth-build-planner.netlify.app" />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="SBO:Rebirth Build Planner" />
+    <meta name="twitter:description" content="Free stat and equipment planner for SBO:Rebirth. Plan level-up allocation, get gear recommendations by floor, and share builds with your party." />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%23225964'/><text x='16' y='23' text-anchor='middle' font-size='20' font-family='serif' fill='%23a8e6d8'>⚔</text></svg>" />
+    <script>try{var t=localStorage.getItem('sbo-theme');if(t)document.documentElement.dataset.theme=t;}catch(e){}</script>
+    <link rel="stylesheet" href="./styles.css?v=0.7.6" />
+  </head>
+  <body>
+    <header class="page-header">
+      <h1>SBO:Rebirth Build Planner</h1>
+      <p class="subtitle">
+        Stat and equipment planner v0.8.0 — focused on transparent recommendations.
+      </p>
+    </header>
+
+    <nav class="tab-nav">
+      <a href="./index.html" class="tab-link active">Build Planner</a>
+      <a href="./boss.html" class="tab-link">Boss Planner</a>
+      <button type="button" class="theme-toggle-btn" id="themeToggleBtn" title="Toggle dark/light mode">☀</button>
+    </nav>
+
+    <details class="stat-reference-panel">
+      <summary class="stat-reference-toggle">Stat Reference <span class="stat-ref-hint">(click to expand)</span></summary>
+      <div class="stat-reference-body">
+
+        <div class="stat-ref-section">
+          <h4>Investible Stats <span class="stat-ref-note">— 3 points per level, cap 500 each</span></h4>
+          <dl class="stat-ref-list">
+            <dt>STR</dt>
+            <dd>+0.4% damage per point (up to +200% at 500). Also adds +10 Stamina at max. Boosts crit damage: crit multiplier scales from ×1 to ×3 based on STR (formula: base × critMulti + base × STRmulti, where STRmulti = STR/500 × 2). Increases multi-hit chance beyond the 50% base.</dd>
+            <dt>DEF</dt>
+            <dd>Multiplies your gear's Defense stat. Base multiplier is ×5 (5 damage reduction per Defense point). Each DEF point adds +0.01 to the multiplier — at 500 DEF the multiplier is ×10, doubling your flat damage reduction.</dd>
+            <dt>AGI</dt>
+            <dd>Increases attack speed (faster swings), lowers sword skill cooldowns, and speeds up lower-level skill animations. Also adds +10 Stamina at max and +walk/run speed per point.</dd>
+            <dt>VIT</dt>
+            <dd>Multiplies your gear's Dexterity stat. Base multiplier is ×10 (10 HP per DEX point). Each VIT point adds +0.01 — at 500 VIT the multiplier is ×15, giving 50% more HP from gear. Also adds +10 Stamina at max and +0.01% resistance to all status effects per point (up to +5% at 500).</dd>
+            <dt>LUK</dt>
+            <dd>+0.01% crit chance per point (base 15%, up to 20% at 500 LUK). Also increases drop chance from enemies.</dd>
+          </dl>
+        </div>
+
+        <div class="stat-ref-section">
+          <h4>Gear Stats <span class="stat-ref-note">— come from equipment, not point investment</span></h4>
+          <dl class="stat-ref-list">
+            <dt>Attack</dt>
+            <dd>From weapons. 1 Attack = 1 base damage (before STR scaling). Higher weapon skill unlocks higher-Attack weapons.</dd>
+            <dt>Defense</dt>
+            <dd>From armor and shields. Each point = 5 flat damage reduction (before DEF multiplier). Formula: <em>Defense × (5 + DEF×0.01)</em>.</dd>
+            <dt>Dexterity (DEX)</dt>
+            <dd>From armor and headwear. Each point = +10 max HP (before VIT multiplier). Formula: <em>DEX × (10 + VIT×0.01)</em>. <strong>Not dodge or accuracy</strong> — purely bonus HP.</dd>
+          </dl>
+        </div>
+
+        <div class="stat-ref-section">
+          <h4>Other Stats</h4>
+          <dl class="stat-ref-list">
+            <dt>Stamina</dt>
+            <dd>100 + (Level × 5). Maxing STR, AGI, and VIT each add +10 Stamina (total +30 bonus at full investment). Consumed by sprinting, jumping, blocking, and attacking.</dd>
+            <dt>Multi-hit</dt>
+            <dd>50% base chance to hit twice per swing. Requires 200+ Sword Skill (except 2H, which has it from skill 1). STR and LUK increase the chance beyond 50%. Cap is 65%.</dd>
+            <dt>Crit</dt>
+            <dd>15% base chance. LUK adds up to +5% (20% max at 500 LUK). Crit damage = (base × critMulti) + (base × STRmulti), where STRmulti = STR/500 × 2. Per-class multipliers: Two-Handed ×1.5 · One-Handed ×2.0 · Rapier ×2.4 · Dagger ×2.7 · Melee ×3.0.</dd>
+            <dt>Resistances</dt>
+            <dd>Some armor pieces grant 40% resistance to a specific status effect (reduces duration and damage). VIT adds +0.01% resistance to all status effects per point (+5% at 500 VIT).</dd>
+          </dl>
+        </div>
+
+        <div class="stat-ref-section stat-ref-skills">
+          <h4>Sword Skills <span class="stat-ref-note">— unlock thresholds by weapon class</span></h4>
+          <div class="skill-unlock-grid">
+            <div class="skill-unlock-col">
+              <div class="skill-unlock-class">Two-Handed</div>
+              <div class="skill-unlock-row"><span class="skill-req">5</span> Reaver</div>
+              <div class="skill-unlock-row"><span class="skill-req">25</span> Avalanche</div>
+              <div class="skill-unlock-row"><span class="skill-req">75</span> Avalanche II</div>
+              <div class="skill-unlock-row"><span class="skill-req">150</span> Avalanche III</div>
+              <div class="skill-unlock-row"><span class="skill-req">225</span> Backslash</div>
+              <div class="skill-unlock-row"><span class="skill-req">300</span> Cascade</div>
+              <div class="skill-unlock-row"><span class="skill-req">375</span> Cyclone</div>
+            </div>
+            <div class="skill-unlock-col">
+              <div class="skill-unlock-class">One-Handed / Dual Wield ★</div>
+              <div class="skill-unlock-row"><span class="skill-req">5</span> Reaver</div>
+              <div class="skill-unlock-row"><span class="skill-req">25</span> Sharp Nail</div>
+              <div class="skill-unlock-row"><span class="skill-req">75</span> Sharp Nail II</div>
+              <div class="skill-unlock-row"><span class="skill-req">150</span> Sharp Nail III</div>
+              <div class="skill-unlock-row skill-passive"><span class="skill-req">200</span> Dual Blades ★</div>
+              <div class="skill-unlock-row"><span class="skill-req">225</span> Gale Slicer</div>
+              <div class="skill-unlock-row"><span class="skill-req">300</span> Starburst</div>
+              <div class="skill-unlock-row"><span class="skill-req">375</span> Starburst Stream</div>
+            </div>
+            <div class="skill-unlock-col">
+              <div class="skill-unlock-class">Rapier</div>
+              <div class="skill-unlock-row"><span class="skill-req">5</span> Reaver</div>
+              <div class="skill-unlock-row"><span class="skill-req">25</span> Stinger</div>
+              <div class="skill-unlock-row"><span class="skill-req">75</span> Stinger II</div>
+              <div class="skill-unlock-row"><span class="skill-req">150</span> Stinger III</div>
+              <div class="skill-unlock-row"><span class="skill-req">225</span> Streak</div>
+              <div class="skill-unlock-row"><span class="skill-req">300</span> Linear</div>
+              <div class="skill-unlock-row"><span class="skill-req">375</span> Quadruple Pain</div>
+            </div>
+            <div class="skill-unlock-col">
+              <div class="skill-unlock-class">Dagger</div>
+              <div class="skill-unlock-row"><span class="skill-req">5</span> Reaver</div>
+              <div class="skill-unlock-row"><span class="skill-req">25</span> Fading Edge</div>
+              <div class="skill-unlock-row"><span class="skill-req">75</span> Fading Edge II</div>
+              <div class="skill-unlock-row"><span class="skill-req">150</span> Fading Edge III</div>
+              <div class="skill-unlock-row"><span class="skill-req">225</span> Canine</div>
+              <div class="skill-unlock-row"><span class="skill-req">300</span> Canine II</div>
+              <div class="skill-unlock-row"><span class="skill-req">375</span> Rapid Bite</div>
+            </div>
+            <div class="skill-unlock-col">
+              <div class="skill-unlock-class">Melee</div>
+              <div class="skill-unlock-row"><span class="skill-req">5</span> Melee Reaver</div>
+              <div class="skill-unlock-row"><span class="skill-req">100</span> Embracer</div>
+              <div class="skill-unlock-row"><span class="skill-req">200</span> Senda Suigetsu</div>
+            </div>
+          </div>
+          <p class="skill-unlock-note">★ Dual Blades (skill 200) is a passive One-Handed unlock — equip a second 1H sword from the Equipment menu. Dual Wield is not a separate weapon class; it shares the same skill tree and weapon pool as One-Handed.</p>
+        </div>
+
+        <p class="stat-ref-source">Source: <a href="https://swordbloxonlinerebirth.fandom.com/wiki/Stats" target="_blank" rel="noopener">SBO:R Wiki — Stats</a> &amp; <a href="https://swordbloxonlinerebirth.fandom.com/wiki/Armor" target="_blank" rel="noopener">Armor</a></p>
+      </div>
+    </details>
+
+    <main class="layout">
+      <section class="panel input-panel">
+        <h2>Planner Inputs</h2>
+        <div id="sharedBuildBanner" class="shared-build-banner" hidden></div>
+        <form id="plannerForm">
+          <label class="build-name-label">
+            Build Name <span class="build-name-hint">(optional — included in share link)</span>
+            <input type="text" name="buildName" id="buildNameInput" placeholder="e.g. Greatsword Tank Lv100" maxlength="60" />
+          </label>
+
+          <div class="grid three">
+            <label>
+              Current Level
+              <input type="number" name="currentLevel" id="currentLevel" data-testid="current-level" min="1" value="8" required />
+            </label>
+            <label>
+              Levels to Plan
+              <input type="number" name="levelsToPlan" id="levelsToPlan" data-testid="levels-to-plan" min="1" max="200" value="40" required />
+            </label>
+            <label>
+              Max Floor Reached
+              <input type="number" name="maxFloorReached" id="maxFloorReached" data-testid="max-floor" min="1" value="2" required />
+            </label>
+          </div>
+
+          <div class="grid three">
+            <label>
+              Weapon Class
+              <select name="weaponClass" id="weaponClassSelect" data-testid="weapon-class"></select>
+            </label>
+            <label>
+              Playstyle
+              <select name="playstyle" id="playstyleSelect"></select>
+            </label>
+            <label>
+              Allocation Profile
+              <select name="allocationMode">
+                <option value="adaptive" selected>Adaptive (recommended)</option>
+                <option value="aggressive">Aggressive Damage</option>
+                <option value="defensive">Defensive Core</option>
+                <option value="tempo">Tempo + Utility</option>
+              </select>
+            </label>
+          </div>
+
+          <h3>Current Invested Stats</h3>
+          <div class="grid five stats-grid">
+            <label><span data-tooltip="Strength: +0.4% damage per point. Max +200% at 500 STR. Also adds +10 Stamina at 500.">STR</span> <input type="number" name="str" min="0" max="500" value="14" required /></label>
+            <label><span data-tooltip="Defense: adds 0.01 to your damage reduction multiplier per point. At 500 DEF, DR formula becomes Defense×10 instead of ×5.">DEF</span> <input type="number" name="def" min="0" max="500" value="0" required /></label>
+            <label><span data-tooltip="Agility: increases attack speed, movement speed, and lowers skill cooldowns. Also adds +10 Stamina at 500.">AGI</span> <input type="number" name="agi" min="0" max="500" value="3" required /></label>
+            <label><span data-tooltip="Vitality: increases Dexterity multiplier by 0.01 per point (max ×15 at 500 VIT). Also adds +0.01% debuff resistance per point.">VIT</span> <input type="number" name="vit" min="0" max="500" value="7" required /></label>
+            <label><span data-tooltip="Luck: +0.01% crit chance and +0.01% item drop chance per point. Max +5% each at 500 LUK.">LUK</span> <input type="number" name="luk" min="0" max="500" value="0" required /></label>
+          </div>
+
+          <h3>Gear Totals</h3>
+          <div class="grid three">
+            <label>
+              <span data-tooltip="Sum of Attack from all equipped weapons. Used to score weapon upgrade value.">Gear ATK</span>
+              <input type="number" name="gearAttack" min="1" step="any" value="30" required />
+            </label>
+            <label>
+              <span data-tooltip="Sum of Defense from armor + shield. Each point = 5 flat damage reduction (×10 at 500 DEF).">Gear DEF</span>
+              <input type="number" name="gearDefense" min="0" step="any" value="35" required />
+            </label>
+            <label>
+              <span data-tooltip="Sum of Dexterity from armor + headwear. Each point = +10 max HP (×15 at 500 VIT).">Gear DEX</span>
+              <input type="number" name="gearDexterity" min="0" step="any" value="140" required />
+            </label>
+          </div>
+
+          <div class="button-row qol-btn-row">
+            <button type="button" class="secondary" id="applyEquippedStatsBtn" data-testid="apply-stats-btn">Apply Stats</button>
+            <button type="button" class="secondary" id="equipTopRecommendationsBtn" data-testid="equip-top-btn">Equip Top</button>
+            <button type="button" class="secondary" id="clearEquippedBtn" data-testid="clear-equipped-btn">Clear</button>
+          </div>
+          <div id="equippedMessage" class="build-action-message"></div>
+          <div id="equippedLoadout" class="equipped-loadout"></div>
+          <details class="form-details">
+            <summary>Quick Equip Options</summary>
+            <div class="grid two qol-grid">
+              <label class="checkbox-label compact">
+                <input type="checkbox" name="autoSyncGearTotals" checked />
+                <span>Auto-sync gear totals when equipping</span>
+              </label>
+              <label class="checkbox-label compact">
+                <input type="checkbox" name="autoAddOwnedOnEquip" checked />
+                <span>Auto-add equipped items to Owned list</span>
+              </label>
+            </div>
+          </details>
+
+          <div class="grid two">
+            <label>
+              Weapon Skill
+              <input type="number" name="weaponSkill" min="1" value="25" required />
+            </label>
+            <label>
+              Gear Sort
+              <select name="gearSortMode" id="gearSortMode">
+                <option value="score" selected>Best score</option>
+                <option value="value">Best value (score ÷ Col)</option>
+              </select>
+            </label>
+            <label>
+              Item Pool
+              <select name="itemPoolMode">
+                <option value="standard" selected>Standard only</option>
+                <option value="all">Include event/gamepass</option>
+              </select>
+            </label>
+            <label>
+              Data Quality
+              <select name="dataQualityMode">
+                <option value="exact-only" selected>Exact data only</option>
+                <option value="mixed">Allow estimated</option>
+              </select>
+            </label>
+          </div>
+
+          <div class="grid two ownership-grid">
+            <label>
+              Owned Items
+              <input
+                type="text"
+                name="ownedItems"
+                placeholder="Iron Greatsword, Beginner Armor, w-steel-greatsword"
+              />
+            </label>
+
+            <label class="checkbox-label">
+              <input type="checkbox" name="onlyOwned" />
+              <span>Recommend only owned items</span>
+            </label>
+          </div>
+
+          <details class="form-details">
+            <summary>Paste Inventory List</summary>
+            <div class="inventory-parser-section">
+              <label>
+                Paste inventory (one item per line, or comma-separated)
+                <textarea
+                  id="inventoryParserInput"
+                  class="inventory-parser-textarea"
+                  rows="5"
+                  placeholder="Iron Greatsword&#10;Beginner Armor&#10;Coned Helmet&#10;Swamp Wanderer"
+                ></textarea>
+              </label>
+              <div class="button-row">
+                <button type="button" class="secondary" id="parseInventoryBtn">Parse &amp; Merge into Owned</button>
+                <button type="button" class="secondary ghost" id="clearInventoryParserBtn">Clear</button>
+              </div>
+              <div id="inventoryParserResult" class="inventory-parser-result" hidden></div>
+            </div>
+          </details>
+
+          <details class="form-details">
+            <summary>Optimization Filters</summary>
+            <div class="grid two optimization-grid">
+              <label>
+                Budget Cap (Col)
+                <input type="number" name="budgetCap" min="0" step="1" placeholder="e.g. 15000" />
+              </label>
+              <label>
+                Avoid items (comma separated)
+                <input type="text" name="avoidItems" placeholder="u-bucket-helmet, Swamp Coat" />
+              </label>
+            </div>
+            <div class="grid three optimization-grid">
+              <label>
+                Min DPS floor
+                <input type="number" name="minDpsFloor" min="0" step="0.1" placeholder="e.g. 180" />
+              </label>
+              <label>
+                Min Damage Reduction
+                <input type="number" name="minDamageReductionFloor" min="0" step="0.1" placeholder="e.g. 120" />
+              </label>
+              <label>
+                Min Bonus HP
+                <input type="number" name="minBonusHpFloor" min="0" step="0.1" placeholder="e.g. 260" />
+              </label>
+            </div>
+            <label class="checkbox-label compact">
+              <input type="checkbox" name="strictBudgetCap" />
+              <span>Strict budget cap (exclude over-cap recommendations)</span>
+            </label>
+          </details>
+
+          <details class="form-details">
+            <summary>Quick Start Templates</summary>
+            <div>
+              <p class="muted-text">One-click load a curated starting build. Overwrites current form values.</p>
+              <div class="quick-preset-grid" id="quickPresetGrid"></div>
+            </div>
+          </details>
+
+          <h3>Build Presets</h3>
+          <div class="grid two preset-grid">
+            <label>
+              Preset Name
+              <input type="text" id="presetName" name="presetName" placeholder="Greatsword Balanced" />
+            </label>
+
+            <label>
+              Saved Presets
+              <select id="savedBuildSelect" name="savedBuildSelect">
+                <option value="">No saved builds</option>
+              </select>
+            </label>
+          </div>
+          <div class="button-row preset-tools">
+            <button type="button" class="secondary" id="togglePresetPinBtn">Pin Selected</button>
+            <label class="checkbox-label compact inline-check">
+              <input type="checkbox" id="showPinnedOnly" name="showPinnedOnly" />
+              <span>Show pinned only</span>
+            </label>
+          </div>
+
+          <div class="button-row">
+            <button type="button" class="secondary" id="saveBuildBtn" data-testid="save-build-btn">Save</button>
+            <button type="button" class="secondary" id="loadBuildBtn" data-testid="load-build-btn">Load</button>
+            <button type="button" class="secondary" id="deleteBuildBtn" data-testid="delete-build-btn">Delete</button>
+            <button type="button" class="secondary" id="exportBuildBtn" data-testid="export-build-btn">Export JSON</button>
+            <button type="button" class="secondary" id="importBuildBtn" data-testid="import-build-btn">Import JSON</button>
+          </div>
+          <input type="file" id="importBuildInput" accept=".json,application/json" hidden />
+          <div id="buildActionMessage" class="build-action-message"></div>
+
+          <details class="form-details">
+            <summary>Compare Saved Builds</summary>
+            <div class="grid two compare-grid">
+              <label>
+                Build A
+                <select id="compareBuildA" name="compareBuildA">
+                  <option value="">No saved builds</option>
+                </select>
+              </label>
+              <label>
+                Build B
+                <select id="compareBuildB" name="compareBuildB">
+                  <option value="">No saved builds</option>
+                </select>
+              </label>
+            </div>
+            <div class="button-row">
+              <button type="button" class="secondary" id="compareBuildBtn">Compare Builds</button>
+            </div>
+            <div id="compareMessage" class="build-action-message"></div>
+          </details>
+
+          <details class="form-details">
+            <summary>Calibration Mode <span class="form-details-hint">(experimental)</span></summary>
+            <div class="grid three calibration-grid">
+              <label>
+                Observed DPS Index
+                <input type="number" id="calObservedDps" min="0" step="0.01" placeholder="e.g. 1850" />
+              </label>
+              <label>
+                Observed Damage Reduction
+                <input type="number" id="calObservedDamageReduction" min="0" step="0.01" placeholder="e.g. 720" />
+              </label>
+              <label>
+                Observed Stamina Pool
+                <input type="number" id="calObservedStamina" min="0" step="0.01" placeholder="e.g. 360" />
+              </label>
+              <label>
+                Observed Crit Chance %
+                <input type="number" id="calObservedCrit" min="0" step="0.01" placeholder="e.g. 16.5" />
+              </label>
+              <label>
+                Observed Drop Bonus %
+                <input type="number" id="calObservedDrop" min="0" step="0.01" placeholder="e.g. 1.25" />
+              </label>
+            </div>
+            <div class="button-row">
+              <button type="button" class="secondary" id="applyCalibrationBtn">Apply Sample</button>
+              <button type="button" class="secondary" id="resetCalibrationBtn">Reset</button>
+              <button type="button" class="secondary" id="exportCalibrationBtn">Export</button>
+              <button type="button" class="secondary" id="importCalibrationBtn">Import</button>
+            </div>
+            <input type="file" id="importCalibrationInput" accept=".json,application/json" hidden />
+            <div id="calibrationMessage" class="build-action-message"></div>
+          </details>
+
+          <div id="stalePlanBanner" class="stale-plan-banner" hidden>Plan may be outdated — click Generate Plan to refresh.</div>
+          <button type="submit" class="primary" data-testid="generate-plan-btn">Generate Plan</button>
+          <p class="hotkeys-hint">
+            <strong>Hotkeys:</strong>
+            Ctrl+Enter Generate • Ctrl+S Save • Ctrl+L Load • Ctrl+E Equip Top • Ctrl+Shift+P Pin • Ctrl+/ Collapse Panels
+          </p>
+        </form>
+
+        <div class="hint-box">
+          <strong>Data note:</strong>
+          Current catalog entries are verified (`exactStats: true`) across core + one-handed + rapier + dagger + dual-wield paths.
+          Dual-wield recommendations prioritize dedicated melee entries and can fall back to one-handed entries for broader progression coverage.
+          Use calibration mode with observed runs to tune formula weighting toward your server/meta conditions.
+        </div>
+        <div id="dataValidationStatus" class="data-validation-status"></div>
+      </section>
+
+      <section class="panel output-panel">
+        <h2>Recommendations</h2>
+        <div class="output-toolbar">
+          <button type="button" class="secondary" id="collapsePanelsBtn" data-testid="collapse-panels-btn" title="Collapse all output panels">Collapse Panels</button>
+          <button type="button" class="secondary" id="expandPanelsBtn" data-testid="expand-panels-btn" title="Expand all output panels">Expand Panels</button>
+          <span class="toolbar-divider" aria-hidden="true"></span>
+          <button type="button" class="secondary" id="copyLoadoutBtn" data-testid="copy-loadout-btn">Copy Loadout</button>
+          <button type="button" class="secondary" id="copyShareLinkBtn" data-testid="copy-share-link-btn">Copy Share Link</button>
+          <button type="button" class="secondary toolbar-primary" id="printBuildBtn" data-testid="print-build-btn">Print / PDF</button>
+        </div>
+        <div id="outputActionMessage" class="build-action-message"></div>
+
+        <article class="subpanel">
+          <h3>Build Logic</h3>
+          <div id="logicExplanation" class="logic-text"></div>
+        </article>
+
+        <article class="subpanel">
+          <h3>Level-by-Level Allocation</h3>
+          <div class="table-wrap">
+            <table id="planTable">
+              <thead>
+                <tr>
+                  <th>Level</th>
+                  <th>STR+</th>
+                  <th>DEF+</th>
+                  <th>AGI+</th>
+                  <th>VIT+</th>
+                  <th>LUK+</th>
+                  <th>STR</th>
+                  <th>DEF</th>
+                  <th>AGI</th>
+                  <th>VIT</th>
+                  <th>LUK</th>
+                  <th>Reason</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </article>
+
+        <article class="subpanel">
+          <h3>Build Benchmarks</h3>
+          <p class="muted-text" style="margin:0 0 0.5rem">Projected metrics at key level milestones across your plan.</p>
+          <div id="benchmarkPanel" class="benchmark-panel"></div>
+        </article>
+
+        <article class="subpanel">
+          <h3>Upgrade Path Timeline</h3>
+          <p class="muted-text" style="margin:0 0 0.5rem">Per-slot item progression across your planned level range, sorted by unlock level.</p>
+          <div id="upgradeTimeline" class="upgrade-timeline"></div>
+        </article>
+
+        <article class="subpanel">
+          <h3>Equipment Recommendations</h3>
+          <div id="gearResults" class="gear-results"></div>
+        </article>
+
+        <article class="subpanel collapsed" id="aiChatPanel">
+          <h3>Ask about your build</h3>
+          <p class="muted-text" style="margin:0 0 0.5rem">AI advisor trained on SBO:R formulas, equipment rules, and boss readiness. Uses your current build and plan when available.</p>
+          <div class="ai-chat-container">
+            <div id="aiChatMessages" class="ai-chat-messages"></div>
+            <div class="ai-chat-input-row">
+              <textarea id="aiChatInput" class="ai-chat-input" rows="3" placeholder="e.g. Why was Steel Rapier recommended? What should I focus on for Illfang? How does multi-hit work?" maxlength="2000" style="min-width: 100%"></textarea>
+              <button type="button" class="primary ai-chat-send" id="aiChatSendBtn" data-testid="ai-chat-send">Send</button>
+            </div>
+            <p id="aiChatStatus" class="ai-chat-status muted-text"></p>
+          </div>
+        </article>
+
+        <article class="subpanel collapsed">
+          <h3>Floor Progress Tracker</h3>
+          <p class="muted-text" style="margin:0 0 0.5rem">Click floors to mark them cleared. Persists across sessions.</p>
+          <div id="floorTracker" class="floor-tracker"></div>
+          <div class="floor-tracker-actions">
+            <button type="button" class="secondary compact" id="ftClearAllBtn" data-testid="ft-clear-all-btn">Clear All</button>
+            <button type="button" class="secondary compact" id="ftMarkToFloorBtn" data-testid="ft-mark-to-floor-btn">Mark Up To Max Floor</button>
+          </div>
+          <div id="floorTrackerSummary" class="floor-tracker-summary"></div>
+        </article>
+
+        <article class="subpanel collapsed">
+          <h3>Saved Build Comparison</h3>
+          <div id="comparisonResults" class="comparison-results">
+            <p class="muted-text">Choose two saved builds and click <strong>Compare Builds</strong>.</p>
+          </div>
+        </article>
+
+        <article class="subpanel collapsed">
+          <h3>Calibration Report</h3>
+          <div id="calibrationReport" class="calibration-report">
+            <p class="muted-text">Add observed in-game metrics in Calibration Mode, then click <strong>Apply Sample</strong>.</p>
+          </div>
+        </article>
+
+        <article class="subpanel collapsed">
+          <h3>Skill Unlock Checklist</h3>
+          <p class="muted-text" style="margin:0 0 0.5rem">Sword skills unlocked at your current weapon skill level.</p>
+          <div id="skillChecklist"></div>
+        </article>
+
+        <article class="subpanel collapsed">
+          <h3>Party Role Advisor</h3>
+          <p class="muted-text" style="margin:0 0 0.5rem">Stat and gear adjustments for tank/DPS/support/farmer roles.</p>
+          <div id="partyRoleAdvisor"></div>
+        </article>
+
+      </section>
+    </main>
+
+    <footer class="page-footer">
+      <details class="changelog-footer">
+        <summary>What's New</summary>
+        <div id="changelogPanel" class="changelog-panel"></div>
+      </details>
+      <p>Prototype built for iterative tuning. Keep formulas/data in sync with live SBO:R updates.</p>
+    </footer>
+
+    <script src="./config.js"></script>
+    <script src="./data.js?v=0.7.6"></script>
+    <script src="./boss-data.js?v=0.7.6"></script>
+    <script src="./boss-readiness.js?v=0.7.6"></script>
+    <script src="./app.js?v=0.7.6"></script>
+  </body>
+</html>

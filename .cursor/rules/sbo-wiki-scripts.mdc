@@ -1,0 +1,28 @@
+---
+description: Wiki extraction script conventions and usage
+globs: "scripts/**/*.js"
+alwaysApply: false
+---
+
+# SBO Wiki Scripts Rules
+
+## Extraction
+
+- Uses MediaWiki API (no auth required)
+- 1.5 s delay between API batches; retries with backoff on 429/5xx
+- Run: `node scripts/wiki-extract.js`
+
+## Output
+
+Writes to `data/wiki-raw/`:
+- `weapons.json`, `armor.json`, `shields.json`, `bosses.json`, `stats-page.json`
+
+## Parsers
+
+Import from `parse-templates.js`:
+- `parseWeaponTemplate`, `parseArmorTemplate`, `parseMobsTemplate`
+- `parseTemplate`, `parseWikitable` for generic use
+
+## Logging
+
+Errors and progress log to `scripts/wiki-extract.log`.

@@ -1,0 +1,38 @@
+---
+description: Item catalog schema and conventions for data.js and boss-data.js
+globs: "**/data.js", "**/boss-data.js"
+alwaysApply: false
+---
+
+# SBO Data Catalog Rules
+
+## Item Schema
+
+Required fields: `id`, `name`, `slot`, `sourceType`, `floorMin`, `scalingType`, and stat fields.
+
+- **id**: lowercase, hyphens, prefix by slot (`w-`, `a-`, `u-`, `l-`, `s-` for weapon/armor/upper/lower/shield)
+- **slot**: `weapon` | `armor` | `upper` | `lower` | `shield`
+- **sourceType**: `shop` | `mob` | `boss` | `crafted` | `dungeon` | `quest` | `event` | `badge` | `gamepass`
+- **scalingType**: `fixed` | `level_1` | `level_5` | `skill_1` | `skill_5`
+
+## Stat Fields
+
+Use `attack`/`defense`/`dexterity` for fixed stats. Use `attackMin`/`attackMax` pairs for scaling items.
+
+## Quality and Validation
+
+- Set `exactStats: true` only for wiki-verified or confirmed items
+- Duplicate `id` causes schema validator failure — grep catalog before adding
+- For colValue: interpolate between nearby catalog anchors when adding new items
+
+## Example
+
+```javascript
+// Good
+{ id: "w-butterfly-blade", name: "Butterfly Blade", slot: "weapon", sourceType: "shop",
+  floorMin: 10, skillReq: 165, scalingType: "fixed", attack: 714, colValue: 47792,
+  weaponClass: ["one-handed"], exactStats: true }
+
+// Bad — duplicate id, missing slot
+{ id: "w-volcanic-blade", name: "Volcanic Blade Mk II", sourceType: "crafted", ... }
+```

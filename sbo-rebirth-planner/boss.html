@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SBO:Rebirth Boss Planner v0.8.0</title>
+    <meta name="description" content="Boss readiness planner for Sword Blox Online: Rebirth. Check your build against every floor boss." />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%23225964'/><text x='16' y='23' text-anchor='middle' font-size='20' font-family='serif' fill='%23a8e6d8'>⚔</text></svg>" />
+    <script>try{var t=localStorage.getItem('sbo-theme');if(t)document.documentElement.dataset.theme=t;}catch(e){}</script>
+    <link rel="stylesheet" href="./styles.css?v=0.7.6" />
+    <link rel="stylesheet" href="./boss.css?v=0.7.6" />
+  </head>
+  <body>
+    <header class="page-header">
+      <h1>SBO:Rebirth Boss Planner</h1>
+      <p class="subtitle">Boss readiness v0.8.0 — uses your build from the Build Planner tab.</p>
+    </header>
+
+    <nav class="tab-nav">
+      <a href="./index.html" class="tab-link">Build Planner</a>
+      <a href="./boss.html" class="tab-link active">Boss Planner</a>
+      <button type="button" class="theme-toggle-btn" id="themeToggleBtn" title="Toggle dark/light mode">☀</button>
+    </nav>
+
+    <main class="boss-main">
+      <!-- Left: Build snapshot + controls -->
+      <aside class="boss-sidebar" id="bossSidebar">
+        <button type="button" class="sidebar-toggle-btn" id="sidebarToggleBtn" data-testid="sidebar-toggle-btn" aria-expanded="true" aria-controls="sidebarContent">
+          <span class="sidebar-toggle-label">Build &amp; Filters</span>
+          <span class="sidebar-toggle-caret">▲</span>
+        </button>
+        <div class="sidebar-content" id="sidebarContent">
+        <section class="boss-build-card">
+          <h2>Your Build</h2>
+          <div id="buildSnapshot" class="build-snapshot">
+            <p class="muted-text">No build loaded. Open the <a href="./index.html">Build Planner</a> and generate a plan first.</p>
+          </div>
+          <div class="boss-sidebar-controls">
+            <button type="button" class="primary" id="refreshBuildBtn" data-testid="refresh-build-btn">Refresh from Planner</button>
+          </div>
+          <p class="muted-text" style="font-size:0.72rem;margin-top:0.5rem">Build is read from your saved draft automatically. Use <strong>Refresh</strong> after making changes in the Build Planner.</p>
+        </section>
+
+        <section class="boss-filter-card">
+          <h2>Filter &amp; Search</h2>
+          <label>
+            Search by name
+            <input type="search" id="filterSearch" placeholder="e.g. Illfang, Shroom…" />
+          </label>
+          <label>
+            Max Floor
+            <input type="number" id="filterFloor" min="1" max="18" value="18" />
+          </label>
+          <label>
+            Show
+            <select id="filterReadiness">
+              <option value="all">All bosses</option>
+              <option value="ready">Ready only</option>
+              <option value="close">Ready + Close</option>
+              <option value="notready">Not ready only</option>
+            </select>
+          </label>
+          <label>
+            Sort by
+            <select id="filterSort">
+              <option value="floor">Floor (default)</option>
+              <option value="hp-asc">HP (low → high)</option>
+              <option value="hp-desc">HP (high → low)</option>
+              <option value="readiness">Readiness score</option>
+            </select>
+          </label>
+          <label class="checkbox-label">
+            <input type="checkbox" id="filterUnlocked" checked />
+            <span>Only show unlocked floors</span>
+          </label>
+          <label class="checkbox-label">
+            <input type="checkbox" id="filterShowMini" checked />
+            <span>Show mini bosses</span>
+          </label>
+          <label class="checkbox-label">
+            <input type="checkbox" id="filterHideBeaten" />
+            <span>Hide beaten bosses</span>
+          </label>
+        </section>
+        </div><!-- /sidebar-content -->
+      </aside>
+
+      <!-- Right: Boss cards -->
+      <section class="boss-list-wrapper">
+        <div id="buildStaleBanner" class="build-stale-banner" hidden>Build updated in another tab — click <strong>Refresh from Planner</strong> to see latest.</div>
+        <div class="boss-list-toolbar">
+          <div id="bossListSummary" class="boss-list-summary"></div>
+          <div class="readiness-pills" id="readinessPills"></div>
+        </div>
+        <div class="boss-list" id="bossList">
+          <div class="boss-loading">
+            <p>Loading boss data…</p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Boss detail modal -->
+    <dialog id="bossModal" class="boss-modal">
+      <div class="boss-modal-inner">
+        <div id="bossModalContent"></div>
+      </div>
+    </dialog>
+
+    <footer class="page-footer">
+      <p>Stats sourced from the <a href="https://swordbloxonlinerebirth.fandom.com" target="_blank" rel="noopener">SBO:Rebirth Wiki</a>. ATK/DEF values not available from wiki — readiness checks use relative DPS index.</p>
+    </footer>
+
+    <script src="./data.js?v=0.7.6"></script>
+    <script src="./boss-data.js?v=0.7.6"></script>
+    <script src="./boss-readiness.js?v=0.7.6"></script>
+    <script src="./boss.js?v=0.7.6"></script>
+  </body>
+</html>

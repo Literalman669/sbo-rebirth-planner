@@ -1,0 +1,16 @@
+{
+  "name": "sbo-rebirth-planner",
+  "version": "1.0.0",
+  "description": "A local-first planner that helps with: - stat point allocation over a chosen level window, - equipment recommendations by slot, - transparent recommendation logic.",
+  "main": "app.js",
+  "scripts": {
+    "test": "node test-planner.js",
+    "serve": "npx serve -p 60290 -l 60290"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "playwright": "^1.58.2"
+  }
+}
