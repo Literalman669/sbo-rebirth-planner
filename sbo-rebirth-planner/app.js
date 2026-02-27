@@ -138,6 +138,10 @@
     {
       version: "v0.9.0",
       notes: [
+        "Boss Planner auto-sync: changes in the Build Planner now auto-update the Boss Planner when you switch tabs.",
+        "Boss Planner: clickable readiness pills for quick filtering, clickable Next Target to open boss modal.",
+        "Boss Planner: build name display, total stat points, search filter persistence, refresh animation.",
+        "Cross-tab: beforeunload/pagehide flush ensures draft is always saved before navigating away.",
         "Ask about your build: AI chat panel trained on SBO:R formulas, equipment, and boss readiness.",
         "Supabase Edge Function sbo-ai-advisor proxies to Hugging Face; uses your build and plan context.",
         "See AI_SETUP.md and config.example.js to enable.",
