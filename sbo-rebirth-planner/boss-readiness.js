@@ -100,21 +100,25 @@
     return { verdict, score, checks };
   }
 
-  function getNextBoss(build) {
+  function getNextBoss(build, opts) {
     const bossData = window.SBO_BOSS_DATA;
     if (!bossData) return null;
+
+    const beatenIds = opts?.beatenIds || [];
 
     const allBosses = [
       ...(bossData.bosses || []),
       ...(bossData.miniBosses || []).filter((b) => b.hp > 0),
     ].sort((a, b) => a.floor - b.floor || a.hp - b.hp);
 
-    const notReady = allBosses.filter((b) => {
-      const r = scoreBossReadiness(b, build);
-      return r.verdict === "close" || r.verdict === "notready";
+    const eligible = allBosses.filter((b) => !beatenIds.includes(b.id));
+
+    const incomplete = eligible.filter((b) => {
+      const v = scoreBossReadiness(b, build).verdict;
+      return v !== "ready";
     });
-    const nextClose = allBosses.find((b) => scoreBossReadiness(b, build).verdict === "close");
-    return nextClose || notReady[0] || null;
+    const nextClose = incomplete.find((b) => scoreBossReadiness(b, build).verdict === "close");
+    return nextClose || incomplete[0] || null;
   }
 
   function getStatAdvice(build, nextBoss) {

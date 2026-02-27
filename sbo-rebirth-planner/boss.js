@@ -181,6 +181,7 @@
       const beatenBtn = e.target.closest(".boss-beaten-btn");
       if (beatenBtn) {
         toggleBossBeaten(beatenBtn.dataset.bossId);
+        renderBuildSnapshot(currentBuild);
         renderBossList();
         return;
       }
@@ -332,7 +333,7 @@
   // ── Boss readiness (shared module) ────────────────────────
   const readiness = window.SBO_BOSS_READINESS;
   const scoreBossReadiness = readiness ? (b, build) => readiness.scoreBossReadiness(b, build) : () => ({ verdict: "unknown", score: 0, checks: [] });
-  const getNextBoss = readiness ? (build) => readiness.getNextBoss(build) : () => null;
+  const getNextBoss = readiness ? (build, opts) => readiness.getNextBoss(build, opts) : () => null;
   const getStatAdvice = readiness ? (build, next) => readiness.getStatAdvice(build, next) : () => null;
 
   // ── Playstyle badge helper ────────────────────────────────
@@ -358,8 +359,11 @@
   function getBuildStrength(build) {
     const allBosses = bossData.bosses.filter(b => b.hp > 0);
     if (!allBosses.length) return 0;
-    const readyCount = allBosses.filter(b => scoreBossReadiness(b, build).verdict === "ready").length;
-    return Math.round((readyCount / allBosses.length) * 100);
+    const beaten = readBossBeatenStorage();
+    const doneCount = allBosses.filter(b =>
+      beaten.includes(b.id) || scoreBossReadiness(b, build).verdict === "ready"
+    ).length;
+    return Math.round((doneCount / allBosses.length) * 100);
   }
 
   function renderStaleBanner() {
@@ -393,7 +397,8 @@
     const profile = data.weaponProfiles[build.weaponClass];
     const badge = getPlaystyleBadge(build.stats);
     const strengthPct = getBuildStrength(build);
-    const nextBoss = getNextBoss(build);
+    const beatenIds = readBossBeatenStorage();
+    const nextBoss = getNextBoss(build, { beatenIds });
     const advice = getStatAdvice(build, nextBoss);
 
     const strengthFillClass = strengthPct >= 70 ? "fill-good" : strengthPct >= 40 ? "fill-warn" : "fill-danger";
