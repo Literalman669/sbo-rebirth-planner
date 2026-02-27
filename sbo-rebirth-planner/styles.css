@@ -3307,7 +3307,14 @@ input.stat-cap-maxed {
   border: 1px solid var(--line);
   margin-right: 1.5rem;
 }
-.ai-chat-message .msg-role { font-weight: 600; font-size: 0.75rem; text-transform: uppercase; color: var(--accent); margin-bottom: 0.2rem; }
+.ai-chat-message .msg-role { font-weight: 600; font-size: 0.75rem; text-transform: uppercase; color: var(--accent); margin-bottom: 0.2rem; display: block; }
+.ai-chat-message .msg-body { font-size: 0.85rem; line-height: 1.55; }
+.ai-chat-message .msg-body strong { color: var(--ink); }
+.ai-chat-message .msg-body .md-h2,
+.ai-chat-message .msg-body .md-h3 { display: block; margin-top: 0.6rem; margin-bottom: 0.2rem; font-size: 0.88rem; color: var(--accent); }
+.ai-chat-message .msg-body .md-li { display: block; padding-left: 0.8rem; position: relative; }
+.ai-chat-message .msg-body .md-li::before { content: "•"; position: absolute; left: 0; color: var(--accent); font-weight: 700; }
+.ai-chat-message .msg-body code { background: var(--bg-2); border: 1px solid var(--line); border-radius: 3px; padding: 0.1rem 0.3rem; font-size: 0.82em; }
 .ai-chat-input-row {
   display: flex;
   gap: 0.5rem;

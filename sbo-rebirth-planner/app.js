@@ -866,10 +866,24 @@
       aiChatStatus.className = "ai-chat-status" + (type ? ` ${type}` : "");
     }
 
+    function renderMarkdown(text) {
+      return escapeHtml(text)
+        .replace(/^### (.+)$/gm, '<strong class="md-h3">$1</strong>')
+        .replace(/^## (.+)$/gm, '<strong class="md-h2">$1</strong>')
+        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*(.+?)\*/g, '<em>$1</em>')
+        .replace(/`([^`]+)`/g, '<code>$1</code>')
+        .replace(/^[-•] (.+)$/gm, '<span class="md-li">$1</span>')
+        .replace(/^\d+\.\s(.+)$/gm, '<span class="md-li">$1</span>')
+        .replace(/\n{2,}/g, '<br><br>')
+        .replace(/\n/g, '<br>');
+    }
+
     function appendMessage(role, content) {
       const div = document.createElement("div");
       div.className = `ai-chat-message ${role}`;
-      div.innerHTML = `<span class="msg-role">${role === "user" ? "You" : "AI"}</span><div>${escapeHtml(content)}</div>`;
+      const rendered = role === "user" ? escapeHtml(content) : renderMarkdown(content);
+      div.innerHTML = `<span class="msg-role">${role === "user" ? "You" : "AI"}</span><div class="msg-body">${rendered}</div>`;
       aiChatMessages.appendChild(div);
       aiChatMessages.scrollTop = aiChatMessages.scrollHeight;
     }
