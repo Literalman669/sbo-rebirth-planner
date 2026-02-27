@@ -3,8 +3,8 @@
 
 const HF_API_URL = "https://api-inference.huggingface.co/models/Qwen/Qwen2.5-7B-Instruct/v1/chat/completions";
 const HF_MODEL = "Qwen/Qwen2.5-7B-Instruct";
-const MAX_TOKENS = 512;
-const TEMPERATURE = 0.6;
+const MAX_TOKENS = 768;
+const TEMPERATURE = 0.5;
 const RATE_LIMIT_REQUESTS = 20;
 const RATE_LIMIT_WINDOW_MS = 60_000;
 
@@ -40,9 +40,14 @@ const SBO_SYSTEM_PROMPT = `You are an expert advisor for Sword Blox Online: Rebi
 - Answer questions about stat allocation, gear choices, and boss readiness.
 - When build context is provided, use it: reference the user's level, stats, weapon class, playstyle, gear totals, and plan summary.
 - Explain recommendations in terms of the formulas above.
-- Be concise (2-4 sentences usually). Use bullets for lists.
+- Be concise and conversational — keep answers short and readable.
+- Use short bullet points, not long tables or walls of text.
+- Do NOT use markdown headers (###). Do NOT use LaTeX math notation. Do NOT use tables.
+- Use **bold** for emphasis and bullet points for lists. Keep it clean.
+- Do NOT invent projected stats or make up future calculations. Only state what the build context provides.
+- If asked about future stats, say the planner's Generate Plan button shows the full level-by-level breakdown.
 - If asked about a specific item or boss, use the context. If unknown, say so.
-- Never invent item stats - only use what's in the context or general knowledge.`;
+- Never invent item stats — only use what's in the context or general knowledge.`;
 
 interface RequestBody {
   message: string;
