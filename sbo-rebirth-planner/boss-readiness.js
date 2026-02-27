@@ -113,12 +113,12 @@
 
     const eligible = allBosses.filter((b) => !beatenIds.includes(b.id));
 
-    const notReady = eligible.filter((b) => {
-      const r = scoreBossReadiness(b, build);
-      return r.verdict === "close" || r.verdict === "notready";
+    const incomplete = eligible.filter((b) => {
+      const v = scoreBossReadiness(b, build).verdict;
+      return v !== "ready";
     });
-    const nextClose = eligible.find((b) => scoreBossReadiness(b, build).verdict === "close");
-    return nextClose || notReady[0] || null;
+    const nextClose = incomplete.find((b) => scoreBossReadiness(b, build).verdict === "close");
+    return nextClose || incomplete[0] || null;
   }
 
   function getStatAdvice(build, nextBoss) {
