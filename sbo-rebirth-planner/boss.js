@@ -28,45 +28,102 @@
   let currentBuild = null;
   let buildStaleFromOtherTab = false;
   let lastSyncedAt = null;
+  let lastSyncedTimerHandle = null;
+  let lastDraftFingerprint = null;
 
-  // ── Init ──────────────────────────────────────────────────
-  function init() {
+  function draftFingerprint() {
+    try {
+      const d = localStorage.getItem(FORM_DRAFT_KEY) || "";
+      const e = localStorage.getItem(EQUIPPED_KEY) || "";
+      return d + "|" + e;
+    } catch { return ""; }
+  }
+
+  function refreshBuild(opts) {
+    const animate = opts?.animate ?? false;
     currentBuild = loadBuildFromStorage();
     lastSyncedAt = Date.now();
+    lastDraftFingerprint = draftFingerprint();
+    buildStaleFromOtherTab = false;
     try { localStorage.setItem(LAST_SYNCED_KEY, String(lastSyncedAt)); } catch {}
     renderStaleBanner();
     renderBuildSnapshot(currentBuild);
     renderBossList();
+    refreshBtn.classList.remove("needs-attention");
+    if (animate) {
+      bossListEl.classList.add("boss-list-refreshing");
+      setTimeout(() => bossListEl.classList.remove("boss-list-refreshing"), 400);
+    }
+  }
 
-    refreshBtn.addEventListener("click", () => {
-      currentBuild = loadBuildFromStorage();
-      lastSyncedAt = Date.now();
-      buildStaleFromOtherTab = false;
-      try { localStorage.setItem(LAST_SYNCED_KEY, String(lastSyncedAt)); } catch {}
-      renderStaleBanner();
-      renderBuildSnapshot(currentBuild);
-      renderBossList();
-      refreshBtn.classList.remove("needs-attention");
-    });
+  // ── Init ──────────────────────────────────────────────────
+  function init() {
+    refreshBuild();
 
+    refreshBtn.addEventListener("click", () => refreshBuild({ animate: true }));
+
+    // Cross-tab: auto-refresh when build data changes in another window
     window.addEventListener("storage", (e) => {
       if (e.key === FORM_DRAFT_KEY || e.key === EQUIPPED_KEY) {
-        buildStaleFromOtherTab = true;
-        if (refreshBtn) refreshBtn.classList.add("needs-attention");
-        renderStaleBanner();
-        renderBuildSnapshot(currentBuild);
+        refreshBuild({ animate: true });
       }
     });
+
+    // Same-tab return: auto-refresh when user navigates back (bfcache)
+    window.addEventListener("pageshow", (e) => {
+      if (e.persisted) refreshBuild({ animate: true });
+    });
+
+    // Tab focus: auto-refresh if draft changed while tab was hidden
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible") {
+        const fp = draftFingerprint();
+        if (fp !== lastDraftFingerprint) {
+          refreshBuild({ animate: true });
+        }
+      }
+    });
+
+    // Periodically update "last synced" display
+    lastSyncedTimerHandle = setInterval(() => {
+      const el = buildSnapshotEl.querySelector(".snapshot-last-synced");
+      if (el && lastSyncedAt) el.textContent = "Last synced " + formatLastSynced(lastSyncedAt);
+    }, 15000);
 
     loadFilters();
 
     filterFloorEl.addEventListener("input", () => { saveFilters(); renderBossList(); });
     filterReadinessEl.addEventListener("change", () => { saveFilters(); renderBossList(); });
     filterUnlockedEl.addEventListener("change", () => { saveFilters(); renderBossList(); });
-    filterSearchEl.addEventListener("input", renderBossList);
+    let searchDebounce = null;
+    filterSearchEl.addEventListener("input", () => {
+      clearTimeout(searchDebounce);
+      searchDebounce = setTimeout(() => { saveFilters(); renderBossList(); }, 120);
+    });
     filterSortEl.addEventListener("change", () => { saveFilters(); renderBossList(); });
     filterShowMiniEl.addEventListener("change", () => { saveFilters(); renderBossList(); });
     if (filterHideBeatenEl) filterHideBeatenEl.addEventListener("change", () => { saveFilters(); renderBossList(); });
+
+    readinessPillsEl.addEventListener("click", (e) => {
+      const pill = e.target.closest(".rpill");
+      if (!pill) return;
+      const verdictMap = { "verdict-ready": "ready", "verdict-close": "close", "verdict-notready": "notready" };
+      for (const [cls, val] of Object.entries(verdictMap)) {
+        if (pill.classList.contains(cls)) {
+          filterReadinessEl.value = filterReadinessEl.value === val ? "all" : val;
+          saveFilters();
+          renderBossList();
+          return;
+        }
+      }
+      if (pill.classList.contains("boss-beaten-pill")) {
+        if (filterHideBeatenEl) {
+          filterHideBeatenEl.checked = !filterHideBeatenEl.checked;
+          saveFilters();
+          renderBossList();
+        }
+      }
+    });
 
     bossModal.addEventListener("click", (e) => {
       if (e.target === bossModal) bossModal.close();
@@ -102,6 +159,16 @@
         sidebarToggleBtn.setAttribute("aria-expanded", collapsed ? "false" : "true");
       });
     }
+
+    buildSnapshotEl.addEventListener("click", (e) => {
+      const nextRec = e.target.closest(".next-boss-rec[data-boss-id]");
+      if (!nextRec) return;
+      const bossId = nextRec.dataset.bossId;
+      const boss =
+        bossData.bosses.find((b) => b.id === bossId) ||
+        (bossData.miniBosses || []).find((b) => b.id === bossId);
+      if (boss) openBossModal(boss, currentBuild);
+    });
 
     document.addEventListener("keydown", (e) => {
       if (!bossModal.open) return;
@@ -184,6 +251,7 @@
     const playstyle = draft.playstyle || "balanced";
     const weaponSkill = clamp(toInt(draft.weaponSkill, 1), 1, 10000);
     const maxFloor = clamp(toInt(draft.maxFloorReached, 1), 1, 18);
+    const buildName = (draft.buildName || "").trim();
 
     const stats = {
       str: clamp(toInt(draft.str, 0), 0, 500),
@@ -202,6 +270,7 @@
     const metrics = computeMetrics(stats, gear, weaponClass, projectedLevel);
 
     return {
+      buildName,
       currentLevel,
       projectedLevel,
       weaponClass,
@@ -337,7 +406,14 @@
     const armourItems = ["armor", "upper", "lower", "shield"].map((s) => lookupItem(eq[s])).filter(Boolean);
     const hasGear = weaponItem || armourItems.length > 0;
 
+    const buildNameHtml = build.buildName
+      ? `<div class="snapshot-build-name" title="Build name">${escHtml(build.buildName)}</div>`
+      : "";
+
+    const totalStatPts = build.stats.str + build.stats.def + build.stats.agi + build.stats.vit + build.stats.luk;
+
     buildSnapshotEl.innerHTML = `
+      ${buildNameHtml}
       <div class="snapshot-header-row">
         <div class="snapshot-grid">
           <div class="snapshot-item">
@@ -361,11 +437,12 @@
       </div>
 
       <div class="snapshot-stats">
-        <span title="STR">STR ${build.stats.str}</span>
-        <span title="DEF">DEF ${build.stats.def}</span>
-        <span title="AGI">AGI ${build.stats.agi}</span>
-        <span title="VIT">VIT ${build.stats.vit}</span>
-        <span title="LUK">LUK ${build.stats.luk}</span>
+        <span class="snapshot-stat-chip" title="STR: ${build.stats.str}">STR ${build.stats.str}</span>
+        <span class="snapshot-stat-chip" title="DEF: ${build.stats.def}">DEF ${build.stats.def}</span>
+        <span class="snapshot-stat-chip" title="AGI: ${build.stats.agi}">AGI ${build.stats.agi}</span>
+        <span class="snapshot-stat-chip" title="VIT: ${build.stats.vit}">VIT ${build.stats.vit}</span>
+        <span class="snapshot-stat-chip" title="LUK: ${build.stats.luk}">LUK ${build.stats.luk}</span>
+        <span class="snapshot-stat-total" title="Total stat points">${totalStatPts} pts</span>
       </div>
 
       ${hasGear ? `<div class="snapshot-gear-row">
@@ -411,7 +488,7 @@
       </div>
 
       ${nextBoss ? `
-      <div class="next-boss-rec">
+      <div class="next-boss-rec" data-boss-id="${escHtml(nextBoss.id)}">
         <div class="next-boss-top">
           <span class="next-boss-label">Next Target</span>
           <span class="next-boss-floor">Floor ${nextBoss.floor}</span>
@@ -421,7 +498,6 @@
 
       ${advice ? `<div class="snapshot-advice"><span class="advice-icon">💡</span><span>${escHtml(advice)}</span></div>` : ""}
 
-      ${buildStaleFromOtherTab ? `<div class="snapshot-stale-banner">Build updated — click <strong>Refresh from Planner</strong> to see latest.</div>` : ""}
       ${lastSyncedAt ? `<div class="snapshot-last-synced">Last synced ${formatLastSynced(lastSyncedAt)}</div>` : ""}
     `;
   }
@@ -435,6 +511,7 @@
         unlocked: filterUnlockedEl.checked,
         sort: filterSortEl.value,
         showMini: filterShowMiniEl.checked,
+        search: filterSearchEl.value,
       };
       if (filterHideBeatenEl) obj.hideBeaten = filterHideBeatenEl.checked;
       localStorage.setItem(FILTER_KEY, JSON.stringify(obj));
@@ -452,6 +529,7 @@
       if (f.sort) filterSortEl.value = f.sort;
       if (f.showMini !== undefined) filterShowMiniEl.checked = f.showMini;
       if (filterHideBeatenEl && f.hideBeaten !== undefined) filterHideBeatenEl.checked = f.hideBeaten;
+      if (f.search) filterSearchEl.value = f.search;
     } catch {}
   }
 
@@ -513,12 +591,13 @@
       showMini ? `, ${filteredMini.length} mini boss${filteredMini.length !== 1 ? "es" : ""}` : ""
     }`;
 
+    const activeFilter = filterReadinessEl.value;
     readinessPillsEl.innerHTML = [
-      readyCnt ? `<span class="rpill verdict-ready">✓ ${readyCnt} Ready</span>` : "",
-      closeCnt ? `<span class="rpill verdict-close">~ ${closeCnt} Close</span>` : "",
-      notReadyCnt ? `<span class="rpill verdict-notready">✗ ${notReadyCnt} Not Ready</span>` : "",
+      readyCnt ? `<span class="rpill verdict-ready${activeFilter === "ready" ? " rpill-active" : ""}" title="Click to filter">✓ ${readyCnt} Ready</span>` : "",
+      closeCnt ? `<span class="rpill verdict-close${activeFilter === "close" ? " rpill-active" : ""}" title="Click to filter">~ ${closeCnt} Close</span>` : "",
+      notReadyCnt ? `<span class="rpill verdict-notready${activeFilter === "notready" ? " rpill-active" : ""}" title="Click to filter">✗ ${notReadyCnt} Not Ready</span>` : "",
       unknownCnt ? `<span class="rpill verdict-unknown">? ${unknownCnt} Unknown</span>` : "",
-      beatenIds.length > 0 ? `<span class="rpill boss-beaten-pill">✓ Beaten: ${beatenIds.length}</span>` : "",
+      beatenIds.length > 0 ? `<span class="rpill boss-beaten-pill${(filterHideBeatenEl?.checked) ? " rpill-active" : ""}" title="Click to toggle beaten filter">✓ Beaten: ${beatenIds.length}</span>` : "",
     ].filter(Boolean).join("");
 
     if (!allFiltered.length) {
