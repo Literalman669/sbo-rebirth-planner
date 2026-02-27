@@ -1,0 +1,1 @@
+dir /s /b "c:\Users\OneBeyondTheWall\Downloads\pathofthesovereign-1.21.1\boss-data.js" "c:\Users\OneBeyondTheWall\Downloads\pathofthesovereign-1.21.1\bosses.json" "c:\Users\OneBeyondTheWall\Downloads\pathofthesovereign-1.21.1\supabase\functions\sbo-ai-advisor\index.ts" "c:\Users\OneBeyondTheWall\Downloads\pathofthesovereign-1.21.1\sbo-rebirth-planner\app.js"
