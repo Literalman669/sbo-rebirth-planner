@@ -131,6 +131,8 @@ body {
 .tab-link {
   display: inline-block;
   padding: 0.6rem 1.2rem;
+  min-height: 2.2rem;
+  line-height: 1.2;
   font-size: 0.85rem;
   font-weight: 600;
   color: var(--ink-soft);
@@ -171,6 +173,25 @@ body {
 .theme-toggle-btn:hover {
   background: var(--accent-soft);
   border-color: var(--accent-2);
+  color: var(--accent);
+}
+
+.next-action-hint {
+  max-width: 1480px;
+  margin: 0.55rem auto 0.35rem;
+  padding: 0.48rem 1.8rem;
+  font-size: 0.8rem;
+  color: var(--ink-soft);
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  background: color-mix(in srgb, var(--bg-1) 80%, var(--bg-2));
+}
+
+.next-action-hint strong {
+  color: var(--accent);
+}
+
+.next-action-hint a {
   color: var(--accent);
 }
 
@@ -751,6 +772,7 @@ select:focus {
   color: #fff;
   border-radius: 12px;
   padding: 0.75rem 1rem;
+  min-height: 2.3rem;
   font-weight: 700;
   letter-spacing: 0.01em;
   cursor: pointer;
@@ -946,6 +968,7 @@ select:focus {
   color: var(--accent);
   border-radius: var(--radius-sm);
   padding: 0.45rem 0.8rem;
+  min-height: 2.05rem;
   font-size: 0.79rem;
   font-weight: 700;
   cursor: pointer;
@@ -1310,6 +1333,7 @@ select:focus {
   margin: 0;
   color: var(--ink-soft);
   font-size: 0.82rem;
+  line-height: 1.45;
 }
 
 .summary-card {
@@ -2131,6 +2155,7 @@ tbody tr:hover {
   color: #175460;
   border-radius: 999px;
   padding: 0.2rem 0.6rem;
+  min-height: 1.7rem;
   font-size: 0.69rem;
   font-weight: 700;
   cursor: pointer;
@@ -2464,6 +2489,14 @@ tbody tr:hover {
     width: 100%;
     justify-content: center;
     text-align: center;
+    min-height: 2.25rem;
+  }
+
+  .tab-link {
+    min-height: 2.4rem;
+    display: inline-flex;
+    align-items: center;
+    padding: 0.55rem 0.95rem;
   }
 
   .panel-toggle {

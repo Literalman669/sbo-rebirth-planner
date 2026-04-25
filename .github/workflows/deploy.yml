@@ -33,6 +33,19 @@ jobs:
         working-directory: sbo-rebirth-planner
         run: npm ci && npm run build:stdb-client
 
+      - name: Validate wiki sync report thresholds
+        working-directory: sbo-rebirth-planner
+        run: npm run validate:wiki-sync
+
+      - name: Run planner smoke tests
+        working-directory: sbo-rebirth-planner
+        run: |
+          npx serve -p 60290 -l 60290 > /tmp/planner-serve.log 2>&1 &
+          SERVER_PID=$!
+          trap "kill $SERVER_PID" EXIT
+          npm test
+          kill $SERVER_PID
+
       - name: Setup Pages
         uses: actions/configure-pages@v4
 

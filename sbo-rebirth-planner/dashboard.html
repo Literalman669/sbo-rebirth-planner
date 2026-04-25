@@ -24,6 +24,7 @@
       <a href="./tools.html" class="tab-link">Tools</a>
       <button type="button" class="theme-toggle-btn" id="themeToggleBtn" title="Toggle dark/light mode">☀</button>
     </nav>
+    <div id="nextActionHint" class="next-action-hint" hidden></div>
 
     <main class="layout dashboard-home-layout">
       <section class="panel dashboard-home-main">
@@ -64,7 +65,10 @@
       </section>
     </main>
 
+    <script src="./shared/state-schema.js?v=0.9.4"></script>
     <script src="./shared/state-adapter.js?v=0.9.4"></script>
+    <script src="./shared/runtime-observability.js?v=0.9.4"></script>
+    <script src="./shared/next-action.js?v=0.9.4"></script>
     <script src="./dashboard.js?v=0.9.4"></script>
   </body>
 </html>

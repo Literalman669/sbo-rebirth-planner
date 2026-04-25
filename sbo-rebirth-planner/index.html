@@ -33,6 +33,7 @@
       <a href="./tools.html" class="tab-link">Tools</a>
       <button type="button" class="theme-toggle-btn" id="themeToggleBtn" title="Toggle dark/light mode">☀</button>
     </nav>
+    <div id="nextActionHint" class="next-action-hint" hidden></div>
 
     <details class="stat-reference-panel">
       <summary class="stat-reference-toggle">Stat Reference <span class="stat-ref-hint">(click to expand)</span></summary>
@@ -361,7 +362,7 @@
             </div>
           </details>
 
-          <details class="form-details">
+          <details class="form-details" id="tools-importexport">
             <summary>Build Presets</summary>
             <div class="grid two preset-grid">
               <label>
@@ -395,7 +396,7 @@
             <div id="buildActionMessage" class="build-action-message"></div>
           </details>
 
-          <details class="form-details">
+          <details class="form-details" id="tools-compare">
             <summary>Compare Saved Builds</summary>
             <div class="grid two compare-grid">
               <label>
@@ -417,7 +418,7 @@
             <div id="compareMessage" class="build-action-message"></div>
           </details>
 
-          <details class="form-details">
+          <details class="form-details" id="tools-calibration">
             <summary>Calibration Mode <span class="form-details-hint">(experimental)</span></summary>
             <div class="grid three calibration-grid">
               <label>
@@ -617,7 +618,11 @@
     <script src="./boss-data.js?v=0.9.4"></script>
     <script src="./boss-readiness.js?v=0.9.4"></script>
     <script src="./shared/projection-core.js?v=0.9.4"></script>
+    <script src="./shared/state-schema.js?v=0.9.4"></script>
     <script src="./shared/state-adapter.js?v=0.9.4"></script>
+    <script src="./shared/planner-storage.js?v=0.9.4"></script>
+    <script src="./shared/runtime-observability.js?v=0.9.4"></script>
+    <script src="./shared/next-action.js?v=0.9.4"></script>
     <script src="./app.js?v=0.9.4"></script>
   </body>
 </html>

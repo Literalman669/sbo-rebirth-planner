@@ -32,11 +32,11 @@
     const builds = state?.getJson(keys.builds, []) || [];
     const draft = state?.getJson(keys.formDraft, {}) || {};
     const equipped = state?.getJson(keys.equipped, { slots: {} }) || { slots: {} };
-    const floorTracker = state?.getJson(keys.floorTracker, {}) || {};
+    const floorTracker = state?.getJson(keys.floorTracker, []) || [];
 
     const ownedCount = parseOwnedItems(draft.ownedItems).length;
     const equippedCount = Object.values(equipped?.slots || {}).filter(Boolean).length;
-    const floorCount = Object.values(floorTracker || {}).filter(Boolean).length;
+    const floorCount = Array.isArray(floorTracker) ? floorTracker.length : 0;
     const updatedAt = draft?.updatedAt || equipped?.updatedAt || null;
 
     const setText = (id, value) => {

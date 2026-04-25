@@ -22,6 +22,7 @@
       <a href="./tools.html" class="tab-link">Tools</a>
       <button type="button" class="theme-toggle-btn" id="themeToggleBtn" title="Toggle dark/light mode">☀</button>
     </nav>
+    <div id="nextActionHint" class="next-action-hint" hidden></div>
     <main class="layout dashboard-home-layout">
       <section class="panel">
         <h2>Progress Snapshot</h2>
@@ -45,7 +46,10 @@
         </div>
       </section>
     </main>
+    <script src="./shared/state-schema.js?v=0.9.4"></script>
     <script src="./shared/state-adapter.js?v=0.9.4"></script>
+    <script src="./shared/runtime-observability.js?v=0.9.4"></script>
+    <script src="./shared/next-action.js?v=0.9.4"></script>
     <script src="./boss-data.js?v=0.9.4"></script>
     <script src="./progress.js?v=0.9.4"></script>
   </body>

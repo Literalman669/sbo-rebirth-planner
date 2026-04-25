@@ -12,6 +12,7 @@
   const FORM_DRAFT_KEY = "sbo-rebirth-planner.form-draft.v1";
   const EQUIPPED_KEY = "sbo-rebirth-planner.equipped.v1";
   const state = window.SBO_STATE_ADAPTER;
+  const keys = state?.KEYS || {};
 
   function getRaw(key) {
     if (state?.getRaw) return state.getRaw(key);
@@ -20,6 +21,21 @@
   function setRaw(key, value) {
     if (state?.setRaw) return state.setRaw(key, value);
     try { localStorage.setItem(key, String(value)); return true; } catch { return false; }
+  }
+  function getJson(key, fallback) {
+    if (state?.getJson) return state.getJson(key, fallback);
+    try {
+      const raw = getRaw(key);
+      if (!raw) return fallback;
+      const parsed = JSON.parse(raw);
+      return parsed == null ? fallback : parsed;
+    } catch {
+      return fallback;
+    }
+  }
+  function setJson(key, value) {
+    if (state?.setJson) return state.setJson(key, value);
+    try { return setRaw(key, JSON.stringify(value)); } catch { return false; }
   }
 
   // ── DOM refs ──────────────────────────────────────────────
@@ -39,9 +55,9 @@
   const bossModal = document.getElementById("bossModal");
   const bossModalContent = document.getElementById("bossModalContent");
 
-  const FILTER_KEY = "sbo-rebirth-planner.boss-filters.v1";
-  const BOSS_BEATEN_KEY = "sbo-rebirth-planner.boss-beaten.v1";
-  const LAST_SYNCED_KEY = "sbo-rebirth-planner.boss-last-synced.v1";
+  const FILTER_KEY = keys.bossFilters || "sbo-rebirth-planner.boss-filters.v1";
+  const BOSS_BEATEN_KEY = keys.bossBeaten || "sbo-rebirth-planner.boss-beaten.v1";
+  const LAST_SYNCED_KEY = keys.bossLastSynced || "sbo-rebirth-planner.boss-last-synced.v1";
 
   let currentBuild = null;
   let buildStaleFromOtherTab = false;
@@ -224,12 +240,9 @@
   // ── Load build from localStorage draft ───────────────────
   function loadBuildFromStorage() {
     try {
-      const raw = getRaw(FORM_DRAFT_KEY);
-      if (!raw) return null;
-      const draft = JSON.parse(raw);
-
-      const equippedRaw = getRaw(EQUIPPED_KEY);
-      const equipped = equippedRaw ? JSON.parse(equippedRaw) : {};
+      const draft = getJson(FORM_DRAFT_KEY, {});
+      if (!draft || typeof draft !== "object") return null;
+      const equipped = getJson(EQUIPPED_KEY, {});
 
       return buildFromDraft(draft, equipped);
     } catch {
@@ -238,20 +251,11 @@
   }
 
   function readBossBeatenStorage() {
-    try {
-      const raw = getRaw(BOSS_BEATEN_KEY);
-      if (!raw) return [];
-      const arr = JSON.parse(raw);
-      return Array.isArray(arr) ? arr : [];
-    } catch {
-      return [];
-    }
+    return getJson(BOSS_BEATEN_KEY, []);
   }
 
   function writeBossBeatenStorage(ids) {
-    try {
-      setRaw(BOSS_BEATEN_KEY, JSON.stringify(ids));
-    } catch {}
+    setJson(BOSS_BEATEN_KEY, ids);
   }
 
   function toggleBossBeaten(id) {
@@ -516,29 +520,28 @@
   function saveFilters() {
     try {
       const obj = {
-        floor: filterFloorEl.value,
+        maxFloor: filterFloorEl.value,
         readiness: filterReadinessEl.value,
-        unlocked: filterUnlockedEl.checked,
+        onlyUnlocked: filterUnlockedEl.checked,
         sort: filterSortEl.value,
         showMini: filterShowMiniEl.checked,
         search: filterSearchEl.value,
       };
-      if (filterHideBeatenEl) obj.hideBeaten = filterHideBeatenEl.checked;
-      setRaw(FILTER_KEY, JSON.stringify(obj));
+      if (filterHideBeatenEl) obj.hideBeaten = Boolean(filterHideBeatenEl.checked);
+      setJson(FILTER_KEY, obj);
     } catch {}
   }
 
   function loadFilters() {
     try {
-      const raw = getRaw(FILTER_KEY);
-      if (!raw) return;
-      const f = JSON.parse(raw);
-      if (f.floor) filterFloorEl.value = f.floor;
+      const f = getJson(FILTER_KEY, {});
+      if (!f || typeof f !== "object") return;
+      if (f.maxFloor) filterFloorEl.value = f.maxFloor;
       if (f.readiness) filterReadinessEl.value = f.readiness;
-      if (f.unlocked !== undefined) filterUnlockedEl.checked = f.unlocked;
+      if (f.onlyUnlocked !== undefined) filterUnlockedEl.checked = Boolean(f.onlyUnlocked);
       if (f.sort) filterSortEl.value = f.sort;
-      if (f.showMini !== undefined) filterShowMiniEl.checked = f.showMini;
-      if (filterHideBeatenEl && f.hideBeaten !== undefined) filterHideBeatenEl.checked = f.hideBeaten;
+      if (f.showMini !== undefined) filterShowMiniEl.checked = Boolean(f.showMini);
+      if (filterHideBeatenEl && f.hideBeaten !== undefined) filterHideBeatenEl.checked = Boolean(f.hideBeaten);
       if (f.search) filterSearchEl.value = f.search;
     } catch {}
   }

@@ -4482,42 +4482,24 @@
   }
 
   function readBuildStorage() {
-    try {
-      const raw = getRawStorage(BUILD_STORAGE_KEY);
-      if (!raw) return {};
-
-      const parsed = JSON.parse(raw);
-      if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
-        return {};
-      }
-
-      return parsed;
-    } catch (_error) {
-      return {};
+    if (window.SBO_PLANNER_STORAGE?.readBuildStorage) {
+      return window.SBO_PLANNER_STORAGE.readBuildStorage(getRawStorage, BUILD_STORAGE_KEY);
     }
+    return {};
   }
 
   function readPinnedPresetStorage() {
-    try {
-      const raw = getRawStorage(PINNED_PRESETS_STORAGE_KEY);
-      if (!raw) return new Set();
-
-      const parsed = JSON.parse(raw);
-      if (!Array.isArray(parsed)) return new Set();
-
-      return new Set(
-        parsed
-          .map((name) => `${name || ""}`.trim())
-          .filter(Boolean),
-      );
-    } catch (_error) {
-      return new Set();
+    if (window.SBO_PLANNER_STORAGE?.readPinnedPresetStorage) {
+      return window.SBO_PLANNER_STORAGE.readPinnedPresetStorage(getRawStorage, PINNED_PRESETS_STORAGE_KEY);
     }
+    return new Set();
   }
 
   function writePinnedPresetStorage(set) {
     try {
-      const raw = JSON.stringify(Array.from(set).sort((a, b) => a.localeCompare(b)));
+      const raw = window.SBO_PLANNER_STORAGE?.writePinnedPresetStorage
+        ? window.SBO_PLANNER_STORAGE.writePinnedPresetStorage(setRawStorage, PINNED_PRESETS_STORAGE_KEY, set)
+        : JSON.stringify(Array.from(set).sort((a, b) => a.localeCompare(b)));
       setRawStorage(PINNED_PRESETS_STORAGE_KEY, raw);
       syncDocKeyToStdb(PINNED_PRESETS_STORAGE_KEY, raw);
     } catch (_error) {
@@ -4526,20 +4508,17 @@
   }
 
   function readPresetFilterPreference() {
-    try {
-      const raw = getRawStorage(PRESET_FILTER_STORAGE_KEY);
-      if (!raw) return false;
-
-      const parsed = JSON.parse(raw);
-      return parseBoolean(parsed?.showPinnedOnly);
-    } catch (_error) {
-      return false;
+    if (window.SBO_PLANNER_STORAGE?.readPresetFilterPreference) {
+      return window.SBO_PLANNER_STORAGE.readPresetFilterPreference(getRawStorage, PRESET_FILTER_STORAGE_KEY, parseBoolean);
     }
+    return false;
   }
 
   function writePresetFilterPreference(showPinnedOnly) {
     try {
-      const raw = JSON.stringify({ showPinnedOnly: Boolean(showPinnedOnly) });
+      const raw = window.SBO_PLANNER_STORAGE?.writePresetFilterPreference
+        ? window.SBO_PLANNER_STORAGE.writePresetFilterPreference(setRawStorage, PRESET_FILTER_STORAGE_KEY, showPinnedOnly)
+        : JSON.stringify({ showPinnedOnly: Boolean(showPinnedOnly) });
       setRawStorage(PRESET_FILTER_STORAGE_KEY, raw);
       syncDocKeyToStdb(PRESET_FILTER_STORAGE_KEY, raw);
     } catch (_error) {
@@ -5064,20 +5043,17 @@
   }
 
   function readFloorTrackerStorage() {
-    try {
-      const raw = getRawStorage(FLOOR_TRACKER_STORAGE_KEY);
-      if (!raw) return new Set();
-      const parsed = JSON.parse(raw);
-      if (!Array.isArray(parsed)) return new Set();
-      return new Set(parsed.filter((n) => Number.isInteger(n) && n >= 1 && n <= FLOOR_TRACKER_MAX));
-    } catch (_e) {
-      return new Set();
+    if (window.SBO_PLANNER_STORAGE?.readFloorTrackerStorage) {
+      return window.SBO_PLANNER_STORAGE.readFloorTrackerStorage(getRawStorage, FLOOR_TRACKER_STORAGE_KEY, FLOOR_TRACKER_MAX);
     }
+    return new Set();
   }
 
   function writeFloorTrackerStorage(clearedSet) {
     try {
-      const raw = JSON.stringify(Array.from(clearedSet).sort((a, b) => a - b));
+      const raw = window.SBO_PLANNER_STORAGE?.writeFloorTrackerStorage
+        ? window.SBO_PLANNER_STORAGE.writeFloorTrackerStorage(setRawStorage, FLOOR_TRACKER_STORAGE_KEY, clearedSet)
+        : JSON.stringify(Array.from(clearedSet).sort((a, b) => a - b));
       setRawStorage(FLOOR_TRACKER_STORAGE_KEY, raw);
       syncDocKeyToStdb(FLOOR_TRACKER_STORAGE_KEY, raw);
     } catch (_e) {}

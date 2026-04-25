@@ -13,7 +13,14 @@
     return false;
   }
 
-  const ITEM_CATALOG = RAW_ITEM_CATALOG.filter((item) => !isCatalogNoise(item));
+  const ITEM_CATALOG = RAW_ITEM_CATALOG
+    .filter((item) => !isCatalogNoise(item))
+    .map((item) => ({
+      ...item,
+      _idToken: normalizeToken(item.id),
+      _nameToken: normalizeToken(item.name),
+      _searchHay: normalizeToken(`${item.name} ${item.id} ${item.slot} ${item.weaponClass || ""}`),
+    }));
 
   function escapeHtml(value) {
     return String(value || "")
@@ -88,6 +95,10 @@
   let compareSelected = new Set();
   let currentPage = 1;
   const PAGE_SIZE = 140;
+  let ownedRevision = 0;
+  let favoritesRevision = 0;
+  let filteredCacheKey = "";
+  let filteredCacheValue = ITEM_CATALOG;
 
   function persistFavorites() {
     state?.setJson(INVENTORY_FAVORITES_KEY, Array.from(favorites.values()).sort());
@@ -126,6 +137,10 @@
     const source = String(els.source?.value || "all");
     const quality = String(els.quality?.value || "all");
     const sort = String(els.sort?.value || "floor-asc");
+    const cacheKey = [
+      search, slot, maxFloor, ownedOnly, favoritesOnly, source, quality, sort, ownedRevision, favoritesRevision,
+    ].join("|");
+    if (cacheKey === filteredCacheKey) return filteredCacheValue;
     const filtered = ITEM_CATALOG.filter((item) => {
       if (slot !== "all" && item.slot !== slot) return false;
       if ((Number(item.floorMin) || 1) > maxFloor) return false;
@@ -135,8 +150,7 @@
       if (ownedOnly && !isOwned(item)) return false;
       if (favoritesOnly && !favorites.has(String(item.id))) return false;
       if (!search) return true;
-      const hay = normalizeToken(`${item.name} ${item.id} ${item.slot} ${item.weaponClass || ""}`);
-      return hay.includes(search);
+      return item._searchHay.includes(search);
     });
     filtered.sort((a, b) => {
       if (sort === "name-asc") return String(a.name || "").localeCompare(String(b.name || ""));
@@ -144,11 +158,13 @@
       if (sort === "floor-desc") return (Number(b.floorMin) || 1) - (Number(a.floorMin) || 1);
       return (Number(a.floorMin) || 1) - (Number(b.floorMin) || 1);
     });
+    filteredCacheKey = cacheKey;
+    filteredCacheValue = filtered;
     return filtered;
   }
 
   function isOwned(item) {
-    return owned.has(normalizeToken(item.id)) || owned.has(normalizeToken(item.name));
+    return owned.has(item._idToken) || owned.has(item._nameToken);
   }
 
   function render() {
@@ -337,8 +353,8 @@
       const itemId = String(input.dataset.itemId || "");
       const item = ITEM_CATALOG.find((entry) => entry.id === itemId);
       if (!item) return;
-      const idToken = normalizeToken(item.id);
-      const nameToken = normalizeToken(item.name);
+      const idToken = item._idToken;
+      const nameToken = item._nameToken;
       if (input.checked) {
         owned.add(idToken);
         owned.add(nameToken);
@@ -346,6 +362,7 @@
         owned.delete(idToken);
         owned.delete(nameToken);
       }
+      ownedRevision += 1;
       render();
     });
 
@@ -356,24 +373,27 @@
       if (!itemId) return;
       if (favorites.has(itemId)) favorites.delete(itemId);
       else favorites.add(itemId);
+      favoritesRevision += 1;
       persistFavorites();
       render();
     });
 
     els.markFilteredOwned?.addEventListener("click", () => {
       getFilteredItems().forEach((item) => {
-        owned.add(normalizeToken(item.id));
-        owned.add(normalizeToken(item.name));
+        owned.add(item._idToken);
+        owned.add(item._nameToken);
       });
+      ownedRevision += 1;
       render();
       showMessage("Marked filtered items as owned.");
     });
 
     els.clearFilteredOwned?.addEventListener("click", () => {
       getFilteredItems().forEach((item) => {
-        owned.delete(normalizeToken(item.id));
-        owned.delete(normalizeToken(item.name));
+        owned.delete(item._idToken);
+        owned.delete(item._nameToken);
       });
+      ownedRevision += 1;
       render();
       showMessage("Cleared ownership for filtered items.");
     });
@@ -387,14 +407,15 @@
       lines.forEach((line) => {
         const token = normalizeToken(line);
         const match = ITEM_CATALOG.find(
-          (item) => normalizeToken(item.name) === token || normalizeToken(item.id) === token,
+          (item) => item._nameToken === token || item._idToken === token,
         );
         if (!match) return;
         const before = owned.size;
-        owned.add(normalizeToken(match.id));
-        owned.add(normalizeToken(match.name));
+        owned.add(match._idToken);
+        owned.add(match._nameToken);
         if (owned.size > before) merged += 1;
       });
+      if (merged > 0) ownedRevision += 1;
       render();
       showMessage(`Merged ${merged} item(s) from bulk paste.`);
     });
@@ -428,6 +449,7 @@
   state?.subscribe(keys.formDraft, () => {
     draft = getDraft();
     owned = parseOwnedTokens(draft.ownedItems || "");
+    ownedRevision += 1;
     render();
   });
 })();

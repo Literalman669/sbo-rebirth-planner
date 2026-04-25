@@ -12,7 +12,17 @@ const syncReport = {
   generatedAt: new Date().toISOString(),
   accepted: { weapons: 0, armor: 0, shields: 0, bosses: 0, minibosses: 0 },
   rejected: [],
+  thresholds: null,
 };
+
+const SYNC_THRESHOLDS = Object.freeze({
+  total: Number(process.env.WIKI_SYNC_MAX_REJECTED_TOTAL || 60),
+  weapon: Number(process.env.WIKI_SYNC_MAX_REJECTED_WEAPONS || 40),
+  armor: Number(process.env.WIKI_SYNC_MAX_REJECTED_ARMOR || 20),
+  shield: Number(process.env.WIKI_SYNC_MAX_REJECTED_SHIELDS || 10),
+  boss: Number(process.env.WIKI_SYNC_MAX_REJECTED_BOSSES || 15),
+  miniboss: Number(process.env.WIKI_SYNC_MAX_REJECTED_MINIBOSSES || 15),
+});
 
 function readJson(p) {
   return JSON.parse(fs.readFileSync(p, "utf8"));
@@ -475,6 +485,30 @@ const bossOut = `window.SBO_BOSS_DATA = ${JSON.stringify(bossObj, null, 2)};\n`;
 fs.writeFileSync(dataPath, dataOut, "utf8");
 fs.writeFileSync(bossPath, bossOut, "utf8");
 
+const rejectedByCategory = syncReport.rejected.reduce((acc, entry) => {
+  const key = String(entry?.category || "unknown").toLowerCase();
+  acc[key] = (acc[key] || 0) + 1;
+  return acc;
+}, {});
+const thresholdSnapshot = {
+  total: syncReport.rejected.length,
+  weapon: rejectedByCategory.weapon || 0,
+  armor: rejectedByCategory.armor || 0,
+  shield: rejectedByCategory.shield || 0,
+  boss: rejectedByCategory.boss || 0,
+  miniboss: rejectedByCategory.miniboss || 0,
+};
+const thresholdStatus = Object.entries(SYNC_THRESHOLDS).map(([key, limit]) => ({
+  key,
+  count: thresholdSnapshot[key] || 0,
+  limit,
+  pass: (thresholdSnapshot[key] || 0) <= limit,
+}));
+syncReport.thresholds = {
+  status: thresholdStatus.every((entry) => entry.pass) ? "pass" : "warn",
+  checks: thresholdStatus,
+};
+
 const mdReport = [
   `# Wiki Sync Report`,
   ``,
@@ -491,6 +525,9 @@ const mdReport = [
   ...(syncReport.rejected.length
     ? syncReport.rejected.map((entry) => `- [${entry.category}] ${entry.name}: ${entry.reason}`)
     : ["- None"]),
+  ``,
+  `## Threshold checks`,
+  ...thresholdStatus.map((entry) => `- ${entry.pass ? "PASS" : "WARN"} ${entry.key}: ${entry.count}/${entry.limit}`),
   ``,
 ].join("\n");
 

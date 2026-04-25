@@ -42,7 +42,20 @@
       const raw = state.getRaw(key);
       return `${key}: ${raw ? `${raw.length} bytes` : "empty"}`;
     });
-    target.textContent = rows.join(" | ");
+    let runtimeTail = "";
+    try {
+      const runtimeRaw = localStorage.getItem("sbo-rebirth-planner.runtime-events.v1");
+      const runtimeEvents = runtimeRaw ? JSON.parse(runtimeRaw) : [];
+      const lastEvent = Array.isArray(runtimeEvents) && runtimeEvents.length
+        ? runtimeEvents[runtimeEvents.length - 1]
+        : null;
+      runtimeTail = lastEvent
+        ? ` | runtime events: ${runtimeEvents.length} (last: ${lastEvent.kind} @ ${lastEvent.at})`
+        : " | runtime events: none";
+    } catch (_) {
+      runtimeTail = " | runtime events: unavailable";
+    }
+    target.textContent = rows.join(" | ") + runtimeTail;
   }
 
   function setMessage(text, kind = "info") {
@@ -55,7 +68,7 @@
   function buildBackupObject() {
     const payload = { exportedAt: new Date().toISOString(), schemaVersion: 1, state: {} };
     exportableKeys.forEach((key) => {
-      payload.state[key] = state.getRaw(key);
+      payload.state[key] = state.getJson(key, null);
     });
     return payload;
   }
@@ -102,7 +115,7 @@
       if (!(key in incomingState)) return;
       const value = incomingState[key];
       if (value == null) return;
-      if (state.setRaw(key, String(value))) applied += 1;
+      if (state.setJson(key, value)) applied += 1;
     });
     renderStorageSummary();
     setMessage(`Imported ${applied} state key(s). Open Planner/Bosses to verify.`, "success");

@@ -34,7 +34,11 @@
     if (!raw) return fallback;
     try {
       const parsed = JSON.parse(raw);
-      return parsed == null ? fallback : parsed;
+      if (parsed == null) return fallback;
+      const normalized = window.SBO_STATE_SCHEMA?.normalizeByKey
+        ? window.SBO_STATE_SCHEMA.normalizeByKey(key, parsed)
+        : parsed;
+      return normalized == null ? fallback : normalized;
     } catch (_) {
       return fallback;
     }
@@ -42,7 +46,10 @@
 
   function setJson(key, value) {
     try {
-      const raw = JSON.stringify(value);
+      const normalized = window.SBO_STATE_SCHEMA?.normalizeByKey
+        ? window.SBO_STATE_SCHEMA.normalizeByKey(key, value)
+        : value;
+      const raw = JSON.stringify(normalized);
       return setRaw(key, raw);
     } catch (_) {
       return false;

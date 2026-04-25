@@ -34,10 +34,8 @@
     const floorTracker = state?.getJson(keys.floorTracker, []) || [];
     const bossBeaten = state?.getJson(keys.bossBeaten, []) || [];
     const draft = state?.getJson(keys.formDraft, {}) || {};
-    const floorArr = Array.isArray(floorTracker)
-      ? floorTracker.slice().filter((n) => Number.isInteger(n)).sort((a, b) => a - b)
-      : [];
-    const beatenIds = Array.isArray(bossBeaten) ? bossBeaten.map((id) => String(id || "")) : [];
+    const floorArr = Array.isArray(floorTracker) ? floorTracker.slice().sort((a, b) => a - b) : [];
+    const beatenIds = Array.isArray(bossBeaten) ? bossBeaten : [];
 
     setText("progFloors", Array.isArray(floorTracker) ? floorTracker.length : 0);
     setText("progBosses", Array.isArray(bossBeaten) ? bossBeaten.length : 0);
