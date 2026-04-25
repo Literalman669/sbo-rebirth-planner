@@ -258,7 +258,7 @@
       ],
     },
   ];
-  const UI_BUILD_STAMP = "d61ec41";
+  const UI_BUILD_STAMP = "f23db16";
 
   const SHARE_FIELDS = [
     "buildName",
