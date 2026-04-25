@@ -137,6 +137,14 @@
 
   const CHANGELOG = [
     {
+      version: "v0.9.5",
+      notes: [
+        "Roadmap reliability pass completed: deploy now blocks on wiki-sync validation + smoke tests before publish.",
+        "Shared state contracts normalized across pages via schema-enforced reads/writes and cross-tab adapter usage.",
+        "Architecture/perf/observability updates: planner storage helpers extracted, inventory filtering optimized, and runtime error capture added with Tools visibility.",
+      ],
+    },
+    {
       version: "v0.9.4",
       notes: [
         "UI containment pass for Planner/Recommendations: fixed floating overflow in Equipment Recommendations and stabilized Cost Summary table alignment at narrower viewports.",
@@ -258,7 +266,7 @@
       ],
     },
   ];
-  const UI_BUILD_STAMP = "f23db16";
+  const UI_BUILD_STAMP = "3ad0df1";
 
   const SHARE_FIELDS = [
     "buildName",
