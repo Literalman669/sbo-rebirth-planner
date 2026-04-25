@@ -152,20 +152,15 @@ Checklist format requested by user. This is now the working build tracker.
 - [x] Boss Planner: flush draft on Boss Planner nav click; storage listener for cross-tab updates; "Last synced" timestamp; stale build banner.
 - [x] Boss Planner: "Refresh from Planner" promoted to primary button; needs-attention styling when build updated in another tab.
 
-### Phase L — AI Integration (v0.9.x) ✅
-- [x] Supabase Edge Function `sbo-ai-advisor` for AI proxy (Hugging Face Inference API).
-- [x] System prompt with SBO:R formulas, stat meanings, equipment rules, boss readiness logic.
-- [x] "Ask about your build" chat panel in planner (collapsible subpanel).
-- [x] Build context: level, stats, gear, plan summary, top recommendations passed to Edge Function.
-- [x] Rate limiting (20 req/min per IP) and error handling.
-- [x] AI_SETUP.md and config.example.js for deployment.
+### Phase L — AI Integration (removed v0.9.1)
+- [x] ~~Supabase Edge Function + in-app AI chat~~ **Removed:** planner is static-only again (no Supabase, no `config.js`, no cloud AI panel).
 
 ### Phase I — Future Ideas (v0.7.x+)
 - [x] Dark mode toggle: CSS variable swap for a dark theme (v0.7.5/v0.7.6).
 - [x] Wiki extraction script: MediaWiki API–based extractor for weapons, armor, shields, bosses, core pages (free, no auth); see `sbo-rebirth-planner/scripts/README.md` and `data/wiki-raw/`.
 - [x] Wiki diff utility (`wiki-diff.js`): compares wiki-raw with catalog, outputs `DIFF_REPORT.md` for manual catalog updates.
-- [x] Supabase wiki sync: `wiki-to-supabase.js` + `supabase-schema.sql` — sync extracted wiki data to Supabase (optional).
-- [ ] Supabase: cloud-saved builds, shared build gallery (project configured; see `sbo-rebirth-planner/SUPABASE_SETUP.md`).
+- [x] ~~Supabase wiki sync~~ **Removed** (v0.9.1): wiki workflow is extract → diff → manual catalog update only.
+- [ ] Optional future: cloud-saved or shared builds via a backend of your choice (not planned around Supabase).
 - [ ] Mobile swipe navigation: swipe left/right between input and output panels on phones.
 - [ ] Party builder: plan 4-player party compositions with role coverage indicators.
 - [ ] Item detail modal: click any gear card to see full item stats, source, floor, and wiki link.

@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>SBO:Rebirth Build Planner v0.9.0</title>
+    <title>SBO:Rebirth Build Planner v0.9.1</title>
     <meta name="description" content="Free stat and equipment planner for Sword Blox Online: Rebirth. Plan your level-up allocation, get gear recommendations, and share builds with your party." />
     <meta property="og:title" content="SBO:Rebirth Build Planner" />
     <meta property="og:description" content="Free stat and equipment planner for SBO:Rebirth. Plan level-up allocation, get gear recommendations by floor, and share builds with your party." />
@@ -14,13 +14,13 @@
     <meta name="twitter:description" content="Free stat and equipment planner for SBO:Rebirth. Plan level-up allocation, get gear recommendations by floor, and share builds with your party." />
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%23225964'/><text x='16' y='23' text-anchor='middle' font-size='20' font-family='serif' fill='%23a8e6d8'>⚔</text></svg>" />
     <script>try{var t=localStorage.getItem('sbo-theme');if(t)document.documentElement.dataset.theme=t;}catch(e){}</script>
-    <link rel="stylesheet" href="./styles.css?v=0.9.0" />
+    <link rel="stylesheet" href="./styles.css?v=0.9.1" />
   </head>
   <body>
     <header class="page-header">
       <h1>SBO:Rebirth Build Planner</h1>
       <p class="subtitle">
-        Stat and equipment planner v0.9.0 — focused on transparent recommendations.
+        Stat and equipment planner v0.9.1 — focused on transparent recommendations.
       </p>
     </header>
 
@@ -493,19 +493,6 @@
           <div id="gearResults" class="gear-results"></div>
         </article>
 
-        <article class="subpanel collapsed" id="aiChatPanel">
-          <h3>Ask about your build</h3>
-          <p class="muted-text" style="margin:0 0 0.5rem">AI advisor trained on SBO:R formulas, equipment rules, and boss readiness. Uses your current build and plan when available.</p>
-          <div class="ai-chat-container">
-            <div id="aiChatMessages" class="ai-chat-messages"></div>
-            <div class="ai-chat-input-row">
-              <textarea id="aiChatInput" class="ai-chat-input" rows="3" placeholder="e.g. Why was Steel Rapier recommended? What should I focus on for Illfang? How does multi-hit work?" maxlength="2000" style="min-width: 100%"></textarea>
-              <button type="button" class="primary ai-chat-send" id="aiChatSendBtn" data-testid="ai-chat-send">Send</button>
-            </div>
-            <p id="aiChatStatus" class="ai-chat-status muted-text"></p>
-          </div>
-        </article>
-
         <article class="subpanel collapsed">
           <h3>Floor Progress Tracker</h3>
           <p class="muted-text" style="margin:0 0 0.5rem">Click floors to mark them cleared. Persists across sessions.</p>
@@ -554,10 +541,9 @@
       <p>Prototype built for iterative tuning. Keep formulas/data in sync with live SBO:R updates.</p>
     </footer>
 
-    <script src="./config.js"></script>
-    <script src="./data.js?v=0.9.0"></script>
-    <script src="./boss-data.js?v=0.9.0"></script>
-    <script src="./boss-readiness.js?v=0.9.0"></script>
-    <script src="./app.js?v=0.9.0"></script>
+    <script src="./data.js?v=0.9.1"></script>
+    <script src="./boss-data.js?v=0.9.1"></script>
+    <script src="./boss-readiness.js?v=0.9.1"></script>
+    <script src="./app.js?v=0.9.1"></script>
   </body>
 </html>

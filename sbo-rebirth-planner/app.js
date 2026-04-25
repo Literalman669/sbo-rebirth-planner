@@ -136,15 +136,18 @@
 
   const CHANGELOG = [
     {
+      version: "v0.9.1",
+      notes: [
+        "Removed cloud AI chat and all Supabase integration. Planner is fully static again (no config.js, no edge proxy).",
+      ],
+    },
+    {
       version: "v0.9.0",
       notes: [
         "Boss Planner auto-sync: changes in the Build Planner now auto-update the Boss Planner when you switch tabs.",
         "Boss Planner: clickable readiness pills for quick filtering, clickable Next Target to open boss modal.",
         "Boss Planner: build name display, total stat points, search filter persistence, refresh animation.",
         "Cross-tab: beforeunload/pagehide flush ensures draft is always saved before navigating away.",
-        "Ask about your build: AI chat panel trained on SBO:R formulas, equipment, and boss readiness.",
-        "Supabase Edge Function sbo-ai-advisor proxies to Hugging Face; uses your build and plan context.",
-        "See AI_SETUP.md and config.example.js to enable.",
       ],
     },
     {
@@ -320,11 +323,6 @@
   const calibrationInputs = Object.fromEntries(
     CALIBRATION_METRICS.map((metric) => [metric.key, document.getElementById(metric.inputId)]),
   );
-  const aiChatMessages = document.getElementById("aiChatMessages");
-  const aiChatInput = document.getElementById("aiChatInput");
-  const aiChatSendBtn = document.getElementById("aiChatSendBtn");
-  const aiChatStatus = document.getElementById("aiChatStatus");
-
   let calibrationState = readCalibrationStorage();
   let pinnedPresetNames = readPinnedPresetStorage();
   let equippedState = readEquippedStorage();
@@ -386,8 +384,6 @@
 
   window.addEventListener("beforeunload", () => flushDraftNow());
   window.addEventListener("pagehide", () => flushDraftNow());
-
-  initializeAiChat();
 
   // Run once on load so users immediately see a sample output.
   onSubmit(new Event("submit"));
@@ -851,172 +847,6 @@
         }
       });
     }
-  }
-
-  function initializeAiChat() {
-    const cfg = window.SBO_AI_CONFIG || {};
-    const supabaseUrl = cfg.supabaseUrl || "https://ejotaqqcqcoljzbbyesd.supabase.co";
-    const anonKey = cfg.anonKey || "";
-    const endpoint = `${supabaseUrl}/functions/v1/sbo-ai-advisor`;
-
-    if (!aiChatMessages || !aiChatInput || !aiChatSendBtn || !aiChatStatus) return;
-
-    function setStatus(text, type) {
-      aiChatStatus.textContent = text || "";
-      aiChatStatus.className = "ai-chat-status" + (type ? ` ${type}` : "");
-    }
-
-    function renderMarkdown(text) {
-      return escapeHtml(text)
-        .replace(/^### (.+)$/gm, '<strong class="md-h3">$1</strong>')
-        .replace(/^## (.+)$/gm, '<strong class="md-h2">$1</strong>')
-        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-        .replace(/\*(.+?)\*/g, '<em>$1</em>')
-        .replace(/`([^`]+)`/g, '<code>$1</code>')
-        .replace(/^[-•] (.+)$/gm, '<span class="md-li">$1</span>')
-        .replace(/^\d+\.\s(.+)$/gm, '<span class="md-li">$1</span>')
-        .replace(/\n{2,}/g, '<br><br>')
-        .replace(/\n/g, '<br>');
-    }
-
-    function appendMessage(role, content) {
-      const div = document.createElement("div");
-      div.className = `ai-chat-message ${role}`;
-      const rendered = role === "user" ? escapeHtml(content) : renderMarkdown(content);
-      div.innerHTML = `<span class="msg-role">${role === "user" ? "You" : "AI"}</span><div class="msg-body">${rendered}</div>`;
-      aiChatMessages.appendChild(div);
-      aiChatMessages.scrollTop = aiChatMessages.scrollHeight;
-    }
-
-    function buildContext() {
-      const input = getFormInput();
-      const projectedLevel = input.currentLevel + input.levelsToPlan;
-      const ctx = {
-        level: input.currentLevel,
-        projectedLevel,
-        weaponClass: input.weaponClass,
-        playstyle: input.playstyle,
-        allocationMode: input.allocationMode,
-        weaponSkill: input.weaponSkill,
-        maxFloor: input.maxFloorReached,
-        stats: input.stats,
-        gear: input.gear,
-      };
-
-      const planStale = !lastPlanResult || formDirtySinceLastSubmit;
-      if (planStale) {
-        const evalResult = evaluateBuild(input.stats, input, projectedLevel);
-        const m = evalResult.metrics;
-        ctx.metrics = {
-          dpsProjection: m.dpsProjection,
-          damageReduction: m.damageReduction,
-          bonusHp: m.bonusHp,
-          critChancePct: m.critChancePct,
-          multiHitPct: m.multiHitPct,
-          debuffResPct: m.debuffResPct,
-        };
-      } else if (lastPlanResult?.finalEval?.metrics) {
-        const m = lastPlanResult.finalEval.metrics;
-        ctx.metrics = {
-          dpsProjection: m.dpsProjection,
-          damageReduction: m.damageReduction,
-          bonusHp: m.bonusHp,
-          critChancePct: m.critChancePct,
-          multiHitPct: m.multiHitPct,
-          debuffResPct: m.debuffResPct,
-        };
-      }
-
-      if (!planStale && lastPlanResult?.rows?.length) {
-        const first = lastPlanResult.rows[0];
-        const last = lastPlanResult.rows[lastPlanResult.rows.length - 1];
-        const alloc = last?.totals
-          ? `Lv${first?.level || input.currentLevel}→Lv${last.level}: STR ${last.totals.str} DEF ${last.totals.def} AGI ${last.totals.agi} VIT ${last.totals.vit} LUK ${last.totals.luk}`
-          : "";
-        ctx.planSummary = alloc;
-      }
-
-      if (!planStale && lastGearPlan && typeof lastGearPlan === "object") {
-        const top = {};
-        for (const [slot, items] of Object.entries(lastGearPlan)) {
-          if (Array.isArray(items) && items.length) {
-            top[slot] = items.slice(0, 2).map(({ item }) => ({ name: item?.name || "?", score: undefined }));
-          }
-        }
-        ctx.topRecommendations = top;
-      }
-
-      if (window.SBO_BOSS_READINESS && ctx.metrics) {
-        const build = {
-          stats: input.stats,
-          metrics: ctx.metrics,
-          projectedLevel,
-          weaponSkill: input.weaponSkill,
-        };
-        const nextBoss = window.SBO_BOSS_READINESS.getNextBoss(build);
-        ctx.nextBoss = nextBoss ? `${nextBoss.name} (Floor ${nextBoss.floor})` : null;
-        ctx.readinessAdvice = window.SBO_BOSS_READINESS.getStatAdvice(build, nextBoss);
-      }
-
-      return ctx;
-    }
-
-    if (!anonKey) {
-      aiChatMessages.innerHTML = `
-        <div class="ai-chat-setup-msg">
-          <strong>AI Advisor setup</strong><br>
-          To enable the AI chat, set <code>window.SBO_AI_CONFIG = { supabaseUrl, anonKey }</code> before loading the planner,
-          or add a script that defines it. Then deploy the <code>sbo-ai-advisor</code> Edge Function to Supabase
-          with <code>HUGGINGFACE_TOKEN</code> in secrets. See <code>supabase/functions/sbo-ai-advisor/</code> and AI_SETUP.md.
-        </div>`;
-      aiChatSendBtn.disabled = true;
-      return;
-    }
-
-    aiChatSendBtn.addEventListener("click", async () => {
-      const msg = aiChatInput.value.trim();
-      if (!msg) return;
-
-      aiChatInput.value = "";
-      appendMessage("user", msg);
-      aiChatSendBtn.disabled = true;
-      setStatus("Thinking…", "loading");
-
-      try {
-        const res = await fetch(endpoint, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${anonKey}`,
-          },
-          body: JSON.stringify({
-            message: msg,
-            buildContext: buildContext(),
-          }),
-        });
-
-        const json = await res.json();
-
-        if (!res.ok) {
-          throw new Error(json.error || `HTTP ${res.status}`);
-        }
-
-        appendMessage("assistant", json.reply || "No response.");
-        setStatus("");
-      } catch (err) {
-        appendMessage("assistant", `Error: ${err.message}`);
-        setStatus(err.message, "error");
-      } finally {
-        aiChatSendBtn.disabled = false;
-      }
-    });
-
-    aiChatInput.addEventListener("keydown", (e) => {
-      if (e.key === "Enter" && !e.shiftKey) {
-        e.preventDefault();
-        aiChatSendBtn.click();
-      }
-    });
   }
 
   function handleParseInventory() {

@@ -10,4 +10,3 @@ windsurf_deployment.yaml
 # Environment and secrets
 .env
 .env.local
-config.js

@@ -38,7 +38,6 @@ Writes to `data/wiki-raw/`:
 1. `node scripts/wiki-extract.js` — fetch wiki data
 2. `node scripts/wiki-diff.js` — compare with catalog, output `data/wiki-raw/DIFF_REPORT.md`
 3. Review DIFF_REPORT, manually update `data.js` or `boss-data.js`
-4. Optionally: `node scripts/wiki-to-supabase.js` — sync to Supabase
 
 ---
 
@@ -54,23 +53,9 @@ Writes `data/wiki-raw/DIFF_REPORT.md` with NEW (in wiki, not catalog), CHANGED (
 
 ---
 
-## Supabase Sync (`wiki-to-supabase.js`)
-
-Syncs wiki-raw data to Supabase tables. Requires `.env` with `SUPABASE_URL` and `SUPABASE_ANON_KEY`.
-
-**First time:** Run `supabase-schema.sql` in Supabase Dashboard → SQL Editor to create tables.
-
-```bash
-node scripts/wiki-to-supabase.js
-```
-
-Upserts into `wiki_weapons`, `wiki_armor`, `wiki_shields`, `wiki_bosses`.
-
----
-
 ## DPO Dataset Generator (`generate-dpo-dataset.js`)
 
-Generates a DPO (Direct Preference Optimization) training dataset from `boss-data.js` and `data.js`. Output is TRL-compatible JSON for fine-tuning the AI advisor.
+Generates a DPO (Direct Preference Optimization) training dataset from `boss-data.js` and `data.js`. Output is TRL-compatible JSON for optional model fine-tuning workflows.
 
 ```bash
 node scripts/generate-dpo-dataset.js

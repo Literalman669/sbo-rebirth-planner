@@ -104,7 +104,7 @@ Use fixed wrong-answer patterns (from real model mistakes):
 
 From [boss-data.js](sbo-rebirth-planner/boss-data.js): bosses and miniBosses with `name`, `floor`, `hp`, `recLevel`, `recSkill`, `drops`, `rareDrops`, `lastHitDrop`, `location`, `statusEffect`, `phases[].notes`.
 
-From [data.js](sbo-rebirth-planner/data.js): `formulas` (strDamagePerPointPct 0.4, defMultiplierBase 5, vitDexterityMultiplierBase 10, etc.) — map to human-readable stat descriptions from [SBO_SYSTEM_PROMPT](sbo-rebirth-planner/supabase/functions/sbo-ai-advisor/index.ts) (lines 15–30).
+From [data.js](sbo-rebirth-planner/data.js): `formulas` (strDamagePerPointPct 0.4, defMultiplierBase 5, vitDexterityMultiplierBase 10, etc.) — map to human-readable stat descriptions aligned with the wiki stat pages (Stats, weapon class pages).
 
 ## Out of Scope (For Later)
 
