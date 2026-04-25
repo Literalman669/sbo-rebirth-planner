@@ -23,6 +23,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: sbo-rebirth-planner/package-lock.json
+
+      - name: Install planner deps and rebuild SpacetimeDB client bundle
+        working-directory: sbo-rebirth-planner
+        run: npm ci && npm run build:stdb-client
+
       - name: Setup Pages
         uses: actions/configure-pages@v4
 

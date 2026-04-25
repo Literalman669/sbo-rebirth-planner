@@ -155,6 +155,11 @@ Checklist format requested by user. This is now the working build tracker.
 ### Phase L — AI Integration (removed v0.9.1)
 - [x] ~~Supabase Edge Function + in-app AI chat~~ **Removed:** planner is static-only again (no Supabase, no `config.js`, no cloud AI panel).
 
+### Phase M — SpacetimeDB sync (v0.9.2) ✅
+- [x] SpacetimeDB **2.0.2** TypeScript module (`spacetimedb-module/`) with private `planner_doc` table + public `my_planner_docs` view.
+- [x] Reducers `upsert_planner_doc` / `delete_planner_doc` (allow-listed keys matching planner `localStorage` blobs).
+- [x] Generated `stdb-bindings/` + esbuild `stdb-client.bundle.js`; optional `config.stdb.js` + `window.SBO_STDB_CONFIG` for Maincloud (see `SPACETIMEDB.md`).
+
 ### Phase I — Future Ideas (v0.7.x+)
 - [x] Dark mode toggle: CSS variable swap for a dark theme (v0.7.5/v0.7.6).
 - [x] Wiki extraction script: MediaWiki API–based extractor for weapons, armor, shields, bosses, core pages (free, no auth); see `sbo-rebirth-planner/scripts/README.md` and `data/wiki-raw/`.

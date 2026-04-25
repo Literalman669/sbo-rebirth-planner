@@ -5,12 +5,19 @@
   "main": "app.js",
   "scripts": {
     "test": "node test-planner.js",
-    "serve": "npx serve -p 60290 -l 60290"
+    "serve": "npx serve -p 60290 -l 60290",
+    "build:stdb-client": "esbuild stdb-client-entry.ts --bundle --format=iife --global-name=SBOPlannerStdb --outfile=stdb-client.bundle.js --platform=browser --target=es2022",
+    "generate:stdb-bindings": "cd ../spacetimedb-module && spacetime build && spacetime generate --lang typescript --out-dir ../sbo-rebirth-planner/stdb-bindings --js-path ./spacetimedb/dist/bundle.js -y"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "playwright": "^1.58.2"
+    "esbuild": "0.24.2",
+    "playwright": "^1.58.2",
+    "typescript": "5.6.3"
+  },
+  "dependencies": {
+    "spacetimedb": "2.0.2"
   }
 }

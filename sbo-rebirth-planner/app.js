@@ -136,6 +136,13 @@
 
   const CHANGELOG = [
     {
+      version: "v0.9.2",
+      notes: [
+        "Optional SpacetimeDB 2.0.2 cloud sync: publish the module in spacetimedb-module/, set window.SBO_STDB_CONFIG in config.stdb.js, load stdb-client.bundle.js — see SPACETIMEDB.md.",
+        "Mirrors saved builds, draft, calibration, equipped loadout, floor tracker, and pin/filter prefs to your database per anonymous identity token.",
+      ],
+    },
+    {
       version: "v0.9.1",
       notes: [
         "Removed cloud AI chat and all Supabase integration. Planner is fully static again (no config.js, no edge proxy).",
@@ -387,6 +394,7 @@
 
   // Run once on load so users immediately see a sample output.
   onSubmit(new Event("submit"));
+  initSpacetimeSync();
 
   function populateSelects() {
     Object.entries(data.weaponProfiles).forEach(([value, profile]) => {
@@ -4296,7 +4304,9 @@
 
   function writePinnedPresetStorage(set) {
     try {
-      localStorage.setItem(PINNED_PRESETS_STORAGE_KEY, JSON.stringify(Array.from(set).sort((a, b) => a.localeCompare(b))));
+      const raw = JSON.stringify(Array.from(set).sort((a, b) => a.localeCompare(b)));
+      localStorage.setItem(PINNED_PRESETS_STORAGE_KEY, raw);
+      syncDocKeyToStdb(PINNED_PRESETS_STORAGE_KEY, raw);
     } catch (_error) {
       showBuildActionMessage("Could not save pinned preset data (storage unavailable).", "error");
     }
@@ -4316,7 +4326,9 @@
 
   function writePresetFilterPreference(showPinnedOnly) {
     try {
-      localStorage.setItem(PRESET_FILTER_STORAGE_KEY, JSON.stringify({ showPinnedOnly: Boolean(showPinnedOnly) }));
+      const raw = JSON.stringify({ showPinnedOnly: Boolean(showPinnedOnly) });
+      localStorage.setItem(PRESET_FILTER_STORAGE_KEY, raw);
+      syncDocKeyToStdb(PRESET_FILTER_STORAGE_KEY, raw);
     } catch (_error) {
       // Ignore filter preference persistence failures quietly.
     }
@@ -4342,7 +4354,9 @@
     if (!snapshot || typeof snapshot !== "object") return;
 
     try {
-      localStorage.setItem(FORM_DRAFT_STORAGE_KEY, JSON.stringify(snapshot));
+      const raw = JSON.stringify(snapshot);
+      localStorage.setItem(FORM_DRAFT_STORAGE_KEY, raw);
+      syncDocKeyToStdb(FORM_DRAFT_STORAGE_KEY, raw);
     } catch (_error) {
       // Ignore draft persistence failures quietly.
     }
@@ -4396,7 +4410,9 @@
 
   function writeEquippedStorage(state) {
     try {
-      localStorage.setItem(EQUIPPED_STORAGE_KEY, JSON.stringify(state));
+      const raw = JSON.stringify(state);
+      localStorage.setItem(EQUIPPED_STORAGE_KEY, raw);
+      syncDocKeyToStdb(EQUIPPED_STORAGE_KEY, raw);
     } catch (_error) {
       showEquippedMessage("Could not save equipped loadout (storage unavailable).", "error");
     }
@@ -4478,15 +4494,31 @@
 
   function writeCalibrationStorage(state) {
     try {
-      localStorage.setItem(CALIBRATION_STORAGE_KEY, JSON.stringify(state));
+      const raw = JSON.stringify(state);
+      localStorage.setItem(CALIBRATION_STORAGE_KEY, raw);
+      syncDocKeyToStdb(CALIBRATION_STORAGE_KEY, raw);
     } catch (_error) {
       showCalibrationMessage("Could not save calibration data (storage unavailable).", "error");
     }
   }
 
+  function syncDocKeyToStdb(docKey, jsonString) {
+    try {
+      const st = window.SBOPlannerStdb;
+      if (!st || typeof st.upsertRemoteDoc !== "function") return;
+      if (!window.SBO_STDB_CONFIG?.uri || !window.SBO_STDB_CONFIG?.databaseName) return;
+      if (typeof jsonString !== "string") return;
+      st.upsertRemoteDoc(docKey, jsonString);
+    } catch (_e) {
+      /* ignore cloud sync failures */
+    }
+  }
+
   function writeBuildStorage(storage) {
     try {
-      localStorage.setItem(BUILD_STORAGE_KEY, JSON.stringify(storage));
+      const raw = JSON.stringify(storage);
+      localStorage.setItem(BUILD_STORAGE_KEY, raw);
+      syncDocKeyToStdb(BUILD_STORAGE_KEY, raw);
     } catch (_error) {
       showBuildActionMessage("Could not save build presets (storage unavailable).", "error");
     }
@@ -4829,7 +4861,9 @@
 
   function writeFloorTrackerStorage(clearedSet) {
     try {
-      localStorage.setItem(FLOOR_TRACKER_STORAGE_KEY, JSON.stringify(Array.from(clearedSet).sort((a, b) => a - b)));
+      const raw = JSON.stringify(Array.from(clearedSet).sort((a, b) => a - b));
+      localStorage.setItem(FLOOR_TRACKER_STORAGE_KEY, raw);
+      syncDocKeyToStdb(FLOOR_TRACKER_STORAGE_KEY, raw);
     } catch (_e) {}
   }
 
@@ -4899,6 +4933,64 @@
         renderFloorTracker(clearedFloors);
       });
     }
+  }
+
+  function applyRemoteStoragePull() {
+    calibrationState = readCalibrationStorage();
+    pinnedPresetNames = readPinnedPresetStorage();
+    equippedState = readEquippedStorage();
+    refreshSavedBuildOptions(String(savedBuildSelect?.value || ""));
+    refreshPresetPinButtonState();
+    if (showPinnedOnlyField) {
+      showPinnedOnlyField.checked = readPresetFilterPreference();
+    }
+    renderCalibrationReport(calibrationState);
+    renderFloorTracker(readFloorTrackerStorage());
+    restoreDraftFormState();
+    renderEquippedLoadout(getFormInput());
+  }
+
+  function initSpacetimeSync() {
+    const cfg = window.SBO_STDB_CONFIG;
+    const st = window.SBOPlannerStdb;
+    if (!cfg?.uri || !cfg?.databaseName || !st?.subscribe || !st?.connect) return;
+
+    const KEYS = [
+      BUILD_STORAGE_KEY,
+      FLOOR_TRACKER_STORAGE_KEY,
+      PINNED_PRESETS_STORAGE_KEY,
+      PRESET_FILTER_STORAGE_KEY,
+      FORM_DRAFT_STORAGE_KEY,
+      EQUIPPED_STORAGE_KEY,
+      CALIBRATION_STORAGE_KEY,
+    ];
+
+    let didSeedCloud = false;
+
+    function mergeRemoteIntoLocal() {
+      let touched = false;
+      for (const key of KEYS) {
+        const remote = st.getRemoteDocJson(key);
+        if (remote == null) continue;
+        const local = localStorage.getItem(key);
+        if (remote !== local) {
+          localStorage.setItem(key, remote);
+          touched = true;
+        }
+      }
+      if (touched) applyRemoteStoragePull();
+
+      if (!didSeedCloud && st.isConnected()) {
+        didSeedCloud = true;
+        for (const key of KEYS) {
+          const local = localStorage.getItem(key);
+          if (local) syncDocKeyToStdb(key, local);
+        }
+      }
+    }
+
+    st.subscribe(() => mergeRemoteIntoLocal());
+    st.connect(cfg);
   }
 
   function toInt(value, fallback = 0) {
