@@ -1,6 +1,14 @@
 (function bossPlannerInit() {
   const data = window.SBO_DATA;
   const bossData = window.SBO_BOSS_DATA;
+  const allBossEntries = [
+    ...(bossData?.bosses || []),
+    ...(bossData?.minibosses || bossData?.miniBosses || []),
+  ];
+  const DATA_MAX_FLOOR = allBossEntries.reduce((maxFloor, boss) => {
+    const floor = Number(boss?.floor);
+    return Number.isFinite(floor) ? Math.max(maxFloor, floor) : maxFloor;
+  }, 1);
   const FORM_DRAFT_KEY = "sbo-rebirth-planner.form-draft.v1";
   const EQUIPPED_KEY = "sbo-rebirth-planner.equipped.v1";
 
@@ -58,6 +66,13 @@
 
   // ── Init ──────────────────────────────────────────────────
   function init() {
+    if (filterFloorEl) {
+      filterFloorEl.max = String(DATA_MAX_FLOOR);
+      if (!filterFloorEl.value || Number(filterFloorEl.value) > DATA_MAX_FLOOR) {
+        filterFloorEl.value = String(DATA_MAX_FLOOR);
+      }
+    }
+
     refreshBuild();
 
     refreshBtn.addEventListener("click", () => refreshBuild({ animate: true }));
@@ -91,6 +106,7 @@
     }, 15000);
 
     loadFilters();
+    renderBossList();
 
     filterFloorEl.addEventListener("input", () => { saveFilters(); renderBossList(); });
     filterReadinessEl.addEventListener("change", () => { saveFilters(); renderBossList(); });
@@ -251,7 +267,7 @@
     const weaponClass = draft.weaponClass || "one-handed";
     const playstyle = draft.playstyle || "balanced";
     const weaponSkill = clamp(toInt(draft.weaponSkill, 1), 1, 10000);
-    const maxFloor = clamp(toInt(draft.maxFloorReached, 1), 1, 18);
+    const maxFloor = clamp(toInt(draft.maxFloorReached, 1), 1, DATA_MAX_FLOOR);
     const buildName = (draft.buildName || "").trim();
 
     const stats = {
@@ -540,14 +556,14 @@
 
   // ── Render boss list ──────────────────────────────────────
   function renderBossList() {
-    const maxFloor = parseInt(filterFloorEl.value, 10) || 18;
+    const maxFloor = parseInt(filterFloorEl.value, 10) || DATA_MAX_FLOOR;
     const readinessFilter = filterReadinessEl.value;
     const unlockedOnly = filterUnlockedEl.checked;
     const showMini = filterShowMiniEl.checked;
     const hideBeaten = filterHideBeatenEl?.checked || false;
     const sortBy = filterSortEl.value;
     const searchTerm = filterSearchEl.value.trim().toLowerCase();
-    const playerMaxFloor = currentBuild?.maxFloor || 18;
+    const playerMaxFloor = currentBuild?.maxFloor || DATA_MAX_FLOOR;
     const beatenIds = readBossBeatenStorage();
 
     const applySearch = (b) => !searchTerm || b.name.toLowerCase().includes(searchTerm);
