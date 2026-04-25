@@ -258,6 +258,7 @@
       ],
     },
   ];
+  const UI_BUILD_STAMP = "d61ec41";
 
   const SHARE_FIELDS = [
     "buildName",
@@ -5033,7 +5034,10 @@
 
   function renderChangelog() {
     if (!changelogPanelEl) return;
-    changelogPanelEl.innerHTML = CHANGELOG.map((entry) => `
+    const plannerVersion = data?.plannerVersion ? `v${data.plannerVersion}` : "unknown";
+    changelogPanelEl.innerHTML = `
+      <div class="changelog-build-stamp">Live build: <strong>${escapeHtml(plannerVersion)}</strong> · ${escapeHtml(UI_BUILD_STAMP)}</div>
+    ` + CHANGELOG.map((entry) => `
       <div class="changelog-entry">
         <div class="changelog-version">${escapeHtml(entry.version)}</div>
         <ul class="changelog-items">

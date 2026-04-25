@@ -3314,6 +3314,16 @@ input.stat-cap-maxed {
   color: var(--ink-soft);
 }
 
+.changelog-build-stamp {
+  margin: 0 0 0.5rem;
+  padding: 0.3rem 0.55rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--bg-2);
+  color: var(--ink-soft);
+  font-size: 0.74rem;
+}
+
 .changelog-entry {
   margin-bottom: 0.6rem;
   padding-bottom: 0.6rem;
