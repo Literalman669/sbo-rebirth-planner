@@ -1,4 +1,4 @@
-# Dashboard Rebuild Notes (v0.9.3)
+# Dashboard Rebuild Notes (v0.9.4)
 
 This document tracks the dashboard-first migration work introduced for the SBO planner refactor.
 

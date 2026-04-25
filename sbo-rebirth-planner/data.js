@@ -1,5 +1,5 @@
 const SBO_DATA = {
-  "plannerVersion": "0.9.3",
+  "plannerVersion": "0.9.4",
   "pointsPerLevel": 3,
   "statCap": 500,
   "formulas": {
