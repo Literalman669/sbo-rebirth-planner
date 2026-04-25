@@ -137,6 +137,22 @@
 
   const CHANGELOG = [
     {
+      version: "v0.9.4",
+      notes: [
+        "UI containment pass for Planner/Recommendations: fixed floating overflow in Equipment Recommendations and stabilized Cost Summary table alignment at narrower viewports.",
+        "Inventory upgrades: favorites, missing-upgrades view, compare-selected panel, and richer inline stat/requirement detail rows.",
+        "Version bump + cache refresh across pages/assets to ensure latest styles and scripts load immediately.",
+      ],
+    },
+    {
+      version: "v0.9.3",
+      notes: [
+        "Six-tab dashboard rollout: dedicated Dashboard, Planner, Inventory, Bosses, Progress, and Tools pages with shared state sync.",
+        "Shared projection + state adapter modules now power planner/boss parity and cross-tab updates.",
+        "Structured owned inventory manager and recommendation explainability improvements shipped on Planner.",
+      ],
+    },
+    {
       version: "v0.9.2",
       notes: [
         "Optional SpacetimeDB 2.0.2 cloud sync: publish the module in spacetimedb-module/, set window.SBO_STDB_CONFIG in config.stdb.js, load stdb-client.bundle.js — see SPACETIMEDB.md.",
@@ -1652,7 +1668,7 @@
     const nonExactCount = dataset.itemCatalog.length - exactCount;
 
     if (nonExactCount > 0) {
-      addWarning(`${nonExactCount} catalog entr${nonExactCount === 1 ? "y is" : "ies are"} still estimated.`);
+      addWarning(`${nonExactCount} catalog entr${nonExactCount === 1 ? "y is" : "ies are"} still estimated (expected until wiki-confirmed stats are available).`);
     }
 
     return {
