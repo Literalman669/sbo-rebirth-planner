@@ -1,5 +1,5 @@
 {
-  "extractedAt": "2026-02-26T10:19:59.301Z",
+  "extractedAt": "2026-04-25T08:57:54.132Z",
   "count": 164,
   "items": [
     {
@@ -950,6 +950,29 @@
       "slot": "armor"
     },
     {
+      "name": "Coned Helmet",
+      "levelReq": 14,
+      "defense": null,
+      "dexterity": 16,
+      "worth": 3640,
+      "howToObtain": "[[Blacksmithing]",
+      "raw": {
+        "title1": "Coned Helmet",
+        "image1": "Enhanced Coned Helmet.png",
+        "equipment_type": "Upper Headwear",
+        "level_req": "Level 14",
+        "dexterity": "16",
+        "craftable": "✔",
+        "tradable": "✔",
+        "worth": "3640 Col",
+        "can_be_sold": "✔",
+        "how_to_obtain": "[[Blacksmithing]"
+      },
+      "wikiTitle": "Enhanced Coned Helmet",
+      "wikiUrl": "https://swordbloxonlinerebirth.fandom.com/wiki/Enhanced_Coned_Helmet",
+      "slot": "armor"
+    },
+    {
       "name": "Enhanced Cloak",
       "levelReq": 12,
       "defense": null,
@@ -1208,6 +1231,30 @@
       },
       "wikiTitle": "Grandmaster Mantle",
       "wikiUrl": "https://swordbloxonlinerebirth.fandom.com/wiki/Grandmaster_Mantle",
+      "slot": "armor"
+    },
+    {
+      "name": "Midnight Platemail",
+      "levelReq": 4,
+      "defense": 2,
+      "dexterity": 9,
+      "worth": 1920,
+      "howToObtain": "Floor 1 Shop",
+      "raw": {
+        "title1": "Midnight Platemail",
+        "image1": "Midnight_platemail.png",
+        "level_req": "Level 4",
+        "craftable": "X",
+        "tradable": "✔",
+        "defense": "2",
+        "dexterity": "9",
+        "equipment_type": "Armor",
+        "worth": "1920 Col",
+        "can_be_sold": "✔",
+        "how_to_obtain": "Floor 1 Shop"
+      },
+      "wikiTitle": "Midnight Platemail",
+      "wikiUrl": "https://swordbloxonlinerebirth.fandom.com/wiki/Midnight_Platemail",
       "slot": "armor"
     },
     {
@@ -2117,29 +2164,6 @@
       "slot": "armor"
     },
     {
-      "name": "Coned Helmet",
-      "levelReq": 14,
-      "defense": null,
-      "dexterity": 16,
-      "worth": 3640,
-      "howToObtain": "[[Blacksmithing]",
-      "raw": {
-        "title1": "Coned Helmet",
-        "image1": "Enhanced Coned Helmet.png",
-        "equipment_type": "Upper Headwear",
-        "level_req": "Level 14",
-        "dexterity": "16",
-        "craftable": "✔",
-        "tradable": "✔",
-        "worth": "3640 Col",
-        "can_be_sold": "✔",
-        "how_to_obtain": "[[Blacksmithing]"
-      },
-      "wikiTitle": "Enhanced Coned Helmet",
-      "wikiUrl": "https://swordbloxonlinerebirth.fandom.com/wiki/Enhanced_Coned_Helmet",
-      "slot": "armor"
-    },
-    {
       "name": "Graciousness",
       "levelReq": 125,
       "defense": null,
@@ -2303,7 +2327,7 @@
       "defense": null,
       "dexterity": 671,
       "worth": null,
-      "howToObtain": "frostveil ec",
+      "howToObtain": "[[Frostveil Echo",
       "raw": {
         "title1": "Frostveil Echo Mantle",
         "image1": "Frostveil Echo Mantle.png",
@@ -2314,34 +2338,34 @@
         "tradable": "✔",
         "worth": "???",
         "can_be_sold": "✔",
-        "how_to_obtain": "frostveil ec"
+        "how_to_obtain": "[[Frostveil Echo"
       },
       "wikiTitle": "Frostveil Echo Mantle",
       "wikiUrl": "https://swordbloxonlinerebirth.fandom.com/wiki/Frostveil_Echo_Mantle",
       "slot": "armor"
     },
     {
-      "name": "Midnight Platemail",
-      "levelReq": 4,
-      "defense": 2,
-      "dexterity": 9,
-      "worth": 1920,
-      "howToObtain": "Floor 1 Shop",
+      "name": "Swamp Legend",
+      "levelReq": 19,
+      "defense": 12.5,
+      "dexterity": 70,
+      "worth": 9120,
+      "howToObtain": "Floor 2 Shop, [[Shops#Floor 3 Shop|Floor 3 Shop]",
       "raw": {
-        "title1": "Midnight Platemail",
-        "image1": "Midnight_platemail.png",
-        "level_req": "Level 4",
+        "title1": "Swamp Legend",
+        "image1": "Swamp legend.png",
+        "level_req": "Level 19",
         "craftable": "X",
         "tradable": "✔",
-        "defense": "2",
-        "dexterity": "9",
+        "defense": "12.5",
+        "dexterity": "70",
         "equipment_type": "Armor",
-        "worth": "1920 Col",
+        "worth": "9120 Col",
         "can_be_sold": "✔",
-        "how_to_obtain": "Floor 1 Shop"
+        "how_to_obtain": "Floor 2 Shop, [[Shops#Floor 3 Shop|Floor 3 Shop]"
       },
-      "wikiTitle": "Midnight Platemail",
-      "wikiUrl": "https://swordbloxonlinerebirth.fandom.com/wiki/Midnight_Platemail",
+      "wikiTitle": "Swamp Legend",
+      "wikiUrl": "https://swordbloxonlinerebirth.fandom.com/wiki/Swamp_Legend",
       "slot": "armor"
     },
     {
@@ -3522,30 +3546,6 @@
       },
       "wikiTitle": "Rabbit Plated Armor Mk IV",
       "wikiUrl": "https://swordbloxonlinerebirth.fandom.com/wiki/Rabbit_Plated_Armor_Mk_IV",
-      "slot": "armor"
-    },
-    {
-      "name": "Swamp Legend",
-      "levelReq": 19,
-      "defense": 12.5,
-      "dexterity": 70,
-      "worth": 9120,
-      "howToObtain": "Floor 2 Shop, [[Shops#Floor 3 Shop|Floor 3 Shop]",
-      "raw": {
-        "title1": "Swamp Legend",
-        "image1": "Swamp legend.png",
-        "level_req": "Level 19",
-        "craftable": "X",
-        "tradable": "✔",
-        "defense": "12.5",
-        "dexterity": "70",
-        "equipment_type": "Armor",
-        "worth": "9120 Col",
-        "can_be_sold": "✔",
-        "how_to_obtain": "Floor 2 Shop, [[Shops#Floor 3 Shop|Floor 3 Shop]"
-      },
-      "wikiTitle": "Swamp Legend",
-      "wikiUrl": "https://swordbloxonlinerebirth.fandom.com/wiki/Swamp_Legend",
       "slot": "armor"
     },
     {

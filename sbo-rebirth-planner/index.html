@@ -135,10 +135,14 @@
     </details>
 
     <main class="layout">
-      <section class="panel input-panel">
-        <h2>Planner Inputs</h2>
+      <section class="panel input-panel" aria-labelledby="panel-inputs-heading">
+        <h2 id="panel-inputs-heading">Planner Inputs</h2>
         <div id="sharedBuildBanner" class="shared-build-banner" hidden></div>
+        <a href="#recommendations" class="skip-to-recommendations">Jump to recommendations</a>
+        <div class="input-panel-body">
         <form id="plannerForm">
+          <section class="form-section" aria-labelledby="form-section-core-title">
+            <h3 class="form-section-title" id="form-section-core-title">Core build</h3>
           <label class="build-name-label">
             Build Name <span class="build-name-hint">(optional — included in share link)</span>
             <input type="text" name="buildName" id="buildNameInput" placeholder="e.g. Greatsword Tank Lv100" maxlength="60" />
@@ -252,6 +256,10 @@
               </select>
             </label>
           </div>
+          </section>
+
+          <section class="form-section" aria-labelledby="form-section-ownership-title">
+            <h3 class="form-section-title" id="form-section-ownership-title">Ownership &amp; filters</h3>
 
           <div class="grid two ownership-grid">
             <label>
@@ -320,6 +328,10 @@
               <span>Strict budget cap (exclude over-cap recommendations)</span>
             </label>
           </details>
+          </section>
+
+          <section class="form-section" aria-labelledby="form-section-presets-title">
+            <h3 class="form-section-title" id="form-section-presets-title">Presets &amp; tools</h3>
 
           <details class="form-details">
             <summary>Quick Start Templates</summary>
@@ -329,37 +341,39 @@
             </div>
           </details>
 
-          <h3>Build Presets</h3>
-          <div class="grid two preset-grid">
-            <label>
-              Preset Name
-              <input type="text" id="presetName" name="presetName" placeholder="Greatsword Balanced" />
-            </label>
+          <details class="form-details">
+            <summary>Build Presets</summary>
+            <div class="grid two preset-grid">
+              <label>
+                Preset Name
+                <input type="text" id="presetName" name="presetName" placeholder="Greatsword Balanced" />
+              </label>
 
-            <label>
-              Saved Presets
-              <select id="savedBuildSelect" name="savedBuildSelect">
-                <option value="">No saved builds</option>
-              </select>
-            </label>
-          </div>
-          <div class="button-row preset-tools">
-            <button type="button" class="secondary" id="togglePresetPinBtn">Pin Selected</button>
-            <label class="checkbox-label compact inline-check">
-              <input type="checkbox" id="showPinnedOnly" name="showPinnedOnly" />
-              <span>Show pinned only</span>
-            </label>
-          </div>
+              <label>
+                Saved Presets
+                <select id="savedBuildSelect" name="savedBuildSelect">
+                  <option value="">No saved builds</option>
+                </select>
+              </label>
+            </div>
+            <div class="button-row preset-tools">
+              <button type="button" class="secondary" id="togglePresetPinBtn">Pin Selected</button>
+              <label class="checkbox-label compact inline-check">
+                <input type="checkbox" id="showPinnedOnly" name="showPinnedOnly" />
+                <span>Show pinned only</span>
+              </label>
+            </div>
 
-          <div class="button-row">
-            <button type="button" class="secondary" id="saveBuildBtn" data-testid="save-build-btn">Save</button>
-            <button type="button" class="secondary" id="loadBuildBtn" data-testid="load-build-btn">Load</button>
-            <button type="button" class="secondary" id="deleteBuildBtn" data-testid="delete-build-btn">Delete</button>
-            <button type="button" class="secondary" id="exportBuildBtn" data-testid="export-build-btn">Export JSON</button>
-            <button type="button" class="secondary" id="importBuildBtn" data-testid="import-build-btn">Import JSON</button>
-          </div>
-          <input type="file" id="importBuildInput" accept=".json,application/json" hidden />
-          <div id="buildActionMessage" class="build-action-message"></div>
+            <div class="button-row">
+              <button type="button" class="secondary" id="saveBuildBtn" data-testid="save-build-btn">Save</button>
+              <button type="button" class="secondary" id="loadBuildBtn" data-testid="load-build-btn">Load</button>
+              <button type="button" class="secondary" id="deleteBuildBtn" data-testid="delete-build-btn">Delete</button>
+              <button type="button" class="secondary" id="exportBuildBtn" data-testid="export-build-btn">Export JSON</button>
+              <button type="button" class="secondary" id="importBuildBtn" data-testid="import-build-btn">Import JSON</button>
+            </div>
+            <input type="file" id="importBuildInput" accept=".json,application/json" hidden />
+            <div id="buildActionMessage" class="build-action-message"></div>
+          </details>
 
           <details class="form-details">
             <summary>Compare Saved Builds</summary>
@@ -416,14 +430,23 @@
             <input type="file" id="importCalibrationInput" accept=".json,application/json" hidden />
             <div id="calibrationMessage" class="build-action-message"></div>
           </details>
+          </section>
 
-          <div id="stalePlanBanner" class="stale-plan-banner" hidden>Plan may be outdated — click Generate Plan to refresh.</div>
-          <button type="submit" class="primary" data-testid="generate-plan-btn">Generate Plan</button>
-          <p class="hotkeys-hint">
-            <strong>Hotkeys:</strong>
-            Ctrl+Enter Generate • Ctrl+S Save • Ctrl+L Load • Ctrl+E Equip Top • Ctrl+Shift+P Pin • Ctrl+/ Collapse Panels
-          </p>
+          <ul class="hotkey-list" aria-label="Keyboard shortcuts">
+            <li><kbd>Ctrl</kbd>+<kbd>Enter</kbd> — Generate plan</li>
+            <li><kbd>Ctrl</kbd>+<kbd>S</kbd> — Save build</li>
+            <li><kbd>Ctrl</kbd>+<kbd>L</kbd> — Load build</li>
+            <li><kbd>Ctrl</kbd>+<kbd>E</kbd> — Equip top</li>
+            <li><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd> — Pin preset</li>
+            <li><kbd>Ctrl</kbd>+<kbd>/</kbd> — Collapse panels</li>
+          </ul>
         </form>
+        </div>
+
+        <div class="input-panel-action-strip" role="region" aria-label="Plan actions">
+          <div id="stalePlanBanner" class="stale-plan-banner stale-plan-banner--strip" hidden>Plan may be outdated — click Generate Plan to refresh.</div>
+          <button type="submit" class="primary" form="plannerForm" data-testid="generate-plan-btn">Generate Plan</button>
+        </div>
 
         <div class="hint-box">
           <strong>Data note:</strong>
@@ -434,15 +457,22 @@
         <div id="dataValidationStatus" class="data-validation-status"></div>
       </section>
 
-      <section class="panel output-panel">
-        <h2>Recommendations</h2>
+      <section id="recommendations" class="panel output-panel" aria-labelledby="panel-output-heading">
+        <h2 id="panel-output-heading">Recommendations</h2>
         <div class="output-toolbar">
-          <button type="button" class="secondary" id="collapsePanelsBtn" data-testid="collapse-panels-btn" title="Collapse all output panels">Collapse Panels</button>
-          <button type="button" class="secondary" id="expandPanelsBtn" data-testid="expand-panels-btn" title="Expand all output panels">Expand Panels</button>
-          <span class="toolbar-divider" aria-hidden="true"></span>
-          <button type="button" class="secondary" id="copyLoadoutBtn" data-testid="copy-loadout-btn">Copy Loadout</button>
-          <button type="button" class="secondary" id="copyShareLinkBtn" data-testid="copy-share-link-btn">Copy Share Link</button>
-          <button type="button" class="secondary toolbar-primary" id="printBuildBtn" data-testid="print-build-btn">Print / PDF</button>
+          <div class="output-toolbar-primary">
+            <button type="button" class="secondary" id="collapsePanelsBtn" data-testid="collapse-panels-btn" title="Collapse all output panels">Collapse Panels</button>
+            <button type="button" class="secondary" id="expandPanelsBtn" data-testid="expand-panels-btn" title="Expand all output panels">Expand Panels</button>
+            <span class="toolbar-divider" aria-hidden="true"></span>
+            <button type="button" class="secondary" id="copyLoadoutBtn" data-testid="copy-loadout-btn">Copy Loadout</button>
+            <button type="button" class="secondary" id="copyShareLinkBtn" data-testid="copy-share-link-btn">Copy Share Link</button>
+          </div>
+          <details class="output-toolbar-more">
+            <summary class="output-toolbar-more-summary">More</summary>
+            <div class="output-toolbar-more-inner">
+              <button type="button" class="secondary" id="printBuildBtn" data-testid="print-build-btn">Print / PDF</button>
+            </div>
+          </details>
         </div>
         <div id="outputActionMessage" class="build-action-message"></div>
 

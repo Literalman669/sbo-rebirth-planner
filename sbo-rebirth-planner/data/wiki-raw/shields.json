@@ -1,6 +1,6 @@
 {
-  "extractedAt": "2026-02-26T10:20:02.721Z",
-  "count": 61,
+  "extractedAt": "2026-04-25T08:57:57.794Z",
+  "count": 62,
   "items": [
     {
       "name": "Liberator Shield",
@@ -900,29 +900,6 @@
       "slot": "shield"
     },
     {
-      "name": "Summer Atlantean Shield Mk II",
-      "levelReq": 70,
-      "defense": 45.9,
-      "dexterity": null,
-      "worth": 240,
-      "howToObtain": "Summer Event: Blacksmithin",
-      "raw": {
-        "title1": "Summer Atlantean Shield Mk II",
-        "image1": "Summer Atlantean Shield Mk II.png",
-        "equipment_type": "Shields",
-        "level_req": "Level 70",
-        "defense": "45.9",
-        "craftable": "✔",
-        "tradable": "✔",
-        "worth": "240 Seashell",
-        "can_be_sold": "X",
-        "how_to_obtain": "Summer Event: Blacksmithin"
-      },
-      "wikiTitle": "Summer Atlantean Shield Mk II",
-      "wikiUrl": "https://swordbloxonlinerebirth.fandom.com/wiki/Summer_Atlantean_Shield_Mk_II",
-      "slot": "shield"
-    },
-    {
       "name": "Cornucopia Shield Mk III",
       "levelReq": 190,
       "defense": 177.9,
@@ -1124,6 +1101,29 @@
       },
       "wikiTitle": "Integrity Petal Shield",
       "wikiUrl": "https://swordbloxonlinerebirth.fandom.com/wiki/Integrity_Petal_Shield",
+      "slot": "shield"
+    },
+    {
+      "name": "Stillfrost Mirror",
+      "levelReq": 190,
+      "defense": 177.9,
+      "dexterity": null,
+      "worth": 72200,
+      "howToObtain": "Q118 (When the Frost Sleeps",
+      "raw": {
+        "title1": "Stillfrost Mirror",
+        "image1": "Stillfrost Mirror.png",
+        "level_req": "Level 190",
+        "craftable": "X",
+        "tradable": "X",
+        "defense": "177.9",
+        "equipment_type": "Shields",
+        "worth": "72,200 col",
+        "can_be_sold": "X",
+        "how_to_obtain": "Q118 (When the Frost Sleeps"
+      },
+      "wikiTitle": "Stillfrost Mirror",
+      "wikiUrl": "https://swordbloxonlinerebirth.fandom.com/wiki/Stillfrost_Mirror",
       "slot": "shield"
     },
     {
@@ -1331,6 +1331,29 @@
       },
       "wikiTitle": "Summer Seashell Shield Mk V",
       "wikiUrl": "https://swordbloxonlinerebirth.fandom.com/wiki/Summer_Seashell_Shield_Mk_V",
+      "slot": "shield"
+    },
+    {
+      "name": "Summer Atlantean Shield Mk II",
+      "levelReq": 70,
+      "defense": 45.9,
+      "dexterity": null,
+      "worth": 240,
+      "howToObtain": "Summer Event: Blacksmithin",
+      "raw": {
+        "title1": "Summer Atlantean Shield Mk II",
+        "image1": "Summer Atlantean Shield Mk II.png",
+        "equipment_type": "Shields",
+        "level_req": "Level 70",
+        "defense": "45.9",
+        "craftable": "✔",
+        "tradable": "✔",
+        "worth": "240 Seashell",
+        "can_be_sold": "X",
+        "how_to_obtain": "Summer Event: Blacksmithin"
+      },
+      "wikiTitle": "Summer Atlantean Shield Mk II",
+      "wikiUrl": "https://swordbloxonlinerebirth.fandom.com/wiki/Summer_Atlantean_Shield_Mk_II",
       "slot": "shield"
     },
     {

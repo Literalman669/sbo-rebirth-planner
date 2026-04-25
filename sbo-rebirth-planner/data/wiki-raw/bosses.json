@@ -1,5 +1,5 @@
 {
-  "extractedAt": "2026-02-26T10:20:04.940Z",
+  "extractedAt": "2026-04-25T08:57:59.965Z",
   "bosses": [
     {
       "name": "Illfang The Kobold Lord",
@@ -688,11 +688,11 @@
     {
       "name": "Sunwarden Caelis",
       "hp": null,
-      "recLevel": 2,
-      "exp": 36000,
-      "col": 4800,
-      "respawn": "180s",
-      "location": "Floor-Nineteen",
+      "recLevel": 210,
+      "exp": null,
+      "col": null,
+      "respawn": "",
+      "location": "",
       "drops": "Glacial Dust, Veilpiecer, Radiant Frost Sigil, Pure Glacial Essence",
       "rareDrops": "",
       "lastHitBonus": "",
@@ -700,15 +700,20 @@
         "title1": "{{PAGENAME}}",
         "image1": "{{PAGENAME}}.png",
         "caption1": "",
-        "row1": "180s",
+        "row1": "",
         "row2": "",
-        "row3": "Floor-Nineteen",
-        "row4": "36000",
-        "row5": "4800",
+        "row3": "",
+        "row4": "",
+        "row5": "",
         "drops": "Glacial Dust, Veilpiecer, Radiant Frost Sigil, Pure Glacial Essence",
         "rare_drops": "",
         "max_health": "??? HP",
-        "level": "2"
+        "level": "210",
+        "exp": "37800",
+        "col": "5040",
+        "location": "Floor-Nineteen",
+        "skill_level_cap": "∞",
+        "respawn_time": "18"
       },
       "wikiTitle": "Sunwarden Caelis",
       "wikiUrl": "https://swordbloxonlinerebirth.fandom.com/wiki/Sunwarden_Caelis"
@@ -1088,7 +1093,8 @@
         "status_effect": "Poison",
         "last_hit_bonus": "",
         "max_health": "531,000 HP",
-        "level": "160"
+        "level": "160",
+        "skill_level_cap": "3"
       },
       "wikiTitle": "Leader Goblin",
       "wikiUrl": "https://swordbloxonlinerebirth.fandom.com/wiki/Leader_Goblin"

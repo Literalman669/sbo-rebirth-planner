@@ -1,6 +1,6 @@
 {
-  "extractedAt": "2026-02-26T10:19:52.392Z",
-  "count": 542,
+  "extractedAt": "2026-04-25T08:57:46.947Z",
+  "count": 544,
   "items": [
     {
       "name": "Butterfly Blade",
@@ -295,31 +295,6 @@
       },
       "wikiTitle": "Atlantic Enguarde",
       "wikiUrl": "https://swordbloxonlinerebirth.fandom.com/wiki/Atlantic_Enguarde",
-      "slot": "weapon"
-    },
-    {
-      "name": "Butterfly Rapier",
-      "attack": 624,
-      "skillReq": 165,
-      "skillMax": false,
-      "colValue": 47792,
-      "location": "Dead Samurai, Floor 10 Shop",
-      "weaponType": "Rapier",
-      "raw": {
-        "title1": "Butterfly Rapier",
-        "image1": "Butterfly_Rapier.png",
-        "caption1": "",
-        "craftable": "X",
-        "tradable": "✔",
-        "skill_level": "Skill 165",
-        "damage": "624 ATK",
-        "location": "Dead Samurai, Floor 10 Shop",
-        "weapon_type": "Rapier",
-        "col_value": "47792 Col",
-        "sellable": ""
-      },
-      "wikiTitle": "Butterfly Rapier",
-      "wikiUrl": "https://swordbloxonlinerebirth.fandom.com/wiki/Butterfly_Rapier",
       "slot": "weapon"
     },
     {
@@ -1175,6 +1150,29 @@
       "slot": "weapon"
     },
     {
+      "name": "Aurora Rapier",
+      "attack": 1886,
+      "skillReq": 370,
+      "skillMax": false,
+      "colValue": 107298,
+      "location": "Sunstone Mercha",
+      "weaponType": "Rapier",
+      "raw": {
+        "title1": "Aurora Rapier",
+        "image1": "Aurora Rapier.png",
+        "weapon_type": "Rapier",
+        "skill_level": "370",
+        "damage": "1886",
+        "tradable": "✔",
+        "col_value": "107,298 Col",
+        "sellable": "✔",
+        "location": "Sunstone Mercha"
+      },
+      "wikiTitle": "Aurora Rapier",
+      "wikiUrl": "https://swordbloxonlinerebirth.fandom.com/wiki/Aurora_Rapier",
+      "slot": "weapon"
+    },
+    {
       "name": "{{PAGENAME}}",
       "attack": 2481,
       "skillReq": 410,
@@ -1295,6 +1293,31 @@
       },
       "wikiTitle": "Corroded Piercer",
       "wikiUrl": "https://swordbloxonlinerebirth.fandom.com/wiki/Corroded_Piercer",
+      "slot": "weapon"
+    },
+    {
+      "name": "Butterfly Rapier",
+      "attack": 624,
+      "skillReq": 165,
+      "skillMax": false,
+      "colValue": 47792,
+      "location": "Dead Samurai, Floor 10 Shop",
+      "weaponType": "Rapier",
+      "raw": {
+        "title1": "Butterfly Rapier",
+        "image1": "Butterfly_Rapier.png",
+        "caption1": "",
+        "craftable": "X",
+        "tradable": "✔",
+        "skill_level": "Skill 165",
+        "damage": "624 ATK",
+        "location": "Dead Samurai, Floor 10 Shop",
+        "weapon_type": "Rapier",
+        "col_value": "47792 Col",
+        "sellable": ""
+      },
+      "wikiTitle": "Butterfly Rapier",
+      "wikiUrl": "https://swordbloxonlinerebirth.fandom.com/wiki/Butterfly_Rapier",
       "slot": "weapon"
     },
     {
@@ -1688,31 +1711,6 @@
       },
       "wikiTitle": "Dark Steel Greatsword",
       "wikiUrl": "https://swordbloxonlinerebirth.fandom.com/wiki/Dark_Steel_Greatsword",
-      "slot": "weapon"
-    },
-    {
-      "name": "Dark Steel Rapier",
-      "attack": 252,
-      "skillReq": 85,
-      "skillMax": false,
-      "colValue": 24592,
-      "location": "Floor 5 Shop",
-      "weaponType": "Rapier",
-      "raw": {
-        "title1": "Dark Steel Rapier",
-        "image1": "Dark Steel Rapier.png",
-        "caption1": "",
-        "craftable": "X",
-        "tradable": "✔",
-        "skill_level": "Skill 85",
-        "damage": "252 ATK",
-        "location": "Floor 5 Shop",
-        "weapon_type": "Rapier",
-        "col_value": "24592 Col",
-        "sellable": ""
-      },
-      "wikiTitle": "Dark Steel Rapier",
-      "wikiUrl": "https://swordbloxonlinerebirth.fandom.com/wiki/Dark_Steel_Rapier",
       "slot": "weapon"
     },
     {
@@ -2730,6 +2728,31 @@
       "slot": "weapon"
     },
     {
+      "name": "Dark Steel Rapier",
+      "attack": 252,
+      "skillReq": 85,
+      "skillMax": false,
+      "colValue": 24592,
+      "location": "Floor 5 Shop",
+      "weaponType": "Rapier",
+      "raw": {
+        "title1": "Dark Steel Rapier",
+        "image1": "Dark Steel Rapier.png",
+        "caption1": "",
+        "craftable": "X",
+        "tradable": "✔",
+        "skill_level": "Skill 85",
+        "damage": "252 ATK",
+        "location": "Floor 5 Shop",
+        "weapon_type": "Rapier",
+        "col_value": "24592 Col",
+        "sellable": ""
+      },
+      "wikiTitle": "Dark Steel Rapier",
+      "wikiUrl": "https://swordbloxonlinerebirth.fandom.com/wiki/Dark_Steel_Rapier",
+      "slot": "weapon"
+    },
+    {
       "name": "Deepsea Challenger",
       "attack": 523,
       "skillReq": 145,
@@ -2922,31 +2945,6 @@
       },
       "wikiTitle": "Eggcelerate Épée",
       "wikiUrl": "https://swordbloxonlinerebirth.fandom.com/wiki/Eggcelerate_%C3%89p%C3%A9e",
-      "slot": "weapon"
-    },
-    {
-      "name": "Eggcelerate Épée Mk II",
-      "attack": 548,
-      "skillReq": 150,
-      "skillMax": false,
-      "colValue": 250,
-      "location": "Easter Event: Blacksmithing",
-      "weaponType": "Rapier",
-      "raw": {
-        "title1": "Eggcelerate Épée Mk II",
-        "image1": "Eggcelerate Épée Mk II.png",
-        "caption1": "",
-        "weapon_type": "Rapier",
-        "craftable": "✔",
-        "tradable": "✔",
-        "skill_level": "Skill 150",
-        "damage": "548 ATK",
-        "location": "Easter Event: Blacksmithing",
-        "col_value": "250 Easter Egg",
-        "sellable": ""
-      },
-      "wikiTitle": "Eggcelerate Épée Mk II",
-      "wikiUrl": "https://swordbloxonlinerebirth.fandom.com/wiki/Eggcelerate_%C3%89p%C3%A9e_Mk_II",
       "slot": "weapon"
     },
     {
@@ -4220,6 +4218,31 @@
       "slot": "weapon"
     },
     {
+      "name": "Eggcelerate Épée Mk II",
+      "attack": 548,
+      "skillReq": 150,
+      "skillMax": false,
+      "colValue": 250,
+      "location": "Easter Event: Blacksmithing",
+      "weaponType": "Rapier",
+      "raw": {
+        "title1": "Eggcelerate Épée Mk II",
+        "image1": "Eggcelerate Épée Mk II.png",
+        "caption1": "",
+        "weapon_type": "Rapier",
+        "craftable": "✔",
+        "tradable": "✔",
+        "skill_level": "Skill 150",
+        "damage": "548 ATK",
+        "location": "Easter Event: Blacksmithing",
+        "col_value": "250 Easter Egg",
+        "sellable": ""
+      },
+      "wikiTitle": "Eggcelerate Épée Mk II",
+      "wikiUrl": "https://swordbloxonlinerebirth.fandom.com/wiki/Eggcelerate_%C3%89p%C3%A9e_Mk_II",
+      "slot": "weapon"
+    },
+    {
       "name": "Eggcelerate Épée Mk III",
       "attack": 955,
       "skillReq": 225,
@@ -4596,31 +4619,6 @@
     },
     {
       "name": "{{PAGENAME}}",
-      "attack": 1111,
-      "skillReq": 228,
-      "skillMax": false,
-      "colValue": 400,
-      "location": "Christmas Event: Blacksmithin",
-      "weaponType": "One Handed",
-      "raw": {
-        "title1": "{{PAGENAME}}",
-        "image1": "Frostbitten Blade Mk III.png",
-        "caption1": "",
-        "weapon_type": "One Handed",
-        "skill_level": "Skill 228",
-        "damage": "1111 ATK",
-        "craftable": "✔",
-        "tradable": "✔",
-        "col_value": "400 Coal",
-        "sellable": "X",
-        "location": "Christmas Event: Blacksmithin"
-      },
-      "wikiTitle": "Frostbitten Blade Mk III",
-      "wikiUrl": "https://swordbloxonlinerebirth.fandom.com/wiki/Frostbitten_Blade_Mk_III",
-      "slot": "weapon"
-    },
-    {
-      "name": "{{PAGENAME}}",
       "attack": 1400,
       "skillReq": 270,
       "skillMax": false,
@@ -4914,31 +4912,6 @@
       },
       "wikiTitle": "Glade Blade",
       "wikiUrl": "https://swordbloxonlinerebirth.fandom.com/wiki/Glade_Blade",
-      "slot": "weapon"
-    },
-    {
-      "name": "Grimms Scythe",
-      "attack": 4,
-      "skillReq": 1,
-      "skillMax": true,
-      "colValue": 0,
-      "location": "Grim",
-      "weaponType": "Two Handed",
-      "raw": {
-        "title1": "Grimms Scythe",
-        "image1": "Grimms Scythe.png",
-        "caption1": "",
-        "craftable": "X",
-        "tradable": "X",
-        "skill_level": "Skill 1 [Min]\nSkill 270 [Max]",
-        "damage": "4 ATK [Min]\n1910 ATK [Max]",
-        "location": "Grim",
-        "weapon_type": "Two Handed",
-        "col_value": "0 Col",
-        "sellable": ""
-      },
-      "wikiTitle": "Grimms Scythe",
-      "wikiUrl": "https://swordbloxonlinerebirth.fandom.com/wiki/Grimms_Scythe",
       "slot": "weapon"
     },
     {
@@ -5770,6 +5743,31 @@
     },
     {
       "name": "{{PAGENAME}}",
+      "attack": 1111,
+      "skillReq": 228,
+      "skillMax": false,
+      "colValue": 400,
+      "location": "Christmas Event: Blacksmithin",
+      "weaponType": "One Handed",
+      "raw": {
+        "title1": "{{PAGENAME}}",
+        "image1": "Frostbitten Blade Mk III.png",
+        "caption1": "",
+        "weapon_type": "One Handed",
+        "skill_level": "Skill 228",
+        "damage": "1111 ATK",
+        "craftable": "✔",
+        "tradable": "✔",
+        "col_value": "400 Coal",
+        "sellable": "X",
+        "location": "Christmas Event: Blacksmithin"
+      },
+      "wikiTitle": "Frostbitten Blade Mk III",
+      "wikiUrl": "https://swordbloxonlinerebirth.fandom.com/wiki/Frostbitten_Blade_Mk_III",
+      "slot": "weapon"
+    },
+    {
+      "name": "{{PAGENAME}}",
       "attack": 1647,
       "skillReq": 304,
       "skillMax": false,
@@ -6057,27 +6055,6 @@
       "slot": "weapon"
     },
     {
-      "name": "Griefspire MKV",
-      "attack": null,
-      "skillReq": null,
-      "skillMax": false,
-      "colValue": null,
-      "location": "",
-      "weaponType": "Rapier",
-      "raw": {
-        "title1": "Griefspire MKV",
-        "image1": "Griefspire MK V.png",
-        "weapon_type": "Rapier",
-        "skill_level": "N/A",
-        "damage": "N/A",
-        "craftable": "✔",
-        "tradable": "✔"
-      },
-      "wikiTitle": "Griefspire Mk V",
-      "wikiUrl": "https://swordbloxonlinerebirth.fandom.com/wiki/Griefspire_Mk_V",
-      "slot": "weapon"
-    },
-    {
       "name": "Frozen Whisper",
       "attack": 1949,
       "skillReq": 400,
@@ -6122,6 +6099,29 @@
       },
       "wikiTitle": "Glacier Splitter",
       "wikiUrl": "https://swordbloxonlinerebirth.fandom.com/wiki/Glacier_Splitter",
+      "slot": "weapon"
+    },
+    {
+      "name": "Frostfang Dagger",
+      "attack": 1751,
+      "skillReq": 370,
+      "skillMax": false,
+      "colValue": 107299,
+      "location": "Sunstone Mercha",
+      "weaponType": "Dagger",
+      "raw": {
+        "title1": "Frostfang Dagger",
+        "image1": "Frostfang Dagger.png",
+        "weapon_type": "Dagger",
+        "skill_level": "370",
+        "damage": "1751",
+        "tradable": "✔",
+        "col_value": "107,299 Col",
+        "sellable": "✔",
+        "location": "Sunstone Mercha"
+      },
+      "wikiTitle": "Frostfang Dagger",
+      "wikiUrl": "https://swordbloxonlinerebirth.fandom.com/wiki/Frostfang_Dagger",
       "slot": "weapon"
     },
     {
@@ -6393,6 +6393,31 @@
       },
       "wikiTitle": "Hecate",
       "wikiUrl": "https://swordbloxonlinerebirth.fandom.com/wiki/Hecate",
+      "slot": "weapon"
+    },
+    {
+      "name": "Grimms Scythe",
+      "attack": 4,
+      "skillReq": 1,
+      "skillMax": true,
+      "colValue": 0,
+      "location": "Grim",
+      "weaponType": "Two Handed",
+      "raw": {
+        "title1": "Grimms Scythe",
+        "image1": "Grimms Scythe.png",
+        "caption1": "",
+        "craftable": "X",
+        "tradable": "X",
+        "skill_level": "Skill 1 [Min]\nSkill 270 [Max]",
+        "damage": "4 ATK [Min]\n1910 ATK [Max]",
+        "location": "Grim",
+        "weapon_type": "Two Handed",
+        "col_value": "0 Col",
+        "sellable": ""
+      },
+      "wikiTitle": "Grimms Scythe",
+      "wikiUrl": "https://swordbloxonlinerebirth.fandom.com/wiki/Grimms_Scythe",
       "slot": "weapon"
     },
     {
@@ -6988,57 +7013,6 @@
     },
     {
       "name": "{{PAGENAME}}",
-      "attack": 1389,
-      "skillReq": 228,
-      "skillMax": false,
-      "colValue": 400,
-      "location": "Halloween Event: Blacksmithin",
-      "weaponType": "Two Handed",
-      "raw": {
-        "title1": "{{PAGENAME}}",
-        "image1": "LabrysSoulCleaverMkIII.png",
-        "caption1": "",
-        "weapon_type": "Two Handed",
-        "skill_level": "Skill 228",
-        "damage": "1389 ATK",
-        "craftable": "✔",
-        "tradable": "✔",
-        "col_value": "400 Candy Corn",
-        "sellable": "X",
-        "location": "Halloween Event: Blacksmithin"
-      },
-      "wikiTitle": "Labrys Soul Cleaver Mk III",
-      "wikiUrl": "https://swordbloxonlinerebirth.fandom.com/wiki/Labrys_Soul_Cleaver_Mk_III",
-      "slot": "weapon"
-    },
-    {
-      "name": "{{PAGENAME}}",
-      "attack": 2059,
-      "skillReq": 304,
-      "skillMax": false,
-      "colValue": 500,
-      "location": "Halloween Event: Blacksmithing",
-      "weaponType": "Two Handed",
-      "raw": {
-        "title1": "{{PAGENAME}}",
-        "image1": "LabrysSoulCleaverMkIV.png",
-        "caption1": "",
-        "weapon_type": "Two Handed",
-        "skill_level": "Skill 304",
-        "damage": "2059 ATK",
-        "craftable": "✔",
-        "tradable": "✔",
-        "col_value": "500 Candy Corn",
-        "sellable": "X",
-        "location": "Halloween Event: Blacksmithing",
-        "status_effect": "5% to inflict paralysis for 3 secon"
-      },
-      "wikiTitle": "Labrys Soul Cleaver Mk IV",
-      "wikiUrl": "https://swordbloxonlinerebirth.fandom.com/wiki/Labrys_Soul_Cleaver_Mk_IV",
-      "slot": "weapon"
-    },
-    {
-      "name": "{{PAGENAME}}",
       "attack": 1816,
       "skillReq": 380,
       "skillMax": false,
@@ -7188,6 +7162,27 @@
       },
       "wikiTitle": "Grimveil",
       "wikiUrl": "https://swordbloxonlinerebirth.fandom.com/wiki/Grimveil",
+      "slot": "weapon"
+    },
+    {
+      "name": "Griefspire MKV",
+      "attack": null,
+      "skillReq": null,
+      "skillMax": false,
+      "colValue": null,
+      "location": "",
+      "weaponType": "Rapier",
+      "raw": {
+        "title1": "Griefspire MKV",
+        "image1": "Griefspire MK V.png",
+        "weapon_type": "Rapier",
+        "skill_level": "N/A",
+        "damage": "N/A",
+        "craftable": "✔",
+        "tradable": "✔"
+      },
+      "wikiTitle": "Griefspire Mk V",
+      "wikiUrl": "https://swordbloxonlinerebirth.fandom.com/wiki/Griefspire_Mk_V",
       "slot": "weapon"
     },
     {
@@ -8013,31 +8008,6 @@
       "slot": "weapon"
     },
     {
-      "name": "Noble Rapier Mk II",
-      "attack": 20,
-      "skillReq": 13,
-      "skillMax": false,
-      "colValue": 3711,
-      "location": "Blacksmithing",
-      "weaponType": "Rapier",
-      "raw": {
-        "title1": "Noble Rapier Mk II",
-        "image1": "Noble Rapier Mk II.png",
-        "caption1": "",
-        "craftable": "✔",
-        "tradable": "✔",
-        "skill_level": "Skill 13",
-        "damage": "20 ATK",
-        "location": "Blacksmithing",
-        "weapon_type": "Rapier",
-        "col_value": "3711 Col",
-        "sellable": ""
-      },
-      "wikiTitle": "Noble Rapier Mk II",
-      "wikiUrl": "https://swordbloxonlinerebirth.fandom.com/wiki/Noble_Rapier_Mk_II",
-      "slot": "weapon"
-    },
-    {
       "name": "Master Steel Greatsword Mk II",
       "attack": 29,
       "skillReq": 13,
@@ -8135,6 +8105,57 @@
       },
       "wikiTitle": "Lambent Light VI",
       "wikiUrl": "https://swordbloxonlinerebirth.fandom.com/wiki/Lambent_Light_VI",
+      "slot": "weapon"
+    },
+    {
+      "name": "{{PAGENAME}}",
+      "attack": 1389,
+      "skillReq": 228,
+      "skillMax": false,
+      "colValue": 400,
+      "location": "Halloween Event: Blacksmithin",
+      "weaponType": "Two Handed",
+      "raw": {
+        "title1": "{{PAGENAME}}",
+        "image1": "LabrysSoulCleaverMkIII.png",
+        "caption1": "",
+        "weapon_type": "Two Handed",
+        "skill_level": "Skill 228",
+        "damage": "1389 ATK",
+        "craftable": "✔",
+        "tradable": "✔",
+        "col_value": "400 Candy Corn",
+        "sellable": "X",
+        "location": "Halloween Event: Blacksmithin"
+      },
+      "wikiTitle": "Labrys Soul Cleaver Mk III",
+      "wikiUrl": "https://swordbloxonlinerebirth.fandom.com/wiki/Labrys_Soul_Cleaver_Mk_III",
+      "slot": "weapon"
+    },
+    {
+      "name": "{{PAGENAME}}",
+      "attack": 2059,
+      "skillReq": 304,
+      "skillMax": false,
+      "colValue": 500,
+      "location": "Halloween Event: Blacksmithing",
+      "weaponType": "Two Handed",
+      "raw": {
+        "title1": "{{PAGENAME}}",
+        "image1": "LabrysSoulCleaverMkIV.png",
+        "caption1": "",
+        "weapon_type": "Two Handed",
+        "skill_level": "Skill 304",
+        "damage": "2059 ATK",
+        "craftable": "✔",
+        "tradable": "✔",
+        "col_value": "500 Candy Corn",
+        "sellable": "X",
+        "location": "Halloween Event: Blacksmithing",
+        "status_effect": "5% to inflict paralysis for 3 secon"
+      },
+      "wikiTitle": "Labrys Soul Cleaver Mk IV",
+      "wikiUrl": "https://swordbloxonlinerebirth.fandom.com/wiki/Labrys_Soul_Cleaver_Mk_IV",
       "slot": "weapon"
     },
     {
@@ -8532,31 +8553,6 @@
       },
       "wikiTitle": "Nightshade Fang MK V",
       "wikiUrl": "https://swordbloxonlinerebirth.fandom.com/wiki/Nightshade_Fang_MK_V",
-      "slot": "weapon"
-    },
-    {
-      "name": "{{PAGENAME}}",
-      "attack": 1784,
-      "skillReq": 375,
-      "skillMax": false,
-      "colValue": null,
-      "location": "Blacksmithing, Requires Q111 Complete",
-      "weaponType": "Dagger",
-      "raw": {
-        "title1": "{{PAGENAME}}",
-        "image1": "{{PAGENAME}}.png",
-        "caption1": "",
-        "weapon_type": "Dagger",
-        "skill_level": "Skill 375",
-        "damage": "1784 ATK",
-        "craftable": "✔",
-        "tradable": "✔",
-        "col_value": "",
-        "sellable": "✔",
-        "location": "Blacksmithing, Requires Q111 Complete"
-      },
-      "wikiTitle": "Null Fang",
-      "wikiUrl": "https://swordbloxonlinerebirth.fandom.com/wiki/Null_Fang",
       "slot": "weapon"
     },
     {
@@ -9229,30 +9225,6 @@
       "slot": "weapon"
     },
     {
-      "name": "Shadow Buster",
-      "attack": 1364,
-      "skillReq": 225,
-      "skillMax": false,
-      "colValue": 65191,
-      "location": "Floor 12 Shop",
-      "weaponType": "Two Handed",
-      "raw": {
-        "title1": "Shadow Buster",
-        "image1": "Shadow Buster.png",
-        "caption1": "",
-        "craftable": "X",
-        "tradable": "✔",
-        "skill_level": "Skill 225",
-        "damage": "1364 ATK",
-        "location": "Floor 12 Shop",
-        "weapon_type": "Two Handed",
-        "col_value": "65191 Col"
-      },
-      "wikiTitle": "Shadow Buster",
-      "wikiUrl": "https://swordbloxonlinerebirth.fandom.com/wiki/Shadow_Buster",
-      "slot": "weapon"
-    },
-    {
       "name": "Scorched Crucible Backsword",
       "attack": 4,
       "skillReq": 1,
@@ -9323,6 +9295,31 @@
       },
       "wikiTitle": "Poisonous Cleaver",
       "wikiUrl": "https://swordbloxonlinerebirth.fandom.com/wiki/Poisonous_Cleaver",
+      "slot": "weapon"
+    },
+    {
+      "name": "Noble Rapier Mk II",
+      "attack": 20,
+      "skillReq": 13,
+      "skillMax": false,
+      "colValue": 3711,
+      "location": "Blacksmithing",
+      "weaponType": "Rapier",
+      "raw": {
+        "title1": "Noble Rapier Mk II",
+        "image1": "Noble Rapier Mk II.png",
+        "caption1": "",
+        "craftable": "✔",
+        "tradable": "✔",
+        "skill_level": "Skill 13",
+        "damage": "20 ATK",
+        "location": "Blacksmithing",
+        "weapon_type": "Rapier",
+        "col_value": "3711 Col",
+        "sellable": ""
+      },
+      "wikiTitle": "Noble Rapier Mk II",
+      "wikiUrl": "https://swordbloxonlinerebirth.fandom.com/wiki/Noble_Rapier_Mk_II",
       "slot": "weapon"
     },
     {
@@ -9426,31 +9423,6 @@
     },
     {
       "name": "{{PAGENAME}}",
-      "attack": 1613,
-      "skillReq": 330,
-      "skillMax": false,
-      "colValue": 95700,
-      "location": "[[Floor-Eighteen#Dungeon Shop|Floor 18 Squid Game Dungeon Merchant]",
-      "weaponType": "Rapier",
-      "raw": {
-        "title1": "{{PAGENAME}}",
-        "image1": "{{PAGENAME}}.png",
-        "caption1": "",
-        "weapon_type": "Rapier",
-        "skill_level": "Skill 330",
-        "damage": "1613 ATK",
-        "craftable": "X",
-        "tradable": "✔",
-        "col_value": "95700 Col",
-        "sellable": "✔",
-        "location": "[[Floor-Eighteen#Dungeon Shop|Floor 18 Squid Game Dungeon Merchant]"
-      },
-      "wikiTitle": "Sentry Sting",
-      "wikiUrl": "https://swordbloxonlinerebirth.fandom.com/wiki/Sentry_Sting",
-      "slot": "weapon"
-    },
-    {
-      "name": "{{PAGENAME}}",
       "attack": 2745,
       "skillReq": 375,
       "skillMax": false,
@@ -9472,6 +9444,31 @@
       },
       "wikiTitle": "Obsidian Breaker",
       "wikiUrl": "https://swordbloxonlinerebirth.fandom.com/wiki/Obsidian_Breaker",
+      "slot": "weapon"
+    },
+    {
+      "name": "{{PAGENAME}}",
+      "attack": 1784,
+      "skillReq": 375,
+      "skillMax": false,
+      "colValue": null,
+      "location": "Blacksmithing, Requires Q111 Complete",
+      "weaponType": "Dagger",
+      "raw": {
+        "title1": "{{PAGENAME}}",
+        "image1": "{{PAGENAME}}.png",
+        "caption1": "",
+        "weapon_type": "Dagger",
+        "skill_level": "Skill 375",
+        "damage": "1784 ATK",
+        "craftable": "✔",
+        "tradable": "✔",
+        "col_value": "",
+        "sellable": "✔",
+        "location": "Blacksmithing, Requires Q111 Complete"
+      },
+      "wikiTitle": "Null Fang",
+      "wikiUrl": "https://swordbloxonlinerebirth.fandom.com/wiki/Null_Fang",
       "slot": "weapon"
     },
     {
@@ -10198,6 +10195,30 @@
       "slot": "weapon"
     },
     {
+      "name": "Shadow Buster",
+      "attack": 1364,
+      "skillReq": 225,
+      "skillMax": false,
+      "colValue": 65191,
+      "location": "Floor 12 Shop",
+      "weaponType": "Two Handed",
+      "raw": {
+        "title1": "Shadow Buster",
+        "image1": "Shadow Buster.png",
+        "caption1": "",
+        "craftable": "X",
+        "tradable": "✔",
+        "skill_level": "Skill 225",
+        "damage": "1364 ATK",
+        "location": "Floor 12 Shop",
+        "weapon_type": "Two Handed",
+        "col_value": "65191 Col"
+      },
+      "wikiTitle": "Shadow Buster",
+      "wikiUrl": "https://swordbloxonlinerebirth.fandom.com/wiki/Shadow_Buster",
+      "slot": "weapon"
+    },
+    {
       "name": "Stalhrim Greatsword",
       "attack": 1201,
       "skillReq": 205,
@@ -10496,31 +10517,6 @@
       "slot": "weapon"
     },
     {
-      "name": "Summer Atlantean Sabre",
-      "attack": 217,
-      "skillReq": 76,
-      "skillMax": false,
-      "colValue": 150,
-      "location": "Summer Event: Summer Sho",
-      "weaponType": "Rapier",
-      "raw": {
-        "title1": "Summer Atlantean Sabre",
-        "image1": "Summer Atlantean Sabre.png",
-        "caption1": "",
-        "weapon_type": "Rapier",
-        "skill_level": "Skill 76",
-        "damage": "217 ATK",
-        "craftable": "X",
-        "tradable": "✔",
-        "col_value": "150 Seashell",
-        "sellable": "X",
-        "location": "Summer Event: Summer Sho"
-      },
-      "wikiTitle": "Summer Atlantean Sabre",
-      "wikiUrl": "https://swordbloxonlinerebirth.fandom.com/wiki/Summer_Atlantean_Sabre",
-      "slot": "weapon"
-    },
-    {
       "name": "Summer Atlantean Dagger",
       "attack": 201,
       "skillReq": 76,
@@ -10618,31 +10614,6 @@
       },
       "wikiTitle": "Summer Atlantean Dagger Mk IV",
       "wikiUrl": "https://swordbloxonlinerebirth.fandom.com/wiki/Summer_Atlantean_Dagger_Mk_IV",
-      "slot": "weapon"
-    },
-    {
-      "name": "Summer Atlantean Dagger Mk V",
-      "attack": 1816,
-      "skillReq": 380,
-      "skillMax": false,
-      "colValue": 550,
-      "location": "Summer Event: [[Blacksmithing]",
-      "weaponType": "Dagger",
-      "raw": {
-        "title1": "Summer Atlantean Dagger Mk V",
-        "image1": "Summer Atlantean Dagger Mk V.png",
-        "caption1": "",
-        "weapon_type": "Dagger",
-        "skill_level": "Skill 380",
-        "damage": "1816 ATK",
-        "craftable": "✔",
-        "tradable": "✔",
-        "col_value": "550 Seashell",
-        "sellable": "X",
-        "location": "Summer Event: [[Blacksmithing]"
-      },
-      "wikiTitle": "Summer Atlantean Dagger Mk V",
-      "wikiUrl": "https://swordbloxonlinerebirth.fandom.com/wiki/Summer_Atlantean_Dagger_Mk_V",
       "slot": "weapon"
     },
     {
@@ -10765,6 +10736,31 @@
       },
       "wikiTitle": "Spectral Whisper MK V",
       "wikiUrl": "https://swordbloxonlinerebirth.fandom.com/wiki/Spectral_Whisper_MK_V",
+      "slot": "weapon"
+    },
+    {
+      "name": "{{PAGENAME}}",
+      "attack": 1613,
+      "skillReq": 330,
+      "skillMax": false,
+      "colValue": 95700,
+      "location": "[[Floor-Eighteen#Dungeon Shop|Floor 18 Squid Game Dungeon Merchant]",
+      "weaponType": "Rapier",
+      "raw": {
+        "title1": "{{PAGENAME}}",
+        "image1": "{{PAGENAME}}.png",
+        "caption1": "",
+        "weapon_type": "Rapier",
+        "skill_level": "Skill 330",
+        "damage": "1613 ATK",
+        "craftable": "X",
+        "tradable": "✔",
+        "col_value": "95700 Col",
+        "sellable": "✔",
+        "location": "[[Floor-Eighteen#Dungeon Shop|Floor 18 Squid Game Dungeon Merchant]"
+      },
+      "wikiTitle": "Sentry Sting",
+      "wikiUrl": "https://swordbloxonlinerebirth.fandom.com/wiki/Sentry_Sting",
       "slot": "weapon"
     },
     {
@@ -11961,6 +11957,31 @@
       "slot": "weapon"
     },
     {
+      "name": "Summer Atlantean Sabre",
+      "attack": 217,
+      "skillReq": 76,
+      "skillMax": false,
+      "colValue": 150,
+      "location": "Summer Event: Summer Sho",
+      "weaponType": "Rapier",
+      "raw": {
+        "title1": "Summer Atlantean Sabre",
+        "image1": "Summer Atlantean Sabre.png",
+        "caption1": "",
+        "weapon_type": "Rapier",
+        "skill_level": "Skill 76",
+        "damage": "217 ATK",
+        "craftable": "X",
+        "tradable": "✔",
+        "col_value": "150 Seashell",
+        "sellable": "X",
+        "location": "Summer Event: Summer Sho"
+      },
+      "wikiTitle": "Summer Atlantean Sabre",
+      "wikiUrl": "https://swordbloxonlinerebirth.fandom.com/wiki/Summer_Atlantean_Sabre",
+      "slot": "weapon"
+    },
+    {
       "name": "Summer Atlantean Sabre Mk II",
       "attack": 558,
       "skillReq": 152,
@@ -12061,6 +12082,31 @@
       "slot": "weapon"
     },
     {
+      "name": "Summer Atlantean Dagger Mk V",
+      "attack": 1816,
+      "skillReq": 380,
+      "skillMax": false,
+      "colValue": 550,
+      "location": "Summer Event: [[Blacksmithing]",
+      "weaponType": "Dagger",
+      "raw": {
+        "title1": "Summer Atlantean Dagger Mk V",
+        "image1": "Summer Atlantean Dagger Mk V.png",
+        "caption1": "",
+        "weapon_type": "Dagger",
+        "skill_level": "Skill 380",
+        "damage": "1816 ATK",
+        "craftable": "✔",
+        "tradable": "✔",
+        "col_value": "550 Seashell",
+        "sellable": "X",
+        "location": "Summer Event: [[Blacksmithing]"
+      },
+      "wikiTitle": "Summer Atlantean Dagger Mk V",
+      "wikiUrl": "https://swordbloxonlinerebirth.fandom.com/wiki/Summer_Atlantean_Dagger_Mk_V",
+      "slot": "weapon"
+    },
+    {
       "name": "Umbral Fangblade",
       "attack": 252,
       "skillReq": 77,
@@ -12079,48 +12125,6 @@
       },
       "wikiTitle": "Umbral Fangblade",
       "wikiUrl": "https://swordbloxonlinerebirth.fandom.com/wiki/Umbral_Fangblade",
-      "slot": "weapon"
-    },
-    {
-      "name": "Umbral Fangblade MK II",
-      "attack": null,
-      "skillReq": null,
-      "skillMax": false,
-      "colValue": null,
-      "location": "",
-      "weaponType": "One Handed",
-      "raw": {
-        "title1": "Umbral Fangblade MK II",
-        "image1": "Umbral Fangblade MK II.png",
-        "weapon_type": "One Handed",
-        "skill_level": "N/A",
-        "damage": "N/A",
-        "craftable": "✔",
-        "tradable": "✔"
-      },
-      "wikiTitle": "Umbral Fangblade Mk II",
-      "wikiUrl": "https://swordbloxonlinerebirth.fandom.com/wiki/Umbral_Fangblade_Mk_II",
-      "slot": "weapon"
-    },
-    {
-      "name": "Umbral Fangblade MK III",
-      "attack": 1138,
-      "skillReq": 232,
-      "skillMax": false,
-      "colValue": null,
-      "location": "",
-      "weaponType": "One Handed",
-      "raw": {
-        "title1": "Umbral Fangblade MK III",
-        "image1": "Umbral Fangblade MK III.png",
-        "weapon_type": "One Handed",
-        "skill_level": "232",
-        "damage": "1138",
-        "craftable": "✔",
-        "tradable": "✔"
-      },
-      "wikiTitle": "Umbral Fangblade Mk III",
-      "wikiUrl": "https://swordbloxonlinerebirth.fandom.com/wiki/Umbral_Fangblade_Mk_III",
       "slot": "weapon"
     },
     {
@@ -13206,6 +13210,48 @@
       },
       "wikiTitle": "Winter Holiday Dagger Mk V",
       "wikiUrl": "https://swordbloxonlinerebirth.fandom.com/wiki/Winter_Holiday_Dagger_Mk_V",
+      "slot": "weapon"
+    },
+    {
+      "name": "Umbral Fangblade MK II",
+      "attack": null,
+      "skillReq": null,
+      "skillMax": false,
+      "colValue": null,
+      "location": "",
+      "weaponType": "One Handed",
+      "raw": {
+        "title1": "Umbral Fangblade MK II",
+        "image1": "Umbral Fangblade MK II.png",
+        "weapon_type": "One Handed",
+        "skill_level": "N/A",
+        "damage": "N/A",
+        "craftable": "✔",
+        "tradable": "✔"
+      },
+      "wikiTitle": "Umbral Fangblade Mk II",
+      "wikiUrl": "https://swordbloxonlinerebirth.fandom.com/wiki/Umbral_Fangblade_Mk_II",
+      "slot": "weapon"
+    },
+    {
+      "name": "Umbral Fangblade MK III",
+      "attack": 1138,
+      "skillReq": 232,
+      "skillMax": false,
+      "colValue": null,
+      "location": "",
+      "weaponType": "One Handed",
+      "raw": {
+        "title1": "Umbral Fangblade MK III",
+        "image1": "Umbral Fangblade MK III.png",
+        "weapon_type": "One Handed",
+        "skill_level": "232",
+        "damage": "1138",
+        "craftable": "✔",
+        "tradable": "✔"
+      },
+      "wikiTitle": "Umbral Fangblade Mk III",
+      "wikiUrl": "https://swordbloxonlinerebirth.fandom.com/wiki/Umbral_Fangblade_Mk_III",
       "slot": "weapon"
     },
     {

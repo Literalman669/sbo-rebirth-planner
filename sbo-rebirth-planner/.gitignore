@@ -10,3 +10,6 @@ windsurf_deployment.yaml
 # Environment and secrets
 .env
 .env.local
+
+# Local UI audit screenshots (npm / Playwright)
+ui-audit/

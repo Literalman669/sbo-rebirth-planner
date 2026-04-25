@@ -1,11 +1,11 @@
-# Wiki vs Catalog Diff — 2026-02-26
+# Wiki vs Catalog Diff — 2026-04-25
 
 Compare `data/wiki-raw/*.json` with `data.js` and `boss-data.js`.
 
 ---
 
 ## Weapons
-- **NEW:** 274 | **CHANGED:** 23 | **IN_CATALOG_ONLY:** 59
+- **NEW:** 276 | **CHANGED:** 23 | **IN_CATALOG_ONLY:** 59
 
 ### NEW (in wiki, not in catalog)
 | Name | Attack | Skill | Col | weaponType |
@@ -37,10 +37,10 @@ Compare `data/wiki-raw/*.json` with `data.js` and `boss-data.js`.
 | Bloodborne Dominion MK III | - | - | - | Two Handed |
 | Bloodborne Dominion MK IV | - | - | - | Two Handed |
 | Bloodborne Dominion MK V | - | - | - | Two Handed |
+| Aurora Rapier | 1886 | 370 | 107298 | Rapier |
 | Corroded Piercer | 573 | 155 | 44892 | Rapier |
 | Coladas Black Blade | 757 | 190 | 55099 | Rapier |
-| Candy Cane Rapier | 6 | 1 | 300 | Rapier |
-| ... and 244 more |
+| ... and 246 more |
 
 ### CHANGED (stats differ)
 | Name | Field | Catalog | Wiki |
@@ -91,7 +91,7 @@ Compare `data/wiki-raw/*.json` with `data.js` and `boss-data.js`.
 | Cloak of Ice | 40 | - | 65 |
 
 ## Shields
-- **NEW:** 31 | **CHANGED:** 13 | **IN_CATALOG_ONLY:** 1
+- **NEW:** 32 | **CHANGED:** 13 | **IN_CATALOG_ONLY:** 1
 
 ## Bosses
 - **NEW:** 22 | **CHANGED:** 9 | **IN_CATALOG_ONLY:** 1
