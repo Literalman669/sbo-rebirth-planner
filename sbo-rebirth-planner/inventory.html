@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SBO:Rebirth Inventory v0.9.3</title>
+    <meta name="description" content="Structured owned inventory manager for SBO:Rebirth planner." />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%23225964'/><text x='16' y='23' text-anchor='middle' font-size='20' font-family='serif' fill='%23a8e6d8'>⚔</text></svg>" />
+    <script>try{var t=localStorage.getItem('sbo-theme');if(t)document.documentElement.dataset.theme=t;}catch(e){}</script>
+    <link rel="stylesheet" href="./styles.css?v=0.9.3" />
+  </head>
+  <body>
+    <header class="page-header">
+      <h1>SBO:Rebirth Inventory</h1>
+      <p class="subtitle">Manage owned gear with structured filters and persistent sync to Planner.</p>
+    </header>
+
+    <nav class="tab-nav">
+      <a href="./dashboard.html" class="tab-link">Dashboard</a>
+      <a href="./index.html" class="tab-link">Planner</a>
+      <a href="./inventory.html" class="tab-link active">Inventory</a>
+      <a href="./boss.html" class="tab-link">Bosses</a>
+      <a href="./progress.html" class="tab-link">Progress</a>
+      <a href="./tools.html" class="tab-link">Tools</a>
+      <button type="button" class="theme-toggle-btn" id="themeToggleBtn" title="Toggle dark/light mode">☀</button>
+    </nav>
+
+    <main class="layout inventory-layout">
+      <section class="panel inventory-controls">
+        <h2>Owned Gear Controls</h2>
+        <div class="grid three">
+          <label>Search
+            <input type="search" id="invSearch" placeholder="Search name, id, slot..." />
+          </label>
+          <label>Slot
+            <select id="invSlot">
+              <option value="all">All slots</option>
+              <option value="weapon">Weapon</option>
+              <option value="armor">Armor</option>
+              <option value="upper">Headwear</option>
+              <option value="lower">Accessory</option>
+              <option value="shield">Shield</option>
+            </select>
+          </label>
+          <label>Max floor
+            <input type="number" id="invMaxFloor" min="1" max="99" value="19" />
+          </label>
+        </div>
+        <div class="grid three">
+          <label>Source
+            <select id="invSource">
+              <option value="all">All sources</option>
+              <option value="shop">Shop</option>
+              <option value="mob">Mob</option>
+              <option value="boss">Boss</option>
+              <option value="crafted">Crafted</option>
+              <option value="event">Event</option>
+              <option value="badge">Badge</option>
+              <option value="gamepass">Gamepass</option>
+            </select>
+          </label>
+          <label>Data quality
+            <select id="invQuality">
+              <option value="all">All</option>
+              <option value="exact">Exact only</option>
+              <option value="estimated">Estimated only</option>
+            </select>
+          </label>
+          <label>Sort
+            <select id="invSort">
+              <option value="floor-asc">Floor (low to high)</option>
+              <option value="floor-desc">Floor (high to low)</option>
+              <option value="name-asc">Name (A-Z)</option>
+              <option value="name-desc">Name (Z-A)</option>
+            </select>
+          </label>
+        </div>
+        <label class="checkbox-label compact inline-check">
+          <input type="checkbox" id="invOwnedOnly" />
+          <span>Show owned only</span>
+        </label>
+        <label class="checkbox-label compact inline-check">
+          <input type="checkbox" id="invFavoritesOnly" />
+          <span>Show favorites only</span>
+        </label>
+        <div class="button-row">
+          <button type="button" class="secondary" id="invMarkFilteredOwned">Mark filtered as owned</button>
+          <button type="button" class="secondary" id="invClearFilteredOwned">Clear filtered owned</button>
+          <button type="button" class="secondary ghost" id="invSaveOwned">Save to Planner</button>
+          <button type="button" class="secondary ghost" id="invExportOwned">Export owned list</button>
+          <button type="button" class="secondary ghost" id="invCopyOwned">Copy owned list</button>
+        </div>
+        <label>
+          Bulk paste (one item per line or comma separated)
+          <textarea id="invBulkPaste" rows="4" placeholder="Iron Greatsword&#10;Beginner Armor&#10;Coned Helmet"></textarea>
+        </label>
+        <div class="button-row">
+          <button type="button" class="secondary" id="invMergeBulk">Merge Bulk Into Owned</button>
+        </div>
+        <p id="invMessage" class="build-action-message"></p>
+      </section>
+
+      <section class="panel inventory-catalog">
+        <h2>Catalog</h2>
+        <p class="muted-text" id="invSummary"></p>
+        <div id="invSlotBreakdown" class="inventory-slot-breakdown"></div>
+        <div id="invList" class="owned-inventory-list inventory-list"></div>
+        <div class="button-row">
+          <button type="button" class="secondary compact" id="invPrevPageBtn">Prev</button>
+          <button type="button" class="secondary compact" id="invNextPageBtn">Next</button>
+          <span id="invPageInfo" class="muted-text"></span>
+        </div>
+      </section>
+
+      <section class="panel inventory-catalog">
+        <h2>Missing Upgrades (Next Floor)</h2>
+        <p class="muted-text" id="invMissingSummary"></p>
+        <div id="invMissingList" class="owned-inventory-list inventory-list"></div>
+      </section>
+
+      <section class="panel inventory-catalog">
+        <h2>Compare Selected Gear</h2>
+        <p class="muted-text" id="invCompareSummary">Select up to 4 items using “Compare” on catalog rows.</p>
+        <div id="invCompareList" class="progress-list"></div>
+      </section>
+    </main>
+
+    <script src="./data.js?v=0.9.3"></script>
+    <script src="./shared/state-adapter.js?v=0.9.3"></script>
+    <script src="./inventory.js?v=0.9.3"></script>
+  </body>
+</html>

@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SBO:Rebirth Progress v0.9.3</title>
+    <meta name="description" content="Track floor and boss progression for SBO:Rebirth planner." />
+    <script>try{var t=localStorage.getItem('sbo-theme');if(t)document.documentElement.dataset.theme=t;}catch(e){}</script>
+    <link rel="stylesheet" href="./styles.css?v=0.9.3" />
+  </head>
+  <body>
+    <header class="page-header">
+      <h1>SBO:Rebirth Progress</h1>
+      <p class="subtitle">Floor and boss progression in one focused view.</p>
+    </header>
+    <nav class="tab-nav">
+      <a href="./dashboard.html" class="tab-link">Dashboard</a>
+      <a href="./index.html" class="tab-link">Planner</a>
+      <a href="./inventory.html" class="tab-link">Inventory</a>
+      <a href="./boss.html" class="tab-link">Bosses</a>
+      <a href="./progress.html" class="tab-link active">Progress</a>
+      <a href="./tools.html" class="tab-link">Tools</a>
+      <button type="button" class="theme-toggle-btn" id="themeToggleBtn" title="Toggle dark/light mode">☀</button>
+    </nav>
+    <main class="layout dashboard-home-layout">
+      <section class="panel">
+        <h2>Progress Snapshot</h2>
+        <div class="dashboard-state-cards">
+          <article class="summary-card"><h4>Floors Cleared</h4><p id="progFloors" class="card-value">0</p></article>
+          <article class="summary-card"><h4>Bosses Beaten</h4><p id="progBosses" class="card-value">0</p></article>
+          <article class="summary-card"><h4>Owned Items</h4><p id="progOwned" class="card-value">0</p></article>
+        </div>
+        <div id="progFloorPills" class="progress-pill-row" aria-label="Cleared floors"></div>
+      </section>
+      <section class="panel">
+        <h2>Recent Boss Progress</h2>
+        <div id="progBossList" class="progress-list"></div>
+      </section>
+      <section class="panel">
+        <h2>Quick Navigation</h2>
+        <div class="dashboard-home-grid">
+          <a class="dashboard-home-card" href="./boss.html"><h3>Open Bosses</h3><p>Review readiness and boss progression.</p></a>
+          <a class="dashboard-home-card" href="./index.html"><h3>Open Planner</h3><p>Adjust build and track stat progress.</p></a>
+          <a class="dashboard-home-card" href="./tools.html"><h3>Open Tools</h3><p>Use backup, import, and advanced utilities.</p></a>
+        </div>
+      </section>
+    </main>
+    <script src="./shared/state-adapter.js?v=0.9.3"></script>
+    <script src="./boss-data.js?v=0.9.3"></script>
+    <script src="./progress.js?v=0.9.3"></script>
+  </body>
+</html>

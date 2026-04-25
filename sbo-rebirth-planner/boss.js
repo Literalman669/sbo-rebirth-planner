@@ -11,6 +11,16 @@
   }, 1);
   const FORM_DRAFT_KEY = "sbo-rebirth-planner.form-draft.v1";
   const EQUIPPED_KEY = "sbo-rebirth-planner.equipped.v1";
+  const state = window.SBO_STATE_ADAPTER;
+
+  function getRaw(key) {
+    if (state?.getRaw) return state.getRaw(key);
+    try { return localStorage.getItem(key); } catch { return null; }
+  }
+  function setRaw(key, value) {
+    if (state?.setRaw) return state.setRaw(key, value);
+    try { localStorage.setItem(key, String(value)); return true; } catch { return false; }
+  }
 
   // ── DOM refs ──────────────────────────────────────────────
   const buildSnapshotEl = document.getElementById("buildSnapshot");
@@ -41,8 +51,8 @@
 
   function draftFingerprint() {
     try {
-      const d = localStorage.getItem(FORM_DRAFT_KEY) || "";
-      const e = localStorage.getItem(EQUIPPED_KEY) || "";
+      const d = getRaw(FORM_DRAFT_KEY) || "";
+      const e = getRaw(EQUIPPED_KEY) || "";
       return d + "|" + e;
     } catch { return ""; }
   }
@@ -53,7 +63,7 @@
     lastSyncedAt = Date.now();
     lastDraftFingerprint = draftFingerprint();
     buildStaleFromOtherTab = false;
-    try { localStorage.setItem(LAST_SYNCED_KEY, String(lastSyncedAt)); } catch {}
+    setRaw(LAST_SYNCED_KEY, String(lastSyncedAt));
     renderStaleBanner();
     renderBuildSnapshot(currentBuild);
     renderBossList();
@@ -214,11 +224,11 @@
   // ── Load build from localStorage draft ───────────────────
   function loadBuildFromStorage() {
     try {
-      const raw = localStorage.getItem(FORM_DRAFT_KEY);
+      const raw = getRaw(FORM_DRAFT_KEY);
       if (!raw) return null;
       const draft = JSON.parse(raw);
 
-      const equippedRaw = localStorage.getItem(EQUIPPED_KEY);
+      const equippedRaw = getRaw(EQUIPPED_KEY);
       const equipped = equippedRaw ? JSON.parse(equippedRaw) : {};
 
       return buildFromDraft(draft, equipped);
@@ -229,7 +239,7 @@
 
   function readBossBeatenStorage() {
     try {
-      const raw = localStorage.getItem(BOSS_BEATEN_KEY);
+      const raw = getRaw(BOSS_BEATEN_KEY);
       if (!raw) return [];
       const arr = JSON.parse(raw);
       return Array.isArray(arr) ? arr : [];
@@ -240,7 +250,7 @@
 
   function writeBossBeatenStorage(ids) {
     try {
-      localStorage.setItem(BOSS_BEATEN_KEY, JSON.stringify(ids));
+      setRaw(BOSS_BEATEN_KEY, JSON.stringify(ids));
     } catch {}
   }
 
@@ -301,48 +311,27 @@
     };
   }
 
-  // ── Replicate evaluateBuild formula from app.js ───────────
   function computeMetrics(stats, gear, weaponClass, projectedLevel) {
-    const f = data.formulas;
-    const profile = data.weaponProfiles[weaponClass] || data.weaponProfiles["one-handed"];
-
-    const strDamageMult = 1 + stats.str * (f.strDamagePerPointPct / 100);
-    const agiSpeedMult = 1 + profile.maxAgiSpeedGain * (stats.agi / data.statCap);
-
-    const baseCrit = f.baseCritChancePct / 100;
-    const lukCritBonus = Math.min(0.05, stats.luk * (f.lukCritChancePerPointPct / 100));
-    const critChance = baseCrit + lukCritBonus;
-
-    const strCritMulti = (stats.str / data.statCap) * (f.strCritMultiMax || 2);
-    const critExpectedMult = 1 + critChance * (profile.critMultiplier - 1) + critChance * strCritMulti;
-
-    const dpsProjection = gear.attack * strDamageMult * agiSpeedMult * critExpectedMult;
-
-    const defenseMultiplier = (f.defMultiplierBase || 5) + stats.def * f.defMultiplierPerPoint;
-    const damageReduction = gear.defense * defenseMultiplier;
-
-    const dexterityMultiplier = (f.vitDexterityMultiplierBase || 10) + stats.vit * f.vitDexterityMultiplierPerPoint;
-    const bonusHp = gear.dexterity * dexterityMultiplier;
-
-    const staminaPool = 100 + projectedLevel * 5 + 0.1 * (stats.str + stats.agi + stats.vit);
-
-    const strMultiHit = Math.min(f.multiHitStatCapPct || 10, stats.str * (f.strMultiHitPerPointPct || 0.02));
-    const lukMultiHit = Math.min(f.multiHitStatCapPct || 10, stats.luk * (f.lukMultiHitPerPointPct || 0.02));
-    const multiHitPct = (f.baseMultiHitPct || 50) + Math.min(15, strMultiHit + lukMultiHit);
-
-    const debuffResPct = Math.min(5, 0.01 * stats.vit);
-    const dropBonusPct = Math.min(5, stats.luk * f.lukDropChancePerPointPct);
-
+    const projectionCore = window.SBO_PROJECTION_CORE;
+    if (projectionCore?.computeBuildMetrics) {
+      return projectionCore.computeBuildMetrics({
+        data,
+        stats,
+        gear,
+        weaponClass,
+        projectedLevel,
+      });
+    }
     return {
-      dpsProjection,
-      damageReduction,
-      bonusHp,
-      staminaPool,
-      critChancePct: critChance * 100,
-      multiHitPct,
-      debuffResPct,
-      dropBonusPct,
-      attackSpeedPct: agiSpeedMult * 100,
+      dpsProjection: 0,
+      damageReduction: 0,
+      bonusHp: 0,
+      staminaPool: 0,
+      critChancePct: 0,
+      multiHitPct: 50,
+      debuffResPct: 0,
+      dropBonusPct: 0,
+      attackSpeedPct: 100,
     };
   }
 
@@ -535,13 +524,13 @@
         search: filterSearchEl.value,
       };
       if (filterHideBeatenEl) obj.hideBeaten = filterHideBeatenEl.checked;
-      localStorage.setItem(FILTER_KEY, JSON.stringify(obj));
+      setRaw(FILTER_KEY, JSON.stringify(obj));
     } catch {}
   }
 
   function loadFilters() {
     try {
-      const raw = localStorage.getItem(FILTER_KEY);
+      const raw = getRaw(FILTER_KEY);
       if (!raw) return;
       const f = JSON.parse(raw);
       if (f.floor) filterFloorEl.value = f.floor;

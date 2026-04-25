@@ -6,6 +6,13 @@ const ROOT = process.cwd();
 const dataPath = path.join(ROOT, "data.js");
 const bossPath = path.join(ROOT, "boss-data.js");
 const wikiDir = path.join(ROOT, "data", "wiki-raw");
+const syncReportPath = path.join(wikiDir, "WIKI_SYNC_REPORT.md");
+const syncReportJsonPath = path.join(wikiDir, "WIKI_SYNC_REPORT.json");
+const syncReport = {
+  generatedAt: new Date().toISOString(),
+  accepted: { weapons: 0, armor: 0, shields: 0, bosses: 0, minibosses: 0 },
+  rejected: [],
+};
 
 function readJson(p) {
   return JSON.parse(fs.readFileSync(p, "utf8"));
@@ -120,8 +127,24 @@ function ensureId(base) {
   return id;
 }
 
+function rejectEntry(category, name, reason) {
+  syncReport.rejected.push({ category, name: name || "Unknown", reason });
+}
+
+function isValidFloor(value) {
+  return Number.isFinite(value) && value >= 1 && value <= 200;
+}
+
 function upsertWeapon(w) {
   if (!w || !w.name) return;
+  if (!Number.isFinite(w.skillReq) || w.skillReq < 1 || w.skillReq > 1000) {
+    rejectEntry("weapon", w.name, "invalid skillReq");
+    return;
+  }
+  if (!Number.isFinite(w.attack) || w.attack <= 0) {
+    rejectEntry("weapon", w.name, "missing or invalid attack");
+    return;
+  }
   const weaponClass = weaponClassFromType(w.weaponType);
   const nameNorm = normalizeName(w.name);
   const matches = items.filter((it) => it.slot === "weapon" && normalizeName(it.name) === nameNorm && it.weaponClass === weaponClass);
@@ -134,6 +157,7 @@ function upsertWeapon(w) {
     it.floorMin = Number.isFinite(inferredFloor) ? Math.max(1, inferredFloor) : (it.floorMin || 1);
     it.exactStats = Number.isFinite(it.attack);
     if (w.location) it.notes = (it.notes && it.notes.length > 0) ? it.notes : `Wiki location: ${w.location}`;
+    syncReport.accepted.weapons += 1;
   }
 
   if (matches.length === 0) {
@@ -158,11 +182,18 @@ function upsertWeapon(w) {
       exactStats: Number.isFinite(attack),
       notes: w.location ? `Wiki location: ${w.location}` : "Wiki sync import",
     });
+    syncReport.accepted.weapons += 1;
   }
 }
 
 function upsertDefenseItem(w, slot) {
   if (!w || !w.name) return;
+  const hasDefense = Number.isFinite(w.defense) && w.defense > 0;
+  const hasDexterity = Number.isFinite(w.dexterity) && w.dexterity > 0;
+  if (!hasDefense && !hasDexterity) {
+    rejectEntry(slot, w.name, "missing both defense and dexterity");
+    return;
+  }
   const nameNorm = normalizeName(w.name);
   const matches = items.filter((it) => it.slot === slot && normalizeName(it.name) === nameNorm);
 
@@ -174,6 +205,8 @@ function upsertDefenseItem(w, slot) {
     const inferredFloor = inferFloor(w.howToObtain);
     it.floorMin = Number.isFinite(inferredFloor) ? Math.max(1, inferredFloor) : (it.floorMin || 1);
     it.exactStats = Number.isFinite(it.defense) || Number.isFinite(it.dexterity);
+    if (slot === "shield") syncReport.accepted.shields += 1;
+    else syncReport.accepted.armor += 1;
   }
 
   if (matches.length === 0) {
@@ -196,6 +229,8 @@ function upsertDefenseItem(w, slot) {
       exactStats: Number.isFinite(w.defense) || Number.isFinite(w.dexterity),
       notes: w.howToObtain ? `Wiki source: ${w.howToObtain}` : "Wiki sync import",
     });
+    if (slot === "shield") syncReport.accepted.shields += 1;
+    else syncReport.accepted.armor += 1;
   }
 }
 
@@ -249,10 +284,18 @@ const bossIndex = new Map(allBosses.map((b) => [normalizeName(b.name), b]));
 
 function upsertBoss(entry, type) {
   if (!entry || !entry.name) return;
+  if (!Number.isFinite(entry.recLevel) || entry.recLevel < 1 || entry.recLevel > 1000) {
+    rejectEntry(type === "mini" ? "miniboss" : "boss", entry.name, "invalid recLevel");
+    return;
+  }
   const key = normalizeName(entry.name);
   const existing = bossIndex.get(key);
   const inferredFloor = inferFloor(entry.location, entry.wikiTitle);
   const floor = Number.isFinite(inferredFloor) ? Math.max(1, inferredFloor) : (existing?.floor ?? 1);
+  if (!isValidFloor(floor)) {
+    rejectEntry(type === "mini" ? "miniboss" : "boss", entry.name, "invalid floor");
+    return;
+  }
   const recLevel = Number.isFinite(entry.recLevel) ? entry.recLevel : (existing?.recLevel ?? 1);
   const hp = Number.isFinite(entry.hp) ? entry.hp : (existing?.hp ?? 0);
   const exp = Number.isFinite(entry.exp) ? entry.exp : (existing?.exp ?? 0);
@@ -277,6 +320,8 @@ function upsertBoss(entry, type) {
     existing.statusEffect = (entry.raw && entry.raw.status_effect) ? String(entry.raw.status_effect).trim() : (existing.statusEffect || null);
     existing.type = existing.type || type;
     existing.exactStats = Number.isFinite(entry.hp) && Number.isFinite(entry.exp) && Number.isFinite(entry.col);
+    if (type === "mini") syncReport.accepted.minibosses += 1;
+    else syncReport.accepted.bosses += 1;
   } else {
     const idBase = slugify(entry.name) || `boss-${Math.random().toString(36).slice(2, 8)}`;
     const newBoss = {
@@ -307,9 +352,11 @@ function upsertBoss(entry, type) {
     if (type === "mini") {
       bossObj.minibosses = bossObj.minibosses || [];
       bossObj.minibosses.push(newBoss);
+      syncReport.accepted.minibosses += 1;
     } else {
       bossObj.bosses = bossObj.bosses || [];
       bossObj.bosses.push(newBoss);
+      syncReport.accepted.bosses += 1;
     }
     bossIndex.set(key, newBoss);
   }
@@ -428,5 +475,28 @@ const bossOut = `window.SBO_BOSS_DATA = ${JSON.stringify(bossObj, null, 2)};\n`;
 fs.writeFileSync(dataPath, dataOut, "utf8");
 fs.writeFileSync(bossPath, bossOut, "utf8");
 
+const mdReport = [
+  `# Wiki Sync Report`,
+  ``,
+  `Generated: ${syncReport.generatedAt}`,
+  ``,
+  `## Accepted`,
+  `- Weapons: ${syncReport.accepted.weapons}`,
+  `- Armor: ${syncReport.accepted.armor}`,
+  `- Shields: ${syncReport.accepted.shields}`,
+  `- Bosses: ${syncReport.accepted.bosses}`,
+  `- Minibosses: ${syncReport.accepted.minibosses}`,
+  ``,
+  `## Rejected`,
+  ...(syncReport.rejected.length
+    ? syncReport.rejected.map((entry) => `- [${entry.category}] ${entry.name}: ${entry.reason}`)
+    : ["- None"]),
+  ``,
+].join("\n");
+
+fs.writeFileSync(syncReportPath, mdReport, "utf8");
+fs.writeFileSync(syncReportJsonPath, JSON.stringify(syncReport, null, 2), "utf8");
+
 console.log(`Updated itemCatalog size: ${dataObj.itemCatalog.length}`);
 console.log(`Updated bosses: ${(bossObj.bosses || []).length}, minibosses: ${(bossObj.minibosses || []).length}`);
+console.log(`Sync report: ${syncReportPath}`);

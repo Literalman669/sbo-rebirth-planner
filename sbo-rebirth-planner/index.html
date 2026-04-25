@@ -25,8 +25,12 @@
     </header>
 
     <nav class="tab-nav">
-      <a href="./index.html" class="tab-link active">Build Planner</a>
-      <a href="./boss.html" class="tab-link">Boss Planner</a>
+      <a href="./dashboard.html" class="tab-link">Dashboard</a>
+      <a href="./index.html" class="tab-link active">Planner</a>
+      <a href="./inventory.html" class="tab-link">Inventory</a>
+      <a href="./boss.html" class="tab-link">Bosses</a>
+      <a href="./progress.html" class="tab-link">Progress</a>
+      <a href="./tools.html" class="tab-link">Tools</a>
       <button type="button" class="theme-toggle-btn" id="themeToggleBtn" title="Toggle dark/light mode">☀</button>
     </nav>
 
@@ -134,7 +138,7 @@
       </div>
     </details>
 
-    <main class="layout">
+    <main class="layout dashboard-shell">
       <section class="panel input-panel" aria-labelledby="panel-inputs-heading">
         <h2 id="panel-inputs-heading">Planner Inputs</h2>
         <div id="sharedBuildBanner" class="shared-build-banner" hidden></div>
@@ -276,6 +280,22 @@
               <span>Recommend only owned items</span>
             </label>
           </div>
+
+          <section class="owned-inventory-panel" aria-labelledby="ownedInventoryHeading">
+            <div class="owned-inventory-header">
+              <h4 id="ownedInventoryHeading">Owned Inventory Manager</h4>
+              <span id="ownedInventoryCount" class="owned-count">0 owned</span>
+            </div>
+            <label>
+              Search catalog
+              <input type="search" id="ownedInventorySearch" placeholder="Search by name, id, slot..." />
+            </label>
+            <div class="owned-inventory-actions">
+              <button type="button" class="secondary compact" id="ownedAddSelectedBtn">Add selected</button>
+              <button type="button" class="secondary compact ghost" id="ownedClearSelectedBtn">Clear selected</button>
+            </div>
+            <div id="ownedInventoryList" class="owned-inventory-list" aria-live="polite"></div>
+          </section>
 
           <details class="form-details">
             <summary>Paste Inventory List</summary>
@@ -475,90 +495,110 @@
           </details>
         </div>
         <div id="outputActionMessage" class="build-action-message"></div>
+        <nav class="dashboard-view-nav" id="dashboardViewNav" aria-label="Dashboard workspace views">
+          <button type="button" class="chip-btn active" data-dashboard-view="all">All</button>
+          <button type="button" class="chip-btn" data-dashboard-view="gear">Gear</button>
+          <button type="button" class="chip-btn" data-dashboard-view="plan">Stat Plan</button>
+          <button type="button" class="chip-btn" data-dashboard-view="timeline">Timeline</button>
+          <button type="button" class="chip-btn" data-dashboard-view="progress">Progress</button>
+          <button type="button" class="chip-btn" data-dashboard-view="tools">Tools</button>
+        </nav>
 
-        <article class="subpanel">
-          <h3>Build Logic</h3>
-          <div id="logicExplanation" class="logic-text"></div>
-        </article>
+        <div class="dashboard-workspace">
+          <div class="dashboard-main-column">
+            <article class="subpanel primary-panel" data-dashboard-panel="gear">
+              <h3>Equipment Recommendations</h3>
+              <div id="gearResults" class="gear-results"></div>
+              <details class="gear-compare-drawer" id="gearCompareDrawer">
+                <summary>Compare shortlisted gear</summary>
+                <div id="gearComparePanel" class="gear-compare-panel">
+                  <p class="muted-text">Click <strong>Compare</strong> on recommendation cards to shortlist alternatives.</p>
+                </div>
+              </details>
+            </article>
 
-        <article class="subpanel">
-          <h3>Level-by-Level Allocation</h3>
-          <div class="table-wrap">
-            <table id="planTable">
-              <thead>
-                <tr>
-                  <th>Level</th>
-                  <th>STR+</th>
-                  <th>DEF+</th>
-                  <th>AGI+</th>
-                  <th>VIT+</th>
-                  <th>LUK+</th>
-                  <th>STR</th>
-                  <th>DEF</th>
-                  <th>AGI</th>
-                  <th>VIT</th>
-                  <th>LUK</th>
-                  <th>Reason</th>
-                </tr>
-              </thead>
-              <tbody></tbody>
-            </table>
+            <article class="subpanel" data-dashboard-panel="plan">
+              <h3>Build Logic</h3>
+              <div id="logicExplanation" class="logic-text"></div>
+            </article>
+
+            <article class="subpanel" data-dashboard-panel="plan">
+              <h3>Level-by-Level Allocation</h3>
+              <div class="table-wrap">
+                <table id="planTable">
+                  <thead>
+                    <tr>
+                      <th>Level</th>
+                      <th>STR+</th>
+                      <th>DEF+</th>
+                      <th>AGI+</th>
+                      <th>VIT+</th>
+                      <th>LUK+</th>
+                      <th>STR</th>
+                      <th>DEF</th>
+                      <th>AGI</th>
+                      <th>VIT</th>
+                      <th>LUK</th>
+                      <th>Reason</th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+            </article>
+
+            <article class="subpanel" data-dashboard-panel="timeline">
+              <h3>Upgrade Path Timeline</h3>
+              <p class="muted-text" style="margin:0 0 0.5rem">Per-slot item progression across your planned level range, sorted by unlock level.</p>
+              <div id="upgradeTimeline" class="upgrade-timeline"></div>
+            </article>
           </div>
-        </article>
 
-        <article class="subpanel">
-          <h3>Build Benchmarks</h3>
-          <p class="muted-text" style="margin:0 0 0.5rem">Projected metrics at key level milestones across your plan.</p>
-          <div id="benchmarkPanel" class="benchmark-panel"></div>
-        </article>
+          <aside class="dashboard-context-column">
+            <article class="subpanel context-panel" data-dashboard-panel="context">
+              <h3>Build Benchmarks</h3>
+              <p class="muted-text" style="margin:0 0 0.5rem">Projected metrics at key level milestones across your plan.</p>
+              <div id="benchmarkPanel" class="benchmark-panel"></div>
+            </article>
 
-        <article class="subpanel">
-          <h3>Upgrade Path Timeline</h3>
-          <p class="muted-text" style="margin:0 0 0.5rem">Per-slot item progression across your planned level range, sorted by unlock level.</p>
-          <div id="upgradeTimeline" class="upgrade-timeline"></div>
-        </article>
+            <article class="subpanel collapsed context-panel" data-dashboard-panel="progress">
+              <h3>Floor Progress Tracker</h3>
+              <p class="muted-text" style="margin:0 0 0.5rem">Click floors to mark them cleared. Persists across sessions.</p>
+              <div id="floorTracker" class="floor-tracker"></div>
+              <div class="floor-tracker-actions">
+                <button type="button" class="secondary compact" id="ftClearAllBtn" data-testid="ft-clear-all-btn">Clear All</button>
+                <button type="button" class="secondary compact" id="ftMarkToFloorBtn" data-testid="ft-mark-to-floor-btn">Mark Up To Max Floor</button>
+              </div>
+              <div id="floorTrackerSummary" class="floor-tracker-summary"></div>
+            </article>
 
-        <article class="subpanel">
-          <h3>Equipment Recommendations</h3>
-          <div id="gearResults" class="gear-results"></div>
-        </article>
+            <article class="subpanel collapsed context-panel" data-dashboard-panel="tools">
+              <h3>Saved Build Comparison</h3>
+              <div id="comparisonResults" class="comparison-results">
+                <p class="muted-text">Choose two saved builds and click <strong>Compare Builds</strong>.</p>
+              </div>
+            </article>
 
-        <article class="subpanel collapsed">
-          <h3>Floor Progress Tracker</h3>
-          <p class="muted-text" style="margin:0 0 0.5rem">Click floors to mark them cleared. Persists across sessions.</p>
-          <div id="floorTracker" class="floor-tracker"></div>
-          <div class="floor-tracker-actions">
-            <button type="button" class="secondary compact" id="ftClearAllBtn" data-testid="ft-clear-all-btn">Clear All</button>
-            <button type="button" class="secondary compact" id="ftMarkToFloorBtn" data-testid="ft-mark-to-floor-btn">Mark Up To Max Floor</button>
-          </div>
-          <div id="floorTrackerSummary" class="floor-tracker-summary"></div>
-        </article>
+            <article class="subpanel collapsed context-panel" data-dashboard-panel="tools">
+              <h3>Calibration Report</h3>
+              <div id="calibrationReport" class="calibration-report">
+                <p class="muted-text">Add observed in-game metrics in Calibration Mode, then click <strong>Apply Sample</strong>.</p>
+              </div>
+            </article>
 
-        <article class="subpanel collapsed">
-          <h3>Saved Build Comparison</h3>
-          <div id="comparisonResults" class="comparison-results">
-            <p class="muted-text">Choose two saved builds and click <strong>Compare Builds</strong>.</p>
-          </div>
-        </article>
+            <article class="subpanel collapsed context-panel" data-dashboard-panel="progress">
+              <h3>Skill Unlock Checklist</h3>
+              <p class="muted-text" style="margin:0 0 0.5rem">Sword skills unlocked at your current weapon skill level.</p>
+              <div id="skillChecklist"></div>
+            </article>
 
-        <article class="subpanel collapsed">
-          <h3>Calibration Report</h3>
-          <div id="calibrationReport" class="calibration-report">
-            <p class="muted-text">Add observed in-game metrics in Calibration Mode, then click <strong>Apply Sample</strong>.</p>
-          </div>
-        </article>
-
-        <article class="subpanel collapsed">
-          <h3>Skill Unlock Checklist</h3>
-          <p class="muted-text" style="margin:0 0 0.5rem">Sword skills unlocked at your current weapon skill level.</p>
-          <div id="skillChecklist"></div>
-        </article>
-
-        <article class="subpanel collapsed">
-          <h3>Party Role Advisor</h3>
-          <p class="muted-text" style="margin:0 0 0.5rem">Stat and gear adjustments for tank/DPS/support/farmer roles.</p>
-          <div id="partyRoleAdvisor"></div>
-        </article>
+            <article class="subpanel collapsed context-panel" data-dashboard-panel="progress">
+              <h3>Party Role Advisor</h3>
+              <p class="muted-text" style="margin:0 0 0.5rem">Stat and gear adjustments for tank/DPS/support/farmer roles.</p>
+              <div id="partyRoleAdvisor"></div>
+            </article>
+          </aside>
+        </div>
 
       </section>
     </main>
@@ -576,6 +616,8 @@
     <script src="./data.js?v=0.9.3"></script>
     <script src="./boss-data.js?v=0.9.3"></script>
     <script src="./boss-readiness.js?v=0.9.3"></script>
+    <script src="./shared/projection-core.js?v=0.9.3"></script>
+    <script src="./shared/state-adapter.js?v=0.9.3"></script>
     <script src="./app.js?v=0.9.3"></script>
   </body>
 </html>

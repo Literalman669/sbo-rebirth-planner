@@ -336,32 +336,6 @@ const SBO_DATA = {
   },
   "itemCatalog": [
     {
-      "id": "a-pagename-image1-pagename-png-equipment-type-armor-level-req-level-205-defense-31",
-      "name": "{{{PAGENAME}}\n  | image1={{PAGENAME}}.png\n  | equipment_type=Armor\n  | level_req=Level 205\n  | defense=313\n  | dexterity=1775\n  | resistance=Bleed (40%), Paralysis (40%)\n  | craftable= ✔\n  | tradable= ✔\n  | worth=0 Col\n  | can_be_sold=X\n  | how_to_obtain=Christmas Event: Blacksmithing\n}}\n==Description==\nA heavy ceremonial coat reinforced with iron plating, once worn in the name of joy.\nNow it carries only judgement.\n\nPart of the 2025 Christmas Event. Legacy Content.\n\n== Crafting ==\nTo craft this overlay, you need a Smithing Skill level of 60.\n\n==== Smithing Requirements: ====\n* 150 Broken Bauble\n* 1 Kringlewrath Chest Plate\n* 2 Kringlewrath Arm Plate\n* 2 Kringlewrath Leg Plate\n* 1 Kringlewrath Mantle Plate\n* 20 Frozen Core Fragment\n*  Requires The Iron Saint Awakens (QE#73) Completed.\nCategory:Cosmetic\n\n\n\nCategory:Armor",
-      "slot": "armor",
-      "floorMin": 1,
-      "levelReq": 1,
-      "sourceType": "mob",
-      "scalingType": "fixed",
-      "colValue": 120,
-      "exactStats": false,
-      "notes": "Wiki sync import"
-    },
-    {
-      "id": "a-pagename",
-      "name": "{{PAGENAME}}",
-      "slot": "armor",
-      "floorMin": 1,
-      "levelReq": 168,
-      "defense": 190.5,
-      "dexterity": 452,
-      "sourceType": "crafted",
-      "scalingType": "fixed",
-      "colValue": 0,
-      "exactStats": true,
-      "notes": "Wiki source: Halloween Event: Holiday Craftable [[Blacksmithing"
-    },
-    {
       "id": "a-akumu-cloak",
       "name": "Akumu Cloak",
       "slot": "armor",
@@ -10805,4 +10779,3 @@ const SBO_DATA = {
 };
 
 window.SBO_DATA = SBO_DATA;
-

@@ -1,5 +1,6 @@
 (function bootstrapPlanner() {
   const data = window.SBO_DATA;
+  const state = window.SBO_STATE_ADAPTER;
   const STAT_KEYS = ["str", "def", "agi", "vit", "luk"];
   const BUILD_STORAGE_KEY = "sbo-rebirth-planner.builds.v1";
   const FLOOR_TRACKER_STORAGE_KEY = "sbo-rebirth-planner.floor-tracker.v1";
@@ -289,6 +290,12 @@
   const parseInventoryBtn = document.getElementById("parseInventoryBtn");
   const clearInventoryParserBtn = document.getElementById("clearInventoryParserBtn");
   const inventoryParserResult = document.getElementById("inventoryParserResult");
+  const ownedInventorySearch = document.getElementById("ownedInventorySearch");
+  const ownedInventoryList = document.getElementById("ownedInventoryList");
+  const ownedInventoryCount = document.getElementById("ownedInventoryCount");
+  const ownedAddSelectedBtn = document.getElementById("ownedAddSelectedBtn");
+  const ownedClearSelectedBtn = document.getElementById("ownedClearSelectedBtn");
+  const gearComparePanel = document.getElementById("gearComparePanel");
   const gearAttackInput = form ? form.querySelector('[name="gearAttack"]') : null;
   const gearDefenseInput = form ? form.querySelector('[name="gearDefense"]') : null;
   const gearDexterityInput = form ? form.querySelector('[name="gearDexterity"]') : null;
@@ -299,6 +306,7 @@
   const ftMarkToFloorBtn = document.getElementById("ftMarkToFloorBtn");
   const quickPresetGrid = document.getElementById("quickPresetGrid");
   const printBuildBtn = document.getElementById("printBuildBtn");
+  const dashboardViewNav = document.getElementById("dashboardViewNav");
   const sharedBuildBanner = document.getElementById("sharedBuildBanner");
   const changelogPanelEl = document.getElementById("changelogPanel");
   const gearSortModeSelect = document.getElementById("gearSortMode");
@@ -339,7 +347,20 @@
   let recalcDebounceTimer = null;
   let formDirtySinceLastSubmit = false;
   let outputPanelsCollapsed = false;
+  let activeDashboardView = "gear";
+  const compareShortlist = new Map();
+  const ownedSelectionSet = new Set();
   const dataValidationReport = validateDataSchema(data);
+
+  function getRawStorage(key) {
+    if (state?.getRaw) return state.getRaw(key);
+    try { return localStorage.getItem(key); } catch (_e) { return null; }
+  }
+
+  function setRawStorage(key, value) {
+    if (state?.setRaw) return state.setRaw(key, value);
+    try { localStorage.setItem(key, String(value)); return true; } catch (_e) { return false; }
+  }
 
   populateSelects();
   if (showPinnedOnlyField) {
@@ -351,6 +372,7 @@
   initializeQuickEquipControls();
   initializeOutputPanelControls();
   initializeInventoryParser();
+  initializeOwnedInventoryManager();
   initializeKeyboardShortcuts();
   initializeShareLink();
   initializeFloorTracker();
@@ -445,6 +467,33 @@
         added ? "success" : "info",
       );
       onSubmit(new Event("submit"));
+      return;
+    }
+
+    if (action === "compare-gear") {
+      const key = `${slot || item.slot}`;
+      if (!compareShortlist.has(key)) compareShortlist.set(key, []);
+      const slotEntries = compareShortlist.get(key);
+      if (!slotEntries.some((entry) => entry.id === item.id)) {
+        slotEntries.push({
+          id: item.id,
+          name: item.name,
+          slot: key,
+          floorMin: item.floorMin,
+          stats: {
+            attack: Number(button.dataset.attack || 0),
+            defense: Number(button.dataset.defense || 0),
+            dexterity: Number(button.dataset.dexterity || 0),
+          },
+          score: Number(button.dataset.score || 0),
+          requirementFit: Number(button.dataset.requirementFit || 0),
+          valueEfficiency: Number(button.dataset.valueEfficiency || 0),
+          owned: button.dataset.owned === "true",
+        });
+      }
+      renderGearComparePanel();
+      showOutputActionMessage(`${item.name} added to compare shortlist.`, "success");
+      return;
     }
   }
 
@@ -757,6 +806,8 @@
     renderPartyRoleAdvisor(input, planResult);
     renderEquippedLoadout(input);
     renderCalibrationReport(calibrationState, planResult.finalEval);
+    renderOwnedInventoryManager();
+    renderGearComparePanel();
     queueDraftWrite();
     formDirtySinceLastSubmit = false;
     renderStalePlanBanner();
@@ -855,6 +906,105 @@
         }
       });
     }
+  }
+
+  function initializeOwnedInventoryManager() {
+    if (ownedInventorySearch) {
+      ownedInventorySearch.addEventListener("input", () => {
+        renderOwnedInventoryManager();
+      });
+    }
+
+    if (ownedAddSelectedBtn) {
+      ownedAddSelectedBtn.addEventListener("click", () => {
+        let addedCount = 0;
+        for (const itemId of ownedSelectionSet) {
+          const item = getCatalogItemById(itemId);
+          if (item && addItemToOwnedList(item)) addedCount += 1;
+        }
+        if (addedCount > 0) {
+          onSubmit(new Event("submit"));
+        } else {
+          showOutputActionMessage("No new selected items were added.", "info");
+        }
+      });
+    }
+
+    if (ownedClearSelectedBtn) {
+      ownedClearSelectedBtn.addEventListener("click", () => {
+        ownedSelectionSet.clear();
+        renderOwnedInventoryManager();
+      });
+    }
+
+    if (ownedInventoryList) {
+      ownedInventoryList.addEventListener("change", (event) => {
+        const target = event.target;
+        if (!(target instanceof HTMLInputElement)) return;
+        if (target.type !== "checkbox") return;
+        const itemId = target.value;
+        if (target.checked) ownedSelectionSet.add(itemId);
+        else ownedSelectionSet.delete(itemId);
+      });
+    }
+  }
+
+  function renderOwnedInventoryManager() {
+    if (!ownedInventoryList || !ownedItemsField) return;
+    const ownedTokens = parseOwnedTokens(ownedItemsField.value || "");
+    if (ownedInventoryCount) ownedInventoryCount.textContent = `${ownedTokens.size} owned`;
+    const search = (ownedInventorySearch?.value || "").trim().toLowerCase();
+    const rows = data.itemCatalog
+      .filter((item) => {
+        if (!search) return true;
+        const hay = `${item.name} ${item.id} ${item.slot} ${item.weaponClass || ""}`.toLowerCase();
+        return hay.includes(search);
+      })
+      .slice(0, 120)
+      .map((item) => {
+        const owned = isOwnedItem(item, ownedTokens);
+        const checked = ownedSelectionSet.has(item.id);
+        return `<label class="owned-inventory-row">
+          <input type="checkbox" value="${escapeHtml(item.id)}" ${checked ? "checked" : ""} />
+          <span class="owned-row-name">${escapeHtml(item.name)}</span>
+          <span class="owned-row-meta">F${item.floorMin || "?"} • ${escapeHtml(item.slot)}</span>
+          <span class="pill ${owned ? "owned" : "not-owned"}">${owned ? "Owned" : "Not owned"}</span>
+        </label>`;
+      })
+      .join("");
+    ownedInventoryList.innerHTML = rows || `<p class="muted-text">No catalog items match your search.</p>`;
+  }
+
+  function renderGearComparePanel() {
+    if (!gearComparePanel) return;
+    const cards = [];
+    for (const [slot, entries] of compareShortlist.entries()) {
+      if (!entries.length) continue;
+      const rowHtml = entries
+        .map((entry) => `<tr>
+          <td>${escapeHtml(entry.name)}</td>
+          <td>${round(entry.score, 3)}</td>
+          <td>${round(entry.stats.attack, 2)}</td>
+          <td>${round(entry.stats.defense, 2)}</td>
+          <td>${round(entry.stats.dexterity, 2)}</td>
+          <td>${round(entry.requirementFit, 2)}</td>
+          <td>${round(entry.valueEfficiency, 2)}</td>
+          <td>${entry.owned ? "Yes" : "No"}</td>
+        </tr>`)
+        .join("");
+      cards.push(`<article class="gear-compare-card">
+        <h5>${escapeHtml(getSlotLabel(slot))}</h5>
+        <div class="table-wrap">
+          <table class="gear-compare-table">
+            <thead><tr><th>Item</th><th>Score</th><th>ATK</th><th>DEF</th><th>DEX</th><th>Req Fit</th><th>Value</th><th>Owned</th></tr></thead>
+            <tbody>${rowHtml}</tbody>
+          </table>
+        </div>
+      </article>`);
+    }
+    gearComparePanel.innerHTML = cards.length
+      ? cards.join("")
+      : `<p class="muted-text">Click <strong>Compare</strong> on recommendation cards to shortlist alternatives.</p>`;
   }
 
   function handleParseInventory() {
@@ -988,6 +1138,41 @@
 
     if (printBuildBtn) {
       printBuildBtn.addEventListener("click", () => window.print());
+    }
+
+    initializeDashboardViewControls();
+  }
+
+  function initializeDashboardViewControls() {
+    if (!dashboardViewNav || !outputPanel) return;
+    dashboardViewNav.addEventListener("click", (event) => {
+      const button = event.target.closest("button[data-dashboard-view]");
+      if (!button) return;
+      const nextView = `${button.dataset.dashboardView || "all"}`;
+      setDashboardView(nextView);
+    });
+    setDashboardView(activeDashboardView);
+  }
+
+  function setDashboardView(view) {
+    if (!outputPanel) return;
+    const allowed = new Set(["all", "gear", "plan", "timeline", "progress", "tools", "context"]);
+    const next = allowed.has(view) ? view : "all";
+    activeDashboardView = next;
+
+    const panels = outputPanel.querySelectorAll("[data-dashboard-panel]");
+    panels.forEach((panel) => {
+      const panelView = `${panel.getAttribute("data-dashboard-panel") || "all"}`;
+      panel.hidden = !(next === "all" || panelView === next);
+    });
+
+    if (dashboardViewNav) {
+      const buttons = dashboardViewNav.querySelectorAll("button[data-dashboard-view]");
+      buttons.forEach((button) => {
+        const isActive = `${button.dataset.dashboardView || ""}` === next;
+        button.classList.toggle("active", isActive);
+        button.setAttribute("aria-pressed", String(isActive));
+      });
     }
   }
 
@@ -2471,54 +2656,46 @@
     const formulas = data.formulas;
     const profile = data.weaponProfiles[input.weaponClass];
     const style = data.playstyles[input.playstyle];
-
-    const strDamageMult = 1 + stats.str * (formulas.strDamagePerPointPct / 100);
-    const agiSpeedMult = 1 + profile.maxAgiSpeedGain * (stats.agi / data.statCap);
-
-    const baseCrit = formulas.baseCritChancePct / 100;
-    const lukCritBonus = Math.min(0.05, stats.luk * (formulas.lukCritChancePerPointPct / 100));
-    const critChance = baseCrit + lukCritBonus;
-
-    // Wiki formula: critDmg = (base * critMulti) + (base * STRmulti), STRmulti = 0-2 based on STR
-    const strCritMulti = (stats.str / data.statCap) * (formulas.strCritMultiMax || 2);
-    const critExpectedMult = 1 + critChance * (profile.critMultiplier - 1) + critChance * strCritMulti;
-
-    const dpsProjection = input.gear.attack * strDamageMult * agiSpeedMult * critExpectedMult;
-
-    const defenseMultiplier = (formulas.defMultiplierBase || 5) + stats.def * formulas.defMultiplierPerPoint;
-    const damageReduction = input.gear.defense * defenseMultiplier;
-
-    const dexterityMultiplier = (formulas.vitDexterityMultiplierBase || 10) + stats.vit * formulas.vitDexterityMultiplierPerPoint;
-    const bonusHp = input.gear.dexterity * dexterityMultiplier;
-
-    const staminaPool = 100 + projectedLevel * 5 + 0.1 * (stats.str + stats.agi + stats.vit);
+    const projectionCore = window.SBO_PROJECTION_CORE;
+    const rawMetrics = projectionCore?.computeBuildMetrics
+      ? projectionCore.computeBuildMetrics({
+          data,
+          stats,
+          gear: input.gear,
+          weaponClass: input.weaponClass,
+          projectedLevel,
+        })
+      : {};
 
     const runSpeedDelta = stats.agi * formulas.agiRunSpeedPerPoint;
     const walkSpeedDelta = stats.agi * formulas.agiWalkSpeedPerPoint;
+    const agiSpeedMult = 1 + profile.maxAgiSpeedGain * (stats.agi / data.statCap);
 
-    const dropBonusPct = Math.min(5, stats.luk * formulas.lukDropChancePerPointPct);
-    // Wiki: base 50% multi-hit, STR adds up to +10%, LUK adds up to +10%, combined cap +15% → total 65%
-    const strMultiHit = Math.min(formulas.multiHitStatCapPct || 10, stats.str * (formulas.strMultiHitPerPointPct || 0.02));
-    const lukMultiHit = Math.min(formulas.multiHitStatCapPct || 10, stats.luk * (formulas.lukMultiHitPerPointPct || 0.02));
-    const combinedMultiHitBonus = Math.min(15, strMultiHit + lukMultiHit);
-    const multiHitPct = (formulas.baseMultiHitPct || 50) + combinedMultiHitBonus;
-    const debuffResPct = Math.min(5, 0.01 * stats.vit);
+    const fallbackCritChance = (() => {
+      const baseCrit = formulas.baseCritChancePct / 100;
+      const lukCritBonus = Math.min(0.05, stats.luk * (formulas.lukCritChancePerPointPct / 100));
+      return (baseCrit + lukCritBonus) * 100;
+    })();
+    const fallbackDrop = Math.min(5, stats.luk * formulas.lukDropChancePerPointPct);
+    const fallbackMulti = (formulas.baseMultiHitPct || 50) + Math.min(
+      15,
+      Math.min(formulas.multiHitStatCapPct || 10, stats.str * (formulas.strMultiHitPerPointPct || 0.02))
+      + Math.min(formulas.multiHitStatCapPct || 10, stats.luk * (formulas.lukMultiHitPerPointPct || 0.02)),
+    );
 
-    const attackSpeedPct = agiSpeedMult * 100;
-
-    const rawMetrics = {
-      dpsProjection,
-      damageReduction,
-      bonusHp,
-      staminaPool,
-      critChancePct: critChance * 100,
-      dropBonusPct,
-      multiHitPct,
-      debuffResPct,
-      attackSpeedPct,
+    const normalizedRawMetrics = {
+      dpsProjection: Number(rawMetrics.dpsProjection) || 0,
+      damageReduction: Number(rawMetrics.damageReduction) || 0,
+      bonusHp: Number(rawMetrics.bonusHp) || 0,
+      staminaPool: Number(rawMetrics.staminaPool) || 0,
+      critChancePct: Number(rawMetrics.critChancePct) || fallbackCritChance,
+      dropBonusPct: Number(rawMetrics.dropBonusPct) || fallbackDrop,
+      multiHitPct: Number(rawMetrics.multiHitPct) || fallbackMulti,
+      debuffResPct: Number(rawMetrics.debuffResPct) || Math.min(5, 0.01 * stats.vit),
+      attackSpeedPct: Number(rawMetrics.attackSpeedPct) || (agiSpeedMult * 100),
     };
 
-    const metrics = applyCalibrationFactors(rawMetrics);
+    const metrics = applyCalibrationFactors(normalizedRawMetrics);
 
     // Normalize into planner-scale values.
     const normDamage = metrics.dpsProjection / 120;
@@ -2537,7 +2714,7 @@
     return {
       score: weightedScore - guardrail.penalty,
       metrics,
-      rawMetrics,
+      rawMetrics: normalizedRawMetrics,
       guardrailPenalty: guardrail.penalty,
       guardrailViolations: guardrail.violations,
     };
@@ -3022,18 +3199,11 @@
                     <div class="gear-meta">
                       Floor ${item.floorMin || "?"} • ${escapeHtml(item.sourceType)} • scaling: ${escapeHtml(item.scalingType || "fixed")}
                     </div>
-                    <div class="gear-meta">
-                      <strong>Location:</strong> ${escapeHtml(locationText)}
-                    </div>
-                    <div class="gear-meta">
-                      <strong>Value:</strong> ${escapeHtml(valueText)} • <strong>Req:</strong> ${escapeHtml(requirementText)}
-                    </div>
-                    <div class="gear-meta">
-                      <strong>Budget:</strong> ${escapeHtml(budgetText)}
-                    </div>
-                    <div class="gear-score">
-                      score ${round(score.total, 3)}
-                      <span>(source ${round(detail.sourceQ, 2)} | scaling ${round(detail.scalingQ, 2)} | floor ${round(detail.floorFit, 2)} | req ${round(detail.requirementFit, 2)} | value ${round(detail.valueEfficiency, 2)} | budget ${round(detail.budgetFit, 2)} | stat ${round(detail.statPower, 2)} | owned ${round(detail.ownedBoost, 2)})</span>
+                    <div class="gear-rationale-chips">
+                      <span class="pill">Req fit ${round(detail.requirementFit, 2)}</span>
+                      <span class="pill">Value ${round(detail.valueEfficiency, 2)}</span>
+                      <span class="pill">${detail.isOwned ? "Owned boost" : "Needs acquisition"}</span>
+                      <span class="pill">${detail.confidence === "exact" ? "High confidence" : "Estimated confidence"}</span>
                     </div>
                     <div class="gear-statline">
                       ATK ${round(detail.attack || 0, 2)} • DEF ${round(detail.defense || 0, 2)} • DEX ${round(detail.dexterity || 0, 2)}
@@ -3058,6 +3228,22 @@
                       >
                         Add to Owned
                       </button>
+                      <button
+                        type="button"
+                        class="chip-btn ghost"
+                        data-action="compare-gear"
+                        data-item-id="${escapeHtml(item.id)}"
+                        data-slot="${escapeHtml(slot)}"
+                        data-score="${round(score.total, 3)}"
+                        data-attack="${round(detail.attack || 0, 2)}"
+                        data-defense="${round(detail.defense || 0, 2)}"
+                        data-dexterity="${round(detail.dexterity || 0, 2)}"
+                        data-requirement-fit="${round(detail.requirementFit, 3)}"
+                        data-value-efficiency="${round(detail.valueEfficiency, 3)}"
+                        data-owned="${detail.isOwned ? "true" : "false"}"
+                      >
+                        Compare
+                      </button>
                     </div>
                     <div class="gear-flags">
                       ${isEquipped ? '<span class="pill equipped">Equipped</span>' : ""}
@@ -3065,6 +3251,16 @@
                       ${detail.overBudget && Number.isFinite(input.optimization?.budgetCap) ? '<span class="pill estimated">Over budget</span>' : ""}
                       <span class="pill ${detail.confidence === "exact" ? "exact" : "estimated"}">${detail.confidence === "exact" ? "Exact data" : "Estimated data"}</span>
                     </div>
+                    <details class="gear-item-details">
+                      <summary>Details</summary>
+                      <div class="gear-meta"><strong>Location:</strong> ${escapeHtml(locationText)}</div>
+                      <div class="gear-meta"><strong>Value:</strong> ${escapeHtml(valueText)} • <strong>Req:</strong> ${escapeHtml(requirementText)}</div>
+                      <div class="gear-meta"><strong>Budget:</strong> ${escapeHtml(budgetText)}</div>
+                      <div class="gear-score">
+                        score ${round(score.total, 3)}
+                        <span>(source ${round(detail.sourceQ, 2)} | scaling ${round(detail.scalingQ, 2)} | floor ${round(detail.floorFit, 2)} | req ${round(detail.requirementFit, 2)} | value ${round(detail.valueEfficiency, 2)} | budget ${round(detail.budgetFit, 2)} | stat ${round(detail.statPower, 2)} | owned ${round(detail.ownedBoost, 2)})</span>
+                      </div>
+                    </details>
                     ${item.notes ? `<div class="gear-note">${escapeHtml(item.notes)}</div>` : ""}
                   </li>
                 `;
@@ -4270,7 +4466,7 @@
 
   function readBuildStorage() {
     try {
-      const raw = localStorage.getItem(BUILD_STORAGE_KEY);
+      const raw = getRawStorage(BUILD_STORAGE_KEY);
       if (!raw) return {};
 
       const parsed = JSON.parse(raw);
@@ -4286,7 +4482,7 @@
 
   function readPinnedPresetStorage() {
     try {
-      const raw = localStorage.getItem(PINNED_PRESETS_STORAGE_KEY);
+      const raw = getRawStorage(PINNED_PRESETS_STORAGE_KEY);
       if (!raw) return new Set();
 
       const parsed = JSON.parse(raw);
@@ -4305,7 +4501,7 @@
   function writePinnedPresetStorage(set) {
     try {
       const raw = JSON.stringify(Array.from(set).sort((a, b) => a.localeCompare(b)));
-      localStorage.setItem(PINNED_PRESETS_STORAGE_KEY, raw);
+      setRawStorage(PINNED_PRESETS_STORAGE_KEY, raw);
       syncDocKeyToStdb(PINNED_PRESETS_STORAGE_KEY, raw);
     } catch (_error) {
       showBuildActionMessage("Could not save pinned preset data (storage unavailable).", "error");
@@ -4314,7 +4510,7 @@
 
   function readPresetFilterPreference() {
     try {
-      const raw = localStorage.getItem(PRESET_FILTER_STORAGE_KEY);
+      const raw = getRawStorage(PRESET_FILTER_STORAGE_KEY);
       if (!raw) return false;
 
       const parsed = JSON.parse(raw);
@@ -4327,7 +4523,7 @@
   function writePresetFilterPreference(showPinnedOnly) {
     try {
       const raw = JSON.stringify({ showPinnedOnly: Boolean(showPinnedOnly) });
-      localStorage.setItem(PRESET_FILTER_STORAGE_KEY, raw);
+      setRawStorage(PRESET_FILTER_STORAGE_KEY, raw);
       syncDocKeyToStdb(PRESET_FILTER_STORAGE_KEY, raw);
     } catch (_error) {
       // Ignore filter preference persistence failures quietly.
@@ -4336,7 +4532,7 @@
 
   function readFormDraft() {
     try {
-      const raw = localStorage.getItem(FORM_DRAFT_STORAGE_KEY);
+      const raw = getRawStorage(FORM_DRAFT_STORAGE_KEY);
       if (!raw) return null;
 
       const parsed = JSON.parse(raw);
@@ -4355,7 +4551,7 @@
 
     try {
       const raw = JSON.stringify(snapshot);
-      localStorage.setItem(FORM_DRAFT_STORAGE_KEY, raw);
+      setRawStorage(FORM_DRAFT_STORAGE_KEY, raw);
       syncDocKeyToStdb(FORM_DRAFT_STORAGE_KEY, raw);
     } catch (_error) {
       // Ignore draft persistence failures quietly.
@@ -4398,7 +4594,7 @@
     const fallback = createDefaultEquippedState();
 
     try {
-      const raw = localStorage.getItem(EQUIPPED_STORAGE_KEY);
+      const raw = getRawStorage(EQUIPPED_STORAGE_KEY);
       if (!raw) return fallback;
 
       const parsed = JSON.parse(raw);
@@ -4411,7 +4607,7 @@
   function writeEquippedStorage(state) {
     try {
       const raw = JSON.stringify(state);
-      localStorage.setItem(EQUIPPED_STORAGE_KEY, raw);
+      setRawStorage(EQUIPPED_STORAGE_KEY, raw);
       syncDocKeyToStdb(EQUIPPED_STORAGE_KEY, raw);
     } catch (_error) {
       showEquippedMessage("Could not save equipped loadout (storage unavailable).", "error");
@@ -4482,7 +4678,7 @@
     const fallback = createDefaultCalibrationState();
 
     try {
-      const raw = localStorage.getItem(CALIBRATION_STORAGE_KEY);
+      const raw = getRawStorage(CALIBRATION_STORAGE_KEY);
       if (!raw) return fallback;
 
       const parsed = JSON.parse(raw);
@@ -4495,7 +4691,7 @@
   function writeCalibrationStorage(state) {
     try {
       const raw = JSON.stringify(state);
-      localStorage.setItem(CALIBRATION_STORAGE_KEY, raw);
+      setRawStorage(CALIBRATION_STORAGE_KEY, raw);
       syncDocKeyToStdb(CALIBRATION_STORAGE_KEY, raw);
     } catch (_error) {
       showCalibrationMessage("Could not save calibration data (storage unavailable).", "error");
@@ -4517,7 +4713,7 @@
   function writeBuildStorage(storage) {
     try {
       const raw = JSON.stringify(storage);
-      localStorage.setItem(BUILD_STORAGE_KEY, raw);
+      setRawStorage(BUILD_STORAGE_KEY, raw);
       syncDocKeyToStdb(BUILD_STORAGE_KEY, raw);
     } catch (_error) {
       showBuildActionMessage("Could not save build presets (storage unavailable).", "error");
@@ -4849,7 +5045,7 @@
 
   function readFloorTrackerStorage() {
     try {
-      const raw = localStorage.getItem(FLOOR_TRACKER_STORAGE_KEY);
+      const raw = getRawStorage(FLOOR_TRACKER_STORAGE_KEY);
       if (!raw) return new Set();
       const parsed = JSON.parse(raw);
       if (!Array.isArray(parsed)) return new Set();
@@ -4862,7 +5058,7 @@
   function writeFloorTrackerStorage(clearedSet) {
     try {
       const raw = JSON.stringify(Array.from(clearedSet).sort((a, b) => a - b));
-      localStorage.setItem(FLOOR_TRACKER_STORAGE_KEY, raw);
+      setRawStorage(FLOOR_TRACKER_STORAGE_KEY, raw);
       syncDocKeyToStdb(FLOOR_TRACKER_STORAGE_KEY, raw);
     } catch (_e) {}
   }

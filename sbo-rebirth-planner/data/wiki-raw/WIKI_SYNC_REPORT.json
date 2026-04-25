@@ -1,0 +1,242 @@
+{
+  "generatedAt": "2026-04-25T09:36:34.530Z",
+  "accepted": {
+    "weapons": 507,
+    "armor": 163,
+    "shields": 62,
+    "bosses": 20,
+    "minibosses": 16
+  },
+  "rejected": [
+    {
+      "category": "weapon",
+      "name": "Barbthorn Needle",
+      "reason": "invalid skillReq"
+    },
+    {
+      "category": "weapon",
+      "name": "Barbthorn Needle MK II",
+      "reason": "invalid skillReq"
+    },
+    {
+      "category": "weapon",
+      "name": "Barbthorn Needle MK III",
+      "reason": "invalid skillReq"
+    },
+    {
+      "category": "weapon",
+      "name": "Barbthorn Needle MK IV",
+      "reason": "invalid skillReq"
+    },
+    {
+      "category": "weapon",
+      "name": "Barbthorn Needle MK V",
+      "reason": "invalid skillReq"
+    },
+    {
+      "category": "weapon",
+      "name": "Bloodborne Dominion",
+      "reason": "invalid skillReq"
+    },
+    {
+      "category": "weapon",
+      "name": "Bloodborne Dominion MK II",
+      "reason": "invalid skillReq"
+    },
+    {
+      "category": "weapon",
+      "name": "Bloodborne Dominion MK III",
+      "reason": "invalid skillReq"
+    },
+    {
+      "category": "weapon",
+      "name": "Bloodborne Dominion MK IV",
+      "reason": "invalid skillReq"
+    },
+    {
+      "category": "weapon",
+      "name": "Bloodborne Dominion MK V",
+      "reason": "invalid skillReq"
+    },
+    {
+      "category": "weapon",
+      "name": "Griefspire",
+      "reason": "invalid skillReq"
+    },
+    {
+      "category": "weapon",
+      "name": "Griefspire MK II",
+      "reason": "invalid skillReq"
+    },
+    {
+      "category": "weapon",
+      "name": "Griefspire MK III",
+      "reason": "invalid skillReq"
+    },
+    {
+      "category": "weapon",
+      "name": "Griefspire MK IV",
+      "reason": "invalid skillReq"
+    },
+    {
+      "category": "weapon",
+      "name": "Icicle",
+      "reason": "invalid skillReq"
+    },
+    {
+      "category": "weapon",
+      "name": "Griefspire MKV",
+      "reason": "invalid skillReq"
+    },
+    {
+      "category": "weapon",
+      "name": "Hemlock Shard",
+      "reason": "invalid skillReq"
+    },
+    {
+      "category": "weapon",
+      "name": "Hemlock Shard MK II",
+      "reason": "invalid skillReq"
+    },
+    {
+      "category": "weapon",
+      "name": "Hemlock Shard MK III",
+      "reason": "invalid skillReq"
+    },
+    {
+      "category": "weapon",
+      "name": "Hemlock Shard MK IV",
+      "reason": "invalid skillReq"
+    },
+    {
+      "category": "weapon",
+      "name": "Hemlock Shard MK V",
+      "reason": "invalid skillReq"
+    },
+    {
+      "category": "weapon",
+      "name": "Oathbreaker MK II",
+      "reason": "invalid skillReq"
+    },
+    {
+      "category": "weapon",
+      "name": "Oathbreaker MK III",
+      "reason": "invalid skillReq"
+    },
+    {
+      "category": "weapon",
+      "name": "Oathbreaker",
+      "reason": "invalid skillReq"
+    },
+    {
+      "category": "weapon",
+      "name": "Oathbreaker MK V",
+      "reason": "invalid skillReq"
+    },
+    {
+      "category": "weapon",
+      "name": "Red Requiem",
+      "reason": "invalid skillReq"
+    },
+    {
+      "category": "weapon",
+      "name": "Red Requiem MK II",
+      "reason": "invalid skillReq"
+    },
+    {
+      "category": "weapon",
+      "name": "Red Requiem MK III",
+      "reason": "invalid skillReq"
+    },
+    {
+      "category": "weapon",
+      "name": "Red Requiem MK IV",
+      "reason": "invalid skillReq"
+    },
+    {
+      "category": "weapon",
+      "name": "Red Requiem MK V",
+      "reason": "invalid skillReq"
+    },
+    {
+      "category": "weapon",
+      "name": "Spinebreaker",
+      "reason": "invalid skillReq"
+    },
+    {
+      "category": "weapon",
+      "name": "Spinebreaker MK II",
+      "reason": "invalid skillReq"
+    },
+    {
+      "category": "weapon",
+      "name": "Spinebreaker MK III",
+      "reason": "invalid skillReq"
+    },
+    {
+      "category": "weapon",
+      "name": "Spinebreaker MK IV",
+      "reason": "invalid skillReq"
+    },
+    {
+      "category": "weapon",
+      "name": "Spinebreaker MK V",
+      "reason": "invalid skillReq"
+    },
+    {
+      "category": "weapon",
+      "name": "Umbral Fangblade MK II",
+      "reason": "invalid skillReq"
+    },
+    {
+      "category": "weapon",
+      "name": "Umbral Fangblade MK IV",
+      "reason": "invalid skillReq"
+    },
+    {
+      "category": "armor",
+      "name": "{{{PAGENAME}}\n  | image1={{PAGENAME}}.png\n  | equipment_type=Armor\n  | level_req=Level 205\n  | defense=313\n  | dexterity=1775\n  | resistance=Bleed (40%), Paralysis (40%)\n  | craftable= ✔\n  | tradable= ✔\n  | worth=0 Col\n  | can_be_sold=X\n  | how_to_obtain=Christmas Event: Blacksmithing\n}}\n==Description==\nA heavy ceremonial coat reinforced with iron plating, once worn in the name of joy.\nNow it carries only judgement.\n\nPart of the 2025 Christmas Event. Legacy Content.\n\n== Crafting ==\nTo craft this overlay, you need a Smithing Skill level of 60.\n\n==== Smithing Requirements: ====\n* 150 Broken Bauble\n* 1 Kringlewrath Chest Plate\n* 2 Kringlewrath Arm Plate\n* 2 Kringlewrath Leg Plate\n* 1 Kringlewrath Mantle Plate\n* 20 Frozen Core Fragment\n*  Requires The Iron Saint Awakens (QE#73) Completed.\nCategory:Cosmetic\n\n\n\nCategory:Armor",
+      "reason": "missing both defense and dexterity"
+    },
+    {
+      "category": "boss",
+      "name": "Lord Slug",
+      "reason": "invalid recLevel"
+    },
+    {
+      "category": "boss",
+      "name": "X'rphan the White Wyrm",
+      "reason": "invalid recLevel"
+    },
+    {
+      "category": "boss",
+      "name": "Storm Atronach",
+      "reason": "invalid recLevel"
+    },
+    {
+      "category": "boss",
+      "name": "Bonnz the Skeleton Lord",
+      "reason": "invalid recLevel"
+    },
+    {
+      "category": "boss",
+      "name": "Karth'uk the Crystal Kraken",
+      "reason": "invalid recLevel"
+    },
+    {
+      "category": "boss",
+      "name": "Rejected",
+      "reason": "invalid recLevel"
+    },
+    {
+      "category": "miniboss",
+      "name": "Guardian of the Gate",
+      "reason": "invalid recLevel"
+    },
+    {
+      "category": "miniboss",
+      "name": "Beatrice the Impartial Queen",
+      "reason": "invalid recLevel"
+    }
+  ]
+}

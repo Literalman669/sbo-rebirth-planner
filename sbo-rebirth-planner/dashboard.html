@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SBO:Rebirth Dashboard v0.9.3</title>
+    <meta name="description" content="SBO:Rebirth planner dashboard with quick actions, state overview, and navigation." />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%23225964'/><text x='16' y='23' text-anchor='middle' font-size='20' font-family='serif' fill='%23a8e6d8'>⚔</text></svg>" />
+    <script>try{var t=localStorage.getItem('sbo-theme');if(t)document.documentElement.dataset.theme=t;}catch(e){}</script>
+    <link rel="stylesheet" href="./styles.css?v=0.9.3" />
+  </head>
+  <body>
+    <header class="page-header">
+      <h1>SBO:Rebirth Dashboard</h1>
+      <p class="subtitle">Central workspace for planning, inventory, and boss progression.</p>
+    </header>
+
+    <nav class="tab-nav">
+      <a href="./dashboard.html" class="tab-link active">Dashboard</a>
+      <a href="./index.html" class="tab-link">Planner</a>
+      <a href="./inventory.html" class="tab-link">Inventory</a>
+      <a href="./boss.html" class="tab-link">Bosses</a>
+      <a href="./progress.html" class="tab-link">Progress</a>
+      <a href="./tools.html" class="tab-link">Tools</a>
+      <button type="button" class="theme-toggle-btn" id="themeToggleBtn" title="Toggle dark/light mode">☀</button>
+    </nav>
+
+    <main class="layout dashboard-home-layout">
+      <section class="panel dashboard-home-main">
+        <h2>Workspace</h2>
+        <div class="dashboard-home-grid">
+          <a class="dashboard-home-card" href="./index.html">
+            <h3>Planner</h3>
+            <p>Stat allocation, upgrade path, and recommendation engine.</p>
+          </a>
+          <a class="dashboard-home-card" href="./inventory.html">
+            <h3>Inventory</h3>
+            <p>Structured owned gear manager with quick filtering and bulk updates.</p>
+          </a>
+          <a class="dashboard-home-card" href="./boss.html">
+            <h3>Bosses</h3>
+            <p>Readiness checks, next target guidance, and floor progression review.</p>
+          </a>
+          <a class="dashboard-home-card" href="./progress.html">
+            <h3>Progress</h3>
+            <p>Track floor completion and boss kill progression.</p>
+          </a>
+          <a class="dashboard-home-card" href="./tools.html">
+            <h3>Tools</h3>
+            <p>Calibration, compare, and advanced planner workflows.</p>
+          </a>
+        </div>
+      </section>
+
+      <section class="panel dashboard-home-side">
+        <h2>Session State</h2>
+        <div class="dashboard-state-cards">
+          <article class="summary-card"><h4>Saved Builds</h4><p id="dashSavedBuilds" class="card-value">0</p></article>
+          <article class="summary-card"><h4>Owned Items</h4><p id="dashOwnedItems" class="card-value">0</p></article>
+          <article class="summary-card"><h4>Equipped Slots</h4><p id="dashEquipped" class="card-value">0</p></article>
+          <article class="summary-card"><h4>Floors Cleared</h4><p id="dashFloors" class="card-value">0</p></article>
+        </div>
+        <p id="dashLastUpdated" class="muted-text" style="margin-top:0.8rem"></p>
+      </section>
+    </main>
+
+    <script src="./shared/state-adapter.js?v=0.9.3"></script>
+    <script src="./dashboard.js?v=0.9.3"></script>
+  </body>
+</html>
