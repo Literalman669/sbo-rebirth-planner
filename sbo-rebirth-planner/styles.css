@@ -498,6 +498,42 @@ details[open] .stat-ref-hint {
   margin-left: auto;
 }
 
+/* Planner form: larger touch targets + readable type (scoped to sticky input column) */
+.input-panel #plannerForm label {
+  gap: 0.48rem;
+  font-size: 0.92rem;
+}
+
+.input-panel #plannerForm input:not([type="checkbox"]):not([type="radio"]),
+.input-panel #plannerForm select,
+.input-panel #plannerForm textarea {
+  font-size: 0.95rem;
+  line-height: 1.35;
+  padding: 0.68rem 0.78rem;
+  min-height: 2.55rem;
+  border-radius: 11px;
+}
+
+.input-panel #plannerForm input[type="number"] {
+  min-width: 0;
+}
+
+.input-panel #plannerForm .grid {
+  gap: 1rem;
+}
+
+.input-panel #plannerForm .stats-grid label {
+  font-size: 0.88rem;
+}
+
+.input-panel #plannerForm .form-section-title {
+  font-size: 0.82rem;
+}
+
+.input-panel #plannerForm h3 {
+  font-size: 0.78rem;
+}
+
 .stale-plan-banner--strip {
   margin-bottom: 0;
   flex: 1 1 12rem;
@@ -1816,7 +1852,7 @@ tr.has-breakpoint td {
 table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.78rem;
+  font-size: clamp(0.84rem, 0.76rem + 0.22vw, 0.95rem);
   min-width: 920px;
 }
 
@@ -1830,7 +1866,7 @@ thead {
 th,
 td {
   border-bottom: 1px solid #e5ebe8;
-  padding: 0.42rem 0.5rem;
+  padding: 0.52rem 0.62rem;
   text-align: left;
   vertical-align: top;
 }
@@ -1838,7 +1874,7 @@ td {
 th {
   font-weight: 700;
   color: var(--accent);
-  font-size: 0.75rem;
+  font-size: clamp(0.78rem, 0.72rem + 0.18vw, 0.86rem);
   letter-spacing: 0.03em;
   text-transform: uppercase;
 }

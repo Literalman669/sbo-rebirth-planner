@@ -137,6 +137,13 @@
 
   const CHANGELOG = [
     {
+      version: "v0.9.6",
+      notes: [
+        "Planner readability: larger inputs, selects, and textareas in Planner Inputs with improved spacing.",
+        "Allocation tables: bumped table body/header sizing and cell padding for easier scanning.",
+      ],
+    },
+    {
       version: "v0.9.5",
       notes: [
         "Roadmap reliability pass completed: deploy now blocks on wiki-sync validation + smoke tests before publish.",
@@ -266,7 +273,7 @@
       ],
     },
   ];
-  const UI_BUILD_STAMP = "76bcb7a";
+  const UI_BUILD_STAMP = "8ffe9c3";
 
   const SHARE_FIELDS = [
     "buildName",
