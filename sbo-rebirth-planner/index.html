@@ -479,24 +479,39 @@
       </section>
 
       <section id="recommendations" class="panel output-panel" aria-labelledby="panel-output-heading">
-        <h2 id="panel-output-heading">Recommendations</h2>
-        <div class="output-toolbar">
-          <div class="output-toolbar-primary">
-            <button type="button" class="secondary" id="collapsePanelsBtn" data-testid="collapse-panels-btn" title="Collapse all output panels">Collapse Panels</button>
-            <button type="button" class="secondary" id="expandPanelsBtn" data-testid="expand-panels-btn" title="Expand all output panels">Expand Panels</button>
-            <span class="toolbar-divider" aria-hidden="true"></span>
+        <header class="output-panel-header">
+          <div>
+            <p class="section-eyebrow">Planner output</p>
+            <h2 id="panel-output-heading">Recommendations</h2>
+            <p class="muted-text output-panel-lede">Review the generated loadout, level plan, progress tools, and share/export actions from one workspace.</p>
+          </div>
+          <div class="output-status-stack" aria-label="Output status">
+            <span class="output-status-pill">Refreshes on Generate</span>
+            <span class="output-status-pill output-status-pill--accent">Share-ready</span>
+          </div>
+        </header>
+
+        <div class="output-toolbar" aria-label="Recommendation actions">
+          <div class="output-toolbar-group" aria-label="Panel display controls">
+            <span class="toolbar-group-label">Panels</span>
+            <button type="button" class="secondary compact" id="collapsePanelsBtn" data-testid="collapse-panels-btn" title="Collapse all output panels">Collapse</button>
+            <button type="button" class="secondary compact" id="expandPanelsBtn" data-testid="expand-panels-btn" title="Expand all output panels">Expand</button>
+          </div>
+          <div class="output-toolbar-group output-toolbar-group--primary" aria-label="Share and export controls">
+            <span class="toolbar-group-label">Share</span>
             <button type="button" class="secondary" id="copyLoadoutBtn" data-testid="copy-loadout-btn">Copy Loadout</button>
             <button type="button" class="secondary" id="copyShareLinkBtn" data-testid="copy-share-link-btn">Copy Share Link</button>
+            <details class="output-toolbar-more">
+              <summary class="output-toolbar-more-summary">More</summary>
+              <div class="output-toolbar-more-inner">
+                <button type="button" class="secondary" id="printBuildBtn" data-testid="print-build-btn">Print / PDF</button>
+              </div>
+            </details>
           </div>
-          <details class="output-toolbar-more">
-            <summary class="output-toolbar-more-summary">More</summary>
-            <div class="output-toolbar-more-inner">
-              <button type="button" class="secondary" id="printBuildBtn" data-testid="print-build-btn">Print / PDF</button>
-            </div>
-          </details>
         </div>
         <div id="outputActionMessage" class="build-action-message"></div>
         <nav class="dashboard-view-nav" id="dashboardViewNav" aria-label="Dashboard workspace views">
+          <span class="dashboard-view-label">View</span>
           <button type="button" class="chip-btn active" data-dashboard-view="all">All</button>
           <button type="button" class="chip-btn" data-dashboard-view="gear">Gear</button>
           <button type="button" class="chip-btn" data-dashboard-view="plan">Stat Plan</button>
@@ -550,7 +565,7 @@
 
             <article class="subpanel" data-dashboard-panel="timeline">
               <h3>Upgrade Path Timeline</h3>
-              <p class="muted-text" style="margin:0 0 0.5rem">Per-slot item progression across your planned level range, sorted by unlock level.</p>
+              <p class="muted-text dashboard-panel-note">Per-slot item progression across your planned level range, sorted by unlock level.</p>
               <div id="upgradeTimeline" class="upgrade-timeline"></div>
             </article>
           </div>
@@ -558,13 +573,13 @@
           <aside class="dashboard-context-column">
             <article class="subpanel context-panel" data-dashboard-panel="context">
               <h3>Build Benchmarks</h3>
-              <p class="muted-text" style="margin:0 0 0.5rem">Projected metrics at key level milestones across your plan.</p>
+              <p class="muted-text dashboard-panel-note">Projected metrics at key level milestones across your plan.</p>
               <div id="benchmarkPanel" class="benchmark-panel"></div>
             </article>
 
             <article class="subpanel collapsed context-panel" data-dashboard-panel="progress">
               <h3>Floor Progress Tracker</h3>
-              <p class="muted-text" style="margin:0 0 0.5rem">Click floors to mark them cleared. Persists across sessions.</p>
+              <p class="muted-text dashboard-panel-note">Click floors to mark them cleared. Persists across sessions.</p>
               <div id="floorTracker" class="floor-tracker"></div>
               <div class="floor-tracker-actions">
                 <button type="button" class="secondary compact" id="ftClearAllBtn" data-testid="ft-clear-all-btn">Clear All</button>
@@ -589,13 +604,13 @@
 
             <article class="subpanel collapsed context-panel" data-dashboard-panel="progress">
               <h3>Skill Unlock Checklist</h3>
-              <p class="muted-text" style="margin:0 0 0.5rem">Sword skills unlocked at your current weapon skill level.</p>
+              <p class="muted-text dashboard-panel-note">Sword skills unlocked at your current weapon skill level.</p>
               <div id="skillChecklist"></div>
             </article>
 
             <article class="subpanel collapsed context-panel" data-dashboard-panel="progress">
               <h3>Party Role Advisor</h3>
-              <p class="muted-text" style="margin:0 0 0.5rem">Stat and gear adjustments for tank/DPS/support/farmer roles.</p>
+              <p class="muted-text dashboard-panel-note">Stat and gear adjustments for tank/DPS/support/farmer roles.</p>
               <div id="partyRoleAdvisor"></div>
             </article>
           </aside>
