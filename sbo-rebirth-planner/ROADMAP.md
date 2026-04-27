@@ -107,6 +107,6 @@ Wiki URL quirks found and fixed:
 ---
 
 ## Notes
-- Netlify deploys paused — testing locally only until further notice
+- **GitHub Pages:** pushes to `main` run `.github/workflows/deploy.yml` (install, optional STDB client build, wiki validation, smoke tests, then upload `sbo-rebirth-planner/` to Pages). The live URL is the repo’s Pages site (e.g. `https://<user>.github.io/<repo>/`).
 - Boss respawn times corrected: floor bosses are **180 seconds** (F4–F13) or **3 minutes** (F14+), not 20 minutes
 - Bosses with empty wiki pages have HP/EXP/Col interpolated from the game's linear scaling formula

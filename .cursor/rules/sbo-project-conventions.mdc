@@ -8,5 +8,5 @@ alwaysApply: true
 - **Project root**: `pathofthesovereign-1.21.1`; planner in `sbo-rebirth-planner/`
 - **Roadmap**: `Road Map/SBO Rebirth Build Planner Roadmap.md`
 - **Wiki**: https://swordbloxonlinerebirth.fandom.com
-- **Stack**: Plain HTML/CSS/JS, no npm build; deploy via Netlify
-- **Live**: https://sbo-rebirth-build-planner.netlify.app
+- **Stack**: Plain HTML/CSS/JS; optional `npm run build:stdb-client` for SpacetimeDB bundle
+- **Live (GitHub Pages)**: https://literalman389.github.io/sbo-rebirth-planner/ — deploy on push to `main` via `.github/workflows/deploy.yml`

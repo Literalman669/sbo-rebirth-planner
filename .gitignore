@@ -6,7 +6,7 @@ node_modules/
 Thumbs.db
 *.log
 
-# Local Netlify folder
+# Optional local tooling folders
 .netlify
 
 # Environment and secrets

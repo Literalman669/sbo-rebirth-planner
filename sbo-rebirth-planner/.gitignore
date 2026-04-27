@@ -4,7 +4,7 @@ Thumbs.db
 *.log
 windsurf_deployment.yaml
 
-# Local Netlify folder
+# Optional local tooling folders
 .netlify
 
 # Environment and secrets

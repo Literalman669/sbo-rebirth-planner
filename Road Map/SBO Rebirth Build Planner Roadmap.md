@@ -105,7 +105,7 @@ Checklist format requested by user. This is now the working build tracker.
 - [x] Add allocation transparency in Build Logic (profile mode + target split percentages).
 - [x] Add recommendation scoring optimizations for requirement-fit and value-efficiency (economy-aware ranking).
 - [x] Add recommendation meta economy summary (average value and average value-fit multiplier).
-- [x] Publish web build and start user feedback loop (live at https://sbo-rebirth-build-planner.netlify.app).
+- [x] Publish web build and start user feedback loop (live on **GitHub Pages**: https://literalman389.github.io/sbo-rebirth-planner/ — deploy workflow: `.github/workflows/deploy.yml`).
 
 ### Phase F — Expansion (v0.4.x) ✅ COMPLETE
 - [x] Mobile responsive layout: full single-column layout on phones, touch-friendly inputs, collapsible sidebar, sticky Generate button.
@@ -115,7 +115,7 @@ Checklist format requested by user. This is now the working build tracker.
 - [x] Level-up planner: "I'm level X, I want to reach level Y" — show optimal point allocation path level by level with stat totals at each step.
 - [x] Party Role Advisor panel: given a party role (tank/DPS/support/farmer), suggest stat allocation adjustments and gear priorities that complement the role.
 - [x] Open Graph / social meta tags: added og:title, og:description, og:type, og:url, twitter:card, twitter:title, twitter:description.
-- [x] Redeploy to Netlify after all Phase F changes. (v0.4.1 live)
+- [x] Ship static build after all Phase F changes. (v0.4.1 live)
 
 ### Phase G — Polish & Quality (v0.5.x)
 - [x] Build comparison: side-by-side stat diff between two saved builds (already implemented in prior sessions).
