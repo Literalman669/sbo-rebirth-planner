@@ -137,6 +137,12 @@
 
   const CHANGELOG = [
     {
+      version: "v0.9.7",
+      notes: [
+        "Inventory: advanced filters (floor range, weapon class, scaling, stat/Col/Lv/skill bounds, notes search, hide 0 Col) plus extra sort modes (Col + total stats).",
+      ],
+    },
+    {
       version: "v0.9.6",
       notes: [
         "Planner readability: larger inputs, selects, and textareas in Planner Inputs with improved spacing.",
@@ -273,7 +279,7 @@
       ],
     },
   ];
-  const UI_BUILD_STAMP = "5b0ac11";
+  const UI_BUILD_STAMP = "8607342";
 
   const SHARE_FIELDS = [
     "buildName",

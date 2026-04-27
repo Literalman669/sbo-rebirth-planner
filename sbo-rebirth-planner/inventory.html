@@ -3,11 +3,11 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>SBO:Rebirth Inventory v0.9.6</title>
+    <title>SBO:Rebirth Inventory v0.9.7</title>
     <meta name="description" content="Structured owned inventory manager for SBO:Rebirth planner." />
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%23225964'/><text x='16' y='23' text-anchor='middle' font-size='20' font-family='serif' fill='%23a8e6d8'>⚔</text></svg>" />
     <script>try{var t=localStorage.getItem('sbo-theme');if(t)document.documentElement.dataset.theme=t;}catch(e){}</script>
-    <link rel="stylesheet" href="./styles.css?v=0.9.6" />
+    <link rel="stylesheet" href="./styles.css?v=0.9.7" />
   </head>
   <body>
     <header class="page-header">
@@ -43,8 +43,8 @@
               <option value="shield">Shield</option>
             </select>
           </label>
-          <label>Max floor
-            <input type="number" id="invMaxFloor" min="1" max="99" value="19" />
+          <label>Max unlock floor
+            <input type="number" id="invMaxFloor" min="1" max="99" value="19" title="Show items with floorMin at or below this value" />
           </label>
         </div>
         <div class="grid three">
@@ -73,9 +73,96 @@
               <option value="floor-desc">Floor (high to low)</option>
               <option value="name-asc">Name (A-Z)</option>
               <option value="name-desc">Name (Z-A)</option>
+              <option value="col-asc">Col (low to high)</option>
+              <option value="col-desc">Col (high to low)</option>
+              <option value="stats-desc">Total stats (high to low)</option>
             </select>
           </label>
         </div>
+        <details class="form-details inventory-advanced-filters">
+          <summary>Advanced filters</summary>
+          <p class="muted-text form-details-hint">Use ranges to narrow the catalog. Leave a field blank to ignore that bound. Weapon class only filters weapon rows.</p>
+          <div class="button-row inv-advanced-actions">
+            <button type="button" class="secondary compact" id="invResetAdvanced">Reset advanced filters</button>
+          </div>
+          <div class="grid three">
+            <label>Min unlock floor
+              <input type="number" id="invMinFloor" min="1" max="99" placeholder="Any" />
+            </label>
+            <label>Weapon class
+              <select id="invWeaponClass">
+                <option value="all">All classes</option>
+                <option value="one-handed">One-handed</option>
+                <option value="two-handed">Two-handed</option>
+                <option value="dual-wield">Dual wield</option>
+                <option value="rapier">Rapier</option>
+                <option value="dagger">Dagger</option>
+                <option value="melee">Melee</option>
+              </select>
+            </label>
+            <label>Scaling type
+              <select id="invScaling">
+                <option value="all">All scaling</option>
+                <option value="fixed">Fixed</option>
+                <option value="level_1">Level ×1</option>
+                <option value="level_5">Level ×5</option>
+                <option value="skill_1">Skill ×1</option>
+                <option value="skill_5">Skill ×5</option>
+              </select>
+            </label>
+          </div>
+          <div class="grid three">
+            <label>ATK min
+              <input type="number" id="invAtkMin" min="0" step="any" placeholder="Any" />
+            </label>
+            <label>ATK max
+              <input type="number" id="invAtkMax" min="0" step="any" placeholder="Any" />
+            </label>
+            <label>DEF min
+              <input type="number" id="invDefMin" min="0" step="any" placeholder="Any" />
+            </label>
+          </div>
+          <div class="grid three">
+            <label>DEF max
+              <input type="number" id="invDefMax" min="0" step="any" placeholder="Any" />
+            </label>
+            <label>DEX min
+              <input type="number" id="invDexMin" min="0" step="any" placeholder="Any" />
+            </label>
+            <label>DEX max
+              <input type="number" id="invDexMax" min="0" step="any" placeholder="Any" />
+            </label>
+          </div>
+          <div class="grid three">
+            <label>Col min
+              <input type="number" id="invColMin" min="0" step="1" placeholder="Any" />
+            </label>
+            <label>Col max
+              <input type="number" id="invColMax" min="0" step="1" placeholder="Any" />
+            </label>
+            <label>Lv req min
+              <input type="number" id="invLvMin" min="0" step="1" placeholder="Any" />
+            </label>
+          </div>
+          <div class="grid three">
+            <label>Lv req max
+              <input type="number" id="invLvMax" min="0" step="1" placeholder="Any" />
+            </label>
+            <label>Skill req min
+              <input type="number" id="invSkMin" min="0" step="1" placeholder="Any" />
+            </label>
+            <label>Skill req max
+              <input type="number" id="invSkMax" min="0" step="1" placeholder="Any" />
+            </label>
+          </div>
+          <label>Notes contains
+            <input type="search" id="invNotes" placeholder="Substring in wiki / source notes…" />
+          </label>
+          <label class="checkbox-label compact inline-check">
+            <input type="checkbox" id="invHideFreeCol" />
+            <span>Hide 0 Col shop/listings</span>
+          </label>
+        </details>
         <label class="checkbox-label compact inline-check">
           <input type="checkbox" id="invOwnedOnly" />
           <span>Show owned only</span>
@@ -126,11 +213,11 @@
       </section>
     </main>
 
-    <script src="./data.js?v=0.9.6"></script>
-    <script src="./shared/state-schema.js?v=0.9.6"></script>
-    <script src="./shared/state-adapter.js?v=0.9.6"></script>
-    <script src="./shared/runtime-observability.js?v=0.9.6"></script>
-    <script src="./shared/next-action.js?v=0.9.6"></script>
-    <script src="./inventory.js?v=0.9.6"></script>
+    <script src="./data.js?v=0.9.7"></script>
+    <script src="./shared/state-schema.js?v=0.9.7"></script>
+    <script src="./shared/state-adapter.js?v=0.9.7"></script>
+    <script src="./shared/runtime-observability.js?v=0.9.7"></script>
+    <script src="./shared/next-action.js?v=0.9.7"></script>
+    <script src="./inventory.js?v=0.9.7"></script>
   </body>
 </html>

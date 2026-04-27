@@ -45,6 +45,24 @@
     source: document.getElementById("invSource"),
     quality: document.getElementById("invQuality"),
     sort: document.getElementById("invSort"),
+    minFloor: document.getElementById("invMinFloor"),
+    weaponClass: document.getElementById("invWeaponClass"),
+    scaling: document.getElementById("invScaling"),
+    atkMin: document.getElementById("invAtkMin"),
+    atkMax: document.getElementById("invAtkMax"),
+    defMin: document.getElementById("invDefMin"),
+    defMax: document.getElementById("invDefMax"),
+    dexMin: document.getElementById("invDexMin"),
+    dexMax: document.getElementById("invDexMax"),
+    colMin: document.getElementById("invColMin"),
+    colMax: document.getElementById("invColMax"),
+    lvMin: document.getElementById("invLvMin"),
+    lvMax: document.getElementById("invLvMax"),
+    skMin: document.getElementById("invSkMin"),
+    skMax: document.getElementById("invSkMax"),
+    notes: document.getElementById("invNotes"),
+    hideFreeCol: document.getElementById("invHideFreeCol"),
+    resetAdvanced: document.getElementById("invResetAdvanced"),
     ownedOnly: document.getElementById("invOwnedOnly"),
     favoritesOnly: document.getElementById("invFavoritesOnly"),
     markFilteredOwned: document.getElementById("invMarkFilteredOwned"),
@@ -83,6 +101,39 @@
       .trim()
       .toLowerCase()
       .replace(/[\s_-]+/g, " ");
+  }
+
+  function parseOptionalInt(el) {
+    const raw = String(el?.value ?? "").trim();
+    if (!raw) return null;
+    const n = parseInt(raw, 10);
+    return Number.isFinite(n) ? n : null;
+  }
+
+  function parseOptionalFloat(el) {
+    const raw = String(el?.value ?? "").trim();
+    if (!raw) return null;
+    const n = parseFloat(raw);
+    return Number.isFinite(n) ? n : null;
+  }
+
+  function statTotal(item) {
+    const a = Number(item?.attack);
+    const d = Number(item?.defense);
+    const x = Number(item?.dexterity);
+    let sum = 0;
+    if (Number.isFinite(a)) sum += a;
+    if (Number.isFinite(d)) sum += d;
+    if (Number.isFinite(x)) sum += x;
+    return sum;
+  }
+
+  function inNumericRange(value, min, max) {
+    if (min == null && max == null) return true;
+    if (!Number.isFinite(value)) return false;
+    if (min != null && value < min) return false;
+    if (max != null && value > max) return false;
+    return true;
   }
 
   function getDraft() {
@@ -132,23 +183,73 @@
     const search = normalizeToken(els.search?.value || "");
     const slot = String(els.slot?.value || "all");
     const maxFloor = Math.max(1, Number(els.maxFloor?.value) || 19);
+    const minFloorRaw = parseOptionalInt(els.minFloor);
+    const minFloor = minFloorRaw != null ? Math.max(1, minFloorRaw) : null;
+    const weaponClass = String(els.weaponClass?.value || "all");
+    const scaling = String(els.scaling?.value || "all");
+    const atkMin = parseOptionalFloat(els.atkMin);
+    const atkMax = parseOptionalFloat(els.atkMax);
+    const defMin = parseOptionalFloat(els.defMin);
+    const defMax = parseOptionalFloat(els.defMax);
+    const dexMin = parseOptionalFloat(els.dexMin);
+    const dexMax = parseOptionalFloat(els.dexMax);
+    const colMin = parseOptionalInt(els.colMin);
+    const colMax = parseOptionalInt(els.colMax);
+    const lvMin = parseOptionalInt(els.lvMin);
+    const lvMax = parseOptionalInt(els.lvMax);
+    const skMin = parseOptionalInt(els.skMin);
+    const skMax = parseOptionalInt(els.skMax);
+    const notesQ = normalizeToken(els.notes?.value || "");
+    const hideFreeCol = Boolean(els.hideFreeCol?.checked);
     const ownedOnly = Boolean(els.ownedOnly?.checked);
     const favoritesOnly = Boolean(els.favoritesOnly?.checked);
     const source = String(els.source?.value || "all");
     const quality = String(els.quality?.value || "all");
     const sort = String(els.sort?.value || "floor-asc");
     const cacheKey = [
-      search, slot, maxFloor, ownedOnly, favoritesOnly, source, quality, sort, ownedRevision, favoritesRevision,
+      search, slot, maxFloor, minFloor, weaponClass, scaling,
+      atkMin, atkMax, defMin, defMax, dexMin, dexMax, colMin, colMax, lvMin, lvMax, skMin, skMax,
+      notesQ, hideFreeCol,
+      ownedOnly, favoritesOnly, source, quality, sort, ownedRevision, favoritesRevision,
     ].join("|");
     if (cacheKey === filteredCacheKey) return filteredCacheValue;
     const filtered = ITEM_CATALOG.filter((item) => {
       if (slot !== "all" && item.slot !== slot) return false;
-      if ((Number(item.floorMin) || 1) > maxFloor) return false;
+      const floor = Number(item.floorMin) || 1;
+      if (floor > maxFloor) return false;
+      if (minFloor != null && floor < minFloor) return false;
       if (source !== "all" && String(item.sourceType || "") !== source) return false;
       if (quality === "exact" && item.exactStats !== true) return false;
       if (quality === "estimated" && item.exactStats === true) return false;
       if (ownedOnly && !isOwned(item)) return false;
       if (favoritesOnly && !favorites.has(String(item.id))) return false;
+      if (weaponClass !== "all") {
+        if (slot === "weapon") {
+          if (String(item.weaponClass || "") !== weaponClass) return false;
+        } else if (slot === "all") {
+          if (item.slot === "weapon") {
+            if (String(item.weaponClass || "") !== weaponClass) return false;
+          } else {
+            return false;
+          }
+        }
+      }
+      if (scaling !== "all") {
+        const st = String(item.scalingType || "fixed");
+        if (st !== scaling) return false;
+      }
+      if (!inNumericRange(Number(item.attack), atkMin, atkMax)) return false;
+      if (!inNumericRange(Number(item.defense), defMin, defMax)) return false;
+      if (!inNumericRange(Number(item.dexterity), dexMin, dexMax)) return false;
+      const col = Number(item.colValue);
+      if (hideFreeCol && Number.isFinite(col) && col === 0) return false;
+      if (!inNumericRange(col, colMin, colMax)) return false;
+      if (!inNumericRange(Number(item.levelReq), lvMin, lvMax)) return false;
+      if (!inNumericRange(Number(item.skillReq), skMin, skMax)) return false;
+      if (notesQ) {
+        const hay = normalizeToken(item.notes || "");
+        if (!hay.includes(notesQ)) return false;
+      }
       if (!search) return true;
       return item._searchHay.includes(search);
     });
@@ -156,6 +257,9 @@
       if (sort === "name-asc") return String(a.name || "").localeCompare(String(b.name || ""));
       if (sort === "name-desc") return String(b.name || "").localeCompare(String(a.name || ""));
       if (sort === "floor-desc") return (Number(b.floorMin) || 1) - (Number(a.floorMin) || 1);
+      if (sort === "col-asc") return (Number(a.colValue) || 0) - (Number(b.colValue) || 0);
+      if (sort === "col-desc") return (Number(b.colValue) || 0) - (Number(a.colValue) || 0);
+      if (sort === "stats-desc") return statTotal(b) - statTotal(a);
       return (Number(a.floorMin) || 1) - (Number(b.floorMin) || 1);
     });
     filteredCacheKey = cacheKey;
@@ -321,12 +425,61 @@
 
   function bindEvents() {
     const rerenderFromFirstPage = () => { currentPage = 1; render(); };
+    const advancedEls = [
+      els.minFloor,
+      els.weaponClass,
+      els.scaling,
+      els.atkMin,
+      els.atkMax,
+      els.defMin,
+      els.defMax,
+      els.dexMin,
+      els.dexMax,
+      els.colMin,
+      els.colMax,
+      els.lvMin,
+      els.lvMax,
+      els.skMin,
+      els.skMax,
+      els.notes,
+      els.hideFreeCol,
+    ];
+    const resetAdvancedFilters = () => {
+      if (els.minFloor) els.minFloor.value = "";
+      if (els.weaponClass) els.weaponClass.value = "all";
+      if (els.scaling) els.scaling.value = "all";
+      [
+        els.atkMin,
+        els.atkMax,
+        els.defMin,
+        els.defMax,
+        els.dexMin,
+        els.dexMax,
+        els.colMin,
+        els.colMax,
+        els.lvMin,
+        els.lvMax,
+        els.skMin,
+        els.skMax,
+      ].forEach((el) => {
+        if (el) el.value = "";
+      });
+      if (els.notes) els.notes.value = "";
+      if (els.hideFreeCol) els.hideFreeCol.checked = false;
+      rerenderFromFirstPage();
+    };
     els.search?.addEventListener("input", rerenderFromFirstPage);
     els.slot?.addEventListener("change", rerenderFromFirstPage);
     els.maxFloor?.addEventListener("change", rerenderFromFirstPage);
     els.source?.addEventListener("change", rerenderFromFirstPage);
     els.quality?.addEventListener("change", rerenderFromFirstPage);
     els.sort?.addEventListener("change", rerenderFromFirstPage);
+    advancedEls.forEach((el) => {
+      if (!el) return;
+      const evt = el.tagName === "SELECT" || el.type === "checkbox" ? "change" : "input";
+      el.addEventListener(evt, rerenderFromFirstPage);
+    });
+    els.resetAdvanced?.addEventListener("click", resetAdvancedFilters);
     els.ownedOnly?.addEventListener("change", rerenderFromFirstPage);
     els.favoritesOnly?.addEventListener("change", rerenderFromFirstPage);
 

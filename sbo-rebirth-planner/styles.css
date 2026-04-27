@@ -1552,6 +1552,15 @@ select:focus {
   margin: 0.35rem 0 0.65rem;
 }
 
+.inventory-advanced-filters {
+  margin-top: 0.65rem;
+}
+
+.inventory-advanced-filters .inv-advanced-actions {
+  margin-top: 0.35rem;
+  margin-bottom: 0.15rem;
+}
+
 .dashboard-workspace {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(240px, 320px);
