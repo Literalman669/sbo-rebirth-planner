@@ -31,7 +31,10 @@ jobs:
 
       - name: Install planner deps and rebuild SpacetimeDB client bundle
         working-directory: sbo-rebirth-planner
-        run: npm ci && npm run build:stdb-client
+        run: |
+          npm ci
+          npx playwright install chromium --with-deps
+          npm run build:stdb-client
 
       - name: Validate wiki sync report thresholds
         working-directory: sbo-rebirth-planner
@@ -40,11 +43,16 @@ jobs:
       - name: Run planner smoke tests
         working-directory: sbo-rebirth-planner
         run: |
-          npx serve -p 60290 -l 60290 > /tmp/planner-serve.log 2>&1 &
+          python3 -m http.server 60290 --bind 127.0.0.1 > /tmp/planner-serve.log 2>&1 &
           SERVER_PID=$!
           trap "kill $SERVER_PID" EXIT
-          npm test
-          kill $SERVER_PID
+          for i in {1..30}; do
+            if curl -fsS http://127.0.0.1:60290/index.html >/dev/null; then
+              break
+            fi
+            sleep 1
+          done
+          BASE_URL=http://127.0.0.1:60290 npm test
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
