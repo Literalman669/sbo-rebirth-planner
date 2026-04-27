@@ -1538,6 +1538,122 @@ select:focus {
 .inventory-layout {
   grid-template-columns: minmax(360px, 500px) minmax(0, 1fr);
   gap: 1.25rem;
+  align-items: start;
+}
+
+/* Inventory left column: structured sections + sticky scroll */
+.inventory-controls {
+  position: sticky;
+  top: 0.85rem;
+  align-self: start;
+  max-height: calc(100vh - 1.65rem);
+  overflow: auto;
+  min-height: 0;
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--line) 85%, transparent) transparent;
+  padding: 1.1rem 1.15rem 1.2rem;
+}
+
+.inventory-controls::-webkit-scrollbar {
+  width: 6px;
+}
+
+.inventory-controls::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--line) 75%, transparent);
+  border-radius: 999px;
+}
+
+.inventory-controls > .inv-controls-header {
+  margin: -0.05rem 0 0;
+  padding-bottom: 0.85rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--line) 88%, transparent);
+}
+
+.inventory-controls > .inv-controls-header h2 {
+  margin: 0 0 0.4rem;
+  padding-bottom: 0;
+  border-bottom: none;
+  font-size: 1.1rem;
+  letter-spacing: -0.02em;
+}
+
+.inventory-controls .inv-controls-lede {
+  margin: 0;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  max-width: 48ch;
+}
+
+.inventory-controls .inv-controls-lede strong {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.inventory-controls .inv-control-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-top: 0.95rem;
+}
+
+.inventory-controls .inv-field-span {
+  width: 100%;
+}
+
+.inventory-controls .inv-scope-grid {
+  margin-top: 0.35rem;
+}
+
+.inventory-controls .inv-control-stack > .inventory-advanced-filters {
+  margin-top: 0;
+  flex-shrink: 0;
+}
+
+.inventory-controls .inv-view-toggles {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1.35rem;
+  padding: 0.15rem 0 0.05rem;
+}
+
+.inventory-controls .inv-actions-hint {
+  margin: -0.2rem 0 0.45rem;
+  font-size: 0.74rem;
+  line-height: 1.4;
+  max-width: 52ch;
+}
+
+.inventory-controls .inv-actions-hint strong {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.inventory-controls .inv-action-row {
+  margin-top: 0.35rem;
+}
+
+.inventory-controls .inv-action-row:first-of-type {
+  margin-top: 0.25rem;
+}
+
+.inventory-controls .inv-action-row--tight {
+  gap: 0.45rem;
+}
+
+.inventory-controls .inv-controls-message {
+  margin: 0.35rem 0 0;
+  padding: 0.45rem 0.55rem;
+  border-radius: 10px;
+  font-size: 0.8rem;
+}
+
+.inventory-controls .form-section .button-row {
+  margin-top: 0.35rem;
+}
+
+.inventory-controls .form-section h3.form-section-title {
+  margin-bottom: 0.55rem;
 }
 
 .inventory-catalog .inventory-list {
@@ -2436,6 +2552,12 @@ tbody tr:hover {
   .dashboard-home-layout,
   .inventory-layout {
     grid-template-columns: 1fr;
+  }
+
+  .inventory-controls {
+    position: static;
+    max-height: none;
+    overflow: visible;
   }
 
   .form-section {

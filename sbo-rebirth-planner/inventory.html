@@ -27,165 +27,199 @@
     <div id="nextActionHint" class="next-action-hint" hidden></div>
 
     <main class="layout inventory-layout">
-      <section class="panel inventory-controls">
-        <h2>Owned Gear Controls</h2>
-        <div class="grid three">
-          <label>Search
-            <input type="search" id="invSearch" placeholder="Search name, id, slot..." />
-          </label>
-          <label>Slot
-            <select id="invSlot">
-              <option value="all">All slots</option>
-              <option value="weapon">Weapon</option>
-              <option value="armor">Armor</option>
-              <option value="upper">Headwear</option>
-              <option value="lower">Accessory</option>
-              <option value="shield">Shield</option>
-            </select>
-          </label>
-          <label>Max unlock floor
-            <input type="number" id="invMaxFloor" min="1" max="99" value="19" title="Show items with floorMin at or below this value" />
-          </label>
+      <section class="panel inventory-controls" aria-labelledby="inv-controls-title">
+        <header class="inv-controls-header">
+          <h2 id="inv-controls-title">Owned gear</h2>
+          <p class="muted-text inv-controls-lede">Filter the catalog, mark what you own, then save — your owned list syncs to the <strong>Planner</strong> tab.</p>
+        </header>
+
+        <div class="inv-control-stack">
+          <div class="form-section">
+            <h3 class="form-section-title">Search &amp; scope</h3>
+            <label class="inv-field-span">Search
+              <input type="search" id="invSearch" placeholder="Name, id, slot, notes…" autocomplete="off" />
+            </label>
+            <div class="grid two inv-scope-grid">
+              <label>Slot
+                <select id="invSlot">
+                  <option value="all">All slots</option>
+                  <option value="weapon">Weapon</option>
+                  <option value="armor">Armor</option>
+                  <option value="upper">Headwear</option>
+                  <option value="lower">Accessory</option>
+                  <option value="shield">Shield</option>
+                </select>
+              </label>
+              <label>Max unlock floor
+                <input type="number" id="invMaxFloor" min="1" max="99" value="19" title="Show items with floorMin at or below this value" />
+              </label>
+            </div>
+          </div>
+
+          <div class="form-section">
+            <h3 class="form-section-title">Catalog &amp; sort</h3>
+            <div class="grid three">
+              <label>Source
+                <select id="invSource">
+                  <option value="all">All sources</option>
+                  <option value="shop">Shop</option>
+                  <option value="mob">Mob</option>
+                  <option value="boss">Boss</option>
+                  <option value="crafted">Crafted</option>
+                  <option value="event">Event</option>
+                  <option value="badge">Badge</option>
+                  <option value="gamepass">Gamepass</option>
+                </select>
+              </label>
+              <label>Data quality
+                <select id="invQuality">
+                  <option value="all">All</option>
+                  <option value="exact">Exact only</option>
+                  <option value="estimated">Estimated only</option>
+                </select>
+              </label>
+              <label>Sort
+                <select id="invSort">
+                  <option value="floor-asc">Floor (low to high)</option>
+                  <option value="floor-desc">Floor (high to low)</option>
+                  <option value="name-asc">Name (A-Z)</option>
+                  <option value="name-desc">Name (Z-A)</option>
+                  <option value="col-asc">Col (low to high)</option>
+                  <option value="col-desc">Col (high to low)</option>
+                  <option value="stats-desc">Total stats (high to low)</option>
+                </select>
+              </label>
+            </div>
+          </div>
+
+          <details class="form-details inventory-advanced-filters">
+            <summary>Advanced filters</summary>
+            <p class="muted-text form-details-hint">Ranges are optional. Weapon class only applies to weapon rows. With <strong>Slot: All</strong>, choosing a weapon class hides non-weapons.</p>
+            <div class="button-row inv-advanced-actions">
+              <button type="button" class="secondary compact" id="invResetAdvanced">Reset advanced filters</button>
+            </div>
+            <div class="grid three">
+              <label>Min unlock floor
+                <input type="number" id="invMinFloor" min="1" max="99" placeholder="Any" />
+              </label>
+              <label>Weapon class
+                <select id="invWeaponClass">
+                  <option value="all">All classes</option>
+                  <option value="one-handed">One-handed</option>
+                  <option value="two-handed">Two-handed</option>
+                  <option value="dual-wield">Dual wield</option>
+                  <option value="rapier">Rapier</option>
+                  <option value="dagger">Dagger</option>
+                  <option value="melee">Melee</option>
+                </select>
+              </label>
+              <label>Scaling type
+                <select id="invScaling">
+                  <option value="all">All scaling</option>
+                  <option value="fixed">Fixed</option>
+                  <option value="level_1">Level ×1</option>
+                  <option value="level_5">Level ×5</option>
+                  <option value="skill_1">Skill ×1</option>
+                  <option value="skill_5">Skill ×5</option>
+                </select>
+              </label>
+            </div>
+            <div class="grid three">
+              <label>ATK min
+                <input type="number" id="invAtkMin" min="0" step="any" placeholder="Any" />
+              </label>
+              <label>ATK max
+                <input type="number" id="invAtkMax" min="0" step="any" placeholder="Any" />
+              </label>
+              <label>DEF min
+                <input type="number" id="invDefMin" min="0" step="any" placeholder="Any" />
+              </label>
+            </div>
+            <div class="grid three">
+              <label>DEF max
+                <input type="number" id="invDefMax" min="0" step="any" placeholder="Any" />
+              </label>
+              <label>DEX min
+                <input type="number" id="invDexMin" min="0" step="any" placeholder="Any" />
+              </label>
+              <label>DEX max
+                <input type="number" id="invDexMax" min="0" step="any" placeholder="Any" />
+              </label>
+            </div>
+            <div class="grid three">
+              <label>Col min
+                <input type="number" id="invColMin" min="0" step="1" placeholder="Any" />
+              </label>
+              <label>Col max
+                <input type="number" id="invColMax" min="0" step="1" placeholder="Any" />
+              </label>
+              <label>Lv req min
+                <input type="number" id="invLvMin" min="0" step="1" placeholder="Any" />
+              </label>
+            </div>
+            <div class="grid three">
+              <label>Lv req max
+                <input type="number" id="invLvMax" min="0" step="1" placeholder="Any" />
+              </label>
+              <label>Skill req min
+                <input type="number" id="invSkMin" min="0" step="1" placeholder="Any" />
+              </label>
+              <label>Skill req max
+                <input type="number" id="invSkMax" min="0" step="1" placeholder="Any" />
+              </label>
+            </div>
+            <label>Notes contains
+              <input type="search" id="invNotes" placeholder="Substring in wiki / source notes…" />
+            </label>
+            <label class="checkbox-label compact inline-check">
+              <input type="checkbox" id="invHideFreeCol" />
+              <span>Hide 0 Col shop/listings</span>
+            </label>
+          </details>
+
+          <div class="form-section">
+            <h3 class="form-section-title">List view</h3>
+            <div class="inv-view-toggles" role="group" aria-label="Catalog list filters">
+              <label class="checkbox-label compact inline-check">
+                <input type="checkbox" id="invOwnedOnly" />
+                <span>Owned only</span>
+              </label>
+              <label class="checkbox-label compact inline-check">
+                <input type="checkbox" id="invFavoritesOnly" />
+                <span>Favorites only</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="form-section">
+            <h3 class="form-section-title">Owned set from catalog</h3>
+            <p class="muted-text inv-actions-hint">Applies to the <strong>filtered</strong> rows in the catalog list.</p>
+            <div class="button-row inv-action-row">
+              <button type="button" class="secondary" id="invMarkFilteredOwned">Mark filtered as owned</button>
+              <button type="button" class="secondary" id="invClearFilteredOwned">Clear filtered owned</button>
+            </div>
+            <div class="button-row inv-action-row">
+              <button type="button" class="secondary" id="invSaveOwned">Save to Planner</button>
+            </div>
+            <div class="button-row inv-action-row inv-action-row--tight">
+              <button type="button" class="secondary ghost compact" id="invExportOwned">Export list</button>
+              <button type="button" class="secondary ghost compact" id="invCopyOwned">Copy list</button>
+            </div>
+          </div>
+
+          <div class="form-section">
+            <h3 class="form-section-title">Bulk paste</h3>
+            <p class="muted-text inv-actions-hint">One name per line or comma-separated; merged into owned without clearing existing.</p>
+            <label>Bulk names
+              <textarea id="invBulkPaste" rows="4" placeholder="Iron Greatsword&#10;Beginner Armor&#10;Coned Helmet"></textarea>
+            </label>
+            <div class="button-row inv-action-row">
+              <button type="button" class="secondary" id="invMergeBulk">Merge into owned</button>
+            </div>
+          </div>
+
+          <p id="invMessage" class="build-action-message inv-controls-message"></p>
         </div>
-        <div class="grid three">
-          <label>Source
-            <select id="invSource">
-              <option value="all">All sources</option>
-              <option value="shop">Shop</option>
-              <option value="mob">Mob</option>
-              <option value="boss">Boss</option>
-              <option value="crafted">Crafted</option>
-              <option value="event">Event</option>
-              <option value="badge">Badge</option>
-              <option value="gamepass">Gamepass</option>
-            </select>
-          </label>
-          <label>Data quality
-            <select id="invQuality">
-              <option value="all">All</option>
-              <option value="exact">Exact only</option>
-              <option value="estimated">Estimated only</option>
-            </select>
-          </label>
-          <label>Sort
-            <select id="invSort">
-              <option value="floor-asc">Floor (low to high)</option>
-              <option value="floor-desc">Floor (high to low)</option>
-              <option value="name-asc">Name (A-Z)</option>
-              <option value="name-desc">Name (Z-A)</option>
-              <option value="col-asc">Col (low to high)</option>
-              <option value="col-desc">Col (high to low)</option>
-              <option value="stats-desc">Total stats (high to low)</option>
-            </select>
-          </label>
-        </div>
-        <details class="form-details inventory-advanced-filters">
-          <summary>Advanced filters</summary>
-          <p class="muted-text form-details-hint">Use ranges to narrow the catalog. Leave a field blank to ignore that bound. Weapon class only filters weapon rows.</p>
-          <div class="button-row inv-advanced-actions">
-            <button type="button" class="secondary compact" id="invResetAdvanced">Reset advanced filters</button>
-          </div>
-          <div class="grid three">
-            <label>Min unlock floor
-              <input type="number" id="invMinFloor" min="1" max="99" placeholder="Any" />
-            </label>
-            <label>Weapon class
-              <select id="invWeaponClass">
-                <option value="all">All classes</option>
-                <option value="one-handed">One-handed</option>
-                <option value="two-handed">Two-handed</option>
-                <option value="dual-wield">Dual wield</option>
-                <option value="rapier">Rapier</option>
-                <option value="dagger">Dagger</option>
-                <option value="melee">Melee</option>
-              </select>
-            </label>
-            <label>Scaling type
-              <select id="invScaling">
-                <option value="all">All scaling</option>
-                <option value="fixed">Fixed</option>
-                <option value="level_1">Level ×1</option>
-                <option value="level_5">Level ×5</option>
-                <option value="skill_1">Skill ×1</option>
-                <option value="skill_5">Skill ×5</option>
-              </select>
-            </label>
-          </div>
-          <div class="grid three">
-            <label>ATK min
-              <input type="number" id="invAtkMin" min="0" step="any" placeholder="Any" />
-            </label>
-            <label>ATK max
-              <input type="number" id="invAtkMax" min="0" step="any" placeholder="Any" />
-            </label>
-            <label>DEF min
-              <input type="number" id="invDefMin" min="0" step="any" placeholder="Any" />
-            </label>
-          </div>
-          <div class="grid three">
-            <label>DEF max
-              <input type="number" id="invDefMax" min="0" step="any" placeholder="Any" />
-            </label>
-            <label>DEX min
-              <input type="number" id="invDexMin" min="0" step="any" placeholder="Any" />
-            </label>
-            <label>DEX max
-              <input type="number" id="invDexMax" min="0" step="any" placeholder="Any" />
-            </label>
-          </div>
-          <div class="grid three">
-            <label>Col min
-              <input type="number" id="invColMin" min="0" step="1" placeholder="Any" />
-            </label>
-            <label>Col max
-              <input type="number" id="invColMax" min="0" step="1" placeholder="Any" />
-            </label>
-            <label>Lv req min
-              <input type="number" id="invLvMin" min="0" step="1" placeholder="Any" />
-            </label>
-          </div>
-          <div class="grid three">
-            <label>Lv req max
-              <input type="number" id="invLvMax" min="0" step="1" placeholder="Any" />
-            </label>
-            <label>Skill req min
-              <input type="number" id="invSkMin" min="0" step="1" placeholder="Any" />
-            </label>
-            <label>Skill req max
-              <input type="number" id="invSkMax" min="0" step="1" placeholder="Any" />
-            </label>
-          </div>
-          <label>Notes contains
-            <input type="search" id="invNotes" placeholder="Substring in wiki / source notes…" />
-          </label>
-          <label class="checkbox-label compact inline-check">
-            <input type="checkbox" id="invHideFreeCol" />
-            <span>Hide 0 Col shop/listings</span>
-          </label>
-        </details>
-        <label class="checkbox-label compact inline-check">
-          <input type="checkbox" id="invOwnedOnly" />
-          <span>Show owned only</span>
-        </label>
-        <label class="checkbox-label compact inline-check">
-          <input type="checkbox" id="invFavoritesOnly" />
-          <span>Show favorites only</span>
-        </label>
-        <div class="button-row">
-          <button type="button" class="secondary" id="invMarkFilteredOwned">Mark filtered as owned</button>
-          <button type="button" class="secondary" id="invClearFilteredOwned">Clear filtered owned</button>
-          <button type="button" class="secondary ghost" id="invSaveOwned">Save to Planner</button>
-          <button type="button" class="secondary ghost" id="invExportOwned">Export owned list</button>
-          <button type="button" class="secondary ghost" id="invCopyOwned">Copy owned list</button>
-        </div>
-        <label>
-          Bulk paste (one item per line or comma separated)
-          <textarea id="invBulkPaste" rows="4" placeholder="Iron Greatsword&#10;Beginner Armor&#10;Coned Helmet"></textarea>
-        </label>
-        <div class="button-row">
-          <button type="button" class="secondary" id="invMergeBulk">Merge Bulk Into Owned</button>
-        </div>
-        <p id="invMessage" class="build-action-message"></p>
       </section>
 
       <section class="panel inventory-catalog">
