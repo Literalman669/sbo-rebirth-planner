@@ -86,7 +86,7 @@ function runDesktopSmoke(extraEnv = {}) {
       SBO_DESKTOP_SMOKE_SET_BOUNDS: "1180x760+32+48",
     });
 
-    assert.equal(firstResult.title, "SBO:Rebirth Dashboard v0.9.7");
+    assert.equal(firstResult.title, "SBO:Rebirth Dashboard v0.9.8");
     assert.match(firstResult.url, /dashboard\.html$/);
     assert.equal(firstResult.windowBounds.width, 1180);
     assert.equal(firstResult.windowBounds.height, 760);

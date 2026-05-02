@@ -163,6 +163,14 @@
 
   const CHANGELOG = [
     {
+      version: "v0.9.8",
+      notes: [
+        "Planner: added Start Here flow, example build, no-plan empty state, and saved advanced-section preferences.",
+        "Dashboard: added action cards for continuing planning, boss target, gear upgrade, inventory status, and backup.",
+        "Data quality: clearer Exact / Estimated / Wiki-sourced / Needs Testing badges across planner, inventory, and boss views.",
+      ],
+    },
+    {
       version: "v0.9.7",
       notes: [
         "Inventory: advanced filters (floor range, weapon class, scaling, stat/Col/Lv/skill bounds, notes search, hide 0 Col) plus extra sort modes (Col + total stats).",
