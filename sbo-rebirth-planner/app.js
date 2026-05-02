@@ -9,6 +9,7 @@
   const PRESET_FILTER_STORAGE_KEY = "sbo-rebirth-planner.preset-filter.v1";
   const FORM_DRAFT_STORAGE_KEY = "sbo-rebirth-planner.form-draft.v1";
   const EQUIPPED_STORAGE_KEY = "sbo-rebirth-planner.equipped.v1";
+  const DISCLOSURE_PREF_STORAGE_KEY = "sbo-rebirth-planner.disclosures.v1";
   const EXPORT_SCHEMA_VERSION = 1;
   const CALIBRATION_EXPORT_SCHEMA_VERSION = 1;
   const CALIBRATION_STORAGE_KEY = "sbo-rebirth-planner.calibration.v1";
@@ -134,6 +135,31 @@
       },
     },
   ];
+  const EXAMPLE_BUILD_SNAPSHOT = Object.freeze({
+    buildName: "Example Beginner Greatsword",
+    currentLevel: 12,
+    levelsToPlan: 20,
+    maxFloorReached: 2,
+    weaponClass: "two-handed",
+    playstyle: "balanced",
+    allocationMode: "adaptive",
+    weaponSkill: 25,
+    str: 18,
+    def: 3,
+    agi: 6,
+    vit: 9,
+    luk: 0,
+    gearAttack: 30,
+    gearDefense: 35,
+    gearDexterity: 140,
+    gearSortMode: "score",
+    itemPoolMode: "standard",
+    dataQualityMode: "exact-only",
+    ownedItems: "",
+    onlyOwned: false,
+    autoSyncGearTotals: true,
+    autoAddOwnedOnEquip: true,
+  });
 
   const CHANGELOG = [
     {
@@ -183,7 +209,7 @@
     {
       version: "v0.9.1",
       notes: [
-        "Removed cloud AI chat and all Supabase integration. Planner is fully static again (no config.js, no edge proxy).",
+        "Removed former cloud chat and all Supabase integration. Planner is fully static again (no config.js, no edge proxy).",
       ],
     },
     {
@@ -274,7 +300,7 @@
     {
       version: "v0.4.0",
       notes: [
-        "Skill Unlock Checklist, Level-Up Planner, and Party Role Advisor panels added.",
+        "Skill Unlock Checklist, Level-Up Planner, and Party Role Guide panels added.",
         "Open Graph / Twitter meta tags for link previews.",
       ],
     },
@@ -314,6 +340,10 @@
   const copyLoadoutBtn = document.getElementById("copyLoadoutBtn");
   const copyShareLinkBtn = document.getElementById("copyShareLinkBtn");
   const outputActionMessage = document.getElementById("outputActionMessage");
+  const noGeneratedPlanEmptyState = document.getElementById("noGeneratedPlanEmptyState");
+  const loadExampleBuildBtn = document.getElementById("loadExampleBuildBtn");
+  const exampleBuildNotice = document.getElementById("exampleBuildNotice");
+  const advancedPlannerJump = document.getElementById("advancedPlannerJump");
   const weaponClassSelect = document.getElementById("weaponClassSelect");
   const playstyleSelect = document.getElementById("playstyleSelect");
   const equippedLoadout = document.getElementById("equippedLoadout");
@@ -360,10 +390,12 @@
   const importBuildBtn = document.getElementById("importBuildBtn");
   const importBuildInput = document.getElementById("importBuildInput");
   const buildActionMessage = document.getElementById("buildActionMessage");
+  const savedBuildsEmptyState = document.getElementById("savedBuildsEmptyState");
   const compareBuildASelect = document.getElementById("compareBuildA");
   const compareBuildBSelect = document.getElementById("compareBuildB");
   const compareBuildBtn = document.getElementById("compareBuildBtn");
   const compareMessage = document.getElementById("compareMessage");
+  const compareBuildsEmptyState = document.getElementById("compareBuildsEmptyState");
   const comparisonResults = document.getElementById("comparisonResults");
   const dataValidationStatus = document.getElementById("dataValidationStatus");
   const calibrationReport = document.getElementById("calibrationReport");
@@ -384,6 +416,7 @@
   let draftWriteTimer = null;
   let recalcDebounceTimer = null;
   let formDirtySinceLastSubmit = false;
+  let hasGeneratedPlan = false;
   let outputPanelsCollapsed = false;
   let activeDashboardView = "gear";
   const compareShortlist = new Map();
@@ -415,9 +448,11 @@
   initializeShareLink();
   initializeFloorTracker();
   initializeQuickPresets();
+  initializePlannerDisclosures();
+  initializeExampleBuild();
   initializeStatCapWarnings();
   renderChangelog();
-  applyUrlShareParams();
+  const loadedSharedBuild = applyUrlShareParams();
 
   (function initThemeToggle() {
     const btn = document.getElementById("themeToggleBtn");
@@ -452,9 +487,71 @@
   window.addEventListener("beforeunload", () => flushDraftNow());
   window.addEventListener("pagehide", () => flushDraftNow());
 
-  // Run once on load so users immediately see a sample output.
-  onSubmit(new Event("submit"));
+  if (loadedSharedBuild) {
+    onSubmit(new Event("submit"));
+  } else {
+    renderPlanOutputState(false);
+  }
   initSpacetimeSync();
+
+  function renderPlanOutputState(generated) {
+    hasGeneratedPlan = Boolean(generated);
+    if (noGeneratedPlanEmptyState) noGeneratedPlanEmptyState.hidden = hasGeneratedPlan;
+    if (dashboardViewNav) dashboardViewNav.hidden = !hasGeneratedPlan;
+    document.querySelectorAll("#recommendations .output-toolbar, #recommendations .dashboard-workspace").forEach((el) => {
+      el.hidden = !hasGeneratedPlan;
+    });
+  }
+
+  function initializeExampleBuild() {
+    if (!loadExampleBuildBtn) return;
+    loadExampleBuildBtn.addEventListener("click", () => {
+      applyFormSnapshot(EXAMPLE_BUILD_SNAPSHOT);
+      if (presetNameInput) presetNameInput.value = "";
+      if (exampleBuildNotice) exampleBuildNotice.hidden = false;
+      renderEquippedLoadout(getFormInput());
+      renderOwnedInventoryManager();
+      queueDraftWrite();
+      formDirtySinceLastSubmit = true;
+      renderStalePlanBanner();
+    });
+  }
+
+  function initializePlannerDisclosures() {
+    const disclosures = Array.from(document.querySelectorAll("[data-disclosure-key]"))
+      .filter((el) => el instanceof HTMLDetailsElement);
+    let prefs = {};
+    try {
+      prefs = JSON.parse(getRawStorage(DISCLOSURE_PREF_STORAGE_KEY) || "{}") || {};
+    } catch (_error) {
+      prefs = {};
+    }
+
+    disclosures.forEach((details) => {
+      const key = details.dataset.disclosureKey;
+      if (!key) return;
+      if (Object.prototype.hasOwnProperty.call(prefs, key)) {
+        details.open = Boolean(prefs[key]);
+      }
+      details.addEventListener("toggle", () => {
+        prefs[key] = details.open;
+        try {
+          setRawStorage(DISCLOSURE_PREF_STORAGE_KEY, JSON.stringify(prefs));
+        } catch (_error) {
+          // Storage can be unavailable in private contexts; disclosure still works for this session.
+        }
+      });
+    });
+
+    if (advancedPlannerJump) {
+      advancedPlannerJump.addEventListener("click", () => {
+        const advanced = document.getElementById("advancedPlannerOptions");
+        if (advanced instanceof HTMLDetailsElement) {
+          advanced.open = true;
+        }
+      });
+    }
+  }
 
   function populateSelects() {
     Object.entries(data.weaponProfiles).forEach(([value, profile]) => {
@@ -828,6 +925,7 @@
 
   function onSubmit(event) {
     event.preventDefault();
+    renderPlanOutputState(true);
 
     const input = getFormInput();
     const planResult = buildLevelPlan(input);
@@ -1234,7 +1332,7 @@
 
   function applyUrlShareParams() {
     const params = new URLSearchParams(window.location.search);
-    if (!params.has("currentLevel") && !params.has("weaponClass")) return;
+    if (!params.has("currentLevel") && !params.has("weaponClass")) return false;
 
     const snapshot = {};
     SHARE_FIELDS.forEach((key) => {
@@ -1254,7 +1352,9 @@
           : `<span class="sbb-name">⚔ Shared Build</span><span class="sbb-hint">Loaded from shared link — edit freely, your changes stay local.</span>`;
       }
       showOutputActionMessage(name ? `Build "${name}" loaded from shared link.` : "Build loaded from shared link.", "success");
+      return true;
     }
+    return false;
   }
 
   function initializeShareLink() {
@@ -3231,6 +3331,7 @@
                 const requirementText = describeItemRequirement(item);
                 const budgetText = describeBudgetItemStatus(item, input.optimization?.budgetCap);
                 const diffHtml = buildStatDiffHtml(detail, equippedStats, isEquipped);
+                const dataQualityHtml = buildItemDataQualityBadgesHtml(item, detail.confidence);
                 return `
                   <li class="gear-item${isEquipped ? " equipped" : ""}">
                     <strong>${escapeHtml(item.name)}</strong>
@@ -3241,7 +3342,7 @@
                       <span class="pill">Req fit ${round(detail.requirementFit, 2)}</span>
                       <span class="pill">Value ${round(detail.valueEfficiency, 2)}</span>
                       <span class="pill">${detail.isOwned ? "Owned boost" : "Needs acquisition"}</span>
-                      <span class="pill">${detail.confidence === "exact" ? "High confidence" : "Estimated confidence"}</span>
+                      ${dataQualityHtml}
                     </div>
                     <div class="gear-statline">
                       ATK ${round(detail.attack || 0, 2)} • DEF ${round(detail.defense || 0, 2)} • DEX ${round(detail.dexterity || 0, 2)}
@@ -3287,7 +3388,7 @@
                       ${isEquipped ? '<span class="pill equipped">Equipped</span>' : ""}
                       <span class="pill ${detail.isOwned ? "owned" : "not-owned"}">${detail.isOwned ? "Owned" : "Unowned"}</span>
                       ${detail.overBudget && Number.isFinite(input.optimization?.budgetCap) ? '<span class="pill estimated">Over budget</span>' : ""}
-                      <span class="pill ${detail.confidence === "exact" ? "exact" : "estimated"}">${detail.confidence === "exact" ? "Exact data" : "Estimated data"}</span>
+                      ${dataQualityHtml}
                     </div>
                     <details class="gear-item-details">
                       <summary>Details</summary>
@@ -3319,6 +3420,23 @@
       ? `<p class="gear-footnote">Shield slot is hidden for Two-Handed recommendations because greatsword paths typically do not run shields.</p>`
       : "";
     gearResults.innerHTML = metaHtml + costHtml + gearCardsHtml + twoHandedNote + weaponPathHtml;
+  }
+
+  function buildItemDataQualityBadgesHtml(item, confidence) {
+    const exact = item?.exactStats === true || confidence === "exact";
+    const hasWikiNote = /wiki/i.test(`${item?.notes || ""}`);
+    const badges = [
+      exact
+        ? '<span class="data-quality-badge exact" title="Exact means this item has confirmed stat values in the catalog.">Exact</span>'
+        : '<span class="data-quality-badge estimated" title="Estimated means one or more recommendation values use fallback formulas.">Estimated</span>',
+    ];
+    if (hasWikiNote) {
+      badges.push('<span class="data-quality-badge wiki" title="Wiki-sourced means the item was imported from captured SBO:Rebirth wiki notes.">Wiki-sourced</span>');
+    }
+    if (!exact) {
+      badges.push('<span class="data-quality-badge testing" title="Needs Testing means live in-game confirmation would improve this row.">Needs Testing</span>');
+    }
+    return badges.join("");
   }
 
   function renderBenchmarkPanel(input, planResult) {
@@ -4301,6 +4419,7 @@
       }
     };
 
+    setField("buildName", snapshot.buildName);
     setField("currentLevel", snapshot.currentLevel);
     setField("levelsToPlan", snapshot.levelsToPlan);
     setField("maxFloorReached", snapshot.maxFloorReached);
@@ -4324,6 +4443,7 @@
     setField("weaponSkill", snapshot.weaponSkill);
     setField("itemPoolMode", snapshot.itemPoolMode);
     setField("dataQualityMode", snapshot.dataQualityMode);
+    setField("gearSortMode", snapshot.gearSortMode);
     setField("ownedItems", snapshot.ownedItems);
     setField("onlyOwned", snapshot.onlyOwned);
     setField("autoSyncGearTotals", snapshot.autoSyncGearTotals);
@@ -4440,6 +4560,7 @@
     prunePinnedPresetNames(storage);
     const allNames = getOrderedPresetNames(storage, false);
     const names = getOrderedPresetNames(storage, Boolean(showPinnedOnlyField?.checked));
+    renderSavedBuildEmptyStates(allNames.length);
 
     savedBuildSelect.innerHTML = "";
 
@@ -4468,6 +4589,11 @@
 
     refreshComparisonOptions(allNames, compareSelectionA, compareSelectionB);
     refreshPresetPinButtonState(currentSelection);
+  }
+
+  function renderSavedBuildEmptyStates(savedCount) {
+    if (savedBuildsEmptyState) savedBuildsEmptyState.hidden = savedCount > 0;
+    if (compareBuildsEmptyState) compareBuildsEmptyState.hidden = savedCount >= 2;
   }
 
   function refreshComparisonOptions(names, selectedA = "", selectedB = "") {
@@ -4897,7 +5023,7 @@
       <div class="sc-list">${rows.join("")}</div>`;
   }
 
-  // ── Party Role Advisor ────────────────────────────────────────────────────
+  // ── Party Role Guide ──────────────────────────────────────────────────────
   function renderPartyRoleAdvisor(input, planResult) {
     const container = document.getElementById("partyRoleAdvisor");
     if (!container) return;

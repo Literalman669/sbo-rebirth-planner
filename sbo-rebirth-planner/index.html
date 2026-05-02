@@ -35,8 +35,29 @@
     </nav>
     <div id="nextActionHint" class="next-action-hint" hidden></div>
 
-    <details class="stat-reference-panel">
-      <summary class="stat-reference-toggle">Stat Reference <span class="stat-ref-hint">(click to expand)</span></summary>
+    <section class="panel start-here-panel" id="startHereFlow" aria-labelledby="start-here-title">
+      <div class="start-here-copy">
+        <p class="section-eyebrow">New player flow</p>
+        <h2 id="start-here-title">Start Here</h2>
+        <p class="muted-text">Use the minimum fields below to create a useful first plan. Advanced gear, inventory, saved builds, calibration, and shortcut tools stay available when you need them.</p>
+      </div>
+      <ol class="start-here-steps" aria-label="Planner quick start steps">
+        <li><strong>Choose weapon class</strong><span>Pick the weapon path you are actively leveling.</span></li>
+        <li><strong>Choose playstyle</strong><span>Tell the planner whether you prefer balanced, damage, survival, mobility, or farming.</span></li>
+        <li><strong>Enter current level</strong><span>This sets how many stat points you should already have.</span></li>
+        <li><strong>Enter invested stats</strong><span>Use your current STR, DEF, AGI, VIT, and LUK from the game.</span></li>
+        <li><strong>Add gear totals</strong><span>Optional, but ATK/DEF/DEX makes recommendations more accurate.</span></li>
+      </ol>
+      <div class="start-here-actions">
+        <button type="submit" class="primary" form="plannerForm" id="startHereGenerateBtn" data-testid="start-here-generate">Generate My Plan</button>
+        <button type="button" class="secondary" id="loadExampleBuildBtn" data-testid="load-example-build">Load Example Build</button>
+        <a class="secondary link-button" href="#advancedPlannerOptions" id="advancedPlannerJump">Show Advanced Planner Options</a>
+      </div>
+      <p id="exampleBuildNotice" class="example-build-notice" hidden>Example build loaded. Generate the plan, then change any fields for your real character. It will not overwrite saved builds unless you click Save.</p>
+    </section>
+
+    <details class="stat-reference-panel" data-disclosure-key="stat-reference">
+      <summary class="stat-reference-toggle">Stat Reference <span class="stat-ref-hint">(advanced reference)</span></summary>
       <div class="stat-reference-body">
 
         <div class="stat-ref-section">
@@ -263,8 +284,11 @@
           </div>
           </section>
 
-          <section class="form-section" aria-labelledby="form-section-ownership-title">
-            <h3 class="form-section-title" id="form-section-ownership-title">Ownership &amp; filters</h3>
+          <details class="form-details advanced-planner-options" id="advancedPlannerOptions" data-disclosure-key="advanced-planner">
+            <summary>Show Advanced Planner Options</summary>
+
+          <details class="form-section planner-disclosure" aria-labelledby="form-section-ownership-title" data-disclosure-key="gear-inventory">
+            <summary class="form-section-title" id="form-section-ownership-title">Advanced Gear &amp; Inventory</summary>
 
           <div class="grid two ownership-grid">
             <label>
@@ -282,10 +306,13 @@
             </label>
           </div>
 
-          <section class="owned-inventory-panel" aria-labelledby="ownedInventoryHeading">
-            <div class="owned-inventory-header">
-              <h4 id="ownedInventoryHeading">Owned Inventory Manager</h4>
+          <details class="owned-inventory-panel planner-disclosure" aria-labelledby="ownedInventoryHeading" data-disclosure-key="owned-inventory">
+            <summary class="owned-inventory-summary">
+              <span id="ownedInventoryHeading">Owned Inventory Manager</span>
               <span id="ownedInventoryCount" class="owned-count">0 owned</span>
+            </summary>
+            <div class="owned-inventory-header">
+              <p class="muted-text">Mark gear you own so recommendations can boost or filter those items.</p>
             </div>
             <label>
               Search catalog
@@ -296,7 +323,7 @@
               <button type="button" class="secondary compact ghost" id="ownedClearSelectedBtn">Clear selected</button>
             </div>
             <div id="ownedInventoryList" class="owned-inventory-list" aria-live="polite"></div>
-          </section>
+          </details>
 
           <details class="form-details">
             <summary>Paste Inventory List</summary>
@@ -349,10 +376,10 @@
               <span>Strict budget cap (exclude over-cap recommendations)</span>
             </label>
           </details>
-          </section>
+          </details>
 
-          <section class="form-section" aria-labelledby="form-section-presets-title">
-            <h3 class="form-section-title" id="form-section-presets-title">Presets &amp; tools</h3>
+          <details class="form-section planner-disclosure" aria-labelledby="form-section-presets-title" data-disclosure-key="saved-builds">
+            <summary class="form-section-title" id="form-section-presets-title">Saved Builds &amp; Compare</summary>
 
           <details class="form-details">
             <summary>Quick Start Templates</summary>
@@ -393,11 +420,19 @@
               <button type="button" class="secondary" id="importBuildBtn" data-testid="import-build-btn">Import JSON</button>
             </div>
             <input type="file" id="importBuildInput" accept=".json,application/json" hidden />
+            <div id="savedBuildsEmptyState" class="empty-state compact">
+              <strong>No saved builds yet.</strong>
+              <span>Generate a plan, name it, then click Save to keep presets for later.</span>
+            </div>
             <div id="buildActionMessage" class="build-action-message"></div>
           </details>
 
           <details class="form-details" id="tools-compare">
             <summary>Compare Saved Builds</summary>
+            <div id="compareBuildsEmptyState" class="empty-state compact">
+              <strong>Need two saved builds to compare.</strong>
+              <span>Save at least two presets, then return here to compare stats and projected metrics.</span>
+            </div>
             <div class="grid two compare-grid">
               <label>
                 Build A
@@ -419,7 +454,7 @@
           </details>
 
           <details class="form-details" id="tools-calibration">
-            <summary>Calibration Mode <span class="form-details-hint">(experimental)</span></summary>
+            <summary>Experimental Calibration <span class="form-details-hint">(advanced)</span></summary>
             <div class="grid three calibration-grid">
               <label>
                 Observed DPS Index
@@ -451,8 +486,10 @@
             <input type="file" id="importCalibrationInput" accept=".json,application/json" hidden />
             <div id="calibrationMessage" class="build-action-message"></div>
           </details>
-          </section>
+          </details>
 
+          <details class="form-details" data-disclosure-key="keyboard-shortcuts">
+            <summary>Keyboard Shortcuts</summary>
           <ul class="hotkey-list" aria-label="Keyboard shortcuts">
             <li><kbd>Ctrl</kbd>+<kbd>Enter</kbd> — Generate plan</li>
             <li><kbd>Ctrl</kbd>+<kbd>S</kbd> — Save build</li>
@@ -461,6 +498,8 @@
             <li><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd> — Pin preset</li>
             <li><kbd>Ctrl</kbd>+<kbd>/</kbd> — Collapse panels</li>
           </ul>
+          </details>
+          </details>
         </form>
         </div>
 
@@ -471,9 +510,9 @@
 
         <div class="hint-box">
           <strong>Data note:</strong>
-          Current catalog entries are verified (`exactStats: true`) across core + one-handed + rapier + dagger + dual-wield paths.
-          Dual-wield recommendations prioritize dedicated melee entries and can fall back to one-handed entries for broader progression coverage.
-          Use calibration mode with observed runs to tune formula weighting toward your server/meta conditions.
+          <span class="data-quality-badge exact" title="Exact means the row has confirmed stat values in the catalog.">Exact</span>
+          <span class="data-quality-badge wiki" title="Wiki-sourced means the row or formula note came from captured SBO:Rebirth wiki data.">Wiki-sourced</span>
+          Catalog entries use verified `exactStats: true` where available. Estimated rows are labeled when mixed data is allowed, and calibration only tunes formula weighting toward observed runs.
         </div>
         <div id="dataValidationStatus" class="data-validation-status"></div>
       </section>
@@ -490,6 +529,11 @@
             <span class="output-status-pill output-status-pill--accent">Share-ready</span>
           </div>
         </header>
+        <div id="noGeneratedPlanEmptyState" class="empty-state no-plan-empty">
+          <strong>No generated plan yet.</strong>
+          <span>Fill the Start Here fields or load the example build, then click Generate My Plan.</span>
+          <button type="submit" class="primary compact" form="plannerForm">Generate My Plan</button>
+        </div>
 
         <div class="output-toolbar" aria-label="Recommendation actions">
           <div class="output-toolbar-group" aria-label="Panel display controls">
@@ -609,7 +653,7 @@
             </article>
 
             <article class="subpanel collapsed context-panel" data-dashboard-panel="progress">
-              <h3>Party Role Advisor</h3>
+              <h3>Party Role Guide</h3>
               <p class="muted-text dashboard-panel-note">Stat and gear adjustments for tank/DPS/support/farmer roles.</p>
               <div id="partyRoleAdvisor"></div>
             </article>

@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="SBO Rebirth Planner icon">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1f5360"/>
+      <stop offset="1" stop-color="#269ea6"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#173643" flood-opacity=".38"/>
+    </filter>
+  </defs>
+  <rect x="8" y="8" width="240" height="240" rx="44" fill="url(#bg)"/>
+  <rect x="12" y="12" width="232" height="232" rx="40" fill="none" stroke="#a8e6d8" stroke-opacity=".45" stroke-width="7"/>
+  <g filter="url(#shadow)" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M78 196 116 158" stroke="#e7b258" stroke-width="19"/>
+    <path d="M96 166 72 142" stroke="#e7b258" stroke-width="15"/>
+    <path d="M111 154 188 75" stroke="#eaf8f6" stroke-width="22"/>
+    <path d="M118 161 196 82" stroke="#a8e6d8" stroke-width="5"/>
+    <path d="M68 207 86 189" stroke="#583126" stroke-width="14"/>
+  </g>
+</svg>

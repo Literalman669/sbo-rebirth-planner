@@ -1,5 +1,5 @@
 /**
- * Shared boss readiness logic for Build Planner (AI context) and Boss Planner.
+ * Shared boss readiness logic for Build Planner context and Boss Planner.
  * Requires: window.SBO_BOSS_DATA, window.SBO_DATA (for Boss Planner's computeMetrics; Build Planner uses its own evaluateBuild)
  */
 (function () {

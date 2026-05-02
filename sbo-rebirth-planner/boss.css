@@ -1487,6 +1487,23 @@ button.needs-attention {
     font-size: 0.7rem;
   }
 
+  .boss-card-actions {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(120px, 1fr);
+    align-items: stretch;
+  }
+
+  .boss-card-actions .boss-beaten-btn,
+  .boss-card-actions .boss-card-cta {
+    width: 100%;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    white-space: normal;
+    line-height: 1.2;
+  }
+
   .modal-footer {
     flex-direction: column;
     align-items: flex-start;

@@ -680,6 +680,7 @@
       ? `<span class="boss-tag weak">Weak: ${(boss.weaknesses || []).join(", ")}</span>`
       : "";
 
+    const qualityBadges = buildBossQualityBadges(boss);
     const estimateNote = !boss.exactStats
       ? `<span class="boss-tag estimate" title="${escHtml(boss.estimateNote || 'Stats not confirmed from wiki')}">⚠ Estimated</span>`
       : "";
@@ -722,7 +723,7 @@
           ${boss.type === "mini" ? `<span class="boss-tag mini-boss-badge">Mini Boss</span>` : ""}
           ${boss.statusEffect ? `<span class="boss-tag status-effect" title="Status effect this boss inflicts">⚡ ${escHtml(boss.statusEffect)}</span>` : ""}
           ${weakHtml}
-          ${estimateNote}
+          ${qualityBadges}
           ${phases.length > 1 ? `<span class="boss-tag phases">${phases.length} phases</span>` : ""}
         </div>
 
@@ -736,6 +737,23 @@
   }
 
   // ── Boss detail modal ─────────────────────────────────────
+  function buildBossQualityBadges(boss) {
+    const exact = boss?.exactStats === true;
+    const hasWiki = Boolean(boss?.wikiUrl) || /wiki/i.test(`${boss?.notes || ""}${boss?.estimateNote || ""}`);
+    const badges = [
+      exact
+        ? '<span class="data-quality-badge exact" title="Exact means boss stats are confirmed in the current data set.">Exact</span>'
+        : '<span class="data-quality-badge estimated" title="Estimated means one or more boss values are unconfirmed or formula-derived.">Estimated</span>',
+    ];
+    if (hasWiki) {
+      badges.push('<span class="data-quality-badge wiki" title="Wiki-sourced means this boss has captured SBO:Rebirth wiki source metadata.">Wiki-sourced</span>');
+    }
+    if (!exact) {
+      badges.push('<span class="data-quality-badge testing" title="Needs Testing means live in-game confirmation would improve readiness accuracy.">Needs Testing</span>');
+    }
+    return badges.join("");
+  }
+
   function openBossModal(boss, build) {
     const readiness = scoreBossReadiness(boss, build);
 
@@ -748,6 +766,7 @@
 
     const verdictLabel = { ready: "Ready", close: "Close", notready: "Not Ready", unknown: "Unknown" }[readiness.verdict] || "Unknown";
     const floorLabel = boss.floor > 0 ? `Floor ${boss.floor}` : `Floor ?`;
+    const qualityBadges = buildBossQualityBadges(boss);
     const wikiName = boss.name.replace(/ /g, "_").replace(/'/g, "%27").replace(/,/g, "%2C");
     const wikiUrl = boss.wikiUrl || `https://swordbloxonlinerebirth.fandom.com/wiki/${wikiName}`;
 
@@ -809,6 +828,7 @@
       </div>
 
       <div class="modal-body">
+        <div class="boss-quality-note">${qualityBadges}</div>
         ${!boss.exactStats ? `
         <div class="modal-estimate-banner">
           <span class="estimate-icon">⚠️</span>

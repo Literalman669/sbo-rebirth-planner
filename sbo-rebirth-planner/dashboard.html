@@ -28,27 +28,32 @@
 
     <main class="layout dashboard-home-layout">
       <section class="panel dashboard-home-main">
-        <h2>Workspace</h2>
-        <div class="dashboard-home-grid">
-          <a class="dashboard-home-card" href="./index.html">
-            <h3>Planner</h3>
-            <p>Stat allocation, upgrade path, and recommendation engine.</p>
+        <h2>What to do next</h2>
+        <div id="dashboardEmptyState" class="empty-state dashboard-empty-state" hidden>
+          <strong>Start by creating your first build plan.</strong>
+          <span>The planner can recommend stats, gear upgrades, and boss targets once a build exists.</span>
+          <a class="primary link-button" href="./index.html">Create First Build</a>
+        </div>
+        <div class="dashboard-action-grid" id="dashboardActionGrid">
+          <a class="dashboard-home-card dashboard-action-card" href="./index.html">
+            <h3>Continue Planning</h3>
+            <p id="dashContinuePlanning">Open your latest planner draft.</p>
           </a>
-          <a class="dashboard-home-card" href="./inventory.html">
-            <h3>Inventory</h3>
-            <p>Structured owned gear manager with quick filtering and bulk updates.</p>
+          <a class="dashboard-home-card dashboard-action-card" href="./boss.html">
+            <h3>Next Recommended Boss</h3>
+            <p id="dashNextBoss">Load a build to calculate readiness.</p>
           </a>
-          <a class="dashboard-home-card" href="./boss.html">
-            <h3>Bosses</h3>
-            <p>Readiness checks, next target guidance, and floor progression review.</p>
+          <a class="dashboard-home-card dashboard-action-card" href="./inventory.html">
+            <h3>Next Gear Upgrade</h3>
+            <p id="dashNextGear">Add a build or inventory to surface missing upgrades.</p>
           </a>
-          <a class="dashboard-home-card" href="./progress.html">
-            <h3>Progress</h3>
-            <p>Track floor completion and boss kill progression.</p>
+          <a class="dashboard-home-card dashboard-action-card" href="./inventory.html">
+            <h3>Inventory Status</h3>
+            <p id="dashInventoryStatus">No owned items saved yet.</p>
           </a>
-          <a class="dashboard-home-card" href="./tools.html">
-            <h3>Tools</h3>
-            <p>Calibration, compare, and advanced planner workflows.</p>
+          <a class="dashboard-home-card dashboard-action-card" href="./tools.html">
+            <h3>Backup Your Progress</h3>
+            <p>Export or import your saved planner data from Tools.</p>
           </a>
         </div>
       </section>
@@ -65,6 +70,10 @@
       </section>
     </main>
 
+    <script src="./data.js?v=0.9.7"></script>
+    <script src="./boss-data.js?v=0.9.7"></script>
+    <script src="./boss-readiness.js?v=0.9.7"></script>
+    <script src="./shared/projection-core.js?v=0.9.7"></script>
     <script src="./shared/state-schema.js?v=0.9.7"></script>
     <script src="./shared/state-adapter.js?v=0.9.7"></script>
     <script src="./shared/runtime-observability.js?v=0.9.7"></script>

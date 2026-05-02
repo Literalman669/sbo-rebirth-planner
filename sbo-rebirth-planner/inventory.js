@@ -291,12 +291,14 @@
         if (Number.isFinite(item.skillReq)) reqBits.push(`Skill ${item.skillReq}`);
         const colValue = Number.isFinite(item.colValue) ? item.colValue.toLocaleString() : "N/A";
         const compareChecked = compareSelected.has(String(item.id));
+        const qualityBadges = buildItemQualityBadges(item);
         return `<label class="owned-inventory-row">
           <input type="checkbox" data-item-id="${escapeHtml(item.id)}" ${checked ? "checked" : ""} />
           <button type="button" class="favorite-btn${isFav ? " active" : ""}" data-action="toggle-favorite" data-item-id="${escapeHtml(item.id)}" aria-label="Toggle favorite">${isFav ? "★" : "☆"}</button>
           <span class="owned-row-name" title="${escapeHtml(item.name)}">${escapeHtml(displayName(item))}</span>
           <span class="owned-row-meta">F${escapeHtml(item.floorMin || "?")} • ${escapeHtml(item.slot)} • ${escapeHtml(item.sourceType || "unknown")} • ${escapeHtml(colValue)} Col</span>
           <span class="owned-row-meta">${escapeHtml(statBits.join(" • ") || "No stat values")} • ${escapeHtml(reqBits.join(" • ") || "No req values")}</span>
+          <span class="owned-row-meta quality-badge-row">${qualityBadges}</span>
           <span class="compare-toggle">
             <input type="checkbox" data-action="compare-select" data-item-id="${escapeHtml(item.id)}" ${compareChecked ? "checked" : ""} />
             <span>Compare</span>
@@ -330,6 +332,23 @@
     }
     renderMissingUpgrades();
     renderComparePanel();
+  }
+
+  function buildItemQualityBadges(item) {
+    const exact = item?.exactStats === true;
+    const hasWikiNote = /wiki/i.test(`${item?.notes || ""}`);
+    const badges = [
+      exact
+        ? '<span class="data-quality-badge exact" title="Exact means this item has confirmed stat values in the catalog.">Exact</span>'
+        : '<span class="data-quality-badge estimated" title="Estimated means one or more item values need formula fallback or confirmation.">Estimated</span>',
+    ];
+    if (hasWikiNote) {
+      badges.push('<span class="data-quality-badge wiki" title="Wiki-sourced means this item was imported from captured SBO:Rebirth wiki notes.">Wiki-sourced</span>');
+    }
+    if (!exact) {
+      badges.push('<span class="data-quality-badge testing" title="Needs Testing means live in-game confirmation would improve this row.">Needs Testing</span>');
+    }
+    return badges.join("");
   }
 
   function computeMissingUpgrades() {

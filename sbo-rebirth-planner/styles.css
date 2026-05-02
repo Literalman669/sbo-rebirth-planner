@@ -70,6 +70,10 @@
   box-sizing: border-box;
 }
 
+[hidden] {
+  display: none !important;
+}
+
 html {
   scroll-behavior: smooth;
 }
@@ -366,11 +370,11 @@ details[open] .stat-ref-hint {
 }
 
 .layout {
-  max-width: 1500px;
+  max-width: 1680px;
   margin: 0 auto;
   padding: 1.15rem 1.6rem 1.9rem;
   display: grid;
-  grid-template-columns: minmax(440px, 0.92fr) minmax(0, 1.08fr);
+  grid-template-columns: minmax(380px, 0.86fr) minmax(0, 1.14fr);
   gap: 1.55rem;
 }
 
@@ -391,6 +395,81 @@ details[open] .stat-ref-hint {
 #recommendations {
   scroll-margin-top: 1rem;
   min-width: 0;
+}
+
+/* Planner output: give context column a fair share of width, stack when tight, and
+   avoid benchmark/comparison tables forcing sideways scroll inside a skinny rail. */
+#recommendations.output-panel {
+  overflow-x: visible;
+  overflow-y: visible;
+}
+
+#recommendations .dashboard-workspace {
+  /* Fluid main column for gear/tables; context rail bounded (wider than legacy 320px, no 50/50 steal). */
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 400px);
+  gap: 1.2rem 1.35rem;
+  container-type: inline-size;
+  container-name: planner-output-dash;
+}
+
+#recommendations .dashboard-context-column {
+  min-width: 0;
+}
+
+#recommendations .dashboard-context-column .subpanel {
+  padding: 1.05rem 1.1rem;
+}
+
+#recommendations .gear-results {
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+/* Avoid clipping LIST PRICE / TO BUY when the summary strip is narrower than the table. */
+#recommendations .gear-cost-summary {
+  overflow-x: auto;
+  overflow-y: visible;
+}
+
+#recommendations .dashboard-context-column .table-wrap {
+  overflow-x: visible;
+}
+
+#recommendations .dashboard-context-column .benchmark-table {
+  min-width: 0;
+  width: 100%;
+  table-layout: auto;
+}
+
+#recommendations .dashboard-context-column .benchmark-table th,
+#recommendations .dashboard-context-column .benchmark-table td {
+  white-space: normal;
+  vertical-align: top;
+  word-break: break-word;
+}
+
+#recommendations .dashboard-context-column .comparison-table-wrap table {
+  min-width: 0;
+  width: 100%;
+  table-layout: auto;
+}
+
+#recommendations .dashboard-context-column .comparison-table-wrap th,
+#recommendations .dashboard-context-column .comparison-table-wrap td {
+  white-space: normal;
+  vertical-align: top;
+  word-break: break-word;
+}
+
+@container planner-output-dash (max-width: 700px) {
+  #recommendations .dashboard-workspace {
+    grid-template-columns: 1fr;
+  }
+
+  #recommendations .dashboard-context-column {
+    position: static;
+    max-height: none;
+    overflow: visible;
+  }
 }
 
 .output-panel {
@@ -1589,6 +1668,202 @@ select:focus {
   line-height: 1.4;
 }
 
+.start-here-panel {
+  max-width: 1280px;
+  margin: 0 auto 0.85rem;
+  display: grid;
+  grid-template-columns: minmax(240px, 0.95fr) minmax(320px, 1.45fr);
+  gap: 1rem;
+  align-items: start;
+  border-color: color-mix(in srgb, var(--accent) 28%, var(--line));
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--accent-soft) 72%, var(--panel)) 0%, var(--panel) 48%),
+    var(--panel);
+}
+
+.start-here-copy h2 {
+  margin: 0 0 0.4rem;
+  color: var(--accent);
+}
+
+.start-here-steps {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.55rem;
+}
+
+.start-here-steps li {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--panel-strong);
+  padding: 0.65rem;
+  min-width: 0;
+}
+
+.start-here-steps strong,
+.start-here-steps span {
+  display: block;
+}
+
+.start-here-steps strong {
+  font-size: 0.78rem;
+  color: var(--ink);
+}
+
+.start-here-steps span {
+  margin-top: 0.25rem;
+  color: var(--ink-soft);
+  font-size: 0.72rem;
+  line-height: 1.35;
+}
+
+.start-here-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.link-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+}
+
+.example-build-notice {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: #7a5200;
+  background: #fff7df;
+  border: 1px solid #f0d28a;
+  border-radius: 8px;
+  padding: 0.55rem 0.7rem;
+  font-size: 0.82rem;
+}
+
+.advanced-planner-options {
+  margin-top: 1.05rem;
+}
+
+.planner-disclosure > summary {
+  cursor: pointer;
+}
+
+.form-section.planner-disclosure > summary.form-section-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0;
+  padding-bottom: 0.45rem;
+}
+
+.form-section.planner-disclosure > summary.form-section-title::after,
+.owned-inventory-summary::after {
+  content: "Open";
+  color: var(--accent);
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+
+.form-section.planner-disclosure[open] > summary.form-section-title::after,
+.owned-inventory-panel[open] > .owned-inventory-summary::after {
+  content: "Hide";
+}
+
+.owned-inventory-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem;
+  cursor: pointer;
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.empty-state {
+  border: 1px dashed color-mix(in srgb, var(--accent) 35%, var(--line));
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--accent-soft) 45%, var(--panel));
+  color: var(--ink-soft);
+  padding: 0.85rem;
+  display: grid;
+  gap: 0.45rem;
+}
+
+.empty-state strong {
+  color: var(--ink);
+}
+
+.empty-state.compact {
+  margin-top: 0.65rem;
+  padding: 0.65rem 0.75rem;
+  font-size: 0.78rem;
+}
+
+.no-plan-empty {
+  margin: 0.9rem 0;
+}
+
+.dashboard-action-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 0.85rem;
+}
+
+.dashboard-action-card {
+  min-height: 118px;
+}
+
+.dashboard-empty-state {
+  margin-bottom: 0.85rem;
+}
+
+.data-quality-badge {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  padding: 0.12rem 0.42rem;
+  margin: 0.08rem 0.12rem 0.08rem 0;
+  font-size: 0.68rem;
+  line-height: 1.2;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.data-quality-badge.exact {
+  color: #0f4c8c;
+  background: #e5f0ff;
+}
+
+.data-quality-badge.estimated {
+  color: #714579;
+  background: #f6eaff;
+}
+
+.data-quality-badge.wiki {
+  color: #0d6a46;
+  background: #e5f7ef;
+}
+
+.data-quality-badge.testing {
+  color: #765010;
+  background: #fff3db;
+}
+
+.quality-badge-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.12rem;
+}
+
 .dashboard-state-cards {
   display: grid;
   gap: 0.5rem;
@@ -2618,6 +2893,14 @@ tbody tr:hover {
     grid-template-columns: 1fr;
   }
 
+  .start-here-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .start-here-steps {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .dashboard-workspace {
     grid-template-columns: 1fr;
   }
@@ -2668,7 +2951,7 @@ tbody tr:hover {
   }
 
   .layout {
-    grid-template-columns: minmax(420px, 0.98fr) minmax(0, 1.02fr);
+    grid-template-columns: minmax(360px, 0.9fr) minmax(0, 1.1fr);
   }
 
   .dashboard-workspace {
@@ -2685,9 +2968,30 @@ tbody tr:hover {
 @media (max-width: 640px) {
   .page-header,
   .layout,
+  .start-here-panel,
+  .stat-reference-panel,
   .page-footer {
     padding-left: 0.85rem;
     padding-right: 0.85rem;
+  }
+
+  .start-here-steps,
+  .dashboard-action-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .start-here-actions,
+  .input-panel-action-strip {
+    align-items: stretch;
+  }
+
+  .start-here-actions > *,
+  .input-panel-action-strip .primary,
+  .button-row > button,
+  .button-row > .secondary,
+  .button-row > .primary {
+    width: 100%;
+    margin-left: 0;
   }
 
   .grid.two,
@@ -3240,7 +3544,7 @@ tr.lup-final td {
   border-top: 2px solid var(--accent-2);
 }
 
-/* ── Party Role Advisor ─────────────────────────────────────────────────── */
+/* ── Party Role Guide ─────────────────────────────────────────────────── */
 .party-role-advisor {
   display: block;
 }
@@ -3918,7 +4222,7 @@ input.stat-cap-maxed {
     display: none !important;
   }
 
-  /* AI panel is printable — include chat history in PDF if expanded */
+  /* Recommendation panels are printable when expanded */
 
   table {
     width: 100%;
@@ -4026,6 +4330,10 @@ input.stat-cap-maxed {
   :root:not([data-theme="light"]) .pill.exact     { background: #0d1e2e; color: #70b8f0; border-color: #1a3a60; }
   :root:not([data-theme="light"]) .pill.estimated { background: #1a0d2e; color: #c0a0f0; border-color: #4a2a80; }
   :root:not([data-theme="light"]) .pill.equipped  { background: #0a2a30; color: var(--accent); border-color: var(--accent-2); }
+  :root:not([data-theme="light"]) .data-quality-badge.exact     { background: #0d1e2e; color: #70b8f0; border-color: #1a3a60; }
+  :root:not([data-theme="light"]) .data-quality-badge.estimated { background: #1a0d2e; color: #c0a0f0; border-color: #4a2a80; }
+  :root:not([data-theme="light"]) .data-quality-badge.wiki      { background: #0d3320; color: #5ee896; border-color: #1a6640; }
+  :root:not([data-theme="light"]) .data-quality-badge.testing   { background: #2e1f00; color: #f5b942; border-color: #6b4500; }
   :root:not([data-theme="light"]) .chip-btn { background: var(--bg-2); color: var(--accent); border-color: var(--line); }
   :root:not([data-theme="light"]) .chip-btn:hover { background: var(--accent-soft); border-color: var(--accent-2); }
   :root:not([data-theme="light"]) .chip-btn.active { background: var(--accent-soft); border-color: var(--accent-2); color: var(--accent); }
@@ -4162,6 +4470,10 @@ input.stat-cap-maxed {
 [data-theme="dark"] .pill.exact     { background: #0d1e2e; color: #70b8f0; border-color: #1a3a60; }
 [data-theme="dark"] .pill.estimated { background: #1a0d2e; color: #c0a0f0; border-color: #4a2a80; }
 [data-theme="dark"] .pill.equipped  { background: #0a2a30; color: var(--accent); border-color: var(--accent-2); }
+[data-theme="dark"] .data-quality-badge.exact     { background: #0d1e2e; color: #70b8f0; border-color: #1a3a60; }
+[data-theme="dark"] .data-quality-badge.estimated { background: #1a0d2e; color: #c0a0f0; border-color: #4a2a80; }
+[data-theme="dark"] .data-quality-badge.wiki      { background: #0d3320; color: #5ee896; border-color: #1a6640; }
+[data-theme="dark"] .data-quality-badge.testing   { background: #2e1f00; color: #f5b942; border-color: #6b4500; }
 [data-theme="dark"] .chip-btn { background: var(--bg-2); color: var(--accent); border-color: var(--line); }
 [data-theme="dark"] .chip-btn:hover { background: var(--accent-soft); border-color: var(--accent-2); }
 [data-theme="dark"] .chip-btn.active { background: var(--accent-soft); border-color: var(--accent-2); color: var(--accent); }

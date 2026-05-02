@@ -9,6 +9,103 @@
       .filter(Boolean);
   }
 
+  function getBuildNames(builds) {
+    if (Array.isArray(builds)) return builds.map((entry) => entry?.name).filter(Boolean);
+    if (builds && typeof builds === "object") return Object.keys(builds);
+    return [];
+  }
+
+  function toNumber(value, fallback = 0) {
+    const n = Number(value);
+    return Number.isFinite(n) ? n : fallback;
+  }
+
+  function createBuildFromDraft(draft) {
+    if (!draft || typeof draft !== "object" || !Object.keys(draft).length) return null;
+    const currentLevel = Math.max(1, Math.trunc(toNumber(draft.currentLevel, 0)));
+    if (!currentLevel) return null;
+    const levelsToPlan = Math.max(1, Math.trunc(toNumber(draft.levelsToPlan, 1)));
+    const projectedLevel = currentLevel + levelsToPlan;
+    const stats = {
+      str: toNumber(draft.str, 0),
+      def: toNumber(draft.def, 0),
+      agi: toNumber(draft.agi, 0),
+      vit: toNumber(draft.vit, 0),
+      luk: toNumber(draft.luk, 0),
+    };
+    const gear = {
+      attack: Math.max(1, toNumber(draft.gearAttack, 1)),
+      defense: Math.max(0, toNumber(draft.gearDefense, 0)),
+      dexterity: Math.max(0, toNumber(draft.gearDexterity, 0)),
+    };
+    const weaponClass = String(draft.weaponClass || "two-handed");
+    const metrics = window.SBO_PROJECTION_CORE?.computeBuildMetrics
+      ? window.SBO_PROJECTION_CORE.computeBuildMetrics({ data: window.SBO_DATA, stats, gear, weaponClass, projectedLevel })
+      : null;
+    if (!metrics) return null;
+    return {
+      buildName: String(draft.buildName || "").trim(),
+      currentLevel,
+      projectedLevel,
+      maxFloorReached: Math.max(1, Math.trunc(toNumber(draft.maxFloorReached, 1))),
+      weaponClass,
+      weaponSkill: Math.max(1, Math.trunc(toNumber(draft.weaponSkill, 1))),
+      stats,
+      gear,
+      metrics,
+    };
+  }
+
+  function renderActionCards({ draft, ownedItems, hasBuild }) {
+    const build = createBuildFromDraft(draft);
+    const setText = (id, value) => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = String(value);
+    };
+
+    const emptyState = document.getElementById("dashboardEmptyState");
+    const actionGrid = document.getElementById("dashboardActionGrid");
+    if (emptyState) emptyState.hidden = hasBuild;
+    if (actionGrid) actionGrid.hidden = !hasBuild;
+
+    if (!hasBuild) return;
+
+    const buildLabel = build?.buildName || (build ? `Lv${build.currentLevel} ${build.weaponClass}` : "latest draft");
+    setText("dashContinuePlanning", `Resume ${buildLabel} in the Planner.`);
+    setText("dashInventoryStatus", ownedItems.length ? `${ownedItems.length} owned item token${ownedItems.length === 1 ? "" : "s"} saved. Open Inventory to review.` : "No owned inventory saved yet. Add items to improve gear recommendations.");
+
+    const bossData = window.SBO_BOSS_DATA;
+    const readiness = window.SBO_BOSS_READINESS;
+    if (build && bossData && readiness?.getNextBoss && readiness?.scoreBossReadiness) {
+      const beaten = state?.getJson(keys.bossBeaten, []) || [];
+      const nextBoss = readiness.getNextBoss(build, { beatenIds: beaten });
+      if (nextBoss) {
+        const score = readiness.scoreBossReadiness(nextBoss, build);
+        setText("dashNextBoss", `${nextBoss.name} on Floor ${nextBoss.floor || "?"}: ${score.verdict} (${Math.round(score.score * 100)}%).`);
+      } else {
+        setText("dashNextBoss", "No unbeaten boss target found for the current filters.");
+      }
+    } else {
+      setText("dashNextBoss", "Boss readiness data is unavailable on this page.");
+    }
+
+    const catalog = window.SBO_DATA?.itemCatalog || [];
+    const maxFloor = build?.maxFloorReached || 1;
+    const ownedSet = new Set(ownedItems.map((item) => item.toLowerCase()));
+    const upgrade = catalog.find((item) => {
+      const floor = Number(item.floorMin) || 1;
+      const id = String(item.id || "").toLowerCase();
+      const name = String(item.name || "").toLowerCase();
+      return floor <= maxFloor + 1 && !ownedSet.has(id) && !ownedSet.has(name);
+    });
+    setText(
+      "dashNextGear",
+      upgrade
+        ? `${upgrade.name} (${upgrade.slot || "gear"}, Floor ${upgrade.floorMin || "?"}) is a missing catalog item near your progress.`
+        : "No missing upgrade found from saved inventory and current floor.",
+    );
+  }
+
   function updateThemeToggle() {
     const btn = document.getElementById("themeToggleBtn");
     if (!btn) return;
@@ -29,7 +126,7 @@
   }
 
   function renderDashboardSnapshot() {
-    const builds = state?.getJson(keys.builds, []) || [];
+    const builds = state?.getJson(keys.builds, {}) || {};
     const draft = state?.getJson(keys.formDraft, {}) || {};
     const equipped = state?.getJson(keys.equipped, { slots: {} }) || { slots: {} };
     const floorTracker = state?.getJson(keys.floorTracker, []) || [];
@@ -44,7 +141,10 @@
       if (el) el.textContent = String(value);
     };
 
-    setText("dashSavedBuilds", Array.isArray(builds) ? builds.length : 0);
+    const buildNames = getBuildNames(builds);
+    const hasBuild = Boolean(Object.keys(draft || {}).length || buildNames.length);
+
+    setText("dashSavedBuilds", buildNames.length);
     setText("dashOwnedItems", ownedCount);
     setText("dashEquipped", equippedCount);
     setText("dashFloors", floorCount);
@@ -58,6 +158,7 @@
         updatedEl.textContent = "No draft state saved yet. Open Planner to start.";
       }
     }
+    renderActionCards({ draft, ownedItems: parseOwnedItems(draft.ownedItems), hasBuild });
   }
 
   updateThemeToggle();

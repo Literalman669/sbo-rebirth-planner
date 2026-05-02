@@ -1,10 +1,16 @@
 {
   "name": "sbo-rebirth-planner",
   "version": "1.0.0",
-  "description": "A local-first planner that helps with: - stat point allocation over a chosen level window, - equipment recommendations by slot, - transparent recommendation logic.",
-  "main": "app.js",
+  "description": "A local-first desktop planner for SBO:Rebirth stat allocation, equipment recommendations, inventory, and boss progression.",
+  "main": "desktop/main.cjs",
   "scripts": {
     "test": "node test-planner.js",
+    "test:desktop": "node test-desktop.js",
+    "desktop:icons": "node scripts/generate-desktop-icon.cjs",
+    "desktop": "electron .",
+    "desktop:package": "npm run desktop:icons && electron-builder --win --x64",
+    "desktop:package:portable": "npm run desktop:icons && electron-builder --win portable --x64",
+    "desktop:package:installer": "npm run desktop:icons && electron-builder --win nsis --x64",
     "serve": "npx serve -p 60290 -l 60290",
     "validate:wiki-sync": "node scripts/wiki-sync-validate.js",
     "build:stdb-client": "esbuild stdb-client-entry.ts --bundle --format=iife --global-name=SBOPlannerStdb --outfile=stdb-client.bundle.js --platform=browser --target=es2022",
@@ -14,11 +20,52 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "electron": "^41.3.0",
+    "electron-builder": "^26.8.1",
     "esbuild": "0.24.2",
     "playwright": "^1.58.2",
     "typescript": "5.6.3"
   },
   "dependencies": {
     "spacetimedb": "2.0.2"
+  },
+  "build": {
+    "appId": "com.literalman669.sbo-rebirth-planner",
+    "productName": "SBO Rebirth Planner",
+    "asar": true,
+    "files": [
+      "**/*",
+      "!ui-audit{,/**}",
+      "!*.log"
+    ],
+    "win": {
+      "icon": "desktop/assets/icon.ico",
+      "target": [
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "portable": {
+      "artifactName": "SBO-Rebirth-Planner-Portable-${version}-${arch}.${ext}"
+    },
+    "nsis": {
+      "artifactName": "SBO-Rebirth-Planner-Setup-${version}-${arch}.${ext}",
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "SBO Rebirth Planner"
+    }
   }
 }

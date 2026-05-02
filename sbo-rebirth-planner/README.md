@@ -49,6 +49,26 @@ No install is needed.
 2. Edit your inputs.
 3. Click **Generate Plan**.
 
+## Desktop app (Windows)
+The planner can also run as a standalone Electron desktop app. Desktop storage is separate from browser storage, so use the existing JSON export/import tools when moving builds between the web version and the desktop app.
+
+```bash
+npm install
+npm run desktop
+```
+
+To build Windows desktop artifacts:
+
+```bash
+npm run desktop:package            # portable .exe + installer
+npm run desktop:package:portable   # portable .exe only
+npm run desktop:package:installer  # installer only
+```
+
+Outputs are written to `dist/`:
+- `SBO-Rebirth-Planner-Portable-1.0.0-x64.exe` runs without installation.
+- `SBO-Rebirth-Planner-Setup-1.0.0-x64.exe` installs the app with Start Menu and Desktop shortcuts.
+
 ## Formula and data notes
 This prototype is based on SBO:R mechanics gathered from public wiki sources:
 - STR/DEF/AGI/VIT/LUK behavior
