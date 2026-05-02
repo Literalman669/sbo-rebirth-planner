@@ -27,10 +27,69 @@
       <section class="panel">
         <h2>Planner Advanced Tools</h2>
         <div class="dashboard-home-grid">
-          <a class="dashboard-home-card" href="./index.html#tools-calibration"><h3>Calibration</h3><p>Tune formula factors from observed runs.</p></a>
-          <a class="dashboard-home-card" href="./index.html#tools-compare"><h3>Compare Builds</h3><p>Evaluate saved builds side-by-side.</p></a>
-          <a class="dashboard-home-card" href="./index.html#tools-importexport"><h3>Import / Export</h3><p>Move presets and settings safely.</p></a>
+          <a class="dashboard-home-card" href="#toolsSharePanel"><h3>Share / Print</h3><p>Copy loadout, copy share link, or print the current workspace.</p></a>
+          <a class="dashboard-home-card" href="#toolsComparePanel"><h3>Compare Builds</h3><p>Evaluate saved builds side-by-side.</p></a>
+          <a class="dashboard-home-card" href="#toolsCalibrationPanel"><h3>Calibration</h3><p>Review current formula calibration multipliers.</p></a>
         </div>
+      </section>
+      <section class="panel" id="toolsSharePanel">
+        <h2>Share / Print</h2>
+        <p class="muted-text">Uses your current Planner draft and equipped gear.</p>
+        <div class="button-row">
+          <button type="button" class="secondary" id="toolsCopyLoadoutBtn">Copy Loadout</button>
+          <button type="button" class="secondary" id="toolsCopyShareLinkBtn">Copy Share Link</button>
+          <button type="button" class="secondary" id="toolsPrintBtn">Print / PDF</button>
+        </div>
+        <p id="toolsShareMessage" class="build-action-message"></p>
+      </section>
+      <section class="panel" id="toolsComparePanel">
+        <h2>Compare Saved Builds</h2>
+        <p class="muted-text">Compare saved build snapshots without loading them into the Planner.</p>
+        <div id="toolsCompareEmptyState" class="empty-state compact">
+          <strong>Need two saved builds to compare.</strong>
+          <span>Save at least two builds from Planner first.</span>
+          <a class="secondary link-button compact" href="./index.html#presetName">Open Planner Saves</a>
+        </div>
+        <div class="grid two compare-grid">
+          <label>Build A
+            <select id="toolsCompareBuildA"></select>
+          </label>
+          <label>Build B
+            <select id="toolsCompareBuildB"></select>
+          </label>
+        </div>
+        <div class="button-row">
+          <button type="button" class="secondary" id="toolsCompareBuildBtn">Compare Builds</button>
+        </div>
+        <p id="toolsCompareMessage" class="build-action-message"></p>
+        <div id="toolsComparisonResults" class="comparison-results"></div>
+      </section>
+      <section class="panel" id="toolsCalibrationPanel">
+        <h2>Calibration Report</h2>
+        <p class="muted-text">Apply observed values against the latest generated plan. Generate a plan first for the best calibration context.</p>
+        <div class="grid three calibration-grid">
+          <label>Observed DPS Index
+            <input type="number" id="toolsCalObservedDps" min="0" step="0.01" placeholder="e.g. 1850" />
+          </label>
+          <label>Observed Damage Reduction
+            <input type="number" id="toolsCalObservedDamageReduction" min="0" step="0.01" placeholder="e.g. 720" />
+          </label>
+          <label>Observed Stamina
+            <input type="number" id="toolsCalObservedStamina" min="0" step="0.01" placeholder="e.g. 360" />
+          </label>
+          <label>Observed Crit %
+            <input type="number" id="toolsCalObservedCrit" min="0" step="0.01" placeholder="e.g. 16.5" />
+          </label>
+          <label>Observed Drop %
+            <input type="number" id="toolsCalObservedDrop" min="0" step="0.01" placeholder="e.g. 1.25" />
+          </label>
+        </div>
+        <div class="button-row">
+          <button type="button" class="secondary" id="toolsApplyCalibrationBtn">Apply Sample</button>
+          <button type="button" class="secondary ghost" id="toolsResetCalibrationBtn">Reset Calibration</button>
+        </div>
+        <p id="toolsCalibrationMessage" class="build-action-message"></p>
+        <div id="toolsCalibrationReport" class="calibration-report"></div>
       </section>
       <section class="panel">
         <h2>Storage Health</h2>
@@ -58,6 +117,7 @@
     <script src="./shared/state-adapter.js?v=0.9.9"></script>
     <script src="./shared/runtime-observability.js?v=0.9.9"></script>
     <script src="./shared/next-action.js?v=0.9.9"></script>
+    <script src="./data.js?v=0.9.9"></script>
     <script src="./tools.js?v=0.9.9"></script>
   </body>
 </html>

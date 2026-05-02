@@ -38,9 +38,8 @@ const { chromium } = require("playwright");
     results.phaseK.advancedControlsCollapsedByDefault = await page.evaluate(() => {
       const advanced = document.getElementById("advancedPlannerOptions");
       const statRef = document.querySelector(".stat-reference-panel");
-      const ownership = document.querySelector('[data-disclosure-key="gear-inventory"]');
       const saved = document.querySelector('[data-disclosure-key="saved-builds"]');
-      return Boolean(advanced && !advanced.open && statRef && !statRef.open && ownership && !ownership.open && saved && !saved.open);
+      return Boolean(advanced && !advanced.open && statRef && !statRef.open && saved && !saved.open);
     });
     results.phaseK.emptyPlanStateShown = await page.isVisible("#noGeneratedPlanEmptyState");
 
@@ -57,17 +56,55 @@ const { chromium } = require("playwright");
     results.phaseK.planSummaryAppears = await page.evaluate(() => {
       const panel = document.getElementById("plannerOutputPriority");
       const summary = document.getElementById("planSummary");
-      return Boolean(panel && !panel.hidden && summary && summary.textContent.includes("Build direction") && summary.textContent.includes("Gear target"));
+      return Boolean(panel && !panel.hidden && summary && summary.textContent.includes("Build direction") && summary.textContent.includes("Gear workspace"));
     });
     results.phaseK.statPriorityAppears = await page.evaluate(() => {
       const panel = document.getElementById("statPriorityPanel");
       return Boolean(panel && panel.textContent.includes("Primary") && panel.textContent.includes("Defensive"));
     });
-    results.phaseK.gearRecommendationReadability = await page.evaluate(() => {
+    results.phaseK.plannerLayoutRevamped = await page.evaluate(() => {
+      const command = document.querySelector(".planner-command-panel .planner-route-summary");
+      const shell = document.querySelector(".planner-shell");
+      const groups = document.querySelectorAll(".core-build-section .planner-form-group");
+      const map = document.querySelector(".planner-output-map");
+      const outputHeading = document.getElementById("panel-output-heading");
       return Boolean(
-        document.querySelector(".gear-why") &&
-        document.querySelector(".gear-visible-facts") &&
-        document.querySelector(".gear-statline")?.textContent.includes("Main gains"),
+        command &&
+        shell &&
+        groups.length >= 4 &&
+        map &&
+        !map.hidden &&
+        outputHeading?.textContent?.includes("Stat Plan"),
+      );
+    });
+    results.phaseK.plannerAllocationControls = await page.evaluate(() => {
+      const summary = document.getElementById("allocationSummary");
+      const controls = document.getElementById("planTableControls");
+      const nextActions = document.getElementById("planAfterTableActions");
+      const rows = Array.from(document.querySelectorAll("#planTable tbody tr"));
+      const hiddenMilestones = rows.filter((row) => row.hidden).length;
+      controls?.querySelector('button[data-plan-table-view="every"]')?.click();
+      const hiddenEvery = rows.filter((row) => row.hidden).length;
+      controls?.querySelector('button[data-plan-table-view="full"]')?.click();
+      const hiddenFull = rows.filter((row) => row.hidden).length;
+      return Boolean(
+        summary?.textContent?.includes("First 5 levels") &&
+        summary?.textContent?.includes("Biggest gain") &&
+        controls?.textContent?.includes("Milestones Only") &&
+        controls?.textContent?.includes("Every Level") &&
+        controls?.textContent?.includes("Show Full Table") &&
+        nextActions?.textContent?.includes("Save Build") &&
+        hiddenMilestones > 0 &&
+        hiddenEvery === 0 &&
+        hiddenFull === 0,
+      );
+    });
+    results.phaseK.plannerLinksGearToInventory = await page.evaluate(() => {
+      const routing = document.querySelector(".inventory-routing-card");
+      const summary = document.getElementById("planSummary");
+      return Boolean(
+        routing?.textContent?.includes("Inventory") &&
+        summary?.querySelector('a[href="./inventory.html"]'),
       );
     });
     results.phaseK.savePromptExists = await page.evaluate(() => {
@@ -92,15 +129,19 @@ const { chromium } = require("playwright");
     await page.fill("#presetName", "Smoke Saved Build");
     await page.click("#saveBuildBtn");
     await page.waitForTimeout(150);
-    results.phaseK.plannerCostSummaryNotClipped = await page.evaluate(() => {
-      const wrapper = document.querySelector("#recommendations .gear-cost-summary");
-      const table = wrapper?.querySelector("table");
-      if (!wrapper || !table) return false;
-      const wrapperRect = wrapper.getBoundingClientRect();
-      const tableRect = table.getBoundingClientRect();
-      const overflowX = getComputedStyle(wrapper).overflowX;
-      return !(tableRect.right > wrapperRect.right + 1 && overflowX === "hidden");
-    });
+    results.phaseK.plannerGearPanelsRemoved = await page.evaluate(() =>
+      !document.querySelector("#gearResults") &&
+      !document.querySelector('[data-dashboard-view="gear"]') &&
+      !document.querySelector('[data-dashboard-panel="gear"]'),
+    );
+    results.phaseK.plannerProgressToolsMoved = await page.evaluate(() =>
+      !document.querySelector('[data-dashboard-view="progress"]') &&
+      !document.querySelector('[data-dashboard-view="tools"]') &&
+      !document.querySelector('[data-dashboard-panel="progress"]') &&
+      !document.querySelector('[data-dashboard-panel="tools"]') &&
+      Boolean(document.querySelector('a[href="./progress.html"]')) &&
+      Boolean(document.querySelector('a[href="./tools.html"]')),
+    );
 
     const hasDashboardViews = await page.isVisible("#dashboardViewNav");
     if (hasDashboardViews) {
@@ -114,6 +155,47 @@ const { chromium } = require("playwright");
     results.phaseK.sixTabNav = expected.every((label) => navLabels.includes(label));
 
     await page.goto(`${baseUrl}/inventory.html`, { waitUntil: "networkidle", timeout: 15000 });
+    results.phaseK.inventoryGearWorkspace = await page.evaluate(() => {
+      const workspace = document.getElementById("invPlannerGearList");
+      return Boolean(
+        document.getElementById("inv-gear-workspace-title") &&
+        document.getElementById("invQuickGearSearch") &&
+        workspace?.querySelector(".inventory-recommendation-card") &&
+        workspace?.querySelector(".gear-why") &&
+        workspace?.querySelector(".gear-visible-facts") &&
+        workspace?.querySelector(".gear-statline"),
+      );
+    });
+    await page.fill("#invQuickGearSearch", "Greatsword");
+    await page.waitForTimeout(150);
+    results.phaseK.inventoryFastSearchActions = await page.evaluate(() => {
+      const resultsPanel = document.getElementById("invQuickGearResults");
+      return Boolean(
+        resultsPanel &&
+        !resultsPanel.hidden &&
+        resultsPanel.querySelector(".quick-gear-result") &&
+        resultsPanel.querySelector('[data-action="equip-recommendation"]') &&
+        resultsPanel.querySelector('[data-action="mark-owned"]') &&
+        resultsPanel.querySelector('[data-action="compare-add"]'),
+      );
+    });
+    await page.click('#invQuickGearResults [data-action="compare-add"]');
+    await page.waitForTimeout(100);
+    results.phaseK.inventoryFastSearchCompare = await page.evaluate(() =>
+      (document.getElementById("invCompareSummary")?.textContent || "").includes("Comparing"),
+    );
+    await page.click('#invQuickGearResults [data-action="equip-recommendation"]');
+    await page.waitForTimeout(100);
+    results.phaseK.inventoryFastSearchEquip = await page.evaluate(() =>
+      (document.getElementById("invEquippedLoadout")?.textContent || "").includes("Equipped totals"),
+    );
+    await page.click("#invQuickGearClear");
+    await page.waitForTimeout(100);
+    results.phaseK.inventoryFastSearchClear = await page.evaluate(() => {
+      const input = document.getElementById("invQuickGearSearch");
+      const resultsPanel = document.getElementById("invQuickGearResults");
+      return input?.value === "" && resultsPanel?.hidden === true && Boolean(document.querySelector("#invPlannerGearList .inventory-recommendation-card"));
+    });
     await page.fill("#invBulkPaste", "Akumu Cloak");
     await page.click("#invMergeBulk");
     await page.click("#invSaveOwned");
@@ -121,6 +203,40 @@ const { chromium } = require("playwright");
     results.phaseK.inventoryToPlannerSync = await page.$eval(
       '[name="ownedItems"]',
       (input) => String(input.value || "").toLowerCase().includes("akumu cloak"),
+    );
+
+    await page.goto(`${baseUrl}/progress.html`, { waitUntil: "networkidle", timeout: 15000 });
+    results.phaseK.progressWorkspacePanels = await page.evaluate(() =>
+      Boolean(
+        document.getElementById("progressFloorTracker") &&
+        document.getElementById("progressSkillChecklist") &&
+        document.getElementById("progressPartyRoleAdvisor") &&
+        document.querySelector("#progressFloorTracker .floor-tracker-cell"),
+      ),
+    );
+    await page.click('#progressFloorTracker .floor-tracker-cell[data-floor="1"]');
+    await page.waitForTimeout(100);
+    await page.reload({ waitUntil: "networkidle", timeout: 15000 });
+    results.phaseK.progressFloorPersists = await page.evaluate(() =>
+      document.querySelector('#progressFloorTracker .floor-tracker-cell[data-floor="1"]')?.classList.contains("cleared") === true,
+    );
+
+    await page.goto(`${baseUrl}/tools.html`, { waitUntil: "networkidle", timeout: 15000 });
+    results.phaseK.toolsWorkspacePanels = await page.evaluate(() =>
+      Boolean(
+        document.getElementById("toolsCopyLoadoutBtn") &&
+        document.getElementById("toolsCopyShareLinkBtn") &&
+        document.getElementById("toolsPrintBtn") &&
+        document.getElementById("toolsComparePanel") &&
+        document.getElementById("toolsCalibrationPanel") &&
+        document.getElementById("toolsExportJsonBtn") &&
+        document.getElementById("toolsBackupJson"),
+      ),
+    );
+    await page.click("#toolsExportJsonBtn");
+    await page.waitForTimeout(100);
+    results.phaseK.toolsBackupStillWorks = await page.evaluate(() =>
+      (document.getElementById("toolsBackupJson")?.value || "").includes("schemaVersion"),
     );
 
     await page.goto(`${baseUrl}/dashboard.html`, { waitUntil: "networkidle", timeout: 15000 });
@@ -186,7 +302,12 @@ const { chromium } = require("playwright");
     results.phaseK?.syncToPlanExists &&
     results.phaseK?.sixTabNav &&
     results.phaseK?.inventoryToPlannerSync &&
-    results.phaseK?.plannerCostSummaryNotClipped &&
+    results.phaseK?.plannerGearPanelsRemoved &&
+    results.phaseK?.plannerProgressToolsMoved &&
+    results.phaseK?.progressWorkspacePanels &&
+    results.phaseK?.progressFloorPersists &&
+    results.phaseK?.toolsWorkspacePanels &&
+    results.phaseK?.toolsBackupStillWorks &&
     results.phaseK?.bossMobileActionsFit &&
     results.phaseK?.projectionCoreLoaded &&
     results.phaseK?.floor19ItemCoverage &&
@@ -198,7 +319,14 @@ const { chromium } = require("playwright");
     results.phaseK?.exampleBuildGeneratesPlan &&
     results.phaseK?.planSummaryAppears &&
     results.phaseK?.statPriorityAppears &&
-    results.phaseK?.gearRecommendationReadability &&
+    results.phaseK?.plannerLayoutRevamped &&
+    results.phaseK?.plannerAllocationControls &&
+    results.phaseK?.plannerLinksGearToInventory &&
+    results.phaseK?.inventoryGearWorkspace &&
+    results.phaseK?.inventoryFastSearchActions &&
+    results.phaseK?.inventoryFastSearchCompare &&
+    results.phaseK?.inventoryFastSearchEquip &&
+    results.phaseK?.inventoryFastSearchClear &&
     results.phaseK?.savePromptExists &&
     results.phaseK?.dataQualityBadgesVisible &&
     results.phaseK?.savedBuildCountObjectStorage &&

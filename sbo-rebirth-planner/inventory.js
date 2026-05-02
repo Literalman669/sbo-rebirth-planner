@@ -2,6 +2,7 @@
   const state = window.SBO_STATE_ADAPTER;
   const keys = state?.KEYS || {};
   const INVENTORY_FAVORITES_KEY = "sbo-rebirth-planner.inventory-favorites.v1";
+  const LAST_GENERATED_PLAN_KEY = "sbo-rebirth-planner.last-generated-plan.v1";
   const RAW_ITEM_CATALOG = window.SBO_DATA?.itemCatalog || [];
   function isCatalogNoise(item) {
     const name = String(item?.name || "");
@@ -19,7 +20,7 @@
       ...item,
       _idToken: normalizeToken(item.id),
       _nameToken: normalizeToken(item.name),
-      _searchHay: normalizeToken(`${item.name} ${item.id} ${item.slot} ${item.weaponClass || ""}`),
+      _searchHay: normalizeToken(`${item.name} ${item.id} ${item.slot} ${item.weaponClass || ""} ${item.sourceType || ""} ${item.notes || ""}`),
     }));
 
   function escapeHtml(value) {
@@ -79,6 +80,14 @@
     slotBreakdown: document.getElementById("invSlotBreakdown"),
     missingSummary: document.getElementById("invMissingSummary"),
     missingList: document.getElementById("invMissingList"),
+    plannerGearSummary: document.getElementById("invPlannerGearSummary"),
+    plannerGearList: document.getElementById("invPlannerGearList"),
+    quickGearSearch: document.getElementById("invQuickGearSearch"),
+    quickGearClear: document.getElementById("invQuickGearClear"),
+    quickGearResults: document.getElementById("invQuickGearResults"),
+    equipTopPicks: document.getElementById("invEquipTopPicks"),
+    applyEquippedTotals: document.getElementById("invApplyEquippedTotals"),
+    equippedLoadout: document.getElementById("invEquippedLoadout"),
     compareSummary: document.getElementById("invCompareSummary"),
     compareList: document.getElementById("invCompareList"),
     summary: document.getElementById("invSummary"),
@@ -117,6 +126,10 @@
     return Number.isFinite(n) ? n : null;
   }
 
+  function clamp(value, min, max) {
+    return Math.min(max, Math.max(min, value));
+  }
+
   function statTotal(item) {
     const a = Number(item?.attack);
     const d = Number(item?.defense);
@@ -142,6 +155,7 @@
 
   let draft = getDraft();
   let owned = parseOwnedTokens(draft.ownedItems || "");
+  let equipped = state?.getJson(keys.equipped, { slots: {} }) || { slots: {} };
   let favorites = new Set((state?.getJson(INVENTORY_FAVORITES_KEY, []) || []).map((id) => String(id || "")));
   let compareSelected = new Set();
   let currentPage = 1;
@@ -271,6 +285,518 @@
     return owned.has(item._idToken) || owned.has(item._nameToken);
   }
 
+  function isOwnedByTokens(item, tokenSet) {
+    if (!tokenSet || tokenSet.size === 0) return false;
+    return tokenSet.has(item._idToken) || tokenSet.has(item._nameToken);
+  }
+
+  function getPlannerContext() {
+    const lastPlan = state?.getJson(LAST_GENERATED_PLAN_KEY, null);
+    const stats = {
+      str: Number(draft.str) || 0,
+      def: Number(draft.def) || 0,
+      agi: Number(draft.agi) || 0,
+      vit: Number(draft.vit) || 0,
+      luk: Number(draft.luk) || 0,
+    };
+    const contextKeyMatches = lastPlan &&
+      Number(lastPlan.currentLevel) === (Number(draft.currentLevel) || 1) &&
+      Number(lastPlan.levelsToPlan) === (Number(draft.levelsToPlan) || 1) &&
+      String(lastPlan.weaponClass || "") === String(draft.weaponClass || "") &&
+      String(lastPlan.playstyle || "") === String(draft.playstyle || "") &&
+      Number(lastPlan.weaponSkill) === (Number(draft.weaponSkill) || 1);
+    const scoringStats = contextKeyMatches && lastPlan.finalStats ? lastPlan.finalStats : stats;
+    return {
+      currentLevel: Math.max(1, Number(draft.currentLevel) || 1),
+      levelsToPlan: Math.max(1, Number(draft.levelsToPlan) || 1),
+      maxFloorReached: Math.max(1, Number(draft.maxFloorReached) || Number(els.maxFloor?.value) || 19),
+      weaponClass: String(draft.weaponClass || els.weaponClass?.value || "two-handed"),
+      weaponSkill: Math.max(1, Number(draft.weaponSkill) || 1),
+      playstyle: String(draft.playstyle || "balanced"),
+      itemPoolMode: String(draft.itemPoolMode || "standard"),
+      dataQualityMode: String(draft.dataQualityMode || "exact-only"),
+      gearSortMode: String(draft.gearSortMode || "score"),
+      ownership: {
+        onlyOwned: Boolean(draft.onlyOwned),
+      },
+      optimization: {
+        budgetCap: Number(draft.budgetCap),
+        strictBudgetCap: Boolean(draft.strictBudgetCap),
+        avoidTokens: parseOwnedTokens(draft.avoidItems || ""),
+      },
+      stats: scoringStats,
+      currentStats: stats,
+      hasGeneratedPlanStats: Boolean(contextKeyMatches && lastPlan.finalStats),
+    };
+  }
+
+  function getRecommendedSlots(weaponClass) {
+    const slots = ["weapon", "armor", "upper", "lower"];
+    if (["one-handed", "rapier", "dagger"].includes(weaponClass)) slots.push("shield");
+    return slots;
+  }
+
+  function isWeaponClassCompatible(itemWeaponClass, requestedWeaponClass) {
+    const itemClass = `${itemWeaponClass || ""}`.trim().toLowerCase();
+    const requestedClass = `${requestedWeaponClass || ""}`.trim().toLowerCase();
+    if (!itemClass || !requestedClass) return false;
+    if (requestedClass === "dual-wield") return itemClass === "dual-wield" || itemClass === "one-handed";
+    return itemClass === requestedClass;
+  }
+
+  function getSlotLabel(slot) {
+    return { weapon: "Weapon", armor: "Armor", upper: "Headwear", lower: "Accessory", shield: "Shield" }[slot] || slot;
+  }
+
+  function itemStatBlock(item) {
+    return {
+      attack: Number(item.attack) || 0,
+      defense: Number(item.defense) || 0,
+      dexterity: Number(item.dexterity) || 0,
+    };
+  }
+
+  function itemRequirementStatus(item, context) {
+    const projectedLevel = context.currentLevel + context.levelsToPlan;
+    const levelReq = Number(item.levelReq);
+    const skillReq = Number(item.skillReq);
+    const misses = [];
+    if (item.slot !== "weapon" && Number.isFinite(levelReq) && levelReq > projectedLevel) misses.push(`Lv ${levelReq}`);
+    if (Number.isFinite(skillReq) && skillReq > context.weaponSkill) misses.push(`Skill ${skillReq}`);
+    if (misses.length) return `Needs ${misses.join(" + ")}`;
+    if (item.slot !== "weapon" && Number.isFinite(levelReq) && levelReq > context.currentLevel) return `Planned by Lv ${levelReq}`;
+    return "Usable now";
+  }
+
+  function getItemScaleRatio(item, projectedLevel, weaponSkill) {
+    if (item.scalingType === "level_1" || item.scalingType === "level_5") {
+      const minLevel = Math.max(1, item.levelReq || 1);
+      const maxLevel = Math.max(minLevel, item.levelReqMax || minLevel);
+      const step = item.scalingType === "level_5" ? 5 : 1;
+      return scaleRatioFromRange(projectedLevel, minLevel, maxLevel, step);
+    }
+    if (item.scalingType === "skill_1" || item.scalingType === "skill_5") {
+      const minSkill = Math.max(1, item.skillReq || 1);
+      const maxSkill = Math.max(minSkill, item.skillReqMax || minSkill);
+      const step = item.scalingType === "skill_5" ? 5 : 1;
+      return scaleRatioFromRange(weaponSkill, minSkill, maxSkill, step);
+    }
+    return 1;
+  }
+
+  function scaleRatioFromRange(currentValue, minValue, maxValue, step) {
+    if (!Number.isFinite(currentValue)) return 0;
+    if (!Number.isFinite(minValue)) minValue = 1;
+    if (!Number.isFinite(maxValue) || maxValue <= minValue) return 1;
+    const normalizedStep = Math.max(1, step || 1);
+    const clampedValue = clamp(currentValue, minValue, maxValue);
+    const steppedValue = minValue + Math.floor((clampedValue - minValue) / normalizedStep) * normalizedStep;
+    return clamp((steppedValue - minValue) / (maxValue - minValue), 0, 1);
+  }
+
+  function resolveScaledStatValue(baseValue, minValue, maxValue, scaleRatio, fallbackValue) {
+    if (Number.isFinite(minValue) && Number.isFinite(maxValue)) return minValue + (maxValue - minValue) * scaleRatio;
+    if (Number.isFinite(baseValue)) return baseValue;
+    return fallbackValue;
+  }
+
+  function deriveItemStatBlock(item, sourceQ, projectedLevel, weaponSkill) {
+    const floor = Math.max(1, item.floorMin || 1);
+    const levelReq = Math.max(1, item.levelReq || 1);
+    const skillReq = Math.max(1, item.skillReq || 1);
+    const exactStats = Boolean(item.exactStats);
+    const scaleRatio = getItemScaleRatio(item, projectedLevel, weaponSkill);
+    const estimatedAttack = floor * 3.1 + skillReq * 0.08 + sourceQ * 1.5;
+    const estimatedDefense = floor * 0.45 + levelReq * 0.03 + sourceQ * 0.4;
+    const estimatedDexterity = floor * 2.4 + levelReq * 0.28 + sourceQ * 1.2;
+    const attackFallback = !exactStats && item.slot === "weapon" ? estimatedAttack : 0;
+    const defenseFallback = !exactStats && ["armor", "upper", "lower", "shield"].includes(item.slot) ? estimatedDefense : 0;
+    const dexterityFallback = !exactStats && ["armor", "upper", "lower"].includes(item.slot) ? estimatedDexterity : 0;
+    return {
+      attack: resolveScaledStatValue(item.attack, item.attackMin, item.attackMax, scaleRatio, attackFallback),
+      defense: resolveScaledStatValue(item.defense, item.defenseMin, item.defenseMax, scaleRatio, defenseFallback),
+      dexterity: resolveScaledStatValue(item.dexterity, item.dexterityMin, item.dexterityMax, scaleRatio, dexterityFallback),
+      projectedLevel,
+      weaponSkill,
+    };
+  }
+
+  function computeItemStatPower(item, statBlock, style, finalStats, weaponClass) {
+    const attackPower = Math.log10(1 + statBlock.attack * 10);
+    const defensePower = Math.log10(1 + statBlock.defense * 50);
+    const dexterityPower = Math.log10(1 + statBlock.dexterity * 3);
+    let statPower = 1;
+    if (item.slot === "weapon") {
+      statPower += attackPower * (0.2 + style.weights.damage * 0.16);
+      if (weaponClass === "two-handed") statPower += attackPower * 0.05;
+    }
+    if (["armor", "upper", "lower", "shield"].includes(item.slot)) {
+      const defenseNeed = clamp((35 - finalStats.def) / 35, 0, 1);
+      const vitalityNeed = clamp((35 - finalStats.vit) / 35, 0, 1);
+      statPower += defensePower * (0.1 + style.weights.survival * 0.18 + defenseNeed * 0.08);
+      statPower += dexterityPower * (0.08 + style.weights.survival * 0.12 + vitalityNeed * 0.06);
+    }
+    return Math.max(1, statPower);
+  }
+
+  function computeRequirementFit(item, projectedLevel, weaponSkill) {
+    if (item.slot === "weapon") {
+      const availableSkill = Math.max(1, Number(weaponSkill) || 1);
+      const minReq = Math.max(1, Number(item.skillReq) || 1);
+      const maxReq = Number.isFinite(item.skillReqMax) ? Math.max(minReq, Number(item.skillReqMax)) : minReq;
+      const minGapRatio = clamp((availableSkill - minReq) / Math.max(18, availableSkill * 0.55), 0, 1);
+      const maxOvershootRatio = clamp((availableSkill - maxReq) / Math.max(28, availableSkill * 0.65), 0, 1);
+      return clamp(1.12 - minGapRatio * 0.2 - maxOvershootRatio * 0.06, 0.84, 1.13);
+    }
+    const availableLevel = Math.max(1, Number(projectedLevel) || 1);
+    const minReq = Math.max(1, Number(item.levelReq) || 1);
+    const maxReq = Number.isFinite(item.levelReqMax) ? Math.max(minReq, Number(item.levelReqMax)) : minReq;
+    const minGapRatio = clamp((availableLevel - minReq) / Math.max(8, availableLevel * 0.42), 0, 1);
+    const maxOvershootRatio = clamp((availableLevel - maxReq) / Math.max(14, availableLevel * 0.52), 0, 1);
+    return clamp(1.11 - minGapRatio * 0.22 - maxOvershootRatio * 0.07, 0.82, 1.12);
+  }
+
+  function computeValueEfficiency(item, projectedLevel, sourceQ, style) {
+    const floor = Math.max(1, Number(item.floorMin) || 1);
+    const value = Math.max(1, Number(item.colValue) || 1);
+    const expectedValue = Math.max(200, (floor * floor * 420 + projectedLevel * 24) * Math.max(0.9, sourceQ));
+    const ratio = clamp(expectedValue / value, 0.45, 2.4);
+    const baseEfficiency = clamp(Math.pow(ratio, 0.19), 0.88, 1.16);
+    const costSensitivity = clamp(0.58 + style.weights.farming * 0.26 + style.weights.survival * 0.12 - style.weights.damage * 0.16, 0.45, 0.95);
+    return 1 + (baseEfficiency - 1) * costSensitivity;
+  }
+
+  function computeBudgetFit(item, budgetCap, strictBudgetCap, style) {
+    if (!Number.isFinite(budgetCap) || budgetCap <= 0) return { budgetFit: 1, overBudget: false };
+    const value = Math.max(0, Number(item.colValue) || 0);
+    if (value <= 0) return { budgetFit: 1, overBudget: false };
+    const budgetSensitivity = clamp(0.5 + style.weights.farming * 0.3 + style.weights.survival * 0.12 - style.weights.damage * 0.14, 0.35, 0.95);
+    const overBudget = value > budgetCap;
+    if (overBudget) {
+      const overRatio = clamp((value - budgetCap) / Math.max(1, budgetCap), 0, 2.2);
+      const hardPenalty = strictBudgetCap ? 0.22 : 0;
+      return { budgetFit: clamp(1 - overRatio * (0.26 + budgetSensitivity * 0.28) - hardPenalty, 0.45, 1), overBudget: true };
+    }
+    const underRatio = clamp((budgetCap - value) / Math.max(1, budgetCap), 0, 1);
+    return { budgetFit: clamp(1 + underRatio * (0.04 + budgetSensitivity * 0.08), 1, 1.14), overBudget: false };
+  }
+
+  function plannerGearScore(item, context) {
+    const data = window.SBO_DATA || {};
+    const sourceQ = data.sourceQuality?.[item.sourceType] || 1;
+    const scalingQ = data.scalingQuality?.[item.scalingType || "fixed"] || 1;
+    const style = data.playstyles?.[context.playstyle] || data.playstyles?.balanced || { weights: { damage: 1, survival: 1, farming: 0.35 } };
+    const projectedLevel = context.currentLevel + context.levelsToPlan;
+    const floorFit = 1 + clamp((projectedLevel - (item.floorMin || 1)) / 30, -0.4, 0.7);
+    let scalingProgress = 1;
+    if (item.scalingType === "level_1") scalingProgress += projectedLevel * 0.003;
+    else if (item.scalingType === "level_5") scalingProgress += Math.floor(projectedLevel / 5) * 0.007;
+    else if (item.scalingType === "skill_1") scalingProgress += context.weaponSkill * 0.002;
+    else if (item.scalingType === "skill_5") scalingProgress += Math.floor(context.weaponSkill / 5) * 0.005;
+    let styleFit = 1;
+    if (item.slot === "weapon") styleFit += style.weights.damage * 0.25;
+    if (["armor", "upper", "lower", "shield"].includes(item.slot)) styleFit += style.weights.survival * 0.2;
+    if (context.weaponClass === "dual-wield" && item.slot === "weapon") {
+      const skillTarget = Math.max(1, context.weaponSkill || 1);
+      const itemSkillReq = Math.max(1, item.skillReq || 1);
+      const skillCloseness = 1 - clamp(Math.abs(skillTarget - itemSkillReq) / 220, 0, 1);
+      if (item.weaponClass === "dual-wield") styleFit += 0.18 + skillCloseness * 0.14;
+      else if (item.weaponClass === "one-handed") styleFit -= 0.04;
+    }
+    if (context.weaponClass === "two-handed" && item.slot === "weapon" && ["crafted", "boss"].includes(item.sourceType)) styleFit += 0.12;
+    if (context.playstyle === "farming" && ["badge", "event"].includes(item.sourceType)) styleFit += 0.08;
+    const statBlock = deriveItemStatBlock(item, sourceQ, projectedLevel, context.weaponSkill);
+    const statPower = computeItemStatPower(item, statBlock, style, context.stats, context.weaponClass);
+    const requirementFit = computeRequirementFit(item, projectedLevel, context.weaponSkill);
+    const valueEfficiency = computeValueEfficiency(item, projectedLevel, sourceQ, style);
+    const { budgetFit, overBudget } = computeBudgetFit(item, context.optimization?.budgetCap, context.optimization?.strictBudgetCap, style);
+    const isItemOwned = isOwned(item);
+    const ownedBoost = isItemOwned ? 1.08 : 1;
+    const total = sourceQ * scalingQ * floorFit * scalingProgress * styleFit * statPower * requirementFit * valueEfficiency * budgetFit * ownedBoost;
+    return {
+      total,
+      value: (item.colValue || 0) > 0 ? total / (item.colValue / 1000) : total,
+      reqFit: requirementFit,
+      ownedBoost,
+      confidence: item.exactStats ? "exact" : "estimated",
+      overBudget,
+      stats: statBlock,
+    };
+  }
+
+  function buildPlannerGearRecommendations() {
+    const context = getPlannerContext();
+    const projectedLevel = context.currentLevel + context.levelsToPlan;
+    const slots = getRecommendedSlots(context.weaponClass);
+    const recommendations = {};
+    slots.forEach((slot) => {
+      const candidates = ITEM_CATALOG
+        .filter((item) => item.slot === slot)
+        .filter((item) => (Number(item.floorMin) || 1) <= context.maxFloorReached)
+        .filter((item) => context.itemPoolMode !== "standard" || !["badge", "gamepass", "event"].includes(String(item.sourceType || "")))
+        .filter((item) => context.dataQualityMode !== "exact-only" || item.exactStats === true)
+        .filter((item) => item.slot === "weapon" ? (item.skillReq || 1) <= context.weaponSkill : (item.levelReq || 1) <= projectedLevel)
+        .filter((item) => !context.ownership.onlyOwned || isOwned(item))
+        .filter((item) => !context.optimization?.avoidTokens?.size || !isOwnedByTokens(item, context.optimization.avoidTokens))
+        .filter((item) => !(
+          context.optimization?.strictBudgetCap &&
+          Number.isFinite(context.optimization.budgetCap) &&
+          Number(item.colValue) > context.optimization.budgetCap
+        ))
+        .filter((item) => slot !== "weapon" || isWeaponClassCompatible(item.weaponClass, context.weaponClass))
+        .map((item) => ({ item, score: plannerGearScore(item, context) }))
+        .sort((a, b) => {
+          const aVal = context.gearSortMode === "value" ? a.score.value : a.score.total;
+          const bVal = context.gearSortMode === "value" ? b.score.value : b.score.total;
+          const scoreDiff = bVal - aVal;
+          if (Math.abs(scoreDiff) > 1e-9) return scoreDiff;
+          const valDiff = (a.item.colValue || 0) - (b.item.colValue || 0);
+          if (valDiff !== 0) return valDiff;
+          return (a.item.id || "").localeCompare(b.item.id || "");
+        })
+        .slice(0, 3);
+      recommendations[slot] = candidates;
+    });
+    return { context, recommendations };
+  }
+
+  function buildGearWhy(item, score) {
+    if (isOwned(item)) return "Owned item, useful immediately.";
+    const stats = score.stats || itemStatBlock(item);
+    if (stats.attack >= stats.defense && stats.attack > 0) return "Strong ATK option for damage-focused progress.";
+    if (stats.defense > 0) return "Strong DEF upgrade for survivability.";
+    if (stats.dexterity > 0) return "DEX helps HP scaling through your VIT formula.";
+    return "Best available score for your current Planner draft.";
+  }
+
+  function getEquippedSlotForItem(item) {
+    const slots = equipped?.slots || {};
+    const match = Object.entries(slots).find(([, itemId]) => String(itemId) === String(item.id));
+    return match?.[0] || "";
+  }
+
+  function buildGearActionResultHtml(item, options = {}) {
+    const stats = itemStatBlock(item);
+    const statLine = [
+      Number.isFinite(stats.attack) && stats.attack ? `ATK +${stats.attack}` : null,
+      Number.isFinite(stats.defense) && stats.defense ? `DEF +${stats.defense}` : null,
+      Number.isFinite(stats.dexterity) && stats.dexterity ? `DEX +${stats.dexterity}` : null,
+    ].filter(Boolean).join(" / ") || "No visible stat gains";
+    const colValue = Number(item.colValue);
+    const cost = Number.isFinite(colValue) ? `${colValue.toLocaleString()} Col` : "Cost unknown";
+    const equippedSlot = getEquippedSlotForItem(item);
+    const heading = options.heading || `${getSlotLabel(item.slot)} result`;
+    return `<article class="quick-gear-result">
+      <div class="quick-gear-result-main">
+        <div class="gear-card-header">
+          <span class="gear-slot">${escapeHtml(heading)}</span>
+          <strong>${escapeHtml(item.name)}</strong>
+        </div>
+        <div class="quality-badge-row">${buildItemQualityBadges(item)}</div>
+        <div class="gear-visible-facts">
+          <span>${escapeHtml(isOwned(item) ? "Owned" : "Not owned")}</span>
+          ${equippedSlot ? `<span>Equipped: ${escapeHtml(getSlotLabel(equippedSlot))}</span>` : ""}
+          <span>F${escapeHtml(item.floorMin || "?")} / ${escapeHtml(item.sourceType || "unknown")}</span>
+          <span>${escapeHtml(cost)}</span>
+        </div>
+        <p class="gear-statline">${escapeHtml(statLine)}</p>
+      </div>
+      <div class="button-row quick-gear-actions">
+        <button type="button" class="secondary compact" data-action="equip-recommendation" data-slot="${escapeHtml(item.slot)}" data-item-id="${escapeHtml(item.id)}">Equip</button>
+        <button type="button" class="secondary compact ghost" data-action="mark-owned" data-item-id="${escapeHtml(item.id)}">Mark Owned</button>
+        <button type="button" class="secondary compact ghost" data-action="compare-add" data-item-id="${escapeHtml(item.id)}">Compare</button>
+      </div>
+    </article>`;
+  }
+
+  function getQuickGearMatches() {
+    const query = normalizeToken(els.quickGearSearch?.value || "");
+    if (!query) return [];
+    return ITEM_CATALOG
+      .filter((item) => item._searchHay.includes(query))
+      .map((item) => {
+        const name = item._nameToken || "";
+        const id = item._idToken || "";
+        const rank =
+          name === query || id === query ? 0 :
+          name.startsWith(query) || id.startsWith(query) ? 1 :
+          name.includes(query) ? 2 :
+          item._searchHay.includes(query) ? 3 :
+          4;
+        return { item, rank };
+      })
+      .sort((a, b) =>
+        a.rank - b.rank ||
+        (Number(a.item.floorMin) || 1) - (Number(b.item.floorMin) || 1) ||
+        String(a.item.name || "").localeCompare(String(b.item.name || "")),
+      )
+      .slice(0, 8)
+      .map(({ item }) => item);
+  }
+
+  function renderQuickGearSearch() {
+    if (!els.quickGearResults || !els.quickGearSearch || !els.quickGearClear) return;
+    const query = String(els.quickGearSearch.value || "").trim();
+    els.quickGearClear.hidden = !query;
+    if (!query) {
+      els.quickGearResults.hidden = true;
+      els.quickGearResults.innerHTML = "";
+      return;
+    }
+    const matches = getQuickGearMatches();
+    els.quickGearResults.hidden = false;
+    els.quickGearResults.innerHTML = matches.length
+      ? `<div class="quick-results-heading"><strong>${matches.length} result${matches.length === 1 ? "" : "s"}</strong><span>Use actions without leaving Inventory.</span></div>${matches.map((item) => buildGearActionResultHtml(item, { heading: getSlotLabel(item.slot) })).join("")}`
+      : `<div class="empty-state compact"><strong>No matching gear found.</strong><span>No matching gear found. Try a shorter name or clear filters.</span></div>`;
+  }
+
+  function renderPlannerGearWorkspace() {
+    if (!els.plannerGearList || !els.plannerGearSummary) return;
+    const { context, recommendations } = buildPlannerGearRecommendations();
+    const allCandidates = Object.values(recommendations).flat();
+    const ownedCount = ITEM_CATALOG.filter((item) => isOwned(item)).length;
+    const exactOnly = context.dataQualityMode === "exact-only" ? "exact rows only" : "exact and estimated rows";
+    const statSource = context.hasGeneratedPlanStats ? "generated plan stats" : "current draft stats";
+    els.plannerGearSummary.textContent = `Using Planner draft: Lv ${context.currentLevel}, ${context.weaponClass}, Floor ${context.maxFloorReached}, ${exactOnly}, ${statSource}. ${ownedCount} owned catalog item(s).`;
+    renderEquippedLoadout();
+    if (!allCandidates.length) {
+      els.plannerGearList.innerHTML = `<div class="empty-state compact">
+        <strong>No gear matches the current Planner draft.</strong>
+        <span>Raise max floor, allow estimated data from Planner settings, or clear strict catalog filters.</span>
+        <a class="secondary link-button compact" href="./index.html">Open Planner</a>
+      </div>`;
+      return;
+    }
+    els.plannerGearList.innerHTML = Object.entries(recommendations).map(([slot, candidates]) => {
+      if (!candidates.length) {
+        return `<article class="gear-card inventory-recommendation-card empty-slot-card">
+          <div class="gear-card-header"><span class="gear-slot">${escapeHtml(getSlotLabel(slot))}</span><strong>No pick found</strong></div>
+          <p class="muted-text">No eligible item for this slot under the current Planner draft.</p>
+        </article>`;
+      }
+      return candidates.map(({ item, score }, index) => {
+        return `<article class="gear-card inventory-recommendation-card ${index === 0 ? "top-pick" : "alternative-pick"}">
+          <div class="gear-card-header">
+            <span class="gear-slot">${escapeHtml(getSlotLabel(slot))}${index === 0 ? " top pick" : ` option ${index + 1}`}</span>
+            <strong>${escapeHtml(item.name)}</strong>
+          </div>
+          <div class="quality-badge-row">${buildItemQualityBadges(item)}</div>
+          <p class="gear-why"><strong>Why this pick?</strong> ${escapeHtml(buildGearWhy(item, score))}</p>
+          <div class="gear-visible-facts">
+            <span>${escapeHtml(isOwned(item) ? "Owned" : "Not owned")}</span>
+            ${equipped?.slots?.[slot] === item.id ? `<span>Equipped</span>` : ""}
+            <span>${escapeHtml(itemRequirementStatus(item, context))}</span>
+            <span>${escapeHtml(Number.isFinite(Number(item.colValue)) ? `${Number(item.colValue).toLocaleString()} Col` : "Cost unknown")}</span>
+          </div>
+          <p class="gear-statline">${escapeHtml([
+            score.stats?.attack ? `ATK +${score.stats.attack}` : null,
+            score.stats?.defense ? `DEF +${score.stats.defense}` : null,
+            score.stats?.dexterity ? `DEX +${score.stats.dexterity}` : null,
+          ].filter(Boolean).join(" / ") || "No visible stat gains")}</p>
+          <div class="button-row">
+            <button type="button" class="secondary compact" data-action="equip-recommendation" data-slot="${escapeHtml(slot)}" data-item-id="${escapeHtml(item.id)}">Equip</button>
+            <button type="button" class="secondary compact ghost" data-action="mark-owned" data-item-id="${escapeHtml(item.id)}">Mark Owned</button>
+            <button type="button" class="secondary compact ghost" data-action="compare-add" data-item-id="${escapeHtml(item.id)}">Compare</button>
+          </div>
+        </article>`;
+      }).join("");
+    }).join("");
+  }
+
+  function getEquippedItems() {
+    const slots = equipped?.slots || {};
+    return Object.entries(slots)
+      .map(([slot, itemId]) => ({ slot, item: ITEM_CATALOG.find((candidate) => String(candidate.id) === String(itemId)) }))
+      .filter((entry) => entry.item);
+  }
+
+  function summarizeEquippedTotals() {
+    return getEquippedItems().reduce((totals, { item }) => {
+      const stats = itemStatBlock(item);
+      totals.attack += stats.attack;
+      totals.defense += stats.defense;
+      totals.dexterity += stats.dexterity;
+      return totals;
+    }, { attack: 0, defense: 0, dexterity: 0 });
+  }
+
+  function renderEquippedLoadout() {
+    if (!els.equippedLoadout) return;
+    const equippedItems = getEquippedItems();
+    if (!equippedItems.length) {
+      els.equippedLoadout.innerHTML = `<p class="muted-text">No equipped gear selected yet. Equip picks below, then apply totals to Planner.</p>`;
+      return;
+    }
+    const totals = summarizeEquippedTotals();
+    els.equippedLoadout.innerHTML = `
+      <div class="equipped-loadout-summary">
+        <strong>Equipped totals</strong>
+        <span>ATK ${totals.attack} / DEF ${totals.defense} / DEX ${totals.dexterity}</span>
+      </div>
+      <div class="equipped-loadout-grid">
+        ${equippedItems.map(({ slot, item }) => `<span class="pill owned">${escapeHtml(getSlotLabel(slot))}: ${escapeHtml(item.name)}</span>`).join("")}
+      </div>`;
+  }
+
+  function saveEquipped() {
+    equipped.updatedAt = new Date().toISOString();
+    state?.setJson(keys.equipped, equipped);
+  }
+
+  function equipItem(slot, itemId) {
+    equipped = equipped || { slots: {} };
+    equipped.slots = equipped.slots || {};
+    equipped.slots[slot] = itemId;
+    saveEquipped();
+  }
+
+  function applyEquippedTotalsToDraft() {
+    const totals = summarizeEquippedTotals();
+    draft = getDraft();
+    draft.gearAttack = String(Math.max(1, totals.attack));
+    draft.gearDefense = String(totals.defense);
+    draft.gearDexterity = String(totals.dexterity);
+    draft.updatedAt = new Date().toISOString();
+    state?.setJson(keys.formDraft, draft);
+    showMessage("Equipped totals applied to Planner draft.");
+  }
+
+  function handleGearActionControl(control) {
+    const item = ITEM_CATALOG.find((candidate) => String(candidate.id) === String(control.dataset.itemId || ""));
+    if (!item) return false;
+    const action = String(control.dataset.action || "");
+    if (action === "equip-recommendation") {
+      equipItem(String(control.dataset.slot || item.slot), String(item.id));
+      if (!isOwned(item)) {
+        owned.add(item._idToken);
+        owned.add(item._nameToken);
+        ownedRevision += 1;
+        persistOwned();
+      }
+      showMessage(`${item.name} equipped in Inventory workspace.`);
+      render();
+      return true;
+    }
+    if (action === "mark-owned") {
+      owned.add(item._idToken);
+      owned.add(item._nameToken);
+      ownedRevision += 1;
+      persistOwned();
+      render();
+      return true;
+    }
+    if (action === "compare-add") {
+      if (compareSelected.size >= 4 && !compareSelected.has(String(item.id))) {
+        showMessage("You can compare up to 4 items at once.");
+        return true;
+      }
+      compareSelected.add(String(item.id));
+      render();
+      return true;
+    }
+    return false;
+  }
+
   function render() {
     if (!els.list) return;
     const items = getFilteredItems();
@@ -330,6 +856,8 @@
         <span class="pill exact">Favorites ${favorites.size}</span>
       `;
     }
+    renderPlannerGearWorkspace();
+    renderQuickGearSearch();
     renderMissingUpgrades();
     renderComparePanel();
   }
@@ -562,6 +1090,45 @@
       render();
     });
 
+    els.plannerGearList?.addEventListener("click", (event) => {
+      const control = event.target.closest("[data-action][data-item-id]");
+      if (!control) return;
+      handleGearActionControl(control);
+    });
+
+    els.quickGearSearch?.addEventListener("input", renderQuickGearSearch);
+    els.quickGearClear?.addEventListener("click", () => {
+      if (els.quickGearSearch) els.quickGearSearch.value = "";
+      renderQuickGearSearch();
+      els.quickGearSearch?.focus();
+    });
+    els.quickGearResults?.addEventListener("click", (event) => {
+      const control = event.target.closest("[data-action][data-item-id]");
+      if (!control) return;
+      handleGearActionControl(control);
+    });
+
+    els.equipTopPicks?.addEventListener("click", () => {
+      const { recommendations } = buildPlannerGearRecommendations();
+      Object.entries(recommendations).forEach(([slot, candidates]) => {
+        const top = candidates?.[0];
+        if (top?.item?.id) {
+          equipItem(slot, String(top.item.id));
+          owned.add(top.item._idToken);
+          owned.add(top.item._nameToken);
+        }
+      });
+      ownedRevision += 1;
+      persistOwned();
+      showMessage("Top gear picks equipped in Inventory workspace.");
+      render();
+    });
+
+    els.applyEquippedTotals?.addEventListener("click", () => {
+      applyEquippedTotalsToDraft();
+      render();
+    });
+
     els.markFilteredOwned?.addEventListener("click", () => {
       getFilteredItems().forEach((item) => {
         owned.add(item._idToken);
@@ -634,6 +1201,10 @@
     draft = getDraft();
     owned = parseOwnedTokens(draft.ownedItems || "");
     ownedRevision += 1;
+    render();
+  });
+  state?.subscribe(keys.equipped, () => {
+    equipped = state?.getJson(keys.equipped, { slots: {} }) || { slots: {} };
     render();
   });
 })();

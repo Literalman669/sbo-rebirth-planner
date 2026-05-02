@@ -34,6 +34,26 @@
         <div id="progFloorPills" class="progress-pill-row" aria-label="Cleared floors"></div>
       </section>
       <section class="panel">
+        <h2>Floor Progress Tracker</h2>
+        <p class="muted-text">Click floors to mark them cleared. This uses the same saved progress across the app.</p>
+        <div id="progressFloorTracker" class="floor-tracker"></div>
+        <div class="floor-tracker-actions">
+          <button type="button" class="secondary compact" id="progressClearFloorsBtn" data-testid="progress-clear-floors-btn">Clear All</button>
+          <button type="button" class="secondary compact" id="progressMarkToFloorBtn" data-testid="progress-mark-to-floor-btn">Mark Up To Max Floor</button>
+        </div>
+        <div id="progressFloorTrackerSummary" class="floor-tracker-summary"></div>
+      </section>
+      <section class="panel">
+        <h2>Skill Unlock Checklist</h2>
+        <p class="muted-text">Uses your current Planner weapon class and weapon skill.</p>
+        <div id="progressSkillChecklist"></div>
+      </section>
+      <section class="panel">
+        <h2>Party Role Guide</h2>
+        <p class="muted-text">Uses your latest generated plan when available, otherwise current Planner stats.</p>
+        <div id="progressPartyRoleAdvisor"></div>
+      </section>
+      <section class="panel">
         <h2>Recent Boss Progress</h2>
         <div id="progBossList" class="progress-list"></div>
       </section>
@@ -50,6 +70,7 @@
     <script src="./shared/state-adapter.js?v=0.9.9"></script>
     <script src="./shared/runtime-observability.js?v=0.9.9"></script>
     <script src="./shared/next-action.js?v=0.9.9"></script>
+    <script src="./data.js?v=0.9.9"></script>
     <script src="./boss-data.js?v=0.9.9"></script>
     <script src="./progress.js?v=0.9.9"></script>
   </body>

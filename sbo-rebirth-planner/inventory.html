@@ -222,6 +222,35 @@
         </div>
       </section>
 
+      <section class="panel inventory-catalog inventory-gear-workspace" aria-labelledby="inv-gear-workspace-title">
+        <div class="inventory-panel-header">
+          <div>
+            <h2 id="inv-gear-workspace-title">Gear Workspace</h2>
+            <p class="muted-text" id="invPlannerGearSummary">Recommendations use your current Planner draft and owned inventory.</p>
+          </div>
+          <div class="button-row inventory-panel-actions">
+            <button type="button" class="secondary compact" id="invEquipTopPicks">Equip Top Picks</button>
+            <button type="button" class="secondary compact" id="invApplyEquippedTotals">Apply Equipped Totals</button>
+            <a class="secondary link-button compact" href="./index.html">Open Planner</a>
+          </div>
+        </div>
+        <div class="inventory-quick-search" role="search" aria-label="Find gear">
+          <label for="invQuickGearSearch">Find Gear</label>
+          <div class="inventory-quick-search-row">
+            <input
+              type="search"
+              id="invQuickGearSearch"
+              placeholder="Search gear to equip, mark owned, or compare..."
+              autocomplete="off"
+            />
+            <button type="button" class="secondary compact ghost" id="invQuickGearClear" hidden>Clear Search</button>
+          </div>
+          <div id="invQuickGearResults" class="inventory-quick-results" hidden></div>
+        </div>
+        <div id="invEquippedLoadout" class="equipped-loadout inventory-equipped-loadout"></div>
+        <div id="invPlannerGearList" class="gear-results inventory-gear-results"></div>
+      </section>
+
       <section class="panel inventory-catalog">
         <h2>Catalog</h2>
         <p class="muted-text" id="invSummary"></p>

@@ -349,6 +349,9 @@
   const plannerOutputPriority = document.getElementById("plannerOutputPriority");
   const planSummaryEl = document.getElementById("planSummary");
   const statPriorityPanel = document.getElementById("statPriorityPanel");
+  const allocationSummaryEl = document.getElementById("allocationSummary");
+  const planTableControls = document.getElementById("planTableControls");
+  const planTableViewNote = document.getElementById("planTableViewNote");
   const gearResults = document.getElementById("gearResults");
   const upgradeTimeline = document.getElementById("upgradeTimeline");
   const benchmarkPanel = document.getElementById("benchmarkPanel");
@@ -436,7 +439,8 @@
   let formDirtySinceLastSubmit = false;
   let hasGeneratedPlan = false;
   let outputPanelsCollapsed = false;
-  let activeDashboardView = "gear";
+  let activeDashboardView = "all";
+  let activePlanTableView = "milestones";
   const compareShortlist = new Map();
   const ownedSelectionSet = new Set();
   const dataValidationReport = validateDataSchema(data);
@@ -464,7 +468,6 @@
   initializeOwnedInventoryManager();
   initializeKeyboardShortcuts();
   initializeShareLink();
-  initializeFloorTracker();
   initializeQuickPresets();
   initializePlannerDisclosures();
   initializeExampleBuild();
@@ -948,22 +951,29 @@
     const input = getFormInput();
     const planResult = buildLevelPlan(input);
     lastPlanResult = planResult;
-    const gearPlan = recommendGear(input, planResult.finalStats);
+    const gearPlan = {};
     lastGearPlan = gearPlan;
+    state?.setJson?.("sbo-rebirth-planner.last-generated-plan.v1", {
+      updatedAt: new Date().toISOString(),
+      currentLevel: input.currentLevel,
+      levelsToPlan: input.levelsToPlan,
+      maxFloorReached: input.maxFloorReached,
+      weaponClass: input.weaponClass,
+      playstyle: input.playstyle,
+      weaponSkill: input.weaponSkill,
+      finalStats: planResult.finalStats,
+      finalMetrics: planResult.finalEval.metrics,
+      finalRawMetrics: planResult.finalEval.rawMetrics,
+      rows: planResult.rows,
+    });
 
-    renderPlanSummary(input, planResult, gearPlan);
+    renderPlanSummary(input, planResult);
     renderStatPriority(input, planResult);
     renderLogic(input, planResult);
+    renderAllocationSummary(planResult.rows);
     renderPlanRows(planResult.rows);
-    renderGearRecommendations(gearPlan, input);
     renderBenchmarkPanel(input, planResult);
-    renderUpgradeTimeline(input);
-    renderSkillChecklist(input);
-    renderPartyRoleAdvisor(input, planResult);
     renderEquippedLoadout(input);
-    renderCalibrationReport(calibrationState, planResult.finalEval);
-    renderOwnedInventoryManager();
-    renderGearComparePanel();
     queueDraftWrite();
     formDirtySinceLastSubmit = false;
     renderStalePlanBanner();
@@ -1319,7 +1329,7 @@
 
   function setDashboardView(view) {
     if (!outputPanel) return;
-    const allowed = new Set(["all", "gear", "plan", "timeline", "progress", "tools", "context"]);
+    const allowed = new Set(["all", "plan", "context"]);
     const next = allowed.has(view) ? view : "all";
     activeDashboardView = next;
 
@@ -1442,6 +1452,12 @@
   }
 
   function handleOutputPanelAction(event) {
+    const tableViewBtn = event.target.closest("button[data-plan-table-view]");
+    if (tableViewBtn && outputPanel?.contains(tableViewBtn)) {
+      setPlanTableView(tableViewBtn.dataset.planTableView || "milestones");
+      return;
+    }
+
     const syncBtn = event.target.closest("#syncToPlanBtn");
     if (syncBtn && outputPanel?.contains(syncBtn)) {
       handleSyncToPlanClick();
@@ -1474,16 +1490,6 @@
     if (action === "gear") {
       gearAttackInput?.focus();
       gearAttackInput?.scrollIntoView({ behavior: "smooth", block: "center" });
-      return;
-    }
-    if (action === "quality") {
-      const dataQualityField = form?.querySelector('[name="dataQualityMode"]');
-      dataQualityField?.focus();
-      dataQualityField?.scrollIntoView({ behavior: "smooth", block: "center" });
-      return;
-    }
-    if (action === "gear-results") {
-      gearResults?.scrollIntoView({ behavior: "smooth", block: "start" });
       return;
     }
     if (action === "logic") {
@@ -3260,7 +3266,7 @@
     const end = planResult.finalEval.metrics;
     const cards = [
       { title: "Level Window", value: `${input.currentLevel + 1} -> ${input.currentLevel + input.levelsToPlan}`, note: `${input.levelsToPlan} levels planned (${input.levelsToPlan * data.pointsPerLevel} points)` },
-      { title: "Access Scope", value: `Floor 1 -> ${input.maxFloorReached}`, note: "Gear recommendations are limited to unlocked floors." },
+      { title: "Access Scope", value: `Floor 1 -> ${input.maxFloorReached}`, note: "Gear workspace uses this floor range on Inventory." },
       { title: "Final Stats", value: `STR ${planResult.finalStats.str} / DEF ${planResult.finalStats.def} / AGI ${planResult.finalStats.agi}`, note: `VIT ${planResult.finalStats.vit} / LUK ${planResult.finalStats.luk}` },
       { title: "Projected DPS Index", value: `${round(end.dpsProjection, 1)}`, note: `${deltaLabel(end.dpsProjection - start.dpsProjection)} vs current` },
       { title: "Projected Survivability", value: `DR ${round(end.damageReduction, 1)} | HP+ ${round(end.bonusHp, 1)}`, note: `Debuff Res +${round(end.debuffResPct, 2)}%` },
@@ -3269,7 +3275,7 @@
     return cards.map((card) => `<article class="summary-card"><h4>${escapeHtml(card.title)}</h4><p class="card-value">${escapeHtml(card.value)}</p><p class="card-note">${escapeHtml(card.note)}</p></article>`).join("");
   }
 
-  function renderPlanSummary(input, planResult, gearPlan) {
+  function renderPlanSummary(input, planResult) {
     if (!planSummaryEl) return;
     const profile = data.weaponProfiles[input.weaponClass];
     const style = data.playstyles[input.playstyle];
@@ -3277,9 +3283,8 @@
     const priorityStats = rankStatsByAdded(totalsAdded);
     const primary = priorityStats[0] || { stat: "str", amount: 0 };
     const secondary = priorityStats[1] || null;
-    const topGear = getTopGearTarget(gearPlan);
     const bossHint = buildBossReadinessHint(input, planResult);
-    const callouts = buildPlanCallouts(input, planResult, gearPlan);
+    const callouts = buildPlanCallouts(input, planResult);
     const mainWarning = callouts[0];
 
     const topStatsText = priorityStats
@@ -3300,9 +3305,10 @@
         note: `${primary.stat.toUpperCase()}: ${describeStatReason(primary.stat)}${secondary ? ` Secondary: ${secondary.stat.toUpperCase()}.` : ""}`,
       },
       {
-        label: "Gear target",
-        value: topGear ? `${getSlotLabel(topGear.slot)}: ${topGear.item.name}` : "No eligible gear target",
-        note: topGear ? buildGearPickReason(topGear.item, topGear.score.breakdown, input, topGear.slot) : "Relax filters or increase floor access to find more options.",
+        label: "Gear workspace",
+        value: "Use Inventory",
+        note: "Inventory now handles gear browsing, owned tracking, comparison, and equipped totals.",
+        action: '<a class="secondary link-button compact" href="./inventory.html">Open Inventory</a>',
       },
       {
         label: "Boss check",
@@ -3444,28 +3450,18 @@
     };
   }
 
-  function buildPlanCallouts(input, planResult, gearPlan) {
+  function buildPlanCallouts(input, planResult) {
     const callouts = [];
-    const candidates = Object.values(gearPlan || {}).flat();
-    const topCandidates = Object.values(gearPlan || {}).map((list) => list?.[0]).filter(Boolean);
     const storage = readBuildStorage();
     const presetName = getSelectedOrTypedPresetName();
     const currentSaved = presetName && storage[presetName];
     const gearTotalsMissing = input.gear.attack <= 1 && input.gear.defense <= 0 && input.gear.dexterity <= 0;
-    const hasEstimated = candidates.some((entry) => entry?.score?.breakdown?.confidence !== "exact");
-    const requirementGap = topCandidates.find((entry) => Number(entry?.score?.breakdown?.requirementFit) < 1);
 
     if (gearTotalsMissing) {
       callouts.push({ tone: "warning", text: "No gear totals entered, so projections may understate your current power.", action: "Add gear totals", actionType: "gear" });
     }
     if (!input.ownership.tokens.size) {
-      callouts.push({ tone: "info", text: "No owned inventory entered. Owned gear can be boosted or filtered once listed.", action: "Open Inventory", href: "./inventory.html" });
-    }
-    if (hasEstimated) {
-      callouts.push({ tone: "warning", text: "Some recommendations use estimated or unknown rows.", action: "Change data quality filter", actionType: "quality" });
-    }
-    if (requirementGap) {
-      callouts.push({ tone: "warning", text: `${requirementGap.item.name} is close to your requirements but not a perfect fit.`, action: "Review gear details", actionType: "gear-results" });
+      callouts.push({ tone: "info", text: "No owned inventory entered. Manage owned gear and recommendations on Inventory.", action: "Open Inventory", href: "./inventory.html" });
     }
     if (!currentSaved) {
       callouts.push({ tone: "info", text: "Plan generated but not saved. Save it so Dashboard and Compare can use it.", action: "Open Save Controls", actionType: "save" });
@@ -3561,10 +3557,76 @@
     queueDraftWrite();
   }
 
+  function renderAllocationSummary(rows) {
+    if (!allocationSummaryEl) return;
+
+    const safeRows = Array.isArray(rows) ? rows : [];
+    if (!safeRows.length) {
+      allocationSummaryEl.innerHTML = "";
+      return;
+    }
+
+    const totals = safeRows.reduce((acc, row) => {
+      STAT_KEYS.forEach((stat) => {
+        acc[stat] += toInt(row?.added?.[stat], 0);
+      });
+      return acc;
+    }, emptyStatBlock());
+    const sortedStats = STAT_KEYS
+      .map((stat) => ({ stat, value: totals[stat] }))
+      .sort((a, b) => b.value - a.value);
+    const topStat = sortedStats[0];
+    const secondStat = sortedStats.find((entry) => entry.value > 0 && entry.stat !== topStat.stat) || sortedStats[1];
+    const firstFiveText = safeRows
+      .slice(0, Math.min(5, safeRows.length))
+      .map((row) => {
+        const gains = STAT_KEYS
+          .filter((stat) => toInt(row?.added?.[stat], 0) > 0)
+          .map((stat) => stat.toUpperCase())
+          .join("/");
+        return `${row.level}: ${gains || "hold"}`;
+      })
+      .join(" · ");
+    const breakpointRows = safeRows.filter((row) => Array.isArray(row.breakpoints) && row.breakpoints.length > 0);
+    const breakpointText = breakpointRows.length
+      ? breakpointRows.slice(0, 4).map((row) => `Lv${row.level}`).join(", ")
+      : "No breakpoints in this range";
+    const finalRow = safeRows[safeRows.length - 1];
+    const statSplit = sortedStats
+      .filter((entry) => entry.value > 0)
+      .slice(0, 4)
+      .map((entry) => `${entry.stat.toUpperCase()} +${entry.value}`)
+      .join(" / ");
+
+    allocationSummaryEl.innerHTML = `
+      <article>
+        <span>First 5 levels</span>
+        <strong>${escapeHtml(firstFiveText)}</strong>
+        <p>Use this as the quick play-by-play before reading the full table.</p>
+      </article>
+      <article>
+        <span>Biggest gain</span>
+        <strong>${topStat.stat.toUpperCase()} +${topStat.value}</strong>
+        <p>${secondStat && secondStat.value > 0 ? `Secondary push: ${secondStat.stat.toUpperCase()} +${secondStat.value}.` : "The plan is concentrated on one priority."}</p>
+      </article>
+      <article>
+        <span>Milestones</span>
+        <strong>${escapeHtml(breakpointText)}</strong>
+        <p>${breakpointRows.length} row${breakpointRows.length === 1 ? "" : "s"} with unlocks, thresholds, or notable gear availability.</p>
+      </article>
+      <article>
+        <span>Final snapshot</span>
+        <strong>Lv${finalRow.level}</strong>
+        <p>${escapeHtml(statSplit || "No additional stat points allocated.")}</p>
+      </article>
+    `;
+  }
+
   function renderPlanRows(rows) {
     planTableBody.innerHTML = rows
-      .map((row) => {
+      .map((row, index) => {
         const hasBreakpoints = row.breakpoints && row.breakpoints.length > 0;
+        const isMilestone = isPlanMilestoneRow(row, index, rows);
         const bpHtml = hasBreakpoints
           ? `<div class="breakpoint-annotations">${row.breakpoints.map((bp) => {
               const isUnlock = bp.startsWith("Unlocks:") || bp.startsWith("Available weapon:");
@@ -3573,7 +3635,10 @@
             }).join("")}</div>`
           : "";
         return `
-          <tr${hasBreakpoints ? ' class="has-breakpoint"' : ""}>
+          <tr class="${[
+            hasBreakpoints ? "has-breakpoint" : "",
+            isMilestone ? "plan-milestone-row" : "",
+          ].filter(Boolean).join(" ")}" data-plan-row-index="${index}" data-plan-milestone="${isMilestone ? "true" : "false"}">
             <td>${row.level}</td>
             <td>${row.added.str}</td>
             <td>${row.added.def}</td>
@@ -3590,6 +3655,54 @@
         `;
       })
       .join("");
+    setPlanTableView(activePlanTableView);
+  }
+
+  function isPlanMilestoneRow(row, index, rows) {
+    const safeRows = Array.isArray(rows) ? rows : [];
+    if (index < 5 || index === safeRows.length - 1) return true;
+    if (Array.isArray(row?.breakpoints) && row.breakpoints.length > 0) return true;
+    return toInt(row?.level, 0) % 10 === 0;
+  }
+
+  function setPlanTableView(view) {
+    const allowed = new Set(["milestones", "every", "full"]);
+    const next = allowed.has(view) ? view : "milestones";
+    activePlanTableView = next;
+
+    const allocationPanel = document.querySelector(".allocation-panel");
+    allocationPanel?.classList.toggle("plan-table-view-milestones", next === "milestones");
+    allocationPanel?.classList.toggle("plan-table-view-every", next === "every");
+    allocationPanel?.classList.toggle("plan-table-view-full", next === "full");
+
+    if (planTableControls) {
+      planTableControls.querySelectorAll("button[data-plan-table-view]").forEach((button) => {
+        const isActive = button.dataset.planTableView === next;
+        button.classList.toggle("active", isActive);
+        button.setAttribute("aria-pressed", String(isActive));
+      });
+    }
+
+    const rows = Array.from(planTableBody?.querySelectorAll("tr") || []);
+    let visibleCount = 0;
+    rows.forEach((row) => {
+      const isMilestone = row.dataset.planMilestone === "true";
+      const shouldHide = next === "milestones" && !isMilestone;
+      row.hidden = shouldHide;
+      row.classList.toggle("plan-row-hidden", shouldHide);
+      if (!shouldHide) visibleCount += 1;
+    });
+
+    if (planTableViewNote) {
+      const totalCount = rows.length;
+      const note =
+        next === "milestones"
+          ? `Showing ${visibleCount} key rows of ${totalCount}. Use Every Level or Show Full Table for the full allocation.`
+          : next === "every"
+            ? `Showing all ${totalCount} rows inside a scrollable table.`
+            : `Showing the full ${totalCount}-row table in the page.`;
+      planTableViewNote.textContent = note;
+    }
   }
 
   function renderGearRecommendations(gearPlan, input) {
@@ -3867,36 +3980,12 @@
       return `<tr><td class="bench-metric-label">Stats</td>${cells}</tr>`;
     })();
 
-    const gearRow = (() => {
-      const timeline = buildUpgradeTimeline(input);
-      const slots = getRecommendedSlots(input.weaponClass);
-      const cells = milestones.map((m) => {
-        const lines = slots.map((slot) => {
-          const phases = timeline[slot] || [];
-          const active = phases
-            .filter(({ unlockLevel }) => unlockLevel <= m.level)
-            .slice(-1)[0];
-          if (!active) return `<div class="bench-gear-line bench-gear-none">${escapeHtml(getSlotLabel(slot))}: —</div>`;
-          const owned = isOwnedItem(active.item, input.ownership.tokens);
-          const equipped = equippedState?.slots?.[slot] === active.item.id;
-          const badge = equipped
-            ? `<span class="bench-gear-badge equipped">E</span>`
-            : owned
-              ? `<span class="bench-gear-badge owned">O</span>`
-              : "";
-          return `<div class="bench-gear-line"><span class="bench-gear-slot">${escapeHtml(getSlotLabel(slot))}</span>${badge} ${escapeHtml(active.item.name)}</div>`;
-        });
-        return `<td class="bench-gear-cell">${lines.join("")}</td>`;
-      }).join("");
-      return `<tr><td class="bench-metric-label">Gear</td>${cells}</tr>`;
-    })();
-
     const summaryHtml = `<div class="summary-cards">${buildSummaryCardsHtml(input, planResult)}</div>`;
     benchmarkPanel.innerHTML = summaryHtml + `
       <div class="table-wrap">
         <table class="benchmark-table">
           <thead><tr><th>Metric</th>${headerCells}</tr></thead>
-          <tbody>${gearRow}${statRow}${bodyRows}${statCapRow}</tbody>
+          <tbody>${statRow}${bodyRows}${statCapRow}</tbody>
         </table>
       </div>
     `;
