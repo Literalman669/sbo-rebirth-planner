@@ -163,6 +163,13 @@
 
   const CHANGELOG = [
     {
+      version: "v0.9.9",
+      notes: [
+        "Planner output: added Your Next Move summary, stat priority cards, warning callouts, and clearer gear recommendation details.",
+        "Planner save flow: generated plans now include a shortcut to the existing saved-build controls without autosaving.",
+      ],
+    },
+    {
       version: "v0.9.8",
       notes: [
         "Planner: added Start Here flow, example build, no-plan empty state, and saved advanced-section preferences.",
@@ -313,7 +320,7 @@
       ],
     },
   ];
-  const UI_BUILD_STAMP = "8607342";
+  const UI_BUILD_STAMP = "planner-output-qa";
 
   const SHARE_FIELDS = [
     "buildName",
@@ -339,6 +346,9 @@
   const stalePlanBanner = document.getElementById("stalePlanBanner");
   const planTableBody = document.querySelector("#planTable tbody");
   const logicExplanation = document.getElementById("logicExplanation");
+  const plannerOutputPriority = document.getElementById("plannerOutputPriority");
+  const planSummaryEl = document.getElementById("planSummary");
+  const statPriorityPanel = document.getElementById("statPriorityPanel");
   const gearResults = document.getElementById("gearResults");
   const upgradeTimeline = document.getElementById("upgradeTimeline");
   const benchmarkPanel = document.getElementById("benchmarkPanel");
@@ -506,7 +516,7 @@
     hasGeneratedPlan = Boolean(generated);
     if (noGeneratedPlanEmptyState) noGeneratedPlanEmptyState.hidden = hasGeneratedPlan;
     if (dashboardViewNav) dashboardViewNav.hidden = !hasGeneratedPlan;
-    document.querySelectorAll("#recommendations .output-toolbar, #recommendations .dashboard-workspace").forEach((el) => {
+    document.querySelectorAll("#recommendations .output-toolbar, #recommendations .generated-output, #recommendations .dashboard-workspace").forEach((el) => {
       el.hidden = !hasGeneratedPlan;
     });
   }
@@ -941,6 +951,8 @@
     const gearPlan = recommendGear(input, planResult.finalStats);
     lastGearPlan = gearPlan;
 
+    renderPlanSummary(input, planResult, gearPlan);
+    renderStatPriority(input, planResult);
     renderLogic(input, planResult);
     renderPlanRows(planResult.rows);
     renderGearRecommendations(gearPlan, input);
@@ -1436,6 +1448,12 @@
       return;
     }
 
+    const summaryActionBtn = event.target.closest("button[data-summary-action]");
+    if (summaryActionBtn && outputPanel?.contains(summaryActionBtn)) {
+      handleSummaryAction(summaryActionBtn.dataset.summaryAction || "");
+      return;
+    }
+
     const button = event.target.closest("button.panel-toggle");
     if (!button || !outputPanel || !outputPanel.contains(button)) {
       return;
@@ -1446,6 +1464,46 @@
 
     setSubpanelCollapsed(panel, !panel.classList.contains("collapsed"));
     syncOutputPanelsCollapsedState();
+  }
+
+  function handleSummaryAction(action) {
+    if (action === "save" || action === "open-save") {
+      openSaveBuildControls();
+      return;
+    }
+    if (action === "gear") {
+      gearAttackInput?.focus();
+      gearAttackInput?.scrollIntoView({ behavior: "smooth", block: "center" });
+      return;
+    }
+    if (action === "quality") {
+      const dataQualityField = form?.querySelector('[name="dataQualityMode"]');
+      dataQualityField?.focus();
+      dataQualityField?.scrollIntoView({ behavior: "smooth", block: "center" });
+      return;
+    }
+    if (action === "gear-results") {
+      gearResults?.scrollIntoView({ behavior: "smooth", block: "start" });
+      return;
+    }
+    if (action === "logic") {
+      logicExplanation?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }
+
+  function openSaveBuildControls() {
+    const advanced = document.getElementById("advancedPlannerOptions");
+    const savedBuilds = document.querySelector('[data-disclosure-key="saved-builds"]');
+    const presets = document.getElementById("tools-importexport");
+    [advanced, savedBuilds, presets].forEach((el) => {
+      if (el instanceof HTMLDetailsElement) el.open = true;
+    });
+    if (!presetNameInput?.value?.trim()) {
+      const buildName = form?.querySelector('[name="buildName"]')?.value?.trim();
+      if (buildName) presetNameInput.value = buildName;
+    }
+    presetNameInput?.focus();
+    presetNameInput?.scrollIntoView({ behavior: "smooth", block: "center" });
   }
 
   function enhanceSubpanelToggles() {
@@ -3211,6 +3269,220 @@
     return cards.map((card) => `<article class="summary-card"><h4>${escapeHtml(card.title)}</h4><p class="card-value">${escapeHtml(card.value)}</p><p class="card-note">${escapeHtml(card.note)}</p></article>`).join("");
   }
 
+  function renderPlanSummary(input, planResult, gearPlan) {
+    if (!planSummaryEl) return;
+    const profile = data.weaponProfiles[input.weaponClass];
+    const style = data.playstyles[input.playstyle];
+    const totalsAdded = diffStats(planResult.initialStats, planResult.finalStats);
+    const priorityStats = rankStatsByAdded(totalsAdded);
+    const primary = priorityStats[0] || { stat: "str", amount: 0 };
+    const secondary = priorityStats[1] || null;
+    const topGear = getTopGearTarget(gearPlan);
+    const bossHint = buildBossReadinessHint(input, planResult);
+    const callouts = buildPlanCallouts(input, planResult, gearPlan);
+    const mainWarning = callouts[0];
+
+    const topStatsText = priorityStats
+      .filter((entry) => entry.amount > 0)
+      .slice(0, 3)
+      .map((entry) => `${entry.stat.toUpperCase()} +${entry.amount}`)
+      .join(" / ") || "No major stat shift";
+
+    const summaryTiles = [
+      {
+        label: "Build direction",
+        value: `${style?.label || "Balanced"} ${profile?.label || "build"}`,
+        note: `${input.levelsToPlan} levels planned (${input.levelsToPlan * data.pointsPerLevel} points).`,
+      },
+      {
+        label: "Add most points into",
+        value: topStatsText,
+        note: `${primary.stat.toUpperCase()}: ${describeStatReason(primary.stat)}${secondary ? ` Secondary: ${secondary.stat.toUpperCase()}.` : ""}`,
+      },
+      {
+        label: "Gear target",
+        value: topGear ? `${getSlotLabel(topGear.slot)}: ${topGear.item.name}` : "No eligible gear target",
+        note: topGear ? buildGearPickReason(topGear.item, topGear.score.breakdown, input, topGear.slot) : "Relax filters or increase floor access to find more options.",
+      },
+      {
+        label: "Boss check",
+        value: bossHint.value,
+        note: bossHint.note,
+        action: bossHint.actionHtml,
+      },
+    ];
+
+    const calloutHtml = callouts.length
+      ? `<div class="plan-callout-list">${callouts.map(buildPlanCalloutHtml).join("")}</div>`
+      : "";
+
+    planSummaryEl.innerHTML = `
+      <div class="plan-summary-hero">
+        <div>
+          <p class="section-eyebrow">Your next move</p>
+          <h4>${escapeHtml(primary.amount > 0 ? `Prioritize ${primary.stat.toUpperCase()} now` : "Review the generated plan")}</h4>
+          <p>${escapeHtml(primary.amount > 0 ? describeStatReason(primary.stat) : "Use the summary below to choose your next stat, gear, and boss step.")}</p>
+        </div>
+        <div class="plan-summary-save">
+          <span>Like this plan?</span>
+          <button type="button" class="secondary compact" data-summary-action="open-save">Open Save Controls</button>
+        </div>
+      </div>
+      <div class="plan-summary-grid">
+        ${summaryTiles.map((tile) => `
+          <article class="plan-summary-tile">
+            <span>${escapeHtml(tile.label)}</span>
+            <strong>${escapeHtml(tile.value)}</strong>
+            <p>${escapeHtml(tile.note)}</p>
+            ${tile.action || ""}
+          </article>
+        `).join("")}
+      </div>
+      ${mainWarning ? `<div class="plan-main-warning"><strong>Main warning:</strong> ${escapeHtml(mainWarning.text)}</div>` : ""}
+      ${calloutHtml}
+    `;
+  }
+
+  function renderStatPriority(input, planResult) {
+    if (!statPriorityPanel) return;
+    const totalsAdded = diffStats(planResult.initialStats, planResult.finalStats);
+    const ranked = rankStatsByAdded(totalsAdded);
+    const primary = ranked[0] || { stat: "str", amount: 0 };
+    const secondary = ranked[1] || { stat: "vit", amount: 0 };
+    const defensive = ["def", "vit"]
+      .map((stat) => ({ stat, amount: totalsAdded[stat] || 0 }))
+      .sort((a, b) => b.amount - a.amount)[0];
+    const utility = ["agi", "luk"]
+      .map((stat) => ({ stat, amount: totalsAdded[stat] || 0 }))
+      .sort((a, b) => b.amount - a.amount)[0];
+
+    const cards = [
+      { role: "Primary", entry: primary },
+      { role: "Secondary", entry: secondary },
+      { role: "Defensive", entry: defensive },
+      { role: "Utility", entry: utility },
+    ];
+
+    statPriorityPanel.innerHTML = `
+      <div class="stat-priority-grid">
+        ${cards.map(({ role, entry }) => `
+          <article class="stat-priority-card ${entry.amount > 0 ? "" : "muted"}">
+            <span>${escapeHtml(role)}</span>
+            <strong>${entry.stat.toUpperCase()}${entry.amount > 0 ? ` +${entry.amount}` : ""}</strong>
+            <p>${escapeHtml(describeStatReason(entry.stat))}</p>
+          </article>
+        `).join("")}
+      </div>
+      <p class="stat-priority-note">This explains the generated allocation; it does not change the stat algorithm.</p>
+    `;
+  }
+
+  function rankStatsByAdded(totalsAdded) {
+    return STAT_KEYS
+      .map((stat) => ({ stat, amount: Number(totalsAdded?.[stat]) || 0 }))
+      .sort((a, b) => b.amount - a.amount || STAT_KEYS.indexOf(a.stat) - STAT_KEYS.indexOf(b.stat));
+  }
+
+  function describeStatReason(stat) {
+    const reasons = {
+      str: "Raises damage, crit damage scaling, and multi-hit pressure.",
+      def: "Improves flat damage reduction from your gear Defense.",
+      agi: "Improves tempo through attack speed, movement, and stamina support.",
+      vit: "Raises HP from Dexterity gear and improves debuff resistance.",
+      luk: "Adds crit chance and drop-rate utility for farming.",
+    };
+    return reasons[stat] || "Supports the generated build direction.";
+  }
+
+  function getTopGearTarget(gearPlan) {
+    return Object.entries(gearPlan || {})
+      .map(([slot, candidates]) => {
+        const top = candidates?.[0];
+        return top ? { slot, item: top.item, score: top.score } : null;
+      })
+      .filter(Boolean)
+      .sort((a, b) => (b.score?.total || 0) - (a.score?.total || 0))[0] || null;
+  }
+
+  function buildBossReadinessHint(input, planResult) {
+    const readiness = window.SBO_BOSS_READINESS;
+    const bossData = window.SBO_BOSS_DATA;
+    if (!readiness?.getNextBoss || !readiness?.scoreBossReadiness || !bossData) {
+      return {
+        value: "Open Bosses",
+        note: "Boss readiness data is unavailable here.",
+        actionHtml: '<a class="secondary link-button compact" href="./boss.html">Open Bosses</a>',
+      };
+    }
+
+    const build = {
+      currentLevel: input.currentLevel,
+      projectedLevel: input.currentLevel + input.levelsToPlan,
+      maxFloorReached: input.maxFloorReached,
+      weaponClass: input.weaponClass,
+      weaponSkill: input.weaponSkill,
+      stats: planResult.finalStats,
+      gear: input.gear,
+      metrics: planResult.finalEval.metrics,
+    };
+    const beatenIds = state?.getJson ? state.getJson("sbo-rebirth-planner.boss-beaten.v1", []) : [];
+    const nextBoss = readiness.getNextBoss(build, { beatenIds });
+    if (!nextBoss) {
+      return {
+        value: "No target found",
+        note: "Open Bosses to review filters and cleared bosses.",
+        actionHtml: '<a class="secondary link-button compact" href="./boss.html">Open Bosses</a>',
+      };
+    }
+
+    const score = readiness.scoreBossReadiness(nextBoss, build);
+    const verdictLabel = score.verdict === "notready" ? "Not ready" : score.verdict === "close" ? "Close" : score.verdict === "ready" ? "Ready" : "Unknown";
+    return {
+      value: `${verdictLabel}: ${nextBoss.name}`,
+      note: `Floor ${nextBoss.floor || "?"}, ${Math.round((score.score || 0) * 100)}% readiness. Open Bosses for the full checklist.`,
+      actionHtml: '<a class="secondary link-button compact" href="./boss.html">Open Bosses</a>',
+    };
+  }
+
+  function buildPlanCallouts(input, planResult, gearPlan) {
+    const callouts = [];
+    const candidates = Object.values(gearPlan || {}).flat();
+    const topCandidates = Object.values(gearPlan || {}).map((list) => list?.[0]).filter(Boolean);
+    const storage = readBuildStorage();
+    const presetName = getSelectedOrTypedPresetName();
+    const currentSaved = presetName && storage[presetName];
+    const gearTotalsMissing = input.gear.attack <= 1 && input.gear.defense <= 0 && input.gear.dexterity <= 0;
+    const hasEstimated = candidates.some((entry) => entry?.score?.breakdown?.confidence !== "exact");
+    const requirementGap = topCandidates.find((entry) => Number(entry?.score?.breakdown?.requirementFit) < 1);
+
+    if (gearTotalsMissing) {
+      callouts.push({ tone: "warning", text: "No gear totals entered, so projections may understate your current power.", action: "Add gear totals", actionType: "gear" });
+    }
+    if (!input.ownership.tokens.size) {
+      callouts.push({ tone: "info", text: "No owned inventory entered. Owned gear can be boosted or filtered once listed.", action: "Open Inventory", href: "./inventory.html" });
+    }
+    if (hasEstimated) {
+      callouts.push({ tone: "warning", text: "Some recommendations use estimated or unknown rows.", action: "Change data quality filter", actionType: "quality" });
+    }
+    if (requirementGap) {
+      callouts.push({ tone: "warning", text: `${requirementGap.item.name} is close to your requirements but not a perfect fit.`, action: "Review gear details", actionType: "gear-results" });
+    }
+    if (!currentSaved) {
+      callouts.push({ tone: "info", text: "Plan generated but not saved. Save it so Dashboard and Compare can use it.", action: "Open Save Controls", actionType: "save" });
+    }
+    if (!callouts.length && planResult?.finalEval?.guardrailViolations?.length) {
+      callouts.push({ tone: "warning", text: "One or more optimization minimums are still below target.", action: "Review Build Logic", actionType: "logic" });
+    }
+    return callouts.slice(0, 4);
+  }
+
+  function buildPlanCalloutHtml(callout) {
+    const actionHtml = callout.href
+      ? `<a class="secondary link-button compact" href="${escapeHtml(callout.href)}">${escapeHtml(callout.action)}</a>`
+      : `<button type="button" class="secondary compact" data-summary-action="${escapeHtml(callout.actionType || "")}">${escapeHtml(callout.action)}</button>`;
+    return `<div class="plan-callout ${escapeHtml(callout.tone || "info")}"><span>${escapeHtml(callout.text)}</span>${actionHtml}</div>`;
+  }
+
   function renderLogic(input, planResult) {
     const profile = data.weaponProfiles[input.weaponClass];
     const style = data.playstyles[input.playstyle];
@@ -3347,11 +3619,21 @@
                 const budgetText = describeBudgetItemStatus(item, input.optimization?.budgetCap);
                 const diffHtml = buildStatDiffHtml(detail, equippedStats, isEquipped);
                 const dataQualityHtml = buildItemDataQualityBadgesHtml(item, detail.confidence);
+                const whyText = buildGearPickReason(item, detail, input, slot);
                 return `
                   <li class="gear-item${isEquipped ? " equipped" : ""}">
-                    <strong>${escapeHtml(item.name)}</strong>
+                    <div class="gear-item-heading">
+                      <span class="gear-slot-label">${escapeHtml(getSlotLabel(slot))}</span>
+                      <strong>${escapeHtml(item.name)}</strong>
+                    </div>
+                    <div class="gear-why"><strong>Why this pick?</strong> ${escapeHtml(whyText)}</div>
                     <div class="gear-meta">
                       Floor ${item.floorMin || "?"} • ${escapeHtml(item.sourceType)} • scaling: ${escapeHtml(item.scalingType || "fixed")}
+                    </div>
+                    <div class="gear-visible-facts">
+                      <span>Req: ${escapeHtml(requirementText)}</span>
+                      <span>Value: ${escapeHtml(valueText)}</span>
+                      <span>${detail.isOwned ? "Owned" : "Not owned"}</span>
                     </div>
                     <div class="gear-rationale-chips">
                       <span class="pill">Req fit ${round(detail.requirementFit, 2)}</span>
@@ -3360,7 +3642,7 @@
                       ${dataQualityHtml}
                     </div>
                     <div class="gear-statline">
-                      ATK ${round(detail.attack || 0, 2)} • DEF ${round(detail.defense || 0, 2)} • DEX ${round(detail.dexterity || 0, 2)}
+                      Main gains: ATK ${round(detail.attack || 0, 2)} • DEF ${round(detail.defense || 0, 2)} • DEX ${round(detail.dexterity || 0, 2)}
                     </div>
                     ${diffHtml}
                     <div class="gear-actions">
@@ -3455,6 +3737,26 @@
       badges.push('<span class="data-quality-badge testing" title="Needs Testing means live in-game confirmation would improve this row.">Needs Testing</span>');
     }
     return badges.join("");
+  }
+
+  function buildGearPickReason(item, detail, input, slot) {
+    if (detail?.isOwned) return "Owned item, useful immediately with the current filters.";
+    if (item?.slot === "weapon" || slot === "weapon") {
+      return "High scoring weapon for your current floor, weapon path, and skill range.";
+    }
+    const defense = Number(detail?.defense) || 0;
+    const dexterity = Number(detail?.dexterity) || 0;
+    const attack = Number(detail?.attack) || 0;
+    if (defense >= dexterity && defense >= attack && defense > 0) {
+      return "Strong DEF upgrade for reducing incoming damage.";
+    }
+    if (dexterity > 0 && dexterity >= defense) {
+      return "Strong DEX option for more VIT-scaled bonus HP.";
+    }
+    if (input?.gearSortMode === "value") {
+      return "Good value pick under the current score-per-Col sort.";
+    }
+    return "Best score for this slot under your current floor, filters, and playstyle.";
   }
 
   function hasWikiSourceEvidence(item) {

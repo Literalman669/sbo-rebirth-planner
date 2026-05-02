@@ -54,6 +54,25 @@ const { chromium } = require("playwright");
       const marker = document.querySelector("#exampleBuildNotice");
       return level === "12" && buildName.toLowerCase().includes("example") && Boolean(firstRow) && Boolean(marker);
     });
+    results.phaseK.planSummaryAppears = await page.evaluate(() => {
+      const panel = document.getElementById("plannerOutputPriority");
+      const summary = document.getElementById("planSummary");
+      return Boolean(panel && !panel.hidden && summary && summary.textContent.includes("Build direction") && summary.textContent.includes("Gear target"));
+    });
+    results.phaseK.statPriorityAppears = await page.evaluate(() => {
+      const panel = document.getElementById("statPriorityPanel");
+      return Boolean(panel && panel.textContent.includes("Primary") && panel.textContent.includes("Defensive"));
+    });
+    results.phaseK.gearRecommendationReadability = await page.evaluate(() => {
+      return Boolean(
+        document.querySelector(".gear-why") &&
+        document.querySelector(".gear-visible-facts") &&
+        document.querySelector(".gear-statline")?.textContent.includes("Main gains"),
+      );
+    });
+    results.phaseK.savePromptExists = await page.evaluate(() => {
+      return Boolean(document.querySelector('[data-summary-action="open-save"], [data-summary-action="save"]'));
+    });
     results.phaseK.dataQualityBadgesVisible = await page.evaluate(() => {
       const badges = Array.from(document.querySelectorAll(".data-quality-badge"));
       return badges.some((badge) => /Exact|Estimated|Wiki-sourced|Needs Testing/.test(badge.textContent || ""));
@@ -177,6 +196,10 @@ const { chromium } = require("playwright");
     results.phaseK?.advancedControlsCollapsedByDefault &&
     results.phaseK?.emptyPlanStateShown &&
     results.phaseK?.exampleBuildGeneratesPlan &&
+    results.phaseK?.planSummaryAppears &&
+    results.phaseK?.statPriorityAppears &&
+    results.phaseK?.gearRecommendationReadability &&
+    results.phaseK?.savePromptExists &&
     results.phaseK?.dataQualityBadgesVisible &&
     results.phaseK?.savedBuildCountObjectStorage &&
     results.phaseK?.dashboardSavedOnlyStatusConsistent &&

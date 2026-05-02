@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>SBO:Rebirth Build Planner v0.9.8</title>
+    <title>SBO:Rebirth Build Planner v0.9.9</title>
     <meta name="description" content="Free stat and equipment planner for Sword Blox Online: Rebirth. Plan your level-up allocation, get gear recommendations, and share builds with your party." />
     <meta property="og:title" content="SBO:Rebirth Build Planner" />
     <meta property="og:description" content="Free stat and equipment planner for SBO:Rebirth. Plan level-up allocation, get gear recommendations by floor, and share builds with your party." />
@@ -14,13 +14,13 @@
     <meta name="twitter:description" content="Free stat and equipment planner for SBO:Rebirth. Plan level-up allocation, get gear recommendations by floor, and share builds with your party." />
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%23225964'/><text x='16' y='23' text-anchor='middle' font-size='20' font-family='serif' fill='%23a8e6d8'>⚔</text></svg>" />
     <script>try{var t=localStorage.getItem('sbo-theme');if(t)document.documentElement.dataset.theme=t;}catch(e){}</script>
-    <link rel="stylesheet" href="./styles.css?v=0.9.8" />
+    <link rel="stylesheet" href="./styles.css?v=0.9.9" />
   </head>
   <body>
     <header class="page-header">
       <h1>SBO:Rebirth Build Planner</h1>
       <p class="subtitle">
-        Stat and equipment planner v0.9.8 — focused on transparent recommendations.
+        Stat and equipment planner v0.9.9 — focused on transparent recommendations.
       </p>
     </header>
 
@@ -567,6 +567,18 @@
           <button type="button" class="chip-btn" data-dashboard-view="tools">Tools</button>
         </nav>
 
+        <div class="planner-output-priority generated-output" id="plannerOutputPriority" hidden>
+          <article class="subpanel plan-summary-panel" aria-labelledby="plan-summary-title">
+            <h3 id="plan-summary-title">Your Next Move</h3>
+            <div id="planSummary" class="plan-summary"></div>
+          </article>
+
+          <article class="subpanel stat-priority-panel" aria-labelledby="stat-priority-title">
+            <h3 id="stat-priority-title">Stat Priority</h3>
+            <div id="statPriorityPanel" class="stat-priority"></div>
+          </article>
+        </div>
+
         <div class="dashboard-workspace">
           <div class="dashboard-main-column">
             <article class="subpanel primary-panel" data-dashboard-panel="gear">
@@ -674,18 +686,18 @@
       <p>Prototype built for iterative tuning. Keep formulas/data in sync with live SBO:R updates.</p>
     </footer>
 
-    <script src="./config.stdb.js?v=0.9.8"></script>
-    <script src="./stdb-client.bundle.js?v=0.9.8"></script>
-    <script src="./data.js?v=0.9.8"></script>
-    <script src="./boss-data.js?v=0.9.8"></script>
-    <script src="./boss-readiness.js?v=0.9.8"></script>
-    <script src="./shared/projection-core.js?v=0.9.8"></script>
-    <script src="./shared/state-schema.js?v=0.9.8"></script>
-    <script src="./shared/state-adapter.js?v=0.9.8"></script>
-    <script src="./shared/planner-storage.js?v=0.9.8"></script>
-    <script src="./shared/runtime-observability.js?v=0.9.8"></script>
-    <script src="./shared/next-action.js?v=0.9.8"></script>
-    <script src="./app.js?v=0.9.8"></script>
+    <script src="./config.stdb.js?v=0.9.9"></script>
+    <script src="./stdb-client.bundle.js?v=0.9.9"></script>
+    <script src="./data.js?v=0.9.9"></script>
+    <script src="./boss-data.js?v=0.9.9"></script>
+    <script src="./boss-readiness.js?v=0.9.9"></script>
+    <script src="./shared/projection-core.js?v=0.9.9"></script>
+    <script src="./shared/state-schema.js?v=0.9.9"></script>
+    <script src="./shared/state-adapter.js?v=0.9.9"></script>
+    <script src="./shared/planner-storage.js?v=0.9.9"></script>
+    <script src="./shared/runtime-observability.js?v=0.9.9"></script>
+    <script src="./shared/next-action.js?v=0.9.9"></script>
+    <script src="./app.js?v=0.9.9"></script>
   </body>
 </html>
 
