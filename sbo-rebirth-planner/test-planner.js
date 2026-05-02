@@ -65,6 +65,14 @@ const { chromium } = require("playwright");
 
     await page.click('button[type="submit"]');
     await page.waitForTimeout(500);
+    await page.evaluate(() => {
+      document.getElementById("advancedPlannerOptions").open = true;
+      document.querySelector('[data-disclosure-key="saved-builds"]').open = true;
+      document.getElementById("tools-importexport").open = true;
+    });
+    await page.fill("#presetName", "Smoke Saved Build");
+    await page.click("#saveBuildBtn");
+    await page.waitForTimeout(150);
     results.phaseK.plannerCostSummaryNotClipped = await page.evaluate(() => {
       const wrapper = document.querySelector("#recommendations .gear-cost-summary");
       const table = wrapper?.querySelector("table");
@@ -97,6 +105,25 @@ const { chromium } = require("playwright");
     );
 
     await page.goto(`${baseUrl}/dashboard.html`, { waitUntil: "networkidle", timeout: 15000 });
+    await page.evaluate(() => {
+      localStorage.removeItem("sbo-rebirth-planner.form-draft.v1");
+      localStorage.removeItem("sbo-rebirth-planner.equipped.v1");
+    });
+    await page.reload({ waitUntil: "networkidle", timeout: 15000 });
+    results.phaseK.savedBuildCountObjectStorage = await page.evaluate(() => {
+      const stored = JSON.parse(localStorage.getItem("sbo-rebirth-planner.builds.v1") || "{}");
+      const countText = document.getElementById("dashSavedBuilds")?.textContent?.trim();
+      return stored && !Array.isArray(stored) && Object.keys(stored).length === 1 && countText === "1";
+    });
+    results.phaseK.dashboardSavedOnlyStatusConsistent = await page.evaluate(() => {
+      const continueText = document.getElementById("dashContinuePlanning")?.textContent || "";
+      const statusText = document.getElementById("dashLastUpdated")?.textContent || "";
+      return (
+        continueText.includes("Open Planner to load") &&
+        statusText.includes("Saved builds are available") &&
+        !statusText.includes("No draft state saved yet")
+      );
+    });
     results.phaseK.dashboardActionCards = await page.evaluate(() => {
       const text = document.body.textContent || "";
       return [
@@ -151,6 +178,8 @@ const { chromium } = require("playwright");
     results.phaseK?.emptyPlanStateShown &&
     results.phaseK?.exampleBuildGeneratesPlan &&
     results.phaseK?.dataQualityBadgesVisible &&
+    results.phaseK?.savedBuildCountObjectStorage &&
+    results.phaseK?.dashboardSavedOnlyStatusConsistent &&
     results.phaseK?.dashboardActionCards &&
     results.errors.length === 0;
 

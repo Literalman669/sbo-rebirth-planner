@@ -1116,7 +1116,14 @@
         </label>`;
       })
       .join("");
-    ownedInventoryList.innerHTML = rows || `<p class="muted-text">No catalog items match your search.</p>`;
+    const emptyOwnedState = ownedTokens.size
+      ? ""
+      : `<div class="empty-state compact owned-empty-state">
+          <strong>No owned inventory yet.</strong>
+          <span>Select catalog items here or open Inventory to import owned gear.</span>
+          <a class="secondary link-button compact" href="./inventory.html">Open Inventory</a>
+        </div>`;
+    ownedInventoryList.innerHTML = emptyOwnedState + (rows || `<p class="muted-text">No catalog items match your search.</p>`);
   }
 
   function renderGearComparePanel() {
@@ -3432,9 +3439,12 @@
 
   function buildItemDataQualityBadgesHtml(item, confidence) {
     const exact = item?.exactStats === true || confidence === "exact";
-    const hasWikiNote = /wiki/i.test(`${item?.notes || ""}`);
+    const unknown = typeof item?.exactStats === "undefined" && confidence !== "exact";
+    const hasWikiNote = hasWikiSourceEvidence(item);
     const badges = [
-      exact
+      unknown
+        ? '<span class="data-quality-badge unknown" title="Unknown means this row has no explicit source-quality marker yet.">Unknown</span>'
+        : exact
         ? '<span class="data-quality-badge exact" title="Exact means this item has confirmed stat values in the catalog.">Exact</span>'
         : '<span class="data-quality-badge estimated" title="Estimated means one or more recommendation values use fallback formulas.">Estimated</span>',
     ];
@@ -3445,6 +3455,15 @@
       badges.push('<span class="data-quality-badge testing" title="Needs Testing means live in-game confirmation would improve this row.">Needs Testing</span>');
     }
     return badges.join("");
+  }
+
+  function hasWikiSourceEvidence(item) {
+    if (!item || typeof item !== "object") return false;
+    if (item.wikiUrl || String(item.sourceUrl || "").includes("fandom.com") || item.source?.wikiUrl) return true;
+    const sourceText = `${item.source || ""} ${item.sourceType || ""} ${item.sourceName || ""}`.toLowerCase();
+    if (/\bwiki\b|fandom/.test(sourceText)) return true;
+    const notes = `${item.notes || ""} ${item.sourceNotes || ""}`;
+    return /wiki sync import|imported from latest wiki extraction|captured .*wiki|wiki source|extracted from .*wiki|fandom/i.test(notes);
   }
 
   function renderBenchmarkPanel(input, planResult) {

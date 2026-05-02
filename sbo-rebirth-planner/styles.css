@@ -1848,6 +1848,11 @@ select:focus {
   background: #f6eaff;
 }
 
+.data-quality-badge.unknown {
+  color: #4b5563;
+  background: #eef2f6;
+}
+
 .data-quality-badge.wiki {
   color: #0d6a46;
   background: #e5f7ef;
@@ -4332,6 +4337,7 @@ input.stat-cap-maxed {
   :root:not([data-theme="light"]) .pill.equipped  { background: #0a2a30; color: var(--accent); border-color: var(--accent-2); }
   :root:not([data-theme="light"]) .data-quality-badge.exact     { background: #0d1e2e; color: #70b8f0; border-color: #1a3a60; }
   :root:not([data-theme="light"]) .data-quality-badge.estimated { background: #1a0d2e; color: #c0a0f0; border-color: #4a2a80; }
+  :root:not([data-theme="light"]) .data-quality-badge.unknown   { background: #1f2937; color: #d1d5db; border-color: #4b5563; }
   :root:not([data-theme="light"]) .data-quality-badge.wiki      { background: #0d3320; color: #5ee896; border-color: #1a6640; }
   :root:not([data-theme="light"]) .data-quality-badge.testing   { background: #2e1f00; color: #f5b942; border-color: #6b4500; }
   :root:not([data-theme="light"]) .chip-btn { background: var(--bg-2); color: var(--accent); border-color: var(--line); }
@@ -4472,6 +4478,7 @@ input.stat-cap-maxed {
 [data-theme="dark"] .pill.equipped  { background: #0a2a30; color: var(--accent); border-color: var(--accent-2); }
 [data-theme="dark"] .data-quality-badge.exact     { background: #0d1e2e; color: #70b8f0; border-color: #1a3a60; }
 [data-theme="dark"] .data-quality-badge.estimated { background: #1a0d2e; color: #c0a0f0; border-color: #4a2a80; }
+[data-theme="dark"] .data-quality-badge.unknown   { background: #1f2937; color: #d1d5db; border-color: #4b5563; }
 [data-theme="dark"] .data-quality-badge.wiki      { background: #0d3320; color: #5ee896; border-color: #1a6640; }
 [data-theme="dark"] .data-quality-badge.testing   { background: #2e1f00; color: #f5b942; border-color: #6b4500; }
 [data-theme="dark"] .chip-btn { background: var(--bg-2); color: var(--accent); border-color: var(--line); }

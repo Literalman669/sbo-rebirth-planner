@@ -39,7 +39,7 @@
       <div class="start-here-copy">
         <p class="section-eyebrow">New player flow</p>
         <h2 id="start-here-title">Start Here</h2>
-        <p class="muted-text">Use the minimum fields below to create a useful first plan. Advanced gear, inventory, saved builds, calibration, and shortcut tools stay available when you need them.</p>
+        <p class="muted-text">Fill the Core Build fields below to create a useful first plan. Advanced gear, inventory, saved builds, calibration, and shortcut tools stay available when you need them.</p>
       </div>
       <ol class="start-here-steps" aria-label="Planner quick start steps">
         <li><strong>Choose weapon class</strong><span>Pick the weapon path you are actively leveling.</span></li>
@@ -51,6 +51,7 @@
       <div class="start-here-actions">
         <button type="submit" class="primary" form="plannerForm" id="startHereGenerateBtn" data-testid="start-here-generate">Generate My Plan</button>
         <button type="button" class="secondary" id="loadExampleBuildBtn" data-testid="load-example-build">Load Example Build</button>
+        <a class="secondary link-button" href="#form-section-core-title">Jump to Core Build</a>
         <a class="secondary link-button" href="#advancedPlannerOptions" id="advancedPlannerJump">Show Advanced Planner Options</a>
       </div>
       <p id="exampleBuildNotice" class="example-build-notice" hidden>Example build loaded. Generate the plan, then change any fields for your real character. It will not overwrite saved builds unless you click Save.</p>
@@ -423,6 +424,7 @@
             <div id="savedBuildsEmptyState" class="empty-state compact">
               <strong>No saved builds yet.</strong>
               <span>Generate a plan, name it, then click Save to keep presets for later.</span>
+              <a class="secondary link-button compact" href="#presetName">Name Build</a>
             </div>
             <div id="buildActionMessage" class="build-action-message"></div>
           </details>
@@ -432,6 +434,7 @@
             <div id="compareBuildsEmptyState" class="empty-state compact">
               <strong>Need two saved builds to compare.</strong>
               <span>Save at least two presets, then return here to compare stats and projected metrics.</span>
+              <a class="secondary link-button compact" href="#presetName">Save Builds First</a>
             </div>
             <div class="grid two compare-grid">
               <label>
@@ -504,8 +507,8 @@
         </div>
 
         <div class="input-panel-action-strip" role="region" aria-label="Plan actions">
-          <div id="stalePlanBanner" class="stale-plan-banner stale-plan-banner--strip" hidden>Plan may be outdated — click Generate Plan to refresh.</div>
-          <button type="submit" class="primary" form="plannerForm" data-testid="generate-plan-btn">Generate Plan</button>
+          <div id="stalePlanBanner" class="stale-plan-banner stale-plan-banner--strip" hidden>Plan may be outdated — click Generate My Plan to refresh.</div>
+          <button type="submit" class="primary" form="plannerForm" data-testid="generate-plan-btn">Generate My Plan</button>
         </div>
 
         <div class="hint-box">

@@ -56,7 +56,7 @@
     };
   }
 
-  function renderActionCards({ draft, ownedItems, hasBuild }) {
+  function renderActionCards({ draft, ownedItems, hasBuild, buildNames = [] }) {
     const build = createBuildFromDraft(draft);
     const setText = (id, value) => {
       const el = document.getElementById(id);
@@ -70,8 +70,12 @@
 
     if (!hasBuild) return;
 
-    const buildLabel = build?.buildName || (build ? `Lv${build.currentLevel} ${build.weaponClass}` : "latest draft");
-    setText("dashContinuePlanning", `Resume ${buildLabel} in the Planner.`);
+    const buildLabel = build?.buildName || (build ? `Lv${build.currentLevel} ${build.weaponClass}` : "");
+    const savedBuildLabel = buildNames[0] ? `"${buildNames[0]}"` : "a saved build";
+    setText(
+      "dashContinuePlanning",
+      build ? `Resume ${buildLabel} in the Planner.` : `Open Planner to load ${savedBuildLabel}.`,
+    );
     setText("dashInventoryStatus", ownedItems.length ? `${ownedItems.length} owned item token${ownedItems.length === 1 ? "" : "s"} saved. Open Inventory to review.` : "No owned inventory saved yet. Add items to improve gear recommendations.");
 
     const bossData = window.SBO_BOSS_DATA;
@@ -134,6 +138,7 @@
     const ownedCount = parseOwnedItems(draft.ownedItems).length;
     const equippedCount = Object.values(equipped?.slots || {}).filter(Boolean).length;
     const floorCount = Array.isArray(floorTracker) ? floorTracker.length : 0;
+    const hasDraft = Boolean(Object.keys(draft || {}).length);
     const updatedAt = draft?.updatedAt || equipped?.updatedAt || null;
 
     const setText = (id, value) => {
@@ -142,7 +147,7 @@
     };
 
     const buildNames = getBuildNames(builds);
-    const hasBuild = Boolean(Object.keys(draft || {}).length || buildNames.length);
+    const hasBuild = Boolean(hasDraft || buildNames.length);
 
     setText("dashSavedBuilds", buildNames.length);
     setText("dashOwnedItems", ownedCount);
@@ -154,11 +159,15 @@
       if (updatedAt) {
         const date = new Date(updatedAt);
         updatedEl.textContent = `Last updated: ${Number.isNaN(date.getTime()) ? updatedAt : date.toLocaleString()}`;
+      } else if (hasDraft) {
+        updatedEl.textContent = "Planner draft exists, but no update timestamp was saved.";
+      } else if (buildNames.length) {
+        updatedEl.textContent = "No current planner draft saved yet. Saved builds are available.";
       } else {
-        updatedEl.textContent = "No draft state saved yet. Open Planner to start.";
+        updatedEl.textContent = "No draft state saved yet. Create your first build plan.";
       }
     }
-    renderActionCards({ draft, ownedItems: parseOwnedItems(draft.ownedItems), hasBuild });
+    renderActionCards({ draft, ownedItems: parseOwnedItems(draft.ownedItems), hasBuild, buildNames });
   }
 
   updateThemeToggle();

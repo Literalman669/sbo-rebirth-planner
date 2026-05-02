@@ -739,9 +739,12 @@
   // ── Boss detail modal ─────────────────────────────────────
   function buildBossQualityBadges(boss) {
     const exact = boss?.exactStats === true;
-    const hasWiki = Boolean(boss?.wikiUrl) || /wiki/i.test(`${boss?.notes || ""}${boss?.estimateNote || ""}`);
+    const unknown = typeof boss?.exactStats === "undefined";
+    const hasWiki = hasBossWikiSourceEvidence(boss);
     const badges = [
-      exact
+      unknown
+        ? '<span class="data-quality-badge unknown" title="Unknown means this boss has no explicit source-quality marker yet.">Unknown</span>'
+        : exact
         ? '<span class="data-quality-badge exact" title="Exact means boss stats are confirmed in the current data set.">Exact</span>'
         : '<span class="data-quality-badge estimated" title="Estimated means one or more boss values are unconfirmed or formula-derived.">Estimated</span>',
     ];
@@ -752,6 +755,15 @@
       badges.push('<span class="data-quality-badge testing" title="Needs Testing means live in-game confirmation would improve readiness accuracy.">Needs Testing</span>');
     }
     return badges.join("");
+  }
+
+  function hasBossWikiSourceEvidence(boss) {
+    if (!boss || typeof boss !== "object") return false;
+    if (boss.wikiUrl || String(boss.sourceUrl || "").includes("fandom.com") || boss.source?.wikiUrl) return true;
+    const sourceText = `${boss.source || ""} ${boss.sourceName || ""}`.toLowerCase();
+    if (/\bwiki\b|fandom/.test(sourceText)) return true;
+    const notes = `${boss.notes || ""} ${boss.estimateNote || ""} ${boss.sourceNotes || ""}`;
+    return /wiki sync import|imported from latest wiki extraction|captured .*wiki|wiki source|extracted from .*wiki|fandom/i.test(notes);
   }
 
   function openBossModal(boss, build) {
