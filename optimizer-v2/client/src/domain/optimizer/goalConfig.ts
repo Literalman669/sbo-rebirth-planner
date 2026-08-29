@@ -37,8 +37,8 @@ export const STAT_TIE_BREAK_ORDER: readonly StatName[] = [
   'luk',
 ];
 
-function positiveDelta(next: number, current: number) {
-  return Math.max(next - current, 0);
+function metricDelta(next: number, current: number) {
+  return next - current;
 }
 
 export function metricDimensionDeltas(
@@ -47,22 +47,22 @@ export function metricDimensionDeltas(
 ): Record<GoalDimension, number> {
   return {
     damage:
-      positiveDelta(next.attackPerHit, current.attackPerHit) / 100 +
-      (positiveDelta(next.critChanceBonus, current.critChanceBonus) / 0.05) *
+      metricDelta(next.attackPerHit, current.attackPerHit) / 100 +
+      (metricDelta(next.critChanceBonus, current.critChanceBonus) / 0.05) *
         0.25,
     survival:
-      positiveDelta(
+      metricDelta(
         next.damageReductionPerHit,
         current.damageReductionPerHit,
       ) /
         100 +
-      positiveDelta(next.bonusHp, current.bonusHp) / 1_000,
+      metricDelta(next.bonusHp, current.bonusHp) / 1_000,
     mobility:
-      positiveDelta(next.stamina, current.stamina) / 100 +
-      positiveDelta(next.walkSpeedBonus, current.walkSpeedBonus) / 2 +
-      positiveDelta(next.sprintSpeedBonus, current.sprintSpeedBonus) / 10,
+      metricDelta(next.stamina, current.stamina) / 100 +
+      metricDelta(next.walkSpeedBonus, current.walkSpeedBonus) / 2 +
+      metricDelta(next.sprintSpeedBonus, current.sprintSpeedBonus) / 10,
     farming:
-      positiveDelta(next.dropChanceBonus, current.dropChanceBonus) / 0.05,
+      metricDelta(next.dropChanceBonus, current.dropChanceBonus) / 0.05,
   };
 }
 
