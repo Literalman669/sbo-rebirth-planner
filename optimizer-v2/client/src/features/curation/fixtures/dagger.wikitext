@@ -1,7 +1,7 @@
 <!-- Canonical page: Dagger; revision: 26212; timestamp: 2026-06-21T05:38:53Z -->
 {| class="wikitable"
-!Equipment Name
-!Skill
+!Weapon Name
+!Skill Level
 !Attack Stat
 !How to Obtain
 |-

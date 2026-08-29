@@ -15,7 +15,7 @@ describe('App', () => {
             publishedAtMicros: 0n,
             lastReviewedAt: '2026-08-29',
           }}
-          source="fallback"
+          source="bundled"
         />
       </MemoryRouter>,
     );
@@ -23,7 +23,9 @@ describe('App', () => {
     expect(
       screen.getByRole('heading', { name: 'SBO:Rebirth Build Optimizer' }),
     ).toBeVisible();
-    expect(screen.getByText('Dataset bootstrap-0 · fallback')).toBeVisible();
+    expect(
+      screen.getByText('Dataset bootstrap-0 · bundled · verified 2026-08-29'),
+    ).toBeVisible();
     expect(screen.queryByText('Bosses')).not.toBeInTheDocument();
   });
 });

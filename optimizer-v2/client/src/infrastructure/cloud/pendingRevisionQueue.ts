@@ -48,6 +48,9 @@ export function createPendingRevisionQueue({
       if (!database.objectStoreNames.contains('pending-revisions')) {
         database.createObjectStore('pending-revisions');
       }
+      if (!database.objectStoreNames.contains('dataset-releases')) {
+        database.createObjectStore('dataset-releases');
+      }
     },
   });
 

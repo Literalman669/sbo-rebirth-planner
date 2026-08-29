@@ -99,13 +99,17 @@ async function seedPublishableDraft(
   });
 
   const equipment = [
-    ['two-handed-item', 'two-handed'],
-    ['one-handed-item', 'one-handed,dual-wield'],
-    ['rapier-item', 'rapier'],
-    ['dagger-item', 'dagger'],
-    ['melee-item', 'melee'],
+    { itemId: 'iron-greatsword', name: 'Iron Greatsword', slot: 'main-hand', weaponPaths: 'two-handed', attack: 3, defense: 0, dexterity: 0, skillRequirement: 1, acquisitionType: 'starter' },
+    { itemId: 'steel-greatsword', name: 'Steel Greatsword', slot: 'main-hand', weaponPaths: 'two-handed', attack: 10, defense: 0, dexterity: 0, skillRequirement: 5, acquisitionType: 'shop' },
+    { itemId: 'beginner-sword', name: 'Beginner Sword', slot: 'main-hand', weaponPaths: 'one-handed,dual-wield', attack: 3.4, defense: 0, dexterity: 0, skillRequirement: 1, acquisitionType: 'starter' },
+    { itemId: 'iron-rapier', name: 'Iron Rapier', slot: 'main-hand', weaponPaths: 'rapier', attack: 2.6, defense: 0, dexterity: 0, skillRequirement: 1, acquisitionType: 'starter' },
+    { itemId: 'iron-dagger', name: 'Iron Dagger', slot: 'main-hand', weaponPaths: 'dagger', attack: 2.5, defense: 0, dexterity: 0, skillRequirement: 1, acquisitionType: 'starter' },
+    { itemId: 'fists', name: 'Fists', slot: 'main-hand', weaponPaths: 'melee', attack: 2.5, defense: 0, dexterity: 0, skillRequirement: 1, acquisitionType: 'starter' },
+    { itemId: 'beginner-armor', name: 'Beginner Armor', slot: 'armor', weaponPaths: '', attack: 0, defense: 0.5, dexterity: 3, skillRequirement: undefined, acquisitionType: 'starter' },
+    { itemId: 'wooden-shield', name: 'Wooden Shield', slot: 'shield', weaponPaths: 'one-handed,rapier,dagger', attack: 0, defense: 0.6, dexterity: 0, skillRequirement: undefined, acquisitionType: 'starter' },
   ] as const;
-  for (const [itemId, weaponPaths] of equipment) {
+  for (const item of equipment) {
+    const { itemId } = item;
     const sourceRefId = `${version}:source:equipment:${itemId}`;
     await curator.connection.reducers.upsertDraftSourceReference({
       id: sourceRefId,
@@ -122,16 +126,16 @@ async function seedPublishableDraft(
       id: `${version}:equipment:${itemId}`,
       releaseVersion: version,
       itemId,
-      name: itemId,
-      slot: 'main-hand',
-      weaponPaths,
-      attack: 1,
-      defense: 0,
-      dexterity: 0,
+      name: item.name,
+      slot: item.slot,
+      weaponPaths: item.weaponPaths,
+      attack: item.attack,
+      defense: item.defense,
+      dexterity: item.dexterity,
       levelRequirement: 1,
-      skillRequirement: 1,
+      skillRequirement: item.skillRequirement,
       floor: 1,
-      acquisitionType: 'starter',
+      acquisitionType: item.acquisitionType,
       acquisitionDetail: 'Integration fixture',
       availability: 'always',
       sourceRefId,
@@ -417,9 +421,9 @@ test('publishes a complete release atomically and keeps it immutable', async ({}
         (release) => release.version === 'bootstrap-0',
       )?.isCurrent,
     ).toBe(false);
-    expect([...curator.connection.db.equipment.iter()]).toHaveLength(5);
+    expect([...curator.connection.db.equipment.iter()]).toHaveLength(8);
     expect([...curator.connection.db.formula.iter()]).toHaveLength(9);
-    expect([...curator.connection.db.sourceReference.iter()]).toHaveLength(14);
+    expect([...curator.connection.db.sourceReference.iter()]).toHaveLength(17);
     expect(
       [...curator.connection.db.myReleaseDrafts.iter()].find(
         (draft) => draft.version === validVersion,

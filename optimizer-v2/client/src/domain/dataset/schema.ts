@@ -82,6 +82,28 @@ export const datasetSnapshotSchema = z.object({
   sourceSummary: z.string().min(1),
   formulaSetVersion: z.literal('sbor-stats-v1'),
   pointsPerLevel: z.literal(3),
+  dualWieldSkillGate: z.literal(200).default(200),
+  knownGaps: z
+    .array(
+      z.object({
+        path: weaponPathSchema,
+        band: z.enum([
+          '1-49',
+          '50-99',
+          '100-149',
+          '150-199',
+          '200-249',
+          '250-299',
+          '300+',
+        ]),
+        reason: z.string().min(1),
+        sourceUrl: z.url().refine((url) => url.startsWith('https://')),
+        sourceRevision: z.string().min(1),
+        lastReviewedAt: z.iso.date(),
+        verificationStatus: z.literal('verified'),
+      }),
+    )
+    .default([]),
   formulas: z
     .array(formulaRecordSchema)
     .length(9)

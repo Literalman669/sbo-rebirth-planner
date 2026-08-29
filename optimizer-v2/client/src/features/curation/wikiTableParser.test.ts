@@ -1,17 +1,20 @@
 import { describe, expect, it } from 'vitest';
 import {
   parseArmorListPage,
+  parseShieldListPage,
   parseStatsPage,
   parseWeaponListPage,
 } from './wikiTableParser';
 import armorFixture from './fixtures/armor.wikitext?raw';
 import daggerFixture from './fixtures/dagger.wikitext?raw';
 import statsFixture from './fixtures/stats.wikitext?raw';
+import shieldsFixture from './fixtures/shields.wikitext?raw';
 
 const fixtures = {
   armor: armorFixture,
   dagger: daggerFixture,
   stats: statsFixture,
+  shields: shieldsFixture,
 };
 const fixture = (name: keyof typeof fixtures) => fixtures[name];
 
@@ -111,5 +114,22 @@ describe('parseArmorListPage', () => {
 
     expect(result).toHaveLength(0);
     expect(result.warnings[0]).toMatch(/invalid dexterity/i);
+  });
+});
+
+describe('parseShieldListPage', () => {
+  it('extracts the current four-column Wooden Shield row', () => {
+    const result = parseShieldListPage(fixture('shields'));
+
+    expect(result).toHaveLength(1);
+    expect(result[0]?.value).toMatchObject({
+      id: 'wooden-shield',
+      slot: 'shield',
+      weaponPaths: ['one-handed', 'rapier', 'dagger'],
+      defense: 0.6,
+      dexterity: 0,
+      levelRequirement: 1,
+      acquisitionType: 'starter',
+    });
   });
 });

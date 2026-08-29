@@ -570,6 +570,23 @@
   padding-bottom: 1.75rem;
 }
 
+.stale-plan-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  border: 1px solid rgb(218 169 77 / 55%);
+  border-radius: 0.45rem;
+  background: rgb(45 33 11 / 82%);
+  color: #f0d8a1;
+  margin-bottom: 1rem;
+  padding: 0.85rem 1rem;
+}
+
+.stale-plan-banner p {
+  margin: 0;
+}
+
 .results-screen > h2 {
   margin-bottom: 1.85rem;
   font-size: clamp(1.45rem, 2.5vw, 1.95rem);

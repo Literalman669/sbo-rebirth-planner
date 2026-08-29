@@ -3,14 +3,16 @@ import type { DatasetRelease } from '../infrastructure/spacetime/releaseSelectio
 import { Link, Outlet } from 'react-router-dom';
 import type { ReactNode } from 'react';
 import { SignInControl } from '../features/auth/SignInControl';
+import type { DatasetSource } from '../infrastructure/spacetime/datasetSelection';
 
 type AppProps = {
   release: DatasetRelease;
-  source: 'live' | 'fallback';
+  source: DatasetSource;
   authControl?: ReactNode;
+  warning?: string | null;
 };
 
-export function App({ release, source, authControl }: AppProps) {
+export function App({ release, source, authControl, warning }: AppProps) {
   return (
     <div className="app-shell">
       <header>
@@ -20,7 +22,10 @@ export function App({ release, source, authControl }: AppProps) {
           </h1>
           {authControl}
         </div>
-        <p className="dataset-status">Dataset {release.version} · {source}</p>
+        <p className="dataset-status">
+          Dataset {release.version} · {source} · verified {release.lastReviewedAt}
+        </p>
+        {warning && <p className="dataset-warning" role="status">{warning}</p>}
       </header>
       <Outlet />
     </div>
@@ -28,12 +33,13 @@ export function App({ release, source, authControl }: AppProps) {
 }
 
 export function ConnectedApp() {
-  const { release, source } = usePublicRelease();
+  const { release, source, warning } = usePublicRelease();
 
   return (
     <App
       release={release}
       source={source}
+      warning={warning}
       authControl={<SignInControl />}
     />
   );

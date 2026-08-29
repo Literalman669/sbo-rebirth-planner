@@ -22,7 +22,7 @@ async function createGuestBuild(page: Page, name: string, level: number) {
     .locator('form.save-build-form')
     .getByRole('button', { name: 'Save Build' })
     .click();
-  await expect(page.getByRole('status')).toContainText('saved locally');
+  await expect(page.getByText('Build saved locally')).toBeVisible();
 }
 
 async function pendingRevisionCount(page: Page) {
@@ -139,7 +139,7 @@ test('imports selectively, syncs offline history, restores, shares, and revokes'
   await expect(anonymousPage.getByText('Read-only shared snapshot')).toBeVisible();
 
   await page.getByRole('button', { name: 'Revoke shared link' }).click();
-  await expect(page.getByRole('status')).toContainText('revoked');
+  await expect(page.getByText('Shared link revoked')).toBeVisible();
   await anonymousPage.reload();
   await expect(
     anonymousPage.getByRole('heading', {

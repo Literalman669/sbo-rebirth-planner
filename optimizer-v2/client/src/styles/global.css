@@ -64,6 +64,12 @@ select {
   white-space: nowrap;
 }
 
+.dataset-warning {
+  margin: 0;
+  color: #efc8b4;
+  font-size: 0.8rem;
+}
+
 .app-header-row,
 .auth-control {
   display: flex;

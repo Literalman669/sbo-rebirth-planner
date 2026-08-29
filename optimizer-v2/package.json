@@ -2,7 +2,10 @@
   "name": "@sbo/optimizer-v2",
   "version": "0.1.0",
   "private": true,
-  "workspaces": ["client", "spacetimedb"],
+  "workspaces": [
+    "client",
+    "spacetimedb"
+  ],
   "scripts": {
     "postinstall": "npm ci --prefix spacetimedb --workspaces=false --ignore-scripts",
     "check:toolchain": "node scripts/check-toolchain.mjs",
@@ -11,9 +14,14 @@
     "typecheck": "npm run typecheck --workspaces --if-present",
     "test:unit": "npm run test:unit --workspaces --if-present && node --test scripts/*.test.mjs",
     "test:e2e": "npm run test:e2e --workspace @sbo/optimizer-client",
-    "test:integration": "node scripts/run-local-integration.mjs"
+    "test:integration": "node scripts/run-local-integration.mjs",
+    "validate:coverage": "node scripts/validate-release-coverage.mjs client/src/data/fallback-release.json",
+    "export:fallback": "tsx scripts/export-fallback-release.mjs"
   },
   "engines": {
     "node": ">=22.0.0 <23"
+  },
+  "devDependencies": {
+    "tsx": "4.23.12"
   }
 }

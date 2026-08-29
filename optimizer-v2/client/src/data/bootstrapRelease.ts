@@ -50,6 +50,8 @@ export const bootstrapRelease = {
     'Reviewed Fandom progression tables and Stats formulas; the SBO:R new-player guide supplies points per level.',
   formulaSetVersion: 'sbor-stats-v1',
   pointsPerLevel: 3,
+  dualWieldSkillGate: 200,
+  knownGaps: [],
   formulas: [
     formula(
       'points-per-level',

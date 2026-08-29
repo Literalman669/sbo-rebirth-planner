@@ -1,4 +1,4 @@
-import { useMemo, useState, type FormEvent } from 'react';
+import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useBuildDraft } from '../../app/providers/BuildDraftContext';
 import { useDataset } from '../../app/providers/DatasetProvider';
@@ -7,6 +7,7 @@ import type { ProjectedMetrics } from '../../domain/optimizer/projections';
 import { optimizeBuild } from '../../domain/optimizer/optimizeBuild';
 import { WeaponPathIcon } from '../planner/WeaponPathIcon';
 import { useOptionalCloudBuilds } from '../../app/providers/CloudBuildsContext';
+import { isPlanStale } from './planStaleness';
 
 const statLabels: Array<{ key: StatName; label: string }> = [
   { key: 'str', label: 'STR' },
@@ -59,6 +60,11 @@ export function ResultsScreen() {
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
   const [shareId, setShareId] = useState<string | null>(null);
   const [shareMessage, setShareMessage] = useState<string | null>(null);
+  const [planVersion, setPlanVersion] = useState(draft.datasetVersion);
+  useEffect(() => {
+    setPlanVersion(draft.datasetVersion);
+  }, [draft.datasetVersion, draft.id]);
+  const stale = isPlanStale(planVersion, snapshot.version);
   const plan = useMemo(
     () => optimizeBuild(draft, snapshot),
     [draft, snapshot],
@@ -103,6 +109,18 @@ export function ResultsScreen() {
         <Link to="/stats">Edit Stats</Link>
         <Link to="/equipment">Edit Equipment</Link>
       </nav>
+
+      {stale && (
+        <aside className="stale-plan-banner" role="status">
+          <p>
+            This plan was created with dataset {planVersion}. A newer verified
+            release is available.
+          </p>
+          <button type="button" onClick={() => setPlanVersion(snapshot.version)}>
+            Recalculate with dataset {snapshot.version}
+          </button>
+        </aside>
+      )}
 
       <section aria-labelledby="do-now-heading" className="result-band">
         <h3 id="do-now-heading">Do now</h3>

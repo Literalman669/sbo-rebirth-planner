@@ -4,7 +4,7 @@ import type { CharacterProfile } from '../../domain/build/model';
 import { characterProfileSchema } from '../../domain/build/schema';
 
 export const DEFAULT_GUEST_DATABASE_NAME = 'sbo-rebirth-optimizer-v2';
-export const GUEST_DATABASE_VERSION = 2;
+export const GUEST_DATABASE_VERSION = 3;
 const DRAFT_KEY = 'active';
 
 const storedGuestBuildSchema = z.object({
@@ -51,6 +51,9 @@ export function createGuestBuildStore({
       }
       if (!database.objectStoreNames.contains('pending-revisions')) {
         database.createObjectStore('pending-revisions');
+      }
+      if (!database.objectStoreNames.contains('dataset-releases')) {
+        database.createObjectStore('dataset-releases');
       }
     },
   });

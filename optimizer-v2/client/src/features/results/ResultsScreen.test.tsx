@@ -1,5 +1,6 @@
 import 'fake-indexeddb/auto';
 import { render, screen, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { createMemoryRouter, RouterProvider } from 'react-router-dom';
 import { describe, expect, it } from 'vitest';
 import { App } from '../../app/App';
@@ -8,6 +9,8 @@ import { DatasetProvider } from '../../app/providers/DatasetProvider';
 import { createAppRoutes } from '../../app/router';
 import type { CharacterProfile } from '../../domain/build/model';
 import { createGuestBuildStore } from '../../infrastructure/storage/guestBuildStore';
+import { bootstrapRelease } from '../../data/bootstrapRelease';
+import type { DatasetSnapshot } from '../../domain/dataset/model';
 
 const release = {
   version: 'bootstrap-0',
@@ -34,18 +37,18 @@ const profile: CharacterProfile = {
   datasetVersion: 'bootstrap-0',
 };
 
-async function renderResults() {
+async function renderResults(snapshot?: DatasetSnapshot) {
   const store = createGuestBuildStore({
     databaseName: `results-screen-${crypto.randomUUID()}`,
   });
   await store.saveDraft(profile);
   const router = createMemoryRouter(
-    createAppRoutes(<App release={release} source="fallback" />),
+    createAppRoutes(<App release={release} source="bundled" />),
     { initialEntries: ['/results'] },
   );
 
   render(
-    <DatasetProvider>
+    <DatasetProvider snapshot={snapshot}>
       <BuildDraftProvider store={store}>
         <RouterProvider router={router} />
       </BuildDraftProvider>
@@ -109,5 +112,25 @@ describe('ResultsScreen', () => {
       'href',
       '/equipment',
     );
+  });
+
+  it('offers recalculation without silently mutating the saved dataset version', async () => {
+    const user = userEvent.setup();
+    await renderResults({
+      ...bootstrapRelease,
+      version: '2026.08.29.2',
+      publishedAt: '2026-08-29T12:00:00.000Z',
+    });
+    await screen.findByRole('heading', {
+      name: 'Your next ten levels, made clear.',
+    });
+
+    const button = screen.getByRole('button', {
+      name: 'Recalculate with dataset 2026.08.29.2',
+    });
+    await user.click(button);
+
+    expect(button).not.toBeInTheDocument();
+    expect(profile.datasetVersion).toBe('bootstrap-0');
   });
 });

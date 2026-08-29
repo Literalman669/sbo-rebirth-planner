@@ -63,6 +63,18 @@ export interface DatasetSnapshot {
   sourceSummary: string;
   formulaSetVersion: 'sbor-stats-v1';
   pointsPerLevel: 3;
+  dualWieldSkillGate?: 200;
+  knownGaps?: KnownGapRecord[];
   formulas: FormulaRecord[];
   equipment: EquipmentRecord[];
+}
+
+export interface KnownGapRecord {
+  path: WeaponPath;
+  band: '1-49' | '50-99' | '100-149' | '150-199' | '200-249' | '250-299' | '300+';
+  reason: string;
+  sourceUrl: string;
+  sourceRevision: string;
+  lastReviewedAt: string;
+  verificationStatus: 'verified';
 }

@@ -1,0 +1,12 @@
+<!-- Canonical page: Shields; revision: 25332; timestamp: 2026-03-14T05:25:07Z -->
+{| class="wikitable sortable"
+!Shield Name
+!Level
+!Defense
+!How to Obtain
+|-
+|[[Wooden Shield]]
+|1
+|0.6
+|Starter Inventory, [[Shops#Floor 1 Shop|Floor 1 Shop]]
+|}

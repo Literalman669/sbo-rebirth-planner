@@ -46,7 +46,7 @@ async function renderRoute(
     await store.saveBuild(namedBuild);
   }
   const router = createMemoryRouter(
-    createAppRoutes(<App release={release} source="fallback" />),
+    createAppRoutes(<App release={release} source="bundled" />),
     { initialEntries: [path] },
   );
 

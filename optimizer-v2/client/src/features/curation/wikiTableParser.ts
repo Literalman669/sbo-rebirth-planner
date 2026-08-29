@@ -156,12 +156,12 @@ export function parseWeaponListPage(
     result.warnings.push(`Unsupported weapon page: ${pageTitle}`);
     return result;
   }
-  const rows = parseTable(wikitext, [
-    'Equipment Name',
-    'Skill',
-    'Attack Stat',
-    'How to Obtain',
-  ]);
+  const rows = parseTable(
+    wikitext,
+    pageTitle === 'One-Handed'
+      ? ['Weapon Name', 'Max Skill', 'Attack Damage', 'How to Obtain']
+      : ['Weapon Name', 'Skill Level', 'Attack Stat', 'How to Obtain'],
+  );
   if (!rows) {
     result.warnings.push('Expected weapon table headers were not found');
     return result;
@@ -298,7 +298,67 @@ export function parseArmorListPage(
 export function parseShieldListPage(
   wikitext: string,
 ): ParsedProposalBatch<EquipmentRecord> {
-  return parseArmorLikePage('shield', 'Shields', wikitext);
+  const result = batch<EquipmentRecord>();
+  const rows = parseTable(wikitext, [
+    'Shield Name',
+    'Level',
+    'Defense',
+    'How to Obtain',
+  ]);
+  if (!rows) {
+    result.warnings.push('Expected shield table headers were not found');
+    return result;
+  }
+  for (const row of rows) {
+    if (row.cells.length !== 4) {
+      result.warnings.push(`Malformed shield row: ${row.sourceLine}`);
+      continue;
+    }
+    const [rawName, rawLevel, rawDefense, rawAcquisition] = row.cells as [
+      string,
+      string,
+      string,
+      string,
+    ];
+    const level = parseStrictNumber(rawLevel);
+    const defense = parseStrictNumber(rawDefense);
+    if (level === null || level < 1) {
+      result.warnings.push(`Invalid shield level: ${row.sourceLine}`);
+      continue;
+    }
+    if (defense === null) {
+      result.warnings.push(`Invalid shield defense: ${row.sourceLine}`);
+      continue;
+    }
+    const obtained = acquisition(rawAcquisition);
+    if (!obtained) {
+      result.warnings.push(`Unrecognized acquisition: ${row.sourceLine}`);
+      continue;
+    }
+    const name = cleanWikiText(rawName);
+    result.push({
+      value: candidateEquipment({
+        id: slugify(name),
+        name,
+        slot: 'shield',
+        weaponPaths: ['one-handed', 'rapier', 'dagger'],
+        attack: 0,
+        defense,
+        dexterity: 0,
+        levelRequirement: level,
+        floor: obtained.floor,
+        acquisitionType: obtained.acquisitionType,
+        acquisitionDetail: obtained.detail,
+        availability: /Event/i.test(obtained.detail)
+          ? 'inactive-event'
+          : 'always',
+        sourceUrl: 'https://swordbloxonlinerebirth.fandom.com/wiki/Shields',
+      }),
+      sourceLine: row.sourceLine,
+      warnings: [],
+    });
+  }
+  return result;
 }
 
 export function parseHeadwearListPage(
