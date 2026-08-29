@@ -9,7 +9,7 @@
     "dev": "npm run dev --workspace @sbo/optimizer-client",
     "build": "npm run build --workspace @sbo/optimizer-client",
     "typecheck": "npm run typecheck --workspaces --if-present",
-    "test:unit": "npm run test:unit --workspaces --if-present",
+    "test:unit": "npm run test:unit --workspaces --if-present && node --test scripts/*.test.mjs",
     "test:e2e": "npm run test:e2e --workspace @sbo/optimizer-client",
     "test:integration": "node scripts/run-local-integration.mjs"
   },

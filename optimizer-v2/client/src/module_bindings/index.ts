@@ -34,11 +34,21 @@ import {
 } from "spacetimedb";
 
 // Import all reducer arg schemas
+import CompleteGuestImportReducer from "./complete_guest_import_reducer";
+import ConfigureAuthReducer from "./configure_auth_reducer";
+import DeleteBuildReducer from "./delete_build_reducer";
+import RestoreBuildRevisionReducer from "./restore_build_revision_reducer";
+import SaveBuildRevisionReducer from "./save_build_revision_reducer";
 
 // Import all procedure arg schemas
 
 // Import all table schema definitions
 import DatasetReleaseRow from "./dataset_release_table";
+import MyBuildRevisionsRow from "./my_build_revisions_table";
+import MyBuildsRow from "./my_builds_table";
+import MyProfileRow from "./my_profile_table";
+import MyRevisionEquipmentRow from "./my_revision_equipment_table";
+import MyRevisionOwnedItemsRow from "./my_revision_owned_items_table";
 
 /** Type-only namespace exports for generated type groups. */
 
@@ -59,10 +69,50 @@ const tablesSchema = __schema({
       { name: 'dataset_release_version_key', constraint: 'unique', columns: ['version'] },
     ],
   }, DatasetReleaseRow),
+  myBuildRevisions: __table({
+    name: 'my_build_revisions',
+    indexes: [
+    ],
+    constraints: [
+    ],
+  }, MyBuildRevisionsRow),
+  myBuilds: __table({
+    name: 'my_builds',
+    indexes: [
+    ],
+    constraints: [
+    ],
+  }, MyBuildsRow),
+  myProfile: __table({
+    name: 'my_profile',
+    indexes: [
+    ],
+    constraints: [
+    ],
+  }, MyProfileRow),
+  myRevisionEquipment: __table({
+    name: 'my_revision_equipment',
+    indexes: [
+    ],
+    constraints: [
+    ],
+  }, MyRevisionEquipmentRow),
+  myRevisionOwnedItems: __table({
+    name: 'my_revision_owned_items',
+    indexes: [
+    ],
+    constraints: [
+    ],
+  }, MyRevisionOwnedItemsRow),
 });
 
 /** The schema information for all reducers in this module. This is defined the same way as the reducers would have been defined in the server, except the body of the reducer is omitted in code generation. */
 const reducersSchema = __reducers(
+  __reducerSchema("complete_guest_import", CompleteGuestImportReducer),
+  __reducerSchema("configure_auth", ConfigureAuthReducer),
+  __reducerSchema("delete_build", DeleteBuildReducer),
+  __reducerSchema("restore_build_revision", RestoreBuildRevisionReducer),
+  __reducerSchema("save_build_revision", SaveBuildRevisionReducer),
 );
 
 /** The schema information for all procedures in this module. This is defined the same way as the procedures would have been defined in the server. */

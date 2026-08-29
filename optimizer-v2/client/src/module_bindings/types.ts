@@ -15,6 +15,67 @@ export const AppConfig = __t.object("AppConfig", {
 });
 export type AppConfig = __Infer<typeof AppConfig>;
 
+export const AuthConfig = __t.object("AuthConfig", {
+  key: __t.string(),
+  mode: __t.string(),
+  issuer: __t.string(),
+  audience: __t.string(),
+});
+export type AuthConfig = __Infer<typeof AuthConfig>;
+
+export const Build = __t.object("Build", {
+  id: __t.string(),
+  owner: __t.identity(),
+  name: __t.string(),
+  headRevisionId: __t.string(),
+  createdAt: __t.timestamp(),
+  updatedAt: __t.timestamp(),
+});
+export type Build = __Infer<typeof Build>;
+
+export const BuildRevision = __t.object("BuildRevision", {
+  id: __t.string(),
+  buildId: __t.string(),
+  owner: __t.identity(),
+  parentRevisionId: __t.option(__t.string()),
+  schemaVersion: __t.u32(),
+  level: __t.u32(),
+  maxFloor: __t.u32(),
+  weaponPath: __t.string(),
+  goal: __t.string(),
+  weaponSkill: __t.option(__t.u32()),
+  str: __t.u32(),
+  def: __t.u32(),
+  agi: __t.u32(),
+  vit: __t.u32(),
+  luk: __t.u32(),
+  datasetVersion: __t.string(),
+  createdAt: __t.timestamp(),
+});
+export type BuildRevision = __Infer<typeof BuildRevision>;
+
+export const CloudEquipmentInput = __t.object("CloudEquipmentInput", {
+  slot: __t.string(),
+  itemId: __t.string(),
+});
+export type CloudEquipmentInput = __Infer<typeof CloudEquipmentInput>;
+
+export const CloudProfileInput = __t.object("CloudProfileInput", {
+  schemaVersion: __t.u32(),
+  level: __t.u32(),
+  maxFloor: __t.u32(),
+  weaponPath: __t.string(),
+  goal: __t.string(),
+  weaponSkill: __t.option(__t.u32()),
+  str: __t.u32(),
+  def: __t.u32(),
+  agi: __t.u32(),
+  vit: __t.u32(),
+  luk: __t.u32(),
+  datasetVersion: __t.string(),
+});
+export type CloudProfileInput = __Infer<typeof CloudProfileInput>;
+
 export const DatasetRelease = __t.object("DatasetRelease", {
   id: __t.u64(),
   version: __t.string(),
@@ -25,4 +86,44 @@ export const DatasetRelease = __t.object("DatasetRelease", {
   isCurrent: __t.bool(),
 });
 export type DatasetRelease = __Infer<typeof DatasetRelease>;
+
+export const MyBuildRevisions = __t.object("MyBuildRevisions", {});
+export type MyBuildRevisions = __Infer<typeof MyBuildRevisions>;
+
+export const MyBuilds = __t.object("MyBuilds", {});
+export type MyBuilds = __Infer<typeof MyBuilds>;
+
+export const MyProfile = __t.object("MyProfile", {});
+export type MyProfile = __Infer<typeof MyProfile>;
+
+export const MyRevisionEquipment = __t.object("MyRevisionEquipment", {});
+export type MyRevisionEquipment = __Infer<typeof MyRevisionEquipment>;
+
+export const MyRevisionOwnedItems = __t.object("MyRevisionOwnedItems", {});
+export type MyRevisionOwnedItems = __Infer<typeof MyRevisionOwnedItems>;
+
+export const RevisionEquipment = __t.object("RevisionEquipment", {
+  id: __t.string(),
+  revisionId: __t.string(),
+  owner: __t.identity(),
+  slot: __t.string(),
+  itemId: __t.string(),
+});
+export type RevisionEquipment = __Infer<typeof RevisionEquipment>;
+
+export const RevisionOwnedItem = __t.object("RevisionOwnedItem", {
+  id: __t.string(),
+  revisionId: __t.string(),
+  owner: __t.identity(),
+  itemId: __t.string(),
+});
+export type RevisionOwnedItem = __Infer<typeof RevisionOwnedItem>;
+
+export const UserProfile = __t.object("UserProfile", {
+  identity: __t.identity(),
+  guestImportCompletedAt: __t.option(__t.timestamp()),
+  createdAt: __t.timestamp(),
+  updatedAt: __t.timestamp(),
+});
+export type UserProfile = __Infer<typeof UserProfile>;
 

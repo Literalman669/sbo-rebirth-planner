@@ -30,6 +30,8 @@ const spacetimeServerExecutable =
         'spacetimedb-cli.exe',
       )
     : 'spacetime';
+const spacetimeCliExecutable = spacetimeServerExecutable;
+const isolatedCliConfigPath = path.join(serverDataDir, 'integration-cli.toml');
 
 async function isHealthy() {
   try {
@@ -81,9 +83,37 @@ server.stderr.on('data', (chunk) => process.stderr.write(chunk));
 try {
   await waitForServer(server);
 
+  const identityResponse = await fetch(`${uri}/v1/identity`, { method: 'POST' });
+  if (!identityResponse.ok) {
+    throw new Error(`Failed to create the isolated publisher identity (${identityResponse.status})`);
+  }
+  const ownerCredential = await identityResponse.json();
+  if (
+    typeof ownerCredential !== 'object' ||
+    ownerCredential === null ||
+    typeof ownerCredential.token !== 'string' ||
+    ownerCredential.token.length === 0
+  ) {
+    throw new Error('The local server returned an invalid publisher credential');
+  }
+
   execFileSync(
-    'spacetime',
+    spacetimeCliExecutable,
     [
+      '--config-path',
+      isolatedCliConfigPath,
+      'login',
+      '--token',
+      ownerCredential.token,
+    ],
+    { cwd: root, stdio: 'ignore' },
+  );
+
+  execFileSync(
+    spacetimeCliExecutable,
+    [
+      '--config-path',
+      isolatedCliConfigPath,
       'publish',
       database,
       '--server',
@@ -91,7 +121,6 @@ try {
       '--module-path',
       './spacetimedb',
       '--yes=all',
-      '--anonymous',
     ],
     { cwd: root, stdio: 'inherit' },
   );
@@ -103,6 +132,10 @@ try {
       cwd: root,
       stdio: 'inherit',
       shell: process.platform === 'win32',
+      env: {
+        ...process.env,
+        SBO_TEST_OWNER_TOKEN: ownerCredential.token,
+      },
     },
   );
 
