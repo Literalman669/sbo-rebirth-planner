@@ -35,7 +35,7 @@ jobs:
 
       - name: Install SpacetimeDB CLI
         run: |
-          curl -sSf https://install.spacetimedb.com | sh
+          curl -sSf https://install.spacetimedb.com | sh -s -- -y
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
       - name: Pin SpacetimeDB 2.8.3

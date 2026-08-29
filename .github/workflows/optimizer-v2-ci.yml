@@ -24,7 +24,7 @@ jobs:
           node-version: 22
           cache: npm
           cache-dependency-path: optimizer-v2/package-lock.json
-      - run: curl -sSf https://install.spacetimedb.com | sh
+      - run: curl -sSf https://install.spacetimedb.com | sh -s -- -y
       - run: echo "$HOME/.local/bin" >> "$GITHUB_PATH"
       - run: spacetime version install 2.8.3 && spacetime version use 2.8.3
       - run: npm ci
