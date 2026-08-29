@@ -122,6 +122,7 @@ export interface BuildRepository {
 type BuildRepositoryOptions = {
   guestStore: GuestBuildStore;
   pendingQueue: PendingRevisionQueue;
+  accountSubject?: string;
   reducers?: CloudReducers;
   getCloudSnapshot?: () => CloudSnapshot;
   randomUUID?: () => string;
@@ -131,6 +132,7 @@ type BuildRepositoryOptions = {
 export function createBuildRepository({
   guestStore,
   pendingQueue,
+  accountSubject,
   reducers,
   getCloudSnapshot = () => ({
     builds: [],
@@ -141,11 +143,16 @@ export function createBuildRepository({
   randomUUID = () => crypto.randomUUID(),
   now = () => new Date().toISOString(),
 }: BuildRepositoryOptions): BuildRepository {
+  if (reducers && !accountSubject) {
+    throw new Error('An authenticated account subject is required for cloud sync');
+  }
+
   async function save(profile: CharacterProfile) {
     await guestStore.saveBuild(profile);
     if (!reducers) return { location: 'local' as const };
+    const subject = accountSubject!;
 
-    const pendingForBuild = (await pendingQueue.list()).filter(
+    const pendingForBuild = (await pendingQueue.list(subject)).filter(
       (revision) => revision.buildId === profile.id,
     );
     const currentCloudHead = getCloudSnapshot().builds.find(
@@ -155,6 +162,7 @@ export function createBuildRepository({
       pendingForBuild.at(-1)?.revisionId ?? currentCloudHead;
     const revisionId = randomUUID();
     await pendingQueue.enqueue({
+      subject,
       revisionId,
       buildId: profile.id,
       profile,
@@ -167,10 +175,10 @@ export function createBuildRepository({
       await reducers.saveBuildRevision(
         toSaveBuildRevisionArgs(profile, revisionId, parentRevisionId),
       );
-      await pendingQueue.acknowledge(revisionId);
+      await pendingQueue.acknowledge(subject, revisionId);
       return { revisionId, location: 'cloud' as const };
     } catch {
-      await pendingQueue.incrementAttempts(revisionId);
+      await pendingQueue.incrementAttempts(subject, revisionId);
       return { revisionId, location: 'cloud-pending' as const };
     }
   }
@@ -201,7 +209,8 @@ export function createBuildRepository({
 
     async retryPending() {
       if (!reducers) return;
-      for (const revision of await pendingQueue.list()) {
+      const subject = accountSubject!;
+      for (const revision of await pendingQueue.list(subject)) {
         try {
           await reducers.saveBuildRevision(
             toSaveBuildRevisionArgs(
@@ -210,9 +219,9 @@ export function createBuildRepository({
               revision.parentRevisionId,
             ),
           );
-          await pendingQueue.acknowledge(revision.revisionId);
+          await pendingQueue.acknowledge(subject, revision.revisionId);
         } catch {
-          await pendingQueue.incrementAttempts(revision.revisionId);
+          await pendingQueue.incrementAttempts(subject, revision.revisionId);
           break;
         }
       }

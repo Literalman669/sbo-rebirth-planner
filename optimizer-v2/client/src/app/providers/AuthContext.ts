@@ -4,6 +4,7 @@ export type AuthStatus = 'guest' | 'loading' | 'authenticated' | 'error';
 
 export interface AuthSession {
   status: AuthStatus;
+  subject?: string;
   preferredUsername?: string;
   idToken?: string;
   errorMessage?: string;

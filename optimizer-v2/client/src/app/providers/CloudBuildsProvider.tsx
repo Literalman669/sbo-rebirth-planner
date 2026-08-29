@@ -17,12 +17,16 @@ export function CloudBuildsProvider({
 }: CloudBuildsProviderProps) {
   const cloud = useCloudBuilds({ guestStore, pendingQueue });
   const { draft, hasActiveDraft, isHydrated } = useBuildDraft();
+  const isCloudEnrolled = cloud.cloudBuilds.some(
+    (build) => build.profile.id === draft.id,
+  );
 
   useEffect(() => {
     if (
       !cloud.isAuthenticated ||
       !cloud.isReady ||
       cloud.needsGuestImport ||
+      !isCloudEnrolled ||
       !isHydrated ||
       !hasActiveDraft
     ) {
@@ -38,6 +42,7 @@ export function CloudBuildsProvider({
     cloud.isAuthenticated,
     cloud.isReady,
     cloud.needsGuestImport,
+    isCloudEnrolled,
     cloud.repository,
     cloud.refreshPending,
     draft,

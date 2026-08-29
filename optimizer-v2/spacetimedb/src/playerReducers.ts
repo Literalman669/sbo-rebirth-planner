@@ -198,6 +198,76 @@ function insertRevision(
   });
 }
 
+function sameStringRows(
+  stored: readonly string[],
+  requested: readonly string[],
+): boolean {
+  if (stored.length !== requested.length) return false;
+  const left = [...stored].sort();
+  const right = [...requested].sort();
+  return left.every((value, index) => value === right[index]);
+}
+
+function isIdempotentRevisionRetry(
+  ctx: AppReducerCtx,
+  args: {
+    buildId: string;
+    revisionId: string;
+    parentRevisionId?: string;
+    profile: CloudProfileInput;
+    equipment: readonly CloudEquipmentInput[];
+    ownedItemIds: readonly string[];
+  },
+): boolean {
+  const revision = ctx.db.buildRevision.id.find(args.revisionId);
+  if (
+    !revision ||
+    !revision.owner.equals(ctx.sender) ||
+    revision.buildId !== args.buildId ||
+    revision.parentRevisionId !== args.parentRevisionId
+  ) {
+    return false;
+  }
+
+  const profile = args.profile;
+  if (
+    revision.schemaVersion !== profile.schemaVersion ||
+    revision.level !== profile.level ||
+    revision.maxFloor !== profile.maxFloor ||
+    revision.weaponPath !== profile.weaponPath ||
+    revision.goal !== profile.goal ||
+    revision.weaponSkill !== profile.weaponSkill ||
+    revision.str !== profile.str ||
+    revision.def !== profile.def ||
+    revision.agi !== profile.agi ||
+    revision.vit !== profile.vit ||
+    revision.luk !== profile.luk ||
+    revision.datasetVersion !== profile.datasetVersion
+  ) {
+    return false;
+  }
+
+  const storedEquipment = Array.from(
+    ctx.db.revisionEquipment.revisionEquipmentRevisionId.filter(
+      args.revisionId,
+    ),
+    (row) => `${row.slot}\u0000${row.itemId}`,
+  );
+  const requestedEquipment = args.equipment.map(
+    (row) => `${row.slot}\u0000${row.itemId}`,
+  );
+  const storedOwnedItems = Array.from(
+    ctx.db.revisionOwnedItem.revisionOwnedItemRevisionId.filter(
+      args.revisionId,
+    ),
+    (row) => row.itemId,
+  );
+  return (
+    sameStringRows(storedEquipment, requestedEquipment) &&
+    sameStringRows(storedOwnedItems, args.ownedItemIds)
+  );
+}
+
 export const configureAuth = spacetimedb.reducer(
   { mode: t.string(), issuer: t.string(), audience: t.string() },
   (ctx, { mode, issuer, audience }) => {
@@ -242,7 +312,8 @@ export const saveBuildRevision = spacetimedb.reducer(
     assertOwnedItems(args.ownedItemIds);
 
     if (ctx.db.buildRevision.id.find(args.revisionId)) {
-      throw new SenderError('Revision ID already exists');
+      if (isIdempotentRevisionRetry(ctx, args)) return;
+      throw new SenderError('Revision ID already exists with different content');
     }
 
     const currentBuild = ctx.db.build.id.find(args.buildId);

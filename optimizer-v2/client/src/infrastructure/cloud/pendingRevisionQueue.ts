@@ -8,6 +8,7 @@ import {
 } from '../storage/guestBuildStore';
 
 const pendingRevisionSchema = z.object({
+  subject: z.string().min(1).max(255),
   revisionId: z.string().min(1).max(100),
   buildId: z.string().min(1).max(100),
   profile: characterProfileSchema,
@@ -17,6 +18,7 @@ const pendingRevisionSchema = z.object({
 });
 
 export interface PendingRevision {
+  subject: string;
   revisionId: string;
   buildId: string;
   profile: CharacterProfile;
@@ -27,9 +29,9 @@ export interface PendingRevision {
 
 export interface PendingRevisionQueue {
   enqueue(revision: PendingRevision): Promise<void>;
-  list(): Promise<PendingRevision[]>;
-  acknowledge(revisionId: string): Promise<void>;
-  incrementAttempts(revisionId: string): Promise<void>;
+  list(subject: string): Promise<PendingRevision[]>;
+  acknowledge(subject: string, revisionId: string): Promise<void>;
+  incrementAttempts(subject: string, revisionId: string): Promise<void>;
 }
 
 type PendingRevisionQueueOptions = { databaseName?: string };
@@ -58,14 +60,23 @@ export function createPendingRevisionQueue({
     async enqueue(revision) {
       const valid = pendingRevisionSchema.parse(revision);
       const database = await databasePromise;
-      await database.put('pending-revisions', valid, valid.revisionId);
+      await database.put(
+        'pending-revisions',
+        valid,
+        `${valid.subject}:${valid.revisionId}`,
+      );
     },
 
-    async list() {
+    async list(subject) {
       const database = await databasePromise;
       const rows = await database.getAll('pending-revisions');
       return rows
-        .map((row) => pendingRevisionSchema.parse(row))
+        .flatMap((row) => {
+          const result = pendingRevisionSchema.safeParse(row);
+          return result.success && result.data.subject === subject
+            ? [result.data]
+            : [];
+        })
         .sort(
           (left, right) =>
             left.enqueuedAt.localeCompare(right.enqueuedAt) ||
@@ -73,15 +84,16 @@ export function createPendingRevisionQueue({
         );
     },
 
-    async acknowledge(revisionId) {
+    async acknowledge(subject, revisionId) {
       const database = await databasePromise;
-      await database.delete('pending-revisions', revisionId);
+      await database.delete('pending-revisions', `${subject}:${revisionId}`);
     },
 
-    async incrementAttempts(revisionId) {
+    async incrementAttempts(subject, revisionId) {
       const database = await databasePromise;
       const transaction = database.transaction('pending-revisions', 'readwrite');
-      const raw = await transaction.store.get(revisionId);
+      const key = `${subject}:${revisionId}`;
+      const raw = await transaction.store.get(key);
       if (raw === undefined) {
         await transaction.done;
         return;
@@ -89,7 +101,7 @@ export function createPendingRevisionQueue({
       const current = pendingRevisionSchema.parse(raw);
       await transaction.store.put(
         { ...current, attempts: current.attempts + 1 },
-        revisionId,
+        key,
       );
       await transaction.done;
     },

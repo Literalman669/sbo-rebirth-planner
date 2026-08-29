@@ -43,6 +43,7 @@ function LocalTestAuthProvider({
   const session = useMemo<AuthSession>(
     () => ({
       status: isAuthenticated ? 'authenticated' : 'guest',
+      subject: isAuthenticated ? 'local-test-player' : undefined,
       preferredUsername: isAuthenticated ? 'Local Test Player' : undefined,
       idToken: isAuthenticated ? token : undefined,
       signIn: async () => {
@@ -85,6 +86,7 @@ function ConfiguredSession({ children }: PropsWithChildren) {
   const session = useMemo<AuthSession>(
     () => ({
       status,
+      subject: auth.user?.profile.sub,
       preferredUsername,
       idToken: auth.user?.id_token,
       errorMessage: auth.error?.message,
@@ -94,6 +96,7 @@ function ConfiguredSession({ children }: PropsWithChildren) {
     [
       auth.error?.message,
       auth.user?.id_token,
+      auth.user?.profile.sub,
       preferredUsername,
       signIn,
       signOut,

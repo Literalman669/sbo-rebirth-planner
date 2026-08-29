@@ -21,11 +21,46 @@ function profile(id: string): CharacterProfile {
 }
 
 describe('PendingRevisionQueue', () => {
+  const subject = 'account-a';
+  it('isolates identical revision IDs between authenticated accounts', async () => {
+    const queue = createPendingRevisionQueue({
+      databaseName: `pending-accounts-${crypto.randomUUID()}`,
+    });
+    await queue.enqueue({
+      subject: 'account-a',
+      revisionId: 'revision-1',
+      buildId: 'build-a',
+      profile: profile('build-a'),
+      enqueuedAt: '2026-08-29T10:00:01.000Z',
+      attempts: 0,
+    });
+    await queue.enqueue({
+      subject: 'account-b',
+      revisionId: 'revision-1',
+      buildId: 'build-b',
+      profile: profile('build-b'),
+      enqueuedAt: '2026-08-29T10:00:02.000Z',
+      attempts: 0,
+    });
+
+    expect((await queue.list('account-a')).map((row) => row.buildId)).toEqual([
+      'build-a',
+    ]);
+    expect((await queue.list('account-b')).map((row) => row.buildId)).toEqual([
+      'build-b',
+    ]);
+
+    await queue.acknowledge('account-a', 'revision-1');
+    expect(await queue.list('account-a')).toHaveLength(0);
+    expect(await queue.list('account-b')).toHaveLength(1);
+  });
+
   it('lists pending revisions in enqueue order and acknowledges one', async () => {
     const queue = createPendingRevisionQueue({
       databaseName: `pending-order-${crypto.randomUUID()}`,
     });
     await queue.enqueue({
+      subject,
       revisionId: 'revision-2',
       buildId: 'build-a',
       profile: profile('build-a'),
@@ -34,6 +69,7 @@ describe('PendingRevisionQueue', () => {
       attempts: 0,
     });
     await queue.enqueue({
+      subject,
       revisionId: 'revision-1',
       buildId: 'build-a',
       profile: profile('build-a'),
@@ -41,12 +77,12 @@ describe('PendingRevisionQueue', () => {
       attempts: 0,
     });
 
-    expect((await queue.list()).map((item) => item.revisionId)).toEqual([
+    expect((await queue.list(subject)).map((item) => item.revisionId)).toEqual([
       'revision-1',
       'revision-2',
     ]);
-    await queue.acknowledge('revision-1');
-    expect((await queue.list()).map((item) => item.revisionId)).toEqual([
+    await queue.acknowledge(subject, 'revision-1');
+    expect((await queue.list(subject)).map((item) => item.revisionId)).toEqual([
       'revision-2',
     ]);
   });
@@ -55,16 +91,17 @@ describe('PendingRevisionQueue', () => {
     const databaseName = `pending-persist-${crypto.randomUUID()}`;
     const first = createPendingRevisionQueue({ databaseName });
     await first.enqueue({
+      subject,
       revisionId: 'revision-1',
       buildId: 'build-a',
       profile: profile('build-a'),
       enqueuedAt: '2026-08-29T10:00:01.000Z',
       attempts: 0,
     });
-    await first.incrementAttempts('revision-1');
+    await first.incrementAttempts(subject, 'revision-1');
 
     const second = createPendingRevisionQueue({ databaseName });
-    expect(await second.list()).toMatchObject([
+    expect(await second.list(subject)).toMatchObject([
       { revisionId: 'revision-1', attempts: 1 },
     ]);
   });
@@ -74,15 +111,18 @@ describe('PendingRevisionQueue', () => {
       databaseName: `pending-race-${crypto.randomUUID()}`,
     });
     await queue.enqueue({
+      subject,
       revisionId: 'revision-1',
       buildId: 'build-a',
       profile: profile('build-a'),
       enqueuedAt: '2026-08-29T10:00:01.000Z',
       attempts: 0,
     });
-    await queue.acknowledge('revision-1');
+    await queue.acknowledge(subject, 'revision-1');
 
-    await expect(queue.incrementAttempts('revision-1')).resolves.toBeUndefined();
-    expect(await queue.list()).toHaveLength(0);
+    await expect(
+      queue.incrementAttempts(subject, 'revision-1'),
+    ).resolves.toBeUndefined();
+    expect(await queue.list(subject)).toHaveLength(0);
   });
 });

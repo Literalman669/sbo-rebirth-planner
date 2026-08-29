@@ -67,6 +67,7 @@ export function useCloudBuilds({
   const reducers = useMemo<CloudReducers | undefined>(() => {
     if (
       auth.status !== 'authenticated' ||
+      !auth.subject ||
       !connectionState.isActive ||
       !connection
     ) {
@@ -81,25 +82,28 @@ export function useCloudBuilds({
         connection.reducers.restoreBuildRevision(args),
       deleteBuild: (args) => connection.reducers.deleteBuild(args),
     };
-  }, [auth.status, connection, connectionState.isActive]);
+  }, [auth.status, auth.subject, connection, connectionState.isActive]);
 
   const repository = useMemo(
     () =>
       createBuildRepository({
         guestStore,
         pendingQueue,
+        accountSubject: reducers ? auth.subject : undefined,
         reducers,
         getCloudSnapshot: () => snapshotRef.current,
       }),
-    [guestStore, pendingQueue, reducers],
+    [auth.subject, guestStore, pendingQueue, reducers],
   );
   const cloudBuilds = useMemo(
     () => selectorRef.current.select(snapshotRef.current),
     [cloud.builds, cloud.equipment, cloud.ownedItems, cloud.revisions],
   );
   const refreshPending = useCallback(async () => {
-    setPendingCount((await pendingQueue.list()).length);
-  }, [pendingQueue]);
+    setPendingCount(
+      auth.subject ? (await pendingQueue.list(auth.subject)).length : 0,
+    );
+  }, [auth.subject, pendingQueue]);
   const createShare = useCallback(
     async (buildId: string) => {
       if (

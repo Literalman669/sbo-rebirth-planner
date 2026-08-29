@@ -112,7 +112,29 @@ test('enforces identity isolation and immutable revision recovery', async ({}, t
       ownedItemIds: ['iron-greatsword'],
     });
 
+    await expect(
+      userA.connection.reducers.saveBuildRevision({
+        buildId: 'build-a',
+        revisionId: 'revision-a1',
+        name: 'Alicization Route',
+        profile: firstProfile,
+        equipment: [{ slot: 'main-hand', itemId: 'iron-greatsword' }],
+        ownedItemIds: ['iron-greatsword'],
+      }),
+    ).resolves.toBeUndefined();
+    await expect(
+      userA.connection.reducers.saveBuildRevision({
+        buildId: 'build-a',
+        revisionId: 'revision-a1',
+        name: 'Alicization Route',
+        profile: { ...firstProfile, level: 99 },
+        equipment: [{ slot: 'main-hand', itemId: 'iron-greatsword' }],
+        ownedItemIds: ['iron-greatsword'],
+      }),
+    ).rejects.toThrow(/Revision ID already exists with different content/);
+
     await expect.poll(() => [...userA.connection.db.myBuilds.iter()].length).toBe(1);
+    expect([...userA.connection.db.myBuildRevisions.iter()]).toHaveLength(1);
     expect([...userB.connection.db.myBuilds.iter()]).toHaveLength(0);
 
     userASecond = await connect(userA.token);

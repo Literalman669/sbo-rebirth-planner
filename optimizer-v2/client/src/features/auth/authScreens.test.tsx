@@ -16,7 +16,7 @@ const oidc = vi.hoisted(() => ({
     error: undefined as Error | undefined,
     user: null as null | {
       id_token: string;
-      profile: { preferred_username?: string };
+      profile: { sub: string; preferred_username?: string };
     },
     signinRedirect: vi.fn(async () => undefined),
     removeUser: vi.fn(async () => undefined),
@@ -51,6 +51,10 @@ function SessionProbe() {
       {session.status} · {session.signInUnavailableReason ?? 'sign-in ready'}
     </p>
   );
+}
+
+function SubjectProbe() {
+  return <p>Subject: {useAuthSession().subject ?? 'none'}</p>;
 }
 
 beforeEach(() => {
@@ -99,6 +103,22 @@ describe('optional authentication', () => {
     expect(oidc.current.signinRedirect).toHaveBeenCalledOnce();
   });
 
+  it('exposes the stable OIDC subject for account-scoped local sync state', () => {
+    oidc.current.isAuthenticated = true;
+    oidc.current.user = {
+      id_token: 'test-id-token',
+      profile: { sub: 'oidc-account-42', preferred_username: 'Kirito' },
+    };
+
+    render(
+      <AuthProvider clientId="public-client-id">
+        <SubjectProbe />
+      </AuthProvider>,
+    );
+
+    expect(screen.getByText('Subject: oidc-account-42')).toBeVisible();
+  });
+
   it('shows callback progress and returns Home after authentication', () => {
     oidc.current.isLoading = true;
     const renderTree = () => (
@@ -118,7 +138,7 @@ describe('optional authentication', () => {
     oidc.current.isAuthenticated = true;
     oidc.current.user = {
       id_token: 'test-id-token',
-      profile: { preferred_username: 'Kirito' },
+      profile: { sub: 'callback-account', preferred_username: 'Kirito' },
     };
     view.rerender(renderTree());
 
@@ -153,7 +173,7 @@ describe('optional authentication', () => {
     oidc.current.isAuthenticated = true;
     oidc.current.user = {
       id_token: 'test-id-token',
-      profile: { preferred_username: 'Asuna' },
+      profile: { sub: 'signout-account', preferred_username: 'Asuna' },
     };
 
     render(

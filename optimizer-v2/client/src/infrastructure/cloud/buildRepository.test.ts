@@ -50,6 +50,7 @@ function reducers(
 }
 
 describe('BuildRepository', () => {
+  const subject = 'account-a';
   it('keeps a guest save local', async () => {
     const storage = adapters('repository-guest');
     const repository = createBuildRepository({
@@ -64,20 +65,39 @@ describe('BuildRepository', () => {
       (await storage.guestStore.listBuilds()).find((result) => result.ok)
         ?.value.profile.id,
     ).toBe('build-a');
-    expect(await storage.pendingQueue.list()).toHaveLength(0);
+    expect(await storage.pendingQueue.list(subject)).toHaveLength(0);
+  });
+
+  it('stores failed revisions only in the authenticated account queue', async () => {
+    const storage = adapters('repository-account-scope');
+    const repository = createBuildRepository({
+      ...storage,
+      reducers: reducers(vi.fn(async () => Promise.reject(new Error('offline')))),
+      accountSubject: subject,
+      randomUUID: () => 'revision-1',
+      now: () => '2026-08-29T10:00:00.000Z',
+    });
+
+    await repository.save(profile());
+
+    expect(await storage.pendingQueue.list(subject)).toMatchObject([
+      { revisionId: 'revision-1', subject },
+    ]);
+    expect(await storage.pendingQueue.list('account-b')).toHaveLength(0);
   });
 
   it('writes locally, enqueues, calls the reducer, then acknowledges', async () => {
     const storage = adapters('repository-cloud');
     const saveBuildRevision = vi.fn(async () => {
       expect(await storage.guestStore.listBuilds()).toHaveLength(1);
-      expect(await storage.pendingQueue.list()).toMatchObject([
+      expect(await storage.pendingQueue.list(subject)).toMatchObject([
         { revisionId: 'revision-1', attempts: 0 },
       ]);
     });
     const repository = createBuildRepository({
       ...storage,
       reducers: reducers(saveBuildRevision),
+      accountSubject: subject,
       randomUUID: () => 'revision-1',
       now: () => '2026-08-29T10:00:00.000Z',
     });
@@ -86,7 +106,7 @@ describe('BuildRepository', () => {
       revisionId: 'revision-1',
       location: 'cloud',
     });
-    expect(await storage.pendingQueue.list()).toHaveLength(0);
+    expect(await storage.pendingQueue.list(subject)).toHaveLength(0);
   });
 
   it('leaves a failed reducer call pending and increments attempts', async () => {
@@ -94,6 +114,7 @@ describe('BuildRepository', () => {
     const repository = createBuildRepository({
       ...storage,
       reducers: reducers(vi.fn(async () => Promise.reject(new Error('offline')))),
+      accountSubject: subject,
       randomUUID: () => 'revision-1',
       now: () => '2026-08-29T10:00:00.000Z',
     });
@@ -102,7 +123,7 @@ describe('BuildRepository', () => {
       revisionId: 'revision-1',
       location: 'cloud-pending',
     });
-    expect(await storage.pendingQueue.list()).toMatchObject([
+    expect(await storage.pendingQueue.list(subject)).toMatchObject([
       { revisionId: 'revision-1', attempts: 1 },
     ]);
   });
@@ -116,6 +137,7 @@ describe('BuildRepository', () => {
     const repository = createBuildRepository({
       ...storage,
       reducers: cloud,
+      accountSubject: subject,
       randomUUID: () => `revision-${++revision}`,
       now: () => '2026-08-29T10:00:00.000Z',
     });
@@ -139,6 +161,7 @@ describe('BuildRepository', () => {
     const repository = createBuildRepository({
       ...storage,
       reducers: cloud,
+      accountSubject: subject,
       randomUUID: () => 'restored-revision',
     });
 
