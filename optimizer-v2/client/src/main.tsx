@@ -8,6 +8,7 @@ import '@fontsource/source-sans-3/latin-600.css';
 import { BuildDraftProvider } from './app/providers/BuildDraftProvider';
 import { AuthProvider } from './app/providers/AuthProvider';
 import { CloudDataProvider } from './app/providers/CloudDataProvider';
+import { CloudBuildsProvider } from './app/providers/CloudBuildsProvider';
 import { DatasetProvider } from './app/providers/DatasetProvider';
 import { appRouter } from './app/router';
 import { PublicDataProvider } from './infrastructure/spacetime/PublicDataProvider';
@@ -20,7 +21,9 @@ createRoot(document.getElementById('root')!).render(
         <PublicDataProvider>
           <DatasetProvider>
             <BuildDraftProvider>
-              <RouterProvider router={appRouter} />
+              <CloudBuildsProvider>
+                <RouterProvider router={appRouter} />
+              </CloudBuildsProvider>
             </BuildDraftProvider>
           </DatasetProvider>
         </PublicDataProvider>

@@ -2,7 +2,10 @@ import 'fake-indexeddb/auto';
 import { openDB } from 'idb';
 import { describe, expect, it } from 'vitest';
 import type { CharacterProfile } from '../../domain/build/model';
-import { createGuestBuildStore } from './guestBuildStore';
+import {
+  createGuestBuildStore,
+  GUEST_DATABASE_VERSION,
+} from './guestBuildStore';
 
 function profile(id: string): CharacterProfile {
   return {
@@ -88,7 +91,7 @@ describe('GuestBuildStore', () => {
     const store = createGuestBuildStore({ databaseName: name });
     await store.saveBuild(profile('valid'));
 
-    const database = await openDB(name, 1);
+    const database = await openDB(name, GUEST_DATABASE_VERSION);
     await database.put(
       'builds',
       {

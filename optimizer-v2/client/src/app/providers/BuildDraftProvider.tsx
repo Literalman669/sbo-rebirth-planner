@@ -135,12 +135,14 @@ export function BuildDraftProvider({
     async (name: string) => {
       const trimmedName = name.trim();
       if (!trimmedName) throw new Error('Build name is required');
-      await store.saveBuild({
+      const savedBuild = {
         ...draftRef.current,
         id: crypto.randomUUID(),
         name: trimmedName,
-      });
+      };
+      await store.saveBuild(savedBuild);
       setSavedBuilds(await store.listBuilds());
+      return savedBuild;
     },
     [store],
   );

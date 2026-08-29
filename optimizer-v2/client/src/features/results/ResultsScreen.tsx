@@ -6,6 +6,7 @@ import type { EquipmentSlot, StatName } from '../../domain/build/model';
 import type { ProjectedMetrics } from '../../domain/optimizer/projections';
 import { optimizeBuild } from '../../domain/optimizer/optimizeBuild';
 import { WeaponPathIcon } from '../planner/WeaponPathIcon';
+import { useOptionalCloudBuilds } from '../../app/providers/CloudBuildsContext';
 
 const statLabels: Array<{ key: StatName; label: string }> = [
   { key: 'str', label: 'STR' },
@@ -50,6 +51,7 @@ function formatDelta(delta: Partial<ProjectedMetrics>) {
 
 export function ResultsScreen() {
   const navigate = useNavigate();
+  const cloud = useOptionalCloudBuilds();
   const { snapshot } = useDataset();
   const { draft, resetDraft, saveNamedBuild } = useBuildDraft();
   const [showSaveForm, setShowSaveForm] = useState(false);
@@ -67,8 +69,20 @@ export function ResultsScreen() {
   const submitSave = (event: FormEvent) => {
     event.preventDefault();
     void saveNamedBuild(buildName)
-      .then(() => {
-        setSaveMessage('Build saved locally');
+      .then(async (savedBuild) => {
+        if (!cloud?.isAuthenticated) return 'local' as const;
+        const result = await cloud.repository.save(savedBuild);
+        await cloud.refreshPending();
+        return result.location;
+      })
+      .then((location) => {
+        setSaveMessage(
+          location === 'cloud'
+            ? 'Build saved to your cloud archive'
+            : location === 'cloud-pending'
+              ? 'Build saved locally and queued for cloud sync'
+              : 'Build saved locally',
+        );
         setShowSaveForm(false);
       })
       .catch((error: unknown) => {

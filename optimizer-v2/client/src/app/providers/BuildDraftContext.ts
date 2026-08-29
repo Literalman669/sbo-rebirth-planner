@@ -6,7 +6,7 @@ export type BuildDraftContextValue = {
   draft: CharacterProfile;
   updateDraft(patch: Partial<CharacterProfile>): void;
   replaceDraft(profile: CharacterProfile): void;
-  saveNamedBuild(name: string): Promise<void>;
+  saveNamedBuild(name: string): Promise<CharacterProfile>;
   resetDraft(): Promise<void>;
   isHydrated: boolean;
   hasActiveDraft: boolean;

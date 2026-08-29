@@ -3,8 +3,8 @@ import { z } from 'zod';
 import type { CharacterProfile } from '../../domain/build/model';
 import { characterProfileSchema } from '../../domain/build/schema';
 
-const DEFAULT_DATABASE_NAME = 'sbo-rebirth-optimizer-v2';
-const DATABASE_VERSION = 1;
+export const DEFAULT_GUEST_DATABASE_NAME = 'sbo-rebirth-optimizer-v2';
+export const GUEST_DATABASE_VERSION = 2;
 const DRAFT_KEY = 'active';
 
 const storedGuestBuildSchema = z.object({
@@ -38,16 +38,19 @@ type GuestBuildStoreOptions = {
 };
 
 export function createGuestBuildStore({
-  databaseName = DEFAULT_DATABASE_NAME,
+  databaseName = DEFAULT_GUEST_DATABASE_NAME,
   now = () => new Date().toISOString(),
 }: GuestBuildStoreOptions = {}): GuestBuildStore {
-  const databasePromise = openDB(databaseName, DATABASE_VERSION, {
+  const databasePromise = openDB(databaseName, GUEST_DATABASE_VERSION, {
     upgrade(database) {
       if (!database.objectStoreNames.contains('draft')) {
         database.createObjectStore('draft');
       }
       if (!database.objectStoreNames.contains('builds')) {
         database.createObjectStore('builds');
+      }
+      if (!database.objectStoreNames.contains('pending-revisions')) {
+        database.createObjectStore('pending-revisions');
       }
     },
   });

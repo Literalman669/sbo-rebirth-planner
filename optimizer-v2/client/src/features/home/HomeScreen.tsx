@@ -1,8 +1,12 @@
 import { useNavigate } from 'react-router-dom';
 import { useBuildDraft } from '../../app/providers/BuildDraftContext';
+import { useOptionalCloudBuilds } from '../../app/providers/CloudBuildsContext';
+import { CloudBuildList } from '../builds/CloudBuildList';
+import { GuestImportDialog } from '../builds/GuestImportDialog';
 
 export function HomeScreen() {
   const navigate = useNavigate();
+  const cloud = useOptionalCloudBuilds();
   const {
     deleteSavedBuild,
     hasActiveDraft,
@@ -11,6 +15,9 @@ export function HomeScreen() {
     resetDraft,
     savedBuilds,
   } = useBuildDraft();
+  const localProfiles = savedBuilds.flatMap((result) =>
+    result.ok ? [result.value.profile] : [],
+  );
 
   if (!isHydrated) {
     return <main className="home-screen"><p>Loading draft</p></main>;
@@ -83,6 +90,37 @@ export function HomeScreen() {
               })}
             </ul>
           </section>
+        ) : null}
+        {cloud?.needsGuestImport && localProfiles.length > 0 ? (
+          <GuestImportDialog
+            builds={localProfiles}
+            onImport={async (ids) => {
+              await cloud.repository.importGuestBuilds(ids);
+              await cloud.refreshPending();
+            }}
+          />
+        ) : null}
+        {cloud?.isAuthenticated && cloud.cloudBuilds.length > 0 ? (
+          <CloudBuildList
+            builds={cloud.cloudBuilds}
+            onLoad={(profile) => {
+              loadSavedBuild(profile);
+              navigate('/results');
+            }}
+            onHistory={(buildId) => navigate(`/builds/${buildId}/history`)}
+            onDelete={(buildId) => {
+              if (!window.confirm('Delete this cloud build and its history?')) {
+                return;
+              }
+              void cloud.repository.delete(buildId);
+            }}
+          />
+        ) : null}
+        {cloud && cloud.pendingCount > 0 ? (
+          <p role="status">
+            {cloud.pendingCount} cloud revision
+            {cloud.pendingCount === 1 ? '' : 's'} waiting to sync.
+          </p>
         ) : null}
       </div>
     </main>

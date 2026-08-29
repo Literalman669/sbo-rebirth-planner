@@ -10,6 +10,7 @@ const databaseName = 'sbo-rebirth-optimizer-v2-test';
 
 type TestConnection = {
   connection: DbConnection;
+  token: string;
   subscription?: SubscriptionHandle;
 };
 
@@ -33,7 +34,9 @@ async function connect(token?: string): Promise<TestConnection> {
     let builder = DbConnection.builder()
       .withUri(uri)
       .withDatabaseName(databaseName)
-      .onConnect((connection) => resolve({ connection }))
+      .onConnect((connection, _identity, issuedToken) =>
+        resolve({ connection, token: issuedToken }),
+      )
       .onConnectError((_context, error) => reject(error));
 
     if (token) builder = builder.withToken(token);
@@ -72,6 +75,7 @@ test('enforces identity isolation and immutable revision recovery', async ({}, t
   const owner = await connect(ownerToken);
   const userA = await connect();
   const userB = await connect();
+  let userASecond: TestConnection | undefined;
 
   try {
     await expect(
@@ -106,6 +110,12 @@ test('enforces identity isolation and immutable revision recovery', async ({}, t
     await expect.poll(() => [...userA.connection.db.myBuilds.iter()].length).toBe(1);
     expect([...userB.connection.db.myBuilds.iter()]).toHaveLength(0);
 
+    userASecond = await connect(userA.token);
+    await subscribeToPrivateViews(userASecond);
+    await expect
+      .poll(() => [...userASecond!.connection.db.myBuilds.iter()].length)
+      .toBe(1);
+
     await expect(
       userB.connection.reducers.saveBuildRevision({
         buildId: 'build-a',
@@ -130,6 +140,15 @@ test('enforces identity isolation and immutable revision recovery', async ({}, t
 
     await expect.poll(() => [...userA.connection.db.myBuildRevisions.iter()].length).toBe(2);
     expect([...userA.connection.db.myBuilds.iter()][0]?.headRevisionId).toBe('revision-a2');
+    await expect
+      .poll(
+        () =>
+          [...userASecond!.connection.db.myBuildRevisions.iter()].length,
+      )
+      .toBe(2);
+    expect(
+      [...userASecond.connection.db.myBuilds.iter()][0]?.headRevisionId,
+    ).toBe('revision-a2');
 
     await userA.connection.reducers.restoreBuildRevision({
       buildId: 'build-a',
@@ -148,6 +167,7 @@ test('enforces identity isolation and immutable revision recovery', async ({}, t
     await expect.poll(() => [...userA.connection.db.myBuilds.iter()].length).toBe(0);
     expect([...userA.connection.db.myBuildRevisions.iter()]).toHaveLength(0);
   } finally {
+    if (userASecond) disconnect(userASecond);
     disconnect(userB);
     disconnect(userA);
     disconnect(owner);
