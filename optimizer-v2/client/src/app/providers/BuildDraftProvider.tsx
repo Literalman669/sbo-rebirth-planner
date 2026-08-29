@@ -39,6 +39,7 @@ export type BuildDraftContextValue = {
   saveNamedBuild(name: string): Promise<void>;
   resetDraft(): Promise<void>;
   isHydrated: boolean;
+  hasActiveDraft: boolean;
   storageError: string | null;
 };
 
@@ -57,9 +58,11 @@ export function BuildDraftProvider({
     createEmptyProfile(snapshot.version),
   );
   const [isHydrated, setIsHydrated] = useState(false);
+  const [hasActiveDraft, setHasActiveDraft] = useState(false);
   const [storageError, setStorageError] = useState<string | null>(null);
   const draftRef = useRef(draft);
   const hydratedRef = useRef(false);
+  const activeDraftRef = useRef(false);
 
   useEffect(() => {
     draftRef.current = draft;
@@ -71,7 +74,12 @@ export function BuildDraftProvider({
     void store
       .loadDraft()
       .then((storedDraft) => {
-        if (active && storedDraft) setDraft(storedDraft);
+        if (active && storedDraft) {
+          draftRef.current = storedDraft;
+          activeDraftRef.current = true;
+          setDraft(storedDraft);
+          setHasActiveDraft(true);
+        }
       })
       .catch((error: unknown) => {
         if (active) {
@@ -93,7 +101,7 @@ export function BuildDraftProvider({
   }, [store]);
 
   useEffect(() => {
-    if (!isHydrated) return;
+    if (!isHydrated || !hasActiveDraft) return;
 
     const timeout = window.setTimeout(() => {
       void store.saveDraft(draft).catch((error: unknown) => {
@@ -104,21 +112,32 @@ export function BuildDraftProvider({
     }, 250);
 
     return () => window.clearTimeout(timeout);
-  }, [draft, isHydrated, store]);
+  }, [draft, hasActiveDraft, isHydrated, store]);
 
   useEffect(
     () => () => {
-      if (hydratedRef.current) void store.saveDraft(draftRef.current);
+      if (hydratedRef.current && activeDraftRef.current) {
+        void store.saveDraft(draftRef.current);
+      }
     },
     [store],
   );
 
   const updateDraft = useCallback((patch: Partial<CharacterProfile>) => {
-    setDraft((current) => ({ ...current, ...patch }));
+    setDraft((current) => {
+      const next = { ...current, ...patch };
+      draftRef.current = next;
+      return next;
+    });
+    activeDraftRef.current = true;
+    setHasActiveDraft(true);
   }, []);
 
   const replaceDraft = useCallback((profile: CharacterProfile) => {
+    draftRef.current = profile;
+    activeDraftRef.current = true;
     setDraft(profile);
+    setHasActiveDraft(true);
   }, []);
 
   const saveNamedBuild = useCallback(
@@ -136,8 +155,11 @@ export function BuildDraftProvider({
 
   const resetDraft = useCallback(async () => {
     const nextDraft = createEmptyProfile(snapshot.version);
+    draftRef.current = nextDraft;
+    activeDraftRef.current = false;
     setDraft(nextDraft);
-    await store.saveDraft(nextDraft);
+    setHasActiveDraft(false);
+    await store.clearDraft();
   }, [snapshot.version, store]);
 
   const value = useMemo<BuildDraftContextValue>(
@@ -148,10 +170,12 @@ export function BuildDraftProvider({
       saveNamedBuild,
       resetDraft,
       isHydrated,
+      hasActiveDraft,
       storageError,
     }),
     [
       draft,
+      hasActiveDraft,
       isHydrated,
       replaceDraft,
       resetDraft,

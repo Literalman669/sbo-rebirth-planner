@@ -30,7 +30,9 @@ function Consumer() {
     isHydrated,
     updateDraft,
     saveNamedBuild,
+    resetDraft,
     storageError,
+    hasActiveDraft,
   } = useBuildDraft();
 
   if (!isHydrated) return <p>Loading draft</p>;
@@ -39,11 +41,15 @@ function Consumer() {
     <div>
       <p>Level {draft.level}</p>
       <p>{storageError ?? 'Storage ready'}</p>
+      <p>{hasActiveDraft ? 'Active draft' : 'No active draft'}</p>
       <button type="button" onClick={() => updateDraft({ level: 13 })}>
         Raise level
       </button>
       <button type="button" onClick={() => void saveNamedBuild('Saved Build')}>
         Save named
+      </button>
+      <button type="button" onClick={() => void resetDraft()}>
+        Reset draft
       </button>
     </div>
   );
@@ -70,6 +76,7 @@ describe('BuildDraftProvider', () => {
 
     expect(await screen.findByText('Level 12')).toBeVisible();
     expect(screen.getByText('Storage ready')).toBeVisible();
+    expect(screen.getByText('Active draft')).toBeVisible();
   });
 
   it('persists edits and creates a named build through the adapter', async () => {
@@ -78,9 +85,11 @@ describe('BuildDraftProvider', () => {
     });
     renderProvider(store);
     await screen.findByText('Level 1');
+    expect(screen.getByText('No active draft')).toBeVisible();
 
     fireEvent.click(screen.getByRole('button', { name: 'Raise level' }));
     expect(screen.getByText('Level 13')).toBeVisible();
+    expect(screen.getByText('Active draft')).toBeVisible();
 
     await waitFor(
       async () => {
@@ -96,5 +105,20 @@ describe('BuildDraftProvider', () => {
         'Saved Build',
       );
     });
+  });
+
+  it('does not recreate a cleared draft during unmount', async () => {
+    const store = createGuestBuildStore({
+      databaseName: `provider-reset-${crypto.randomUUID()}`,
+    });
+    await store.saveDraft(profile());
+    const view = renderProvider(store);
+    await screen.findByText('Active draft');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Reset draft' }));
+    await screen.findByText('No active draft');
+    view.unmount();
+
+    await expect(store.loadDraft()).resolves.toBeNull();
   });
 });

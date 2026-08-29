@@ -71,6 +71,18 @@ describe('GuestBuildStore', () => {
     ]);
   });
 
+  it('clears the active draft without deleting named builds', async () => {
+    const store = createGuestBuildStore({ databaseName: databaseName('clear') });
+    await store.saveDraft(profile('draft'));
+    await store.saveBuild(profile('named'));
+
+    await store.clearDraft();
+
+    await expect(store.loadDraft()).resolves.toBeNull();
+    const builds = await store.listBuilds();
+    expect(builds.find((result) => result.ok)?.value.profile.id).toBe('named');
+  });
+
   it('reports a malformed build without discarding valid builds', async () => {
     const name = databaseName('corrupt');
     const store = createGuestBuildStore({ databaseName: name });

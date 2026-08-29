@@ -1,5 +1,6 @@
 import { usePublicRelease } from '../infrastructure/spacetime/PublicDataProvider';
 import type { DatasetRelease } from '../infrastructure/spacetime/releaseSelection';
+import { Outlet } from 'react-router-dom';
 
 type AppProps = {
   release: DatasetRelease;
@@ -8,10 +9,13 @@ type AppProps = {
 
 export function App({ release, source }: AppProps) {
   return (
-    <main className="app-shell">
-      <h1>SBO:Rebirth Build Optimizer</h1>
-      <p>Dataset {release.version} · {source}</p>
-    </main>
+    <div className="app-shell">
+      <header>
+        <h1>SBO:Rebirth Build Optimizer</h1>
+        <p>Dataset {release.version} · {source}</p>
+      </header>
+      <Outlet />
+    </div>
   );
 }
 

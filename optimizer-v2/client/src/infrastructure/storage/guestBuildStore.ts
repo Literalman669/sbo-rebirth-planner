@@ -26,6 +26,7 @@ export type GuestBuildListResult =
 export interface GuestBuildStore {
   loadDraft(): Promise<CharacterProfile | null>;
   saveDraft(profile: CharacterProfile): Promise<void>;
+  clearDraft(): Promise<void>;
   listBuilds(): Promise<GuestBuildListResult[]>;
   saveBuild(profile: CharacterProfile): Promise<void>;
   deleteBuild(id: string): Promise<void>;
@@ -65,6 +66,11 @@ export function createGuestBuildStore({
       const validProfile = characterProfileSchema.parse(profile);
       const database = await databasePromise;
       await database.put('draft', validProfile, DRAFT_KEY);
+    },
+
+    async clearDraft() {
+      const database = await databasePromise;
+      await database.delete('draft', DRAFT_KEY);
     },
 
     async listBuilds() {
