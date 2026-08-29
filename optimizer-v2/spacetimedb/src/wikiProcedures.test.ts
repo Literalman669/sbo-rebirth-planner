@@ -15,6 +15,10 @@ describe('buildWikiApiUrl', () => {
   it('rejects pages outside the canonical allowlist', () => {
     expect(() => buildWikiApiUrl('Admin')).toThrow('Wiki page is not allowlisted');
   });
+
+  it('allows the canonical Fists item page used by the verified melee starter', () => {
+    expect(buildWikiApiUrl('Fists')).toContain('titles=Fists');
+  });
 });
 
 describe('parseMediaWikiRevisionResponse', () => {

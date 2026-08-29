@@ -19,4 +19,5 @@ export default __t.row({
   sourceRevision: __t.string().name("source_revision"),
   capturedAt: __t.string().name("captured_at"),
   lastReviewedAt: __t.string().name("last_reviewed_at"),
+  candidateId: __t.option(__t.string()).name("candidate_id"),
 });

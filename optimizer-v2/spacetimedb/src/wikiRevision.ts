@@ -9,6 +9,7 @@ export const ALLOWED_WIKI_PAGES = new Set([
   'Rapier',
   'Dagger',
   'Melee',
+  'Fists',
   'Armor',
   'Shields',
   'Upper Headwear',

@@ -496,6 +496,7 @@ export const sourceReference = table(
     sourceRevision: t.string(),
     capturedAt: t.string(),
     lastReviewedAt: t.string(),
+    candidateId: t.string().optional(),
   },
 );
 

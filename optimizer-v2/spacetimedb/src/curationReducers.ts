@@ -88,6 +88,82 @@ function parseWeaponPaths(value: string): string[] {
   return paths;
 }
 
+type PublishedSourceRow = {
+  id: string;
+  releaseVersion: string;
+  entityKind: string;
+  entityId: string;
+  sourceUrl: string;
+  sourceRevision: string;
+  capturedAt: string;
+  lastReviewedAt: string;
+  candidateId?: string;
+};
+
+function sourcePageTitle(sourceUrl: string): string | undefined {
+  const prefix = 'https://swordbloxonlinerebirth.fandom.com/wiki/';
+  if (!sourceUrl.startsWith(prefix)) return undefined;
+  try {
+    return decodeURIComponent(sourceUrl.slice(prefix.length));
+  } catch {
+    return undefined;
+  }
+}
+
+function candidateIdForPage(pageTitle: string, revisionId: string): string {
+  return `${pageTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-')}:${revisionId}`;
+}
+
+function acceptedCandidateForPublishedSource(
+  ctx: AppReducerCtx,
+  source: PublishedSourceRow,
+): string {
+  if (source.candidateId) {
+    const storedCandidate = ctx.db.wikiCandidate.id.find(source.candidateId);
+    if (storedCandidate?.status === 'accepted') return storedCandidate.id;
+    throw new SenderError(
+      `Published source ${source.id} no longer has its accepted candidate`,
+    );
+  }
+
+  const isLegacyOwnerAttestation =
+    source.entityKind === 'formula' &&
+    source.entityId === 'points-per-level' &&
+    source.sourceUrl === officialGameUrl &&
+    ownerAttestationPattern.test(source.sourceRevision);
+  if (isLegacyOwnerAttestation) {
+    const statsCandidates = Array.from(ctx.db.wikiCandidate.iter())
+      .filter(
+        (candidate) =>
+          candidate.pageTitle === 'Stats' && candidate.status === 'accepted',
+      )
+      .sort((left, right) => left.id.localeCompare(right.id));
+    const candidate = statsCandidates[statsCandidates.length - 1];
+    if (candidate) return candidate.id;
+    throw new SenderError(
+      'Stage and accept the Stats candidate before carrying forward the owner attestation',
+    );
+  }
+
+  const pageTitle = sourcePageTitle(source.sourceUrl);
+  if (!pageTitle) {
+    throw new SenderError(`Published source ${source.id} is not canonical`);
+  }
+  const candidateId = candidateIdForPage(pageTitle, source.sourceRevision);
+  const candidate = ctx.db.wikiCandidate.id.find(candidateId);
+  if (
+    !candidate ||
+    candidate.status !== 'accepted' ||
+    candidate.pageTitle !== pageTitle ||
+    candidate.revisionId !== source.sourceRevision
+  ) {
+    throw new SenderError(
+      `Stage and accept ${pageTitle} revision ${source.sourceRevision} before carrying it forward`,
+    );
+  }
+  return candidate.id;
+}
+
 export const grantCurator = spacetimedb.reducer(
   { identity: t.identity() },
   (ctx, { identity }) => {
@@ -146,6 +222,137 @@ export const createReleaseDraft = spacetimedb.reducer(
       createdAt: ctx.timestamp,
       updatedAt: ctx.timestamp,
     });
+  },
+);
+
+export const createReleaseDraftFromCurrent = spacetimedb.reducer(
+  {
+    version: t.string(),
+    sourceSummary: t.string(),
+    lastReviewedAt: t.string(),
+  },
+  (ctx, args) => {
+    assertCurator(ctx);
+    if (!releasePattern.test(args.version)) {
+      throw new SenderError('Release version is invalid');
+    }
+    assertText(args.sourceSummary, 'Source summary', 500);
+    assertDate(args.lastReviewedAt, 'Last reviewed date');
+    if (
+      ctx.db.releaseDraft.version.find(args.version) ||
+      ctx.db.datasetRelease.version.find(args.version)
+    ) {
+      throw new SenderError('Release version already exists');
+    }
+
+    const currentReleases = Array.from(ctx.db.datasetRelease.iter()).filter(
+      (release) => release.isCurrent,
+    );
+    if (currentReleases.length !== 1) {
+      throw new SenderError('Exactly one current release is required');
+    }
+    const current = currentReleases[0]!;
+    const equipmentRows = Array.from(
+      ctx.db.equipment.equipmentReleaseVersion.filter(current.version),
+    );
+    const formulaRows = Array.from(
+      ctx.db.formula.formulaReleaseVersion.filter(current.version),
+    );
+    const sourceRows = Array.from(
+      ctx.db.sourceReference.sourceReferenceReleaseVersion.filter(
+        current.version,
+      ),
+    );
+    if (
+      equipmentRows.length === 0 ||
+      formulaRows.length === 0 ||
+      sourceRows.length === 0
+    ) {
+      throw new SenderError('The current release has no curated data to carry forward');
+    }
+
+    const candidateIds = new Map<string, string>();
+    const draftSourceIds = new Map<string, string>();
+    for (const source of sourceRows) {
+      candidateIds.set(
+        source.id,
+        acceptedCandidateForPublishedSource(ctx, source),
+      );
+      draftSourceIds.set(
+        source.id,
+        `${args.version}:source:${source.entityKind}:${source.entityId}`,
+      );
+    }
+
+    ctx.db.releaseDraft.insert({
+      version: args.version,
+      createdBy: ctx.sender,
+      formulaSetVersion: current.formulaSetVersion,
+      sourceSummary: args.sourceSummary,
+      lastReviewedAt: args.lastReviewedAt,
+      status: 'draft',
+      createdAt: ctx.timestamp,
+      updatedAt: ctx.timestamp,
+    });
+    for (const source of sourceRows) {
+      ctx.db.draftSourceReference.insert({
+        id: draftSourceIds.get(source.id)!,
+        releaseVersion: args.version,
+        entityKind: source.entityKind,
+        entityId: source.entityId,
+        sourceUrl: source.sourceUrl,
+        sourceRevision: source.sourceRevision,
+        capturedAt: source.capturedAt,
+        lastReviewedAt: source.lastReviewedAt,
+        candidateId: candidateIds.get(source.id)!,
+      });
+    }
+    for (const row of equipmentRows) {
+      const sourceRefId = draftSourceIds.get(row.sourceRefId);
+      const candidateId = candidateIds.get(row.sourceRefId);
+      if (!sourceRefId || !candidateId) {
+        throw new SenderError(`Equipment ${row.itemId} has no published source`);
+      }
+      ctx.db.draftEquipment.insert({
+        id: `${args.version}:equipment:${row.itemId}`,
+        releaseVersion: args.version,
+        itemId: row.itemId,
+        name: row.name,
+        slot: row.slot,
+        weaponPaths: row.weaponPaths,
+        attack: row.attack,
+        defense: row.defense,
+        dexterity: row.dexterity,
+        levelRequirement: row.levelRequirement,
+        skillRequirement: row.skillRequirement,
+        floor: row.floor,
+        acquisitionType: row.acquisitionType,
+        acquisitionDetail: row.acquisitionDetail,
+        availability: row.availability,
+        sourceRefId,
+        lastReviewedAt: row.lastReviewedAt,
+        candidateId,
+      });
+    }
+    for (const row of formulaRows) {
+      const sourceRefId = draftSourceIds.get(row.sourceRefId);
+      const candidateId = candidateIds.get(row.sourceRefId);
+      if (!sourceRefId || !candidateId) {
+        throw new SenderError(`Formula ${row.formulaId} has no published source`);
+      }
+      ctx.db.draftFormula.insert({
+        id: `${args.version}:formula:${row.formulaId}`,
+        releaseVersion: args.version,
+        formulaId: row.formulaId,
+        expression: row.expression,
+        units: row.units,
+        applicability: row.applicability,
+        boundaryBehavior: row.boundaryBehavior,
+        sourceRefId,
+        lastReviewedAt: row.lastReviewedAt,
+        candidateId,
+      });
+    }
   },
 );
 
@@ -393,7 +600,15 @@ export const publishRelease = spacetimedb.reducer(
     ]);
     const candidates = [...candidateIds].flatMap((id) => {
       const candidate = ctx.db.wikiCandidate.id.find(id);
-      return candidate ? [{ id: candidate.id, status: candidate.status }] : [];
+      return candidate
+        ? [{
+            id: candidate.id,
+            pageTitle: candidate.pageTitle,
+            sourceUrl: candidate.sourceUrl,
+            revisionId: candidate.revisionId,
+            status: candidate.status,
+          }]
+        : [];
     });
 
     const errors = validateReleaseDraft({
@@ -431,6 +646,7 @@ export const publishRelease = spacetimedb.reducer(
         sourceRevision: source.sourceRevision,
         capturedAt: source.capturedAt,
         lastReviewedAt: source.lastReviewedAt,
+        candidateId: source.candidateId,
       });
     }
     for (const row of equipmentRows) {

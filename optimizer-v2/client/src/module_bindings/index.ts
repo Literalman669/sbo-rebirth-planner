@@ -38,6 +38,7 @@ import CompleteGuestImportReducer from "./complete_guest_import_reducer";
 import ConfigureAuthReducer from "./configure_auth_reducer";
 import CreateBuildShareReducer from "./create_build_share_reducer";
 import CreateReleaseDraftReducer from "./create_release_draft_reducer";
+import CreateReleaseDraftFromCurrentReducer from "./create_release_draft_from_current_reducer";
 import DeleteBuildReducer from "./delete_build_reducer";
 import GrantCuratorReducer from "./grant_curator_reducer";
 import PublishReleaseReducer from "./publish_release_reducer";
@@ -268,6 +269,7 @@ const reducersSchema = __reducers(
   __reducerSchema("configure_auth", ConfigureAuthReducer),
   __reducerSchema("create_build_share", CreateBuildShareReducer),
   __reducerSchema("create_release_draft", CreateReleaseDraftReducer),
+  __reducerSchema("create_release_draft_from_current", CreateReleaseDraftFromCurrentReducer),
   __reducerSchema("delete_build", DeleteBuildReducer),
   __reducerSchema("grant_curator", GrantCuratorReducer),
   __reducerSchema("publish_release", PublishReleaseReducer),

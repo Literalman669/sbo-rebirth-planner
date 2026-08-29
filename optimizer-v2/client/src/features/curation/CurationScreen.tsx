@@ -31,6 +31,7 @@ const allowedWikiPages = [
   'Rapier',
   'Dagger',
   'Melee',
+  'Fists',
   'Armor',
   'Shields',
   'Upper Headwear',
@@ -74,6 +75,9 @@ export function CurationScreen() {
   const [publicEquipment] = useTable(tables.equipment);
   const [publicFormulas] = useTable(tables.formula);
   const createDraft = useReducer(reducers.createReleaseDraft);
+  const cloneCurrentRelease = useReducer(
+    reducers.createReleaseDraftFromCurrent,
+  );
   const upsertDraftEquipment = useReducer(reducers.upsertDraftEquipment);
   const upsertDraftFormula = useReducer(reducers.upsertDraftFormula);
   const upsertDraftSourceReference = useReducer(
@@ -224,6 +228,10 @@ export function CurationScreen() {
                 await createDraft(input);
                 setSelectedVersion(input.version);
               }}
+              onCloneCurrent={async (input) => {
+                await cloneCurrentRelease(input);
+                setSelectedVersion(input.version);
+              }}
             />
             <PublishReleasePanel
               version={selectedVersion}
@@ -272,6 +280,14 @@ export function CurationScreen() {
                     publicFormulas as readonly Formula[],
                   )}
                   onAccept={accept}
+                  onAcceptSourceOnly={async (sourceCandidate, note) =>
+                    recordReviewDecision({
+                      id: `review:source-only:${sourceCandidate.id}`,
+                      candidateId: sourceCandidate.id,
+                      decision: 'accept',
+                      note,
+                    })
+                  }
                   onReject={async (note) =>
                     recordReviewDecision({
                       id: `review:reject:${candidate.id}`,

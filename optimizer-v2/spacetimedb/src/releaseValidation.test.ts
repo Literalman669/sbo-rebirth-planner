@@ -6,18 +6,36 @@ import {
   type ReleaseValidationInput,
 } from './releaseValidation';
 
-function validDraft(): ReleaseValidationInput {
-  const sourceId = 'source-stats';
+const wiki = 'https://swordbloxonlinerebirth.fandom.com/wiki';
+
+function candidate(pageTitle: string, revisionId: string) {
+  const id = `${pageTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-')}:${revisionId}`;
   return {
-    version: '2026.08.29.1',
-    formulaSetVersion: 'sbor-stats-v1',
-    equipment: [
-      ['two-handed-item', 'two-handed'],
-      ['one-handed-item', 'one-handed,dual-wield'],
-      ['rapier-item', 'rapier'],
-      ['dagger-item', 'dagger'],
-      ['melee-item', 'melee'],
-    ].map(([itemId, weaponPaths]) => ({
+    id,
+    pageTitle,
+    sourceUrl: `${wiki}/${encodeURIComponent(pageTitle)}`,
+    revisionId,
+    status: 'accepted',
+  };
+}
+
+function validDraft(): ReleaseValidationInput {
+  const weaponFixtures = [
+    ['two-handed-item', 'two-handed', 'Two-Handed', '100'],
+    ['one-handed-item', 'one-handed,dual-wield', 'One-Handed', '101'],
+    ['rapier-item', 'rapier', 'Rapier', '102'],
+    ['dagger-item', 'dagger', 'Dagger', '103'],
+    ['fists', 'melee', 'Fists', '104'],
+  ] as const;
+  const statsCandidate = candidate('Stats', '23125');
+  const equipmentCandidates = weaponFixtures.map((row) =>
+    candidate(row[2], row[3]),
+  );
+  const equipment = weaponFixtures.map(([itemId, weaponPaths, pageTitle]) => {
+    const sourceCandidate = equipmentCandidates.find(
+      (row) => row.pageTitle === pageTitle,
+    )!;
+    return {
       itemId,
       slot: 'main-hand',
       weaponPaths,
@@ -28,37 +46,56 @@ function validDraft(): ReleaseValidationInput {
       floor: 1,
       acquisitionType: 'starter',
       availability: 'always',
-      sourceRefId: sourceId,
-      candidateId: 'stats:23125',
-    })),
-    formulas: REQUIRED_FORMULA_IDS.map((formulaId) => ({
-      formulaId,
-      sourceRefId: sourceId,
-      candidateId: 'stats:23125',
-    })),
+      sourceRefId: `source-equipment-${itemId}`,
+      candidateId: sourceCandidate.id,
+    };
+  });
+  const formulas = REQUIRED_FORMULA_IDS.map((formulaId) => ({
+    formulaId,
+    sourceRefId: `source-formula-${formulaId}`,
+    candidateId: statsCandidate.id,
+  }));
+
+  return {
+    version: '2026.08.29.1',
+    formulaSetVersion: 'sbor-stats-v1',
+    equipment,
+    formulas,
     sources: [
-      {
-        id: sourceId,
-        entityKind: 'gap',
-        entityId: 'shared-test-source',
-        sourceUrl: 'https://swordbloxonlinerebirth.fandom.com/wiki/Stats',
-        sourceRevision: '23125',
-        candidateId: 'stats:23125',
-      },
+      ...equipment.map((row) => {
+        const sourceCandidate = equipmentCandidates.find(
+          (candidateRow) => candidateRow.id === row.candidateId,
+        )!;
+        return {
+          id: row.sourceRefId,
+          entityKind: 'equipment',
+          entityId: row.itemId,
+          sourceUrl: sourceCandidate.sourceUrl,
+          sourceRevision: sourceCandidate.revisionId,
+          candidateId: sourceCandidate.id,
+        };
+      }),
+      ...formulas.map((row) => ({
+        id: row.sourceRefId,
+        entityKind: 'formula',
+        entityId: row.formulaId,
+        sourceUrl: statsCandidate.sourceUrl,
+        sourceRevision: statsCandidate.revisionId,
+        candidateId: statsCandidate.id,
+      })),
     ],
-    candidates: [{ id: 'stats:23125', status: 'accepted' }],
+    candidates: [...equipmentCandidates, statsCandidate],
   };
 }
 
 describe('validateReleaseDraft', () => {
-  it('accepts a complete six-path, canonically sourced draft', () => {
+  it('accepts rows whose entity, candidate page, URL, and revision all match', () => {
     expect(validateReleaseDraft(validDraft())).toEqual([]);
   });
 
   it('rejects duplicate item IDs', () => {
     const input = validDraft();
     input.equipment.push({ ...input.equipment[0]! });
-
     expect(validateReleaseDraft(input)).toContain(
       'Duplicate equipment item ID: two-handed-item',
     );
@@ -70,16 +107,45 @@ describe('validateReleaseDraft', () => {
       ...input.equipment[0]!,
       sourceRefId: 'missing-source',
     };
-
     expect(validateReleaseDraft(input)).toContain(
       'Equipment two-handed-item has no source reference',
+    );
+  });
+
+  it('rejects a source attached to a different entity', () => {
+    const input = validDraft();
+    input.sources[0] = { ...input.sources[0]!, entityId: 'other-item' };
+    expect(validateReleaseDraft(input)).toContain(
+      'Equipment two-handed-item source does not identify that equipment row',
+    );
+  });
+
+  it('rejects a candidate from the wrong canonical page', () => {
+    const input = validDraft();
+    const source = input.sources[0]!;
+    source.sourceUrl = `${wiki}/Stats`;
+    source.sourceRevision = '23125';
+    source.candidateId = 'stats:23125';
+    input.equipment[0] = {
+      ...input.equipment[0]!,
+      candidateId: 'stats:23125',
+    };
+    expect(validateReleaseDraft(input)).toContain(
+      'Equipment two-handed-item must use the Two-Handed candidate page',
+    );
+  });
+
+  it('rejects a source revision that differs from its candidate', () => {
+    const input = validDraft();
+    input.sources[0] = { ...input.sources[0]!, sourceRevision: '999' };
+    expect(validateReleaseDraft(input)).toContain(
+      'Source source-equipment-two-handed-item does not match candidate two-handed:100',
     );
   });
 
   it('rejects floors outside the published game range', () => {
     const input = validDraft();
     input.equipment[0] = { ...input.equipment[0]!, floor: 0 };
-
     expect(validateReleaseDraft(input)).toContain(
       'Equipment two-handed-item has an invalid floor',
     );
@@ -88,7 +154,6 @@ describe('validateReleaseDraft', () => {
   it('rejects negative equipment stats', () => {
     const input = validDraft();
     input.equipment[0] = { ...input.equipment[0]!, attack: -1 };
-
     expect(validateReleaseDraft(input)).toContain(
       'Equipment two-handed-item has a negative stat',
     );
@@ -99,7 +164,6 @@ describe('validateReleaseDraft', () => {
     input.formulas = input.formulas.filter(
       (formula) => formula.formulaId !== 'points-per-level',
     );
-
     expect(validateReleaseDraft(input)).toContain(
       'Missing required formula: points-per-level',
     );
@@ -110,7 +174,6 @@ describe('validateReleaseDraft', () => {
     input.equipment = input.equipment.filter(
       (equipment) => !equipment.weaponPaths.includes('rapier'),
     );
-
     expect(validateReleaseDraft(input)).toContain(
       'Missing weapon-path coverage: rapier',
     );
@@ -118,10 +181,9 @@ describe('validateReleaseDraft', () => {
 
   it('rejects rows linked to an unaccepted wiki candidate', () => {
     const input = validDraft();
-    input.candidates[0] = { id: 'stats:23125', status: 'pending' };
-
+    input.candidates[0] = { ...input.candidates[0]!, status: 'pending' };
     expect(validateReleaseDraft(input)).toContain(
-      'Candidate stats:23125 is not accepted',
+      'Candidate two-handed:100 is not accepted',
     );
   });
 
@@ -129,25 +191,24 @@ describe('validateReleaseDraft', () => {
     const input = validDraft();
     input.sources[0] = {
       ...input.sources[0]!,
-      candidateId: 'stats:missing',
+      candidateId: 'two-handed:missing',
     };
-
     expect(validateReleaseDraft(input)).toContain(
-      'Source source-stats has no accepted candidate',
+      'Source source-equipment-two-handed-item has no accepted candidate',
     );
   });
 
   it('accepts the owner gameplay attestation only for points per level', () => {
     const input = validDraft();
-    input.sources[0] = {
-      ...input.sources[0]!,
-      entityKind: 'formula',
-      entityId: 'points-per-level',
+    const sourceIndex = input.sources.findIndex(
+      (source) => source.entityId === 'points-per-level',
+    );
+    input.sources[sourceIndex] = {
+      ...input.sources[sourceIndex]!,
       sourceUrl:
         'https://www.roblox.com/games/4733278992/Sword-Blox-Online-Rebirth',
       sourceRevision: 'owner-gameplay-attestation:2026-08-29',
     };
-
     expect(validateReleaseDraft(input)).toEqual([]);
   });
 });

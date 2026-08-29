@@ -82,6 +82,9 @@ export interface ReleaseSourceValidationRow {
 
 export interface ReleaseCandidateValidationRow {
   id: string;
+  pageTitle: string;
+  sourceUrl: string;
+  revisionId: string;
   status: string;
 }
 
@@ -104,6 +107,45 @@ function hasApprovedSource(source: ReleaseSourceValidationRow): boolean {
   );
 }
 
+function isOwnerPointsAttestation(
+  source: ReleaseSourceValidationRow,
+): boolean {
+  return (
+    source.entityKind === 'formula' &&
+    source.entityId === 'points-per-level' &&
+    source.sourceUrl === officialGameUrl &&
+    ownerAttestationPattern.test(source.sourceRevision)
+  );
+}
+
+function canonicalPageTitle(sourceUrl: string): string | undefined {
+  const prefix = 'https://swordbloxonlinerebirth.fandom.com/wiki/';
+  if (!sourceUrl.startsWith(prefix)) return undefined;
+  try {
+    return decodeURIComponent(sourceUrl.slice(prefix.length));
+  } catch {
+    return undefined;
+  }
+}
+
+function expectedEquipmentCandidatePage(
+  equipment: ReleaseEquipmentValidationRow,
+): string | undefined {
+  if (equipment.slot === 'armor') return 'Armor';
+  if (equipment.slot === 'shield') return 'Shields';
+  if (equipment.slot === 'upper-head') return 'Upper Headwear';
+  if (equipment.slot === 'lower-head') return 'Lower Headwear';
+  const paths = new Set(
+    equipment.weaponPaths.split(',').map((path) => path.trim()),
+  );
+  if (paths.has('two-handed')) return 'Two-Handed';
+  if (paths.has('one-handed') || paths.has('dual-wield')) return 'One-Handed';
+  if (paths.has('rapier')) return 'Rapier';
+  if (paths.has('dagger')) return 'Dagger';
+  if (paths.has('melee')) return equipment.itemId === 'fists' ? 'Fists' : 'Melee';
+  return undefined;
+}
+
 export function validateReleaseDraft(
   input: ReleaseValidationInput,
 ): string[] {
@@ -115,28 +157,43 @@ export function validateReleaseDraft(
     errors.push('Formula set version is unsupported');
   }
 
-  const candidateStatuses = new Map<string, string>();
+  const candidatesById = new Map<string, ReleaseCandidateValidationRow>();
   for (const candidate of input.candidates) {
-    if (candidateStatuses.has(candidate.id)) {
+    if (candidatesById.has(candidate.id)) {
       errors.push(`Duplicate candidate ID: ${candidate.id}`);
     }
-    candidateStatuses.set(candidate.id, candidate.status);
+    candidatesById.set(candidate.id, candidate);
     if (candidate.status !== 'accepted') {
       errors.push(`Candidate ${candidate.id} is not accepted`);
     }
   }
 
   const sourceIds = new Set<string>();
+  const sourcesById = new Map<string, ReleaseSourceValidationRow>();
   for (const source of input.sources) {
     if (sourceIds.has(source.id)) {
       errors.push(`Duplicate source reference ID: ${source.id}`);
     }
     sourceIds.add(source.id);
+    sourcesById.set(source.id, source);
     if (!hasApprovedSource(source)) {
       errors.push(`Source ${source.id} does not have approved provenance`);
     }
-    if (candidateStatuses.get(source.candidateId) !== 'accepted') {
+    const candidate = candidatesById.get(source.candidateId);
+    if (candidate?.status !== 'accepted') {
       errors.push(`Source ${source.id} has no accepted candidate`);
+    } else if (isOwnerPointsAttestation(source)) {
+      if (candidate.pageTitle !== 'Stats') {
+        errors.push(`Source ${source.id} must use the Stats review candidate`);
+      }
+    } else if (
+      canonicalPageTitle(source.sourceUrl) !== candidate.pageTitle ||
+      canonicalPageTitle(candidate.sourceUrl) !== candidate.pageTitle ||
+      source.sourceRevision !== candidate.revisionId
+    ) {
+      errors.push(
+        `Source ${source.id} does not match candidate ${source.candidateId}`,
+      );
     }
   }
 
@@ -150,8 +207,27 @@ export function validateReleaseDraft(
     if (!sourceIds.has(equipment.sourceRefId)) {
       errors.push(`Equipment ${equipment.itemId} has no source reference`);
     }
-    if (candidateStatuses.get(equipment.candidateId) !== 'accepted') {
+    if (candidatesById.get(equipment.candidateId)?.status !== 'accepted') {
       errors.push(`Equipment ${equipment.itemId} has no accepted candidate`);
+    }
+    const source = sourcesById.get(equipment.sourceRefId);
+    if (
+      source &&
+      (source.entityKind !== 'equipment' || source.entityId !== equipment.itemId)
+    ) {
+      errors.push(
+        `Equipment ${equipment.itemId} source does not identify that equipment row`,
+      );
+    }
+    if (source && source.candidateId !== equipment.candidateId) {
+      errors.push(`Equipment ${equipment.itemId} candidate does not match its source`);
+    }
+    const candidate = candidatesById.get(equipment.candidateId);
+    const expectedPage = expectedEquipmentCandidatePage(equipment);
+    if (candidate && expectedPage && candidate.pageTitle !== expectedPage) {
+      errors.push(
+        `Equipment ${equipment.itemId} must use the ${expectedPage} candidate page`,
+      );
     }
     if (
       !Number.isInteger(equipment.floor) ||
@@ -218,8 +294,24 @@ export function validateReleaseDraft(
     if (!sourceIds.has(formula.sourceRefId)) {
       errors.push(`Formula ${formula.formulaId} has no source reference`);
     }
-    if (candidateStatuses.get(formula.candidateId) !== 'accepted') {
+    if (candidatesById.get(formula.candidateId)?.status !== 'accepted') {
       errors.push(`Formula ${formula.formulaId} has no accepted candidate`);
+    }
+    const source = sourcesById.get(formula.sourceRefId);
+    if (
+      source &&
+      (source.entityKind !== 'formula' || source.entityId !== formula.formulaId)
+    ) {
+      errors.push(
+        `Formula ${formula.formulaId} source does not identify that formula row`,
+      );
+    }
+    if (source && source.candidateId !== formula.candidateId) {
+      errors.push(`Formula ${formula.formulaId} candidate does not match its source`);
+    }
+    const candidate = candidatesById.get(formula.candidateId);
+    if (candidate && candidate.pageTitle !== 'Stats') {
+      errors.push(`Formula ${formula.formulaId} must use the Stats candidate page`);
     }
   }
   for (const formulaId of REQUIRED_FORMULA_IDS) {

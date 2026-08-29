@@ -38,23 +38,6 @@ async function waitFor(read, expected, label) {
   throw new Error(`Timed out waiting for ${label}`);
 }
 
-async function currentIndividualPage(pageTitle, expectedRevision) {
-  const endpoint =
-    'https://swordbloxonlinerebirth.fandom.com/api.php?action=query&' +
-    'prop=revisions&rvprop=ids%7Ctimestamp%7Ccontent&rvslots=main&' +
-    `format=json&formatversion=2&titles=${encodeURIComponent(pageTitle)}`;
-  const response = await fetch(endpoint);
-  if (!response.ok) throw new Error(`${pageTitle} verification failed (${response.status})`);
-  const body = await response.json();
-  const revision = body?.query?.pages?.[0]?.revisions?.[0];
-  if (String(revision?.revid) !== expectedRevision) {
-    throw new Error(
-      `${pageTitle} changed from reviewed revision ${expectedRevision} to ${revision?.revid}`,
-    );
-  }
-  return revision;
-}
-
 const connection = await connect();
 let subscription;
 try {
@@ -86,6 +69,7 @@ try {
     'Rapier',
     'Dagger',
     'Melee',
+    'Fists',
     'Armor',
     'Shields',
   ];
@@ -115,10 +99,6 @@ try {
       note: `Reviewed canonical ${pageTitle} revision ${sourceRevisions[pageTitle]} for the first release.`,
     });
   }
-  const fistsRevision = await currentIndividualPage(
-    'Fists',
-    sourceRevisions.Fists,
-  );
   const candidates = () => [...connection.db.myWikiCandidates.iter()];
   await waitFor(
     () => candidates().every((candidate) => candidate.status === 'accepted'),
@@ -137,7 +117,6 @@ try {
     return candidateIds.get(pageTitle);
   }
   function capturedAtFor(pageTitle) {
-    if (pageTitle === 'Fists') return fistsRevision.timestamp;
     const candidate = candidates().find(
       (row) => row.id === candidateFor(pageTitle),
     );

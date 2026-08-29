@@ -9,6 +9,7 @@ import {
 } from './CurationScreen';
 import { applyCandidateAcceptance } from './curationWorkflow';
 import { PublishReleasePanel } from './PublishReleasePanel';
+import { ReleaseDraftEditor } from './ReleaseDraftEditor';
 
 const statsCandidate: CandidateRecord = {
   id: 'stats:23125',
@@ -71,6 +72,40 @@ describe('CandidateReview', () => {
     await user.click(button);
 
     expect(reject).toHaveBeenCalledWith('The points-per-level rule is missing.');
+  });
+
+  it('allows a curator to accept an allowlisted source-only revision with a note', async () => {
+    const user = userEvent.setup();
+    const acceptSourceOnly = vi.fn(async () => undefined);
+    render(
+      <CandidateReview
+        candidate={{
+          ...statsCandidate,
+          id: 'fists:21749',
+          pageTitle: 'Fists',
+          sourceUrl: 'https://swordbloxonlinerebirth.fandom.com/wiki/Fists',
+          revisionId: '21749',
+          content: 'Reviewed Fists infobox',
+        }}
+        draftVersion="2026.08.30.1"
+        onAccept={vi.fn()}
+        onAcceptSourceOnly={acceptSourceOnly}
+        onReject={vi.fn()}
+      />,
+    );
+
+    await user.type(
+      screen.getByLabelText('Review note'),
+      'Compared the Fists infobox to the existing verified starter row.',
+    );
+    await user.click(
+      screen.getByRole('button', { name: 'Accept source revision only' }),
+    );
+
+    expect(acceptSourceOnly).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'fists:21749' }),
+      'Compared the Fists infobox to the existing verified starter row.',
+    );
   });
 });
 
@@ -149,5 +184,39 @@ describe('PublishReleasePanel', () => {
     );
 
     expect(await screen.findByText('Release 2026.08.29.4 is live.')).toBeVisible();
+  });
+});
+
+describe('ReleaseDraftEditor', () => {
+  it('can start a complete draft from the current verified release', async () => {
+    const user = userEvent.setup();
+    const clone = vi.fn(async () => undefined);
+    render(
+      <ReleaseDraftEditor
+        drafts={[]}
+        selectedVersion={null}
+        counts={{ equipment: 0, formulas: 0, sources: 0 }}
+        onSelect={vi.fn()}
+        onCreate={vi.fn()}
+        onCloneCurrent={clone}
+      />,
+    );
+
+    await user.click(screen.getByText('Create another draft'));
+    await user.type(screen.getByLabelText('Version'), '2026.08.30.1');
+    await user.type(
+      screen.getByLabelText('Source summary'),
+      'Carry forward the verified release for one focused update.',
+    );
+    await user.click(
+      screen.getByRole('button', { name: 'Start with current verified data' }),
+    );
+
+    expect(clone).toHaveBeenCalledWith({
+      version: '2026.08.30.1',
+      sourceSummary:
+        'Carry forward the verified release for one focused update.',
+      lastReviewedAt: '2026-08-29',
+    });
   });
 });

@@ -10,6 +10,7 @@ import CompleteGuestImportReducer from "../complete_guest_import_reducer";
 import ConfigureAuthReducer from "../configure_auth_reducer";
 import CreateBuildShareReducer from "../create_build_share_reducer";
 import CreateReleaseDraftReducer from "../create_release_draft_reducer";
+import CreateReleaseDraftFromCurrentReducer from "../create_release_draft_from_current_reducer";
 import DeleteBuildReducer from "../delete_build_reducer";
 import GrantCuratorReducer from "../grant_curator_reducer";
 import PublishReleaseReducer from "../publish_release_reducer";
@@ -28,6 +29,7 @@ export type CompleteGuestImportParams = __Infer<typeof CompleteGuestImportReduce
 export type ConfigureAuthParams = __Infer<typeof ConfigureAuthReducer>;
 export type CreateBuildShareParams = __Infer<typeof CreateBuildShareReducer>;
 export type CreateReleaseDraftParams = __Infer<typeof CreateReleaseDraftReducer>;
+export type CreateReleaseDraftFromCurrentParams = __Infer<typeof CreateReleaseDraftFromCurrentReducer>;
 export type DeleteBuildParams = __Infer<typeof DeleteBuildReducer>;
 export type GrantCuratorParams = __Infer<typeof GrantCuratorReducer>;
 export type PublishReleaseParams = __Infer<typeof PublishReleaseReducer>;

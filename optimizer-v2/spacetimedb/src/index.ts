@@ -18,6 +18,7 @@ export {
 export { createBuildShare, revokeBuildShare } from './sharing';
 export {
   createReleaseDraft,
+  createReleaseDraftFromCurrent,
   grantCurator,
   publishRelease,
   recordReviewDecision,

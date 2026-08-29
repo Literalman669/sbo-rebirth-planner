@@ -73,6 +73,10 @@ type CandidateReviewProps = {
   draftVersion: string | null;
   currentValues?: readonly string[];
   onAccept(candidate: CandidateRecord): Promise<void> | void;
+  onAcceptSourceOnly?(
+    candidate: CandidateRecord,
+    note: string,
+  ): Promise<void> | void;
   onReject(note: string): Promise<void> | void;
 };
 
@@ -81,6 +85,7 @@ export function CandidateReview({
   draftVersion,
   currentValues = [],
   onAccept,
+  onAcceptSourceOnly,
   onReject,
 }: CandidateReviewProps) {
   const proposals = useMemo(
@@ -88,18 +93,21 @@ export function CandidateReview({
     [candidate],
   );
   const [note, setNote] = useState('');
-  const [pendingAction, setPendingAction] = useState<'accept' | 'reject' | null>(
-    null,
-  );
+  const [pendingAction, setPendingAction] = useState<
+    'accept' | 'accept-source' | 'reject' | null
+  >(null);
   const [error, setError] = useState<string | null>(null);
   const proposalCount = proposals.equipment.length + proposals.formulas.length;
 
-  async function run(action: 'accept' | 'reject') {
+  async function run(action: 'accept' | 'accept-source' | 'reject') {
     setError(null);
     setPendingAction(action);
     try {
       if (action === 'accept') await onAccept(candidate);
-      else await onReject(note.trim());
+      else if (action === 'accept-source') {
+        if (!onAcceptSourceOnly) throw new Error('Source-only review is unavailable');
+        await onAcceptSourceOnly(candidate, note.trim());
+      } else await onReject(note.trim());
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : String(caught));
     } finally {
@@ -171,17 +179,30 @@ export function CandidateReview({
       </details>
 
       <div className="candidate-actions">
-        <button
-          type="button"
-          disabled={
-            !draftVersion || proposalCount === 0 || pendingAction !== null
-          }
-          onClick={() => void run('accept')}
-        >
-          Accept into {draftVersion ?? 'a selected draft'}
-        </button>
+        {proposalCount > 0 ? (
+          <button
+            type="button"
+            disabled={!draftVersion || pendingAction !== null}
+            onClick={() => void run('accept')}
+          >
+            Accept into {draftVersion ?? 'a selected draft'}
+          </button>
+        ) : (
+          <button
+            type="button"
+            disabled={
+              !draftVersion ||
+              !onAcceptSourceOnly ||
+              note.trim().length === 0 ||
+              pendingAction !== null
+            }
+            onClick={() => void run('accept-source')}
+          >
+            Accept source revision only
+          </button>
+        )}
         <label>
-          Rejection note
+          {proposalCount === 0 ? 'Review note' : 'Rejection note'}
           <textarea
             value={note}
             onChange={(event) => setNote(event.currentTarget.value)}

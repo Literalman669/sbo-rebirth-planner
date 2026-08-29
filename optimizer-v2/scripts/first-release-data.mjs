@@ -106,7 +106,6 @@ const progressionWeapons = [
 const fists = {
   ...weapon('Fists', 'Fists', ['melee'], 1, 2.5, 1),
   acquisitionDetail: 'Starter Inventory',
-  sourcePage: 'Melee',
 };
 
 const armor = {

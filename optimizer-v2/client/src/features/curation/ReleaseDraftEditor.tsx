@@ -19,6 +19,11 @@ type ReleaseDraftEditorProps = {
     sourceSummary: string;
     lastReviewedAt: string;
   }): Promise<void> | void;
+  onCloneCurrent(input: {
+    version: string;
+    sourceSummary: string;
+    lastReviewedAt: string;
+  }): Promise<void> | void;
 };
 
 export function ReleaseDraftEditor({
@@ -27,6 +32,7 @@ export function ReleaseDraftEditor({
   counts,
   onSelect,
   onCreate,
+  onCloneCurrent,
 }: ReleaseDraftEditorProps) {
   const [version, setVersion] = useState('');
   const [summary, setSummary] = useState('');
@@ -42,6 +48,24 @@ export function ReleaseDraftEditor({
       await onCreate({
         version,
         formulaSetVersion: 'sbor-stats-v1',
+        sourceSummary: summary,
+        lastReviewedAt: reviewedAt,
+      });
+      setVersion('');
+      setSummary('');
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : String(caught));
+    }
+  }
+
+  async function cloneCurrent() {
+    setError(null);
+    try {
+      if (!version || !summary || !reviewedAt) {
+        throw new Error('Version, source summary, and review date are required');
+      }
+      await onCloneCurrent({
+        version,
         sourceSummary: summary,
         lastReviewedAt: reviewedAt,
       });
@@ -107,7 +131,12 @@ export function ReleaseDraftEditor({
               onChange={(event) => setReviewedAt(event.currentTarget.value)}
             />
           </label>
-          <button type="submit">Create release draft</button>
+          <button type="button" onClick={() => void cloneCurrent()}>
+            Start with current verified data
+          </button>
+          <button type="submit" className="button-secondary">
+            Create empty release draft
+          </button>
         </form>
       </details>
       {error && <p className="curation-error" role="alert">{error}</p>}

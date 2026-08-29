@@ -52,72 +52,93 @@ async function seedPublishableDraft(
   curator: TestConnection,
   version: string,
 ) {
-  const candidateId = 'stats:23125';
-  const candidate = [...curator.connection.db.myWikiCandidates.iter()].find(
-    (row) => row.id === candidateId,
-  );
-  if (!candidate) {
-    await owner.connection.reducers.stageWikiFixtureForLocalTest({
-      pageTitle: 'Stats',
-      responseBody: JSON.stringify({
-        query: {
-          pages: [
-            {
-              title: 'Stats',
-              revisions: [
-                {
-                  revid: 23125,
-                  timestamp: '2025-11-03T13:14:55Z',
-                  slots: { main: { content: 'Stats fixture fragment' } },
-                },
-              ],
-            },
-          ],
-        },
-      }),
-    });
+  const revisions = {
+    Stats: '23125',
+    'Two-Handed': '26187',
+    'One-Handed': '26216',
+    Rapier: '26275',
+    Dagger: '26212',
+    Fists: '21749',
+    Armor: '26210',
+    Shields: '25332',
+  } as const;
+  const candidateIdFor = (pageTitle: keyof typeof revisions) =>
+    `${pageTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-')}:${revisions[pageTitle]}`;
+  for (const [pageTitle, revisionId] of Object.entries(revisions)) {
+    const candidateId = candidateIdFor(pageTitle as keyof typeof revisions);
+    const existing = [...curator.connection.db.myWikiCandidates.iter()].find(
+      (row) => row.id === candidateId,
+    );
+    if (!existing) {
+      await owner.connection.reducers.stageWikiFixtureForLocalTest({
+        pageTitle,
+        responseBody: JSON.stringify({
+          query: {
+            pages: [
+              {
+                title: pageTitle,
+                revisions: [
+                  {
+                    revid: Number(revisionId),
+                    timestamp: '2025-11-03T13:14:55Z',
+                    slots: { main: { content: `${pageTitle} fixture fragment` } },
+                  },
+                ],
+              },
+            ],
+          },
+        }),
+      });
+    }
+    await expect
+      .poll(
+        () =>
+          [...curator.connection.db.myWikiCandidates.iter()].find(
+            (row) => row.id === candidateId,
+          )?.status,
+      )
+      .toBe(existing?.status === 'accepted' ? 'accepted' : 'pending');
+    const staged = [...curator.connection.db.myWikiCandidates.iter()].find(
+      (row) => row.id === candidateId,
+    );
+    if (staged?.status === 'pending') {
+      await curator.connection.reducers.recordReviewDecision({
+        id: `${version}:review:${candidateId}`,
+        candidateId,
+        decision: 'accept',
+        note: `Verified ${pageTitle} against the captured revision.`,
+      });
+    }
   }
-  await expect
-    .poll(
-      () =>
-        [...curator.connection.db.myWikiCandidates.iter()].find(
-          (row) => row.id === candidateId,
-        )?.status,
-    )
-    .toBe('pending');
-  await curator.connection.reducers.recordReviewDecision({
-    id: `${version}:review`,
-    candidateId,
-    decision: 'accept',
-    note: 'Verified against the captured revision.',
-  });
   await curator.connection.reducers.createReleaseDraft({
     version,
     formulaSetVersion: 'sbor-stats-v1',
-    sourceSummary: 'Integration release with canonical provenance',
+    sourceSummary: 'Integration release with exact canonical provenance',
     lastReviewedAt: '2026-08-29',
   });
 
   const equipment = [
-    { itemId: 'iron-greatsword', name: 'Iron Greatsword', slot: 'main-hand', weaponPaths: 'two-handed', attack: 3, defense: 0, dexterity: 0, skillRequirement: 1, acquisitionType: 'starter' },
-    { itemId: 'steel-greatsword', name: 'Steel Greatsword', slot: 'main-hand', weaponPaths: 'two-handed', attack: 10, defense: 0, dexterity: 0, skillRequirement: 5, acquisitionType: 'shop' },
-    { itemId: 'beginner-sword', name: 'Beginner Sword', slot: 'main-hand', weaponPaths: 'one-handed,dual-wield', attack: 3.4, defense: 0, dexterity: 0, skillRequirement: 1, acquisitionType: 'starter' },
-    { itemId: 'iron-rapier', name: 'Iron Rapier', slot: 'main-hand', weaponPaths: 'rapier', attack: 2.6, defense: 0, dexterity: 0, skillRequirement: 1, acquisitionType: 'starter' },
-    { itemId: 'iron-dagger', name: 'Iron Dagger', slot: 'main-hand', weaponPaths: 'dagger', attack: 2.5, defense: 0, dexterity: 0, skillRequirement: 1, acquisitionType: 'starter' },
-    { itemId: 'fists', name: 'Fists', slot: 'main-hand', weaponPaths: 'melee', attack: 2.5, defense: 0, dexterity: 0, skillRequirement: 1, acquisitionType: 'starter' },
-    { itemId: 'beginner-armor', name: 'Beginner Armor', slot: 'armor', weaponPaths: '', attack: 0, defense: 0.5, dexterity: 3, skillRequirement: undefined, acquisitionType: 'starter' },
-    { itemId: 'wooden-shield', name: 'Wooden Shield', slot: 'shield', weaponPaths: 'one-handed,rapier,dagger', attack: 0, defense: 0.6, dexterity: 0, skillRequirement: undefined, acquisitionType: 'starter' },
+    { itemId: 'iron-greatsword', name: 'Iron Greatsword', pageTitle: 'Two-Handed', slot: 'main-hand', weaponPaths: 'two-handed', attack: 3, defense: 0, dexterity: 0, skillRequirement: 1, acquisitionType: 'starter' },
+    { itemId: 'steel-greatsword', name: 'Steel Greatsword', pageTitle: 'Two-Handed', slot: 'main-hand', weaponPaths: 'two-handed', attack: 10, defense: 0, dexterity: 0, skillRequirement: 5, acquisitionType: 'shop' },
+    { itemId: 'beginner-sword', name: 'Beginner Sword', pageTitle: 'One-Handed', slot: 'main-hand', weaponPaths: 'one-handed,dual-wield', attack: 3.4, defense: 0, dexterity: 0, skillRequirement: 1, acquisitionType: 'starter' },
+    { itemId: 'iron-rapier', name: 'Iron Rapier', pageTitle: 'Rapier', slot: 'main-hand', weaponPaths: 'rapier', attack: 2.6, defense: 0, dexterity: 0, skillRequirement: 1, acquisitionType: 'starter' },
+    { itemId: 'iron-dagger', name: 'Iron Dagger', pageTitle: 'Dagger', slot: 'main-hand', weaponPaths: 'dagger', attack: 2.5, defense: 0, dexterity: 0, skillRequirement: 1, acquisitionType: 'starter' },
+    { itemId: 'fists', name: 'Fists', pageTitle: 'Fists', slot: 'main-hand', weaponPaths: 'melee', attack: 2.5, defense: 0, dexterity: 0, skillRequirement: 1, acquisitionType: 'starter' },
+    { itemId: 'beginner-armor', name: 'Beginner Armor', pageTitle: 'Armor', slot: 'armor', weaponPaths: '', attack: 0, defense: 0.5, dexterity: 3, skillRequirement: undefined, acquisitionType: 'starter' },
+    { itemId: 'wooden-shield', name: 'Wooden Shield', pageTitle: 'Shields', slot: 'shield', weaponPaths: 'one-handed,rapier,dagger', attack: 0, defense: 0.6, dexterity: 0, skillRequirement: undefined, acquisitionType: 'starter' },
   ] as const;
   for (const item of equipment) {
     const { itemId } = item;
+    const pageTitle = item.pageTitle as keyof typeof revisions;
+    const candidateId = candidateIdFor(pageTitle);
     const sourceRefId = `${version}:source:equipment:${itemId}`;
     await curator.connection.reducers.upsertDraftSourceReference({
       id: sourceRefId,
       releaseVersion: version,
       entityKind: 'equipment',
       entityId: itemId,
-      sourceUrl: 'https://swordbloxonlinerebirth.fandom.com/wiki/Stats',
-      sourceRevision: '23125',
+      sourceUrl: `https://swordbloxonlinerebirth.fandom.com/wiki/${encodeURIComponent(pageTitle)}`,
+      sourceRevision: revisions[pageTitle],
       capturedAt: '2025-11-03T13:14:55Z',
       lastReviewedAt: '2026-08-29',
       candidateId,
@@ -144,6 +165,7 @@ async function seedPublishableDraft(
     });
   }
 
+  const candidateId = candidateIdFor('Stats');
   const formulaIds = [
     'points-per-level',
     'attack-from-str',
@@ -163,7 +185,7 @@ async function seedPublishableDraft(
       entityKind: 'formula',
       entityId: formulaId,
       sourceUrl: 'https://swordbloxonlinerebirth.fandom.com/wiki/Stats',
-      sourceRevision: '23125',
+      sourceRevision: revisions.Stats,
       capturedAt: '2025-11-03T13:14:55Z',
       lastReviewedAt: '2026-08-29',
       candidateId,
@@ -369,6 +391,7 @@ test('publishes a complete release atomically and keeps it immutable', async ({}
   const ordinary = await connect();
   const invalidVersion = '2026.08.29.2';
   const validVersion = '2026.08.29.3';
+  const clonedVersion = '2026.08.29.4';
   try {
     await owner.connection.reducers.configureAuth({
       mode: 'development',
@@ -429,6 +452,53 @@ test('publishes a complete release atomically and keeps it immutable', async ({}
         (draft) => draft.version === validVersion,
       )?.status,
     ).toBe('published');
+
+    const cloneCurrent = (
+      curator.connection.reducers as unknown as {
+        createReleaseDraftFromCurrent(args: {
+          version: string;
+          sourceSummary: string;
+          lastReviewedAt: string;
+        }): Promise<void>;
+      }
+    ).createReleaseDraftFromCurrent;
+    await cloneCurrent({
+      version: clonedVersion,
+      sourceSummary: 'Carry-forward release ready for focused wiki updates',
+      lastReviewedAt: '2026-08-29',
+    });
+    await expect
+      .poll(
+        () =>
+          [...curator.connection.db.myDraftEquipment.iter()].filter(
+            (row) => row.releaseVersion === clonedVersion,
+          ).length,
+      )
+      .toBe(8);
+    expect(
+      [...curator.connection.db.myDraftFormulas.iter()].filter(
+        (row) => row.releaseVersion === clonedVersion,
+      ),
+    ).toHaveLength(9);
+    expect(
+      [...curator.connection.db.myDraftSourceReferences.iter()].filter(
+        (row) => row.releaseVersion === clonedVersion,
+      ),
+    ).toHaveLength(17);
+    await publishAsCurator({ version: clonedVersion });
+    await expect
+      .poll(
+        () =>
+          [...curator.connection.db.datasetRelease.iter()].find(
+            (release) => release.version === clonedVersion,
+          )?.isCurrent,
+      )
+      .toBe(true);
+    expect(
+      [...curator.connection.db.datasetRelease.iter()].find(
+        (release) => release.version === validVersion,
+      )?.isCurrent,
+    ).toBe(false);
     await expect(publishAsCurator({ version: validVersion })).rejects.toThrow(
       /already published/,
     );
