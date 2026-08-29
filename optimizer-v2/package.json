@@ -10,7 +10,8 @@
     "build": "npm run build --workspace @sbo/optimizer-client",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "test:unit": "npm run test:unit --workspaces --if-present",
-    "test:e2e": "npm run test:e2e --workspace @sbo/optimizer-client"
+    "test:e2e": "npm run test:e2e --workspace @sbo/optimizer-client",
+    "test:integration": "node scripts/run-local-integration.mjs"
   },
   "engines": {
     "node": ">=22.0.0 <23"

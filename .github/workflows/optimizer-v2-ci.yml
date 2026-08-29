@@ -1,0 +1,45 @@
+name: Optimizer V2 CI
+
+on:
+  push:
+    paths:
+      - 'optimizer-v2/**'
+      - '.github/workflows/optimizer-v2-ci.yml'
+  pull_request:
+    paths:
+      - 'optimizer-v2/**'
+      - '.github/workflows/optimizer-v2-ci.yml'
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: optimizer-v2/package-lock.json
+      - run: curl -sSf https://install.spacetimedb.com | sh
+      - run: echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+      - run: spacetime version install 2.8.3 && spacetime version use 2.8.3
+      - run: npm ci
+        working-directory: optimizer-v2
+      - run: npm run check:toolchain
+        working-directory: optimizer-v2
+      - run: npm run test:unit
+        working-directory: optimizer-v2
+      - run: npm run typecheck
+        working-directory: optimizer-v2
+      - run: spacetime build
+        working-directory: optimizer-v2
+      - run: spacetime generate --lang typescript --out-dir ./client/src/module_bindings --module-path ./spacetimedb --yes
+        working-directory: optimizer-v2
+      - run: git diff --exit-code -- client/src/module_bindings
+        working-directory: optimizer-v2
+      - run: npx playwright install --with-deps chromium
+        working-directory: optimizer-v2
+      - run: npm run test:integration
+        working-directory: optimizer-v2
+      - run: npm run build
+        working-directory: optimizer-v2
