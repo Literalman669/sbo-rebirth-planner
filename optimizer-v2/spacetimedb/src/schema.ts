@@ -242,6 +242,254 @@ export const sharedBuildOwnedItem = table(
   },
 );
 
+export const curatorRole = table(
+  { name: 'curator_role' },
+  {
+    identity: t.identity().primaryKey(),
+    grantedBy: t.identity(),
+    grantedAt: t.timestamp(),
+  },
+);
+
+export const wikiSourceState = table(
+  { name: 'wiki_source_state' },
+  {
+    pageTitle: t.string().primaryKey(),
+    lastRevisionId: t.string(),
+    lastCheckedAt: t.timestamp(),
+  },
+);
+
+export const wikiCandidate = table(
+  {
+    name: 'wiki_candidate',
+    indexes: [
+      {
+        accessor: 'wikiCandidateStatus',
+        name: 'wiki_candidate_status',
+        algorithm: 'btree',
+        columns: ['status'],
+      },
+    ],
+  },
+  {
+    id: t.string().primaryKey(),
+    pageTitle: t.string(),
+    sourceUrl: t.string(),
+    revisionId: t.string(),
+    revisionTimestamp: t.string(),
+    content: t.string(),
+    status: t.string(),
+    createdAt: t.timestamp(),
+  },
+);
+
+export const reviewDecision = table(
+  {
+    name: 'review_decision',
+    indexes: [
+      {
+        accessor: 'reviewDecisionCandidateId',
+        name: 'review_decision_candidate_id',
+        algorithm: 'btree',
+        columns: ['candidateId'],
+      },
+    ],
+  },
+  {
+    id: t.string().primaryKey(),
+    candidateId: t.string(),
+    curator: t.identity(),
+    decision: t.string(),
+    note: t.string(),
+    createdAt: t.timestamp(),
+  },
+);
+
+export const releaseDraft = table(
+  { name: 'release_draft' },
+  {
+    version: t.string().primaryKey(),
+    createdBy: t.identity(),
+    formulaSetVersion: t.string(),
+    sourceSummary: t.string(),
+    lastReviewedAt: t.string(),
+    status: t.string(),
+    createdAt: t.timestamp(),
+    updatedAt: t.timestamp(),
+  },
+);
+
+export const draftEquipment = table(
+  {
+    name: 'draft_equipment',
+    indexes: [
+      {
+        accessor: 'draftEquipmentReleaseVersion',
+        name: 'draft_equipment_release_version',
+        algorithm: 'btree',
+        columns: ['releaseVersion'],
+      },
+    ],
+  },
+  {
+    id: t.string().primaryKey(),
+    releaseVersion: t.string(),
+    itemId: t.string(),
+    name: t.string(),
+    slot: t.string(),
+    weaponPaths: t.string(),
+    attack: t.f64(),
+    defense: t.f64(),
+    dexterity: t.f64(),
+    levelRequirement: t.u32(),
+    skillRequirement: t.u32().optional(),
+    floor: t.u32(),
+    acquisitionType: t.string(),
+    acquisitionDetail: t.string(),
+    availability: t.string(),
+    sourceRefId: t.string(),
+    lastReviewedAt: t.string(),
+    candidateId: t.string(),
+  },
+);
+
+export const draftFormula = table(
+  {
+    name: 'draft_formula',
+    indexes: [
+      {
+        accessor: 'draftFormulaReleaseVersion',
+        name: 'draft_formula_release_version',
+        algorithm: 'btree',
+        columns: ['releaseVersion'],
+      },
+    ],
+  },
+  {
+    id: t.string().primaryKey(),
+    releaseVersion: t.string(),
+    formulaId: t.string(),
+    expression: t.string(),
+    units: t.string(),
+    applicability: t.string(),
+    boundaryBehavior: t.string(),
+    sourceRefId: t.string(),
+    lastReviewedAt: t.string(),
+    candidateId: t.string(),
+  },
+);
+
+export const draftSourceReference = table(
+  {
+    name: 'draft_source_reference',
+    indexes: [
+      {
+        accessor: 'draftSourceReferenceReleaseVersion',
+        name: 'draft_source_reference_release_version',
+        algorithm: 'btree',
+        columns: ['releaseVersion'],
+      },
+    ],
+  },
+  {
+    id: t.string().primaryKey(),
+    releaseVersion: t.string(),
+    entityKind: t.string(),
+    entityId: t.string(),
+    sourceUrl: t.string(),
+    sourceRevision: t.string(),
+    capturedAt: t.string(),
+    lastReviewedAt: t.string(),
+    candidateId: t.string(),
+  },
+);
+
+export const equipment = table(
+  {
+    name: 'equipment',
+    public: true,
+    indexes: [
+      {
+        accessor: 'equipmentReleaseVersion',
+        name: 'equipment_release_version',
+        algorithm: 'btree',
+        columns: ['releaseVersion'],
+      },
+    ],
+  },
+  {
+    id: t.string().primaryKey(),
+    releaseVersion: t.string(),
+    itemId: t.string(),
+    name: t.string(),
+    slot: t.string(),
+    weaponPaths: t.string(),
+    attack: t.f64(),
+    defense: t.f64(),
+    dexterity: t.f64(),
+    levelRequirement: t.u32(),
+    skillRequirement: t.u32().optional(),
+    floor: t.u32(),
+    acquisitionType: t.string(),
+    acquisitionDetail: t.string(),
+    availability: t.string(),
+    sourceRefId: t.string(),
+    lastReviewedAt: t.string(),
+  },
+);
+
+export const formula = table(
+  {
+    name: 'formula',
+    public: true,
+    indexes: [
+      {
+        accessor: 'formulaReleaseVersion',
+        name: 'formula_release_version',
+        algorithm: 'btree',
+        columns: ['releaseVersion'],
+      },
+    ],
+  },
+  {
+    id: t.string().primaryKey(),
+    releaseVersion: t.string(),
+    formulaId: t.string(),
+    expression: t.string(),
+    units: t.string(),
+    applicability: t.string(),
+    boundaryBehavior: t.string(),
+    sourceRefId: t.string(),
+    lastReviewedAt: t.string(),
+  },
+);
+
+export const sourceReference = table(
+  {
+    name: 'source_reference',
+    public: true,
+    indexes: [
+      {
+        accessor: 'sourceReferenceReleaseVersion',
+        name: 'source_reference_release_version',
+        algorithm: 'btree',
+        columns: ['releaseVersion'],
+      },
+    ],
+  },
+  {
+    id: t.string().primaryKey(),
+    releaseVersion: t.string(),
+    entityKind: t.string(),
+    entityId: t.string(),
+    sourceUrl: t.string(),
+    sourceRevision: t.string(),
+    capturedAt: t.string(),
+    lastReviewedAt: t.string(),
+  },
+);
+
 const spacetimedb = schema({
   appConfig,
   datasetRelease,
@@ -255,6 +503,17 @@ const spacetimedb = schema({
   sharedBuild,
   sharedBuildEquipment,
   sharedBuildOwnedItem,
+  curatorRole,
+  wikiSourceState,
+  wikiCandidate,
+  reviewDecision,
+  releaseDraft,
+  draftEquipment,
+  draftFormula,
+  draftSourceReference,
+  equipment,
+  formula,
+  sourceReference,
 });
 
 export type AppSchema = (typeof spacetimedb)['schemaType'];

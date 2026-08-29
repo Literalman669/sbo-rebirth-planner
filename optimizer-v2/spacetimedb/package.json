@@ -6,7 +6,7 @@
   "scripts": {
     "build": "spacetime build --module-path .",
     "typecheck": "tsc --noEmit --pretty false",
-    "test:unit": "vitest run src/validation.test.ts"
+    "test:unit": "vitest run"
   },
   "dependencies": {
     "@sbo/optimizer-v2": "file:..",

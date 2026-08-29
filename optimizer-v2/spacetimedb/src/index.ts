@@ -16,6 +16,25 @@ export {
   myRevisionOwnedItems,
 } from './playerViews';
 export { createBuildShare, revokeBuildShare } from './sharing';
+export {
+  createReleaseDraft,
+  grantCurator,
+  recordReviewDecision,
+  removeDraftEquipment,
+  revokeCurator,
+  upsertDraftEquipment,
+  upsertDraftFormula,
+  upsertDraftSourceReference,
+} from './curationReducers';
+export {
+  myCuratorAccess,
+  myDraftEquipment,
+  myDraftFormulas,
+  myDraftSourceReferences,
+  myReleaseDrafts,
+  myReviewDecisions,
+  myWikiCandidates,
+} from './curationViews';
 
 export const init = spacetimedb.init((ctx) => {
   ctx.db.appConfig.insert({ ownerIdentity: ctx.sender });

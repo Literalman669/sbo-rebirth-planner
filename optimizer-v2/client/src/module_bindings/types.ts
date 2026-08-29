@@ -84,6 +84,19 @@ export const CloudProfileInput = __t.object("CloudProfileInput", {
 });
 export type CloudProfileInput = __Infer<typeof CloudProfileInput>;
 
+export const CuratorAccess = __t.object("CuratorAccess", {
+  identity: __t.identity(),
+  access: __t.string(),
+});
+export type CuratorAccess = __Infer<typeof CuratorAccess>;
+
+export const CuratorRole = __t.object("CuratorRole", {
+  identity: __t.identity(),
+  grantedBy: __t.identity(),
+  grantedAt: __t.timestamp(),
+});
+export type CuratorRole = __Infer<typeof CuratorRole>;
+
 export const DatasetRelease = __t.object("DatasetRelease", {
   id: __t.u64(),
   version: __t.string(),
@@ -95,20 +108,146 @@ export const DatasetRelease = __t.object("DatasetRelease", {
 });
 export type DatasetRelease = __Infer<typeof DatasetRelease>;
 
+export const DraftEquipment = __t.object("DraftEquipment", {
+  id: __t.string(),
+  releaseVersion: __t.string(),
+  itemId: __t.string(),
+  name: __t.string(),
+  slot: __t.string(),
+  weaponPaths: __t.string(),
+  attack: __t.f64(),
+  defense: __t.f64(),
+  dexterity: __t.f64(),
+  levelRequirement: __t.u32(),
+  skillRequirement: __t.option(__t.u32()),
+  floor: __t.u32(),
+  acquisitionType: __t.string(),
+  acquisitionDetail: __t.string(),
+  availability: __t.string(),
+  sourceRefId: __t.string(),
+  lastReviewedAt: __t.string(),
+  candidateId: __t.string(),
+});
+export type DraftEquipment = __Infer<typeof DraftEquipment>;
+
+export const DraftFormula = __t.object("DraftFormula", {
+  id: __t.string(),
+  releaseVersion: __t.string(),
+  formulaId: __t.string(),
+  expression: __t.string(),
+  units: __t.string(),
+  applicability: __t.string(),
+  boundaryBehavior: __t.string(),
+  sourceRefId: __t.string(),
+  lastReviewedAt: __t.string(),
+  candidateId: __t.string(),
+});
+export type DraftFormula = __Infer<typeof DraftFormula>;
+
+export const DraftSourceReference = __t.object("DraftSourceReference", {
+  id: __t.string(),
+  releaseVersion: __t.string(),
+  entityKind: __t.string(),
+  entityId: __t.string(),
+  sourceUrl: __t.string(),
+  sourceRevision: __t.string(),
+  capturedAt: __t.string(),
+  lastReviewedAt: __t.string(),
+  candidateId: __t.string(),
+});
+export type DraftSourceReference = __Infer<typeof DraftSourceReference>;
+
+export const Equipment = __t.object("Equipment", {
+  id: __t.string(),
+  releaseVersion: __t.string(),
+  itemId: __t.string(),
+  name: __t.string(),
+  slot: __t.string(),
+  weaponPaths: __t.string(),
+  attack: __t.f64(),
+  defense: __t.f64(),
+  dexterity: __t.f64(),
+  levelRequirement: __t.u32(),
+  skillRequirement: __t.option(__t.u32()),
+  floor: __t.u32(),
+  acquisitionType: __t.string(),
+  acquisitionDetail: __t.string(),
+  availability: __t.string(),
+  sourceRefId: __t.string(),
+  lastReviewedAt: __t.string(),
+});
+export type Equipment = __Infer<typeof Equipment>;
+
+export const Formula = __t.object("Formula", {
+  id: __t.string(),
+  releaseVersion: __t.string(),
+  formulaId: __t.string(),
+  expression: __t.string(),
+  units: __t.string(),
+  applicability: __t.string(),
+  boundaryBehavior: __t.string(),
+  sourceRefId: __t.string(),
+  lastReviewedAt: __t.string(),
+});
+export type Formula = __Infer<typeof Formula>;
+
 export const MyBuildRevisions = __t.object("MyBuildRevisions", {});
 export type MyBuildRevisions = __Infer<typeof MyBuildRevisions>;
 
 export const MyBuilds = __t.object("MyBuilds", {});
 export type MyBuilds = __Infer<typeof MyBuilds>;
 
+export const MyCuratorAccess = __t.object("MyCuratorAccess", {});
+export type MyCuratorAccess = __Infer<typeof MyCuratorAccess>;
+
+export const MyDraftEquipment = __t.object("MyDraftEquipment", {});
+export type MyDraftEquipment = __Infer<typeof MyDraftEquipment>;
+
+export const MyDraftFormulas = __t.object("MyDraftFormulas", {});
+export type MyDraftFormulas = __Infer<typeof MyDraftFormulas>;
+
+export const MyDraftSourceReferences = __t.object("MyDraftSourceReferences", {});
+export type MyDraftSourceReferences = __Infer<typeof MyDraftSourceReferences>;
+
 export const MyProfile = __t.object("MyProfile", {});
 export type MyProfile = __Infer<typeof MyProfile>;
+
+export const MyReleaseDrafts = __t.object("MyReleaseDrafts", {});
+export type MyReleaseDrafts = __Infer<typeof MyReleaseDrafts>;
+
+export const MyReviewDecisions = __t.object("MyReviewDecisions", {});
+export type MyReviewDecisions = __Infer<typeof MyReviewDecisions>;
 
 export const MyRevisionEquipment = __t.object("MyRevisionEquipment", {});
 export type MyRevisionEquipment = __Infer<typeof MyRevisionEquipment>;
 
 export const MyRevisionOwnedItems = __t.object("MyRevisionOwnedItems", {});
 export type MyRevisionOwnedItems = __Infer<typeof MyRevisionOwnedItems>;
+
+export const MyWikiCandidates = __t.object("MyWikiCandidates", {});
+export type MyWikiCandidates = __Infer<typeof MyWikiCandidates>;
+
+export const ReleaseDraft = __t.object("ReleaseDraft", {
+  version: __t.string(),
+  createdBy: __t.identity(),
+  formulaSetVersion: __t.string(),
+  sourceSummary: __t.string(),
+  lastReviewedAt: __t.string(),
+  status: __t.string(),
+  createdAt: __t.timestamp(),
+  updatedAt: __t.timestamp(),
+});
+export type ReleaseDraft = __Infer<typeof ReleaseDraft>;
+
+export const ReviewDecision = __t.object("ReviewDecision", {
+  id: __t.string(),
+  candidateId: __t.string(),
+  curator: __t.identity(),
+  decision: __t.string(),
+  note: __t.string(),
+  createdAt: __t.timestamp(),
+});
+export type ReviewDecision = __Infer<typeof ReviewDecision>;
 
 export const RevisionEquipment = __t.object("RevisionEquipment", {
   id: __t.string(),
@@ -161,6 +300,18 @@ export const SharedBuildOwnedItem = __t.object("SharedBuildOwnedItem", {
 });
 export type SharedBuildOwnedItem = __Infer<typeof SharedBuildOwnedItem>;
 
+export const SourceReference = __t.object("SourceReference", {
+  id: __t.string(),
+  releaseVersion: __t.string(),
+  entityKind: __t.string(),
+  entityId: __t.string(),
+  sourceUrl: __t.string(),
+  sourceRevision: __t.string(),
+  capturedAt: __t.string(),
+  lastReviewedAt: __t.string(),
+});
+export type SourceReference = __Infer<typeof SourceReference>;
+
 export const UserProfile = __t.object("UserProfile", {
   identity: __t.identity(),
   guestImportCompletedAt: __t.option(__t.timestamp()),
@@ -168,4 +319,23 @@ export const UserProfile = __t.object("UserProfile", {
   updatedAt: __t.timestamp(),
 });
 export type UserProfile = __Infer<typeof UserProfile>;
+
+export const WikiCandidate = __t.object("WikiCandidate", {
+  id: __t.string(),
+  pageTitle: __t.string(),
+  sourceUrl: __t.string(),
+  revisionId: __t.string(),
+  revisionTimestamp: __t.string(),
+  content: __t.string(),
+  status: __t.string(),
+  createdAt: __t.timestamp(),
+});
+export type WikiCandidate = __Infer<typeof WikiCandidate>;
+
+export const WikiSourceState = __t.object("WikiSourceState", {
+  pageTitle: __t.string(),
+  lastRevisionId: __t.string(),
+  lastCheckedAt: __t.timestamp(),
+});
+export type WikiSourceState = __Infer<typeof WikiSourceState>;
 

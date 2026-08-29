@@ -37,23 +37,41 @@ import {
 import CompleteGuestImportReducer from "./complete_guest_import_reducer";
 import ConfigureAuthReducer from "./configure_auth_reducer";
 import CreateBuildShareReducer from "./create_build_share_reducer";
+import CreateReleaseDraftReducer from "./create_release_draft_reducer";
 import DeleteBuildReducer from "./delete_build_reducer";
+import GrantCuratorReducer from "./grant_curator_reducer";
+import RecordReviewDecisionReducer from "./record_review_decision_reducer";
+import RemoveDraftEquipmentReducer from "./remove_draft_equipment_reducer";
 import RestoreBuildRevisionReducer from "./restore_build_revision_reducer";
 import RevokeBuildShareReducer from "./revoke_build_share_reducer";
+import RevokeCuratorReducer from "./revoke_curator_reducer";
 import SaveBuildRevisionReducer from "./save_build_revision_reducer";
+import UpsertDraftEquipmentReducer from "./upsert_draft_equipment_reducer";
+import UpsertDraftFormulaReducer from "./upsert_draft_formula_reducer";
+import UpsertDraftSourceReferenceReducer from "./upsert_draft_source_reference_reducer";
 
 // Import all procedure arg schemas
 
 // Import all table schema definitions
 import DatasetReleaseRow from "./dataset_release_table";
+import EquipmentRow from "./equipment_table";
+import FormulaRow from "./formula_table";
 import MyBuildRevisionsRow from "./my_build_revisions_table";
 import MyBuildsRow from "./my_builds_table";
+import MyCuratorAccessRow from "./my_curator_access_table";
+import MyDraftEquipmentRow from "./my_draft_equipment_table";
+import MyDraftFormulasRow from "./my_draft_formulas_table";
+import MyDraftSourceReferencesRow from "./my_draft_source_references_table";
 import MyProfileRow from "./my_profile_table";
+import MyReleaseDraftsRow from "./my_release_drafts_table";
+import MyReviewDecisionsRow from "./my_review_decisions_table";
 import MyRevisionEquipmentRow from "./my_revision_equipment_table";
 import MyRevisionOwnedItemsRow from "./my_revision_owned_items_table";
+import MyWikiCandidatesRow from "./my_wiki_candidates_table";
 import SharedBuildRow from "./shared_build_table";
 import SharedBuildEquipmentRow from "./shared_build_equipment_table";
 import SharedBuildOwnedItemRow from "./shared_build_owned_item_table";
+import SourceReferenceRow from "./source_reference_table";
 
 /** Type-only namespace exports for generated type groups. */
 
@@ -74,6 +92,34 @@ const tablesSchema = __schema({
       { name: 'dataset_release_version_key', constraint: 'unique', columns: ['version'] },
     ],
   }, DatasetReleaseRow),
+  equipment: __table({
+    name: 'equipment',
+    indexes: [
+      { accessor: 'id', name: 'equipment_id_idx_btree', algorithm: 'btree', columns: [
+        'id',
+      ] },
+      { accessor: 'equipmentReleaseVersion', name: 'equipment_release_version_idx_btree', algorithm: 'btree', columns: [
+        'releaseVersion',
+      ] },
+    ],
+    constraints: [
+      { name: 'equipment_id_key', constraint: 'unique', columns: ['id'] },
+    ],
+  }, EquipmentRow),
+  formula: __table({
+    name: 'formula',
+    indexes: [
+      { accessor: 'id', name: 'formula_id_idx_btree', algorithm: 'btree', columns: [
+        'id',
+      ] },
+      { accessor: 'formulaReleaseVersion', name: 'formula_release_version_idx_btree', algorithm: 'btree', columns: [
+        'releaseVersion',
+      ] },
+    ],
+    constraints: [
+      { name: 'formula_id_key', constraint: 'unique', columns: ['id'] },
+    ],
+  }, FormulaRow),
   sharedBuild: __table({
     name: 'shared_build',
     indexes: [
@@ -113,6 +159,20 @@ const tablesSchema = __schema({
       { name: 'shared_build_owned_item_id_key', constraint: 'unique', columns: ['id'] },
     ],
   }, SharedBuildOwnedItemRow),
+  sourceReference: __table({
+    name: 'source_reference',
+    indexes: [
+      { accessor: 'id', name: 'source_reference_id_idx_btree', algorithm: 'btree', columns: [
+        'id',
+      ] },
+      { accessor: 'sourceReferenceReleaseVersion', name: 'source_reference_release_version_idx_btree', algorithm: 'btree', columns: [
+        'releaseVersion',
+      ] },
+    ],
+    constraints: [
+      { name: 'source_reference_id_key', constraint: 'unique', columns: ['id'] },
+    ],
+  }, SourceReferenceRow),
   myBuildRevisions: __table({
     name: 'my_build_revisions',
     indexes: [
@@ -127,6 +187,34 @@ const tablesSchema = __schema({
     constraints: [
     ],
   }, MyBuildsRow),
+  myCuratorAccess: __table({
+    name: 'my_curator_access',
+    indexes: [
+    ],
+    constraints: [
+    ],
+  }, MyCuratorAccessRow),
+  myDraftEquipment: __table({
+    name: 'my_draft_equipment',
+    indexes: [
+    ],
+    constraints: [
+    ],
+  }, MyDraftEquipmentRow),
+  myDraftFormulas: __table({
+    name: 'my_draft_formulas',
+    indexes: [
+    ],
+    constraints: [
+    ],
+  }, MyDraftFormulasRow),
+  myDraftSourceReferences: __table({
+    name: 'my_draft_source_references',
+    indexes: [
+    ],
+    constraints: [
+    ],
+  }, MyDraftSourceReferencesRow),
   myProfile: __table({
     name: 'my_profile',
     indexes: [
@@ -134,6 +222,20 @@ const tablesSchema = __schema({
     constraints: [
     ],
   }, MyProfileRow),
+  myReleaseDrafts: __table({
+    name: 'my_release_drafts',
+    indexes: [
+    ],
+    constraints: [
+    ],
+  }, MyReleaseDraftsRow),
+  myReviewDecisions: __table({
+    name: 'my_review_decisions',
+    indexes: [
+    ],
+    constraints: [
+    ],
+  }, MyReviewDecisionsRow),
   myRevisionEquipment: __table({
     name: 'my_revision_equipment',
     indexes: [
@@ -148,6 +250,13 @@ const tablesSchema = __schema({
     constraints: [
     ],
   }, MyRevisionOwnedItemsRow),
+  myWikiCandidates: __table({
+    name: 'my_wiki_candidates',
+    indexes: [
+    ],
+    constraints: [
+    ],
+  }, MyWikiCandidatesRow),
 });
 
 /** The schema information for all reducers in this module. This is defined the same way as the reducers would have been defined in the server, except the body of the reducer is omitted in code generation. */
@@ -155,10 +264,18 @@ const reducersSchema = __reducers(
   __reducerSchema("complete_guest_import", CompleteGuestImportReducer),
   __reducerSchema("configure_auth", ConfigureAuthReducer),
   __reducerSchema("create_build_share", CreateBuildShareReducer),
+  __reducerSchema("create_release_draft", CreateReleaseDraftReducer),
   __reducerSchema("delete_build", DeleteBuildReducer),
+  __reducerSchema("grant_curator", GrantCuratorReducer),
+  __reducerSchema("record_review_decision", RecordReviewDecisionReducer),
+  __reducerSchema("remove_draft_equipment", RemoveDraftEquipmentReducer),
   __reducerSchema("restore_build_revision", RestoreBuildRevisionReducer),
   __reducerSchema("revoke_build_share", RevokeBuildShareReducer),
+  __reducerSchema("revoke_curator", RevokeCuratorReducer),
   __reducerSchema("save_build_revision", SaveBuildRevisionReducer),
+  __reducerSchema("upsert_draft_equipment", UpsertDraftEquipmentReducer),
+  __reducerSchema("upsert_draft_formula", UpsertDraftFormulaReducer),
+  __reducerSchema("upsert_draft_source_reference", UpsertDraftSourceReferenceReducer),
 );
 
 /** The schema information for all procedures in this module. This is defined the same way as the procedures would have been defined in the server. */
