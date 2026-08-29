@@ -1,0 +1,12 @@
+<!-- Canonical page: Dagger; revision: 26212; timestamp: 2026-06-21T05:38:53Z -->
+{| class="wikitable"
+!Equipment Name
+!Skill
+!Attack Stat
+!How to Obtain
+|-
+|[[Iron Dagger]]
+|1
+|2.5
+|Starter Inventory, [[Shops#Floor 1 Shop|Floor 1 Shop]]
+|}

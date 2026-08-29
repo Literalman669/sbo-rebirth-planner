@@ -1,0 +1,14 @@
+<!-- Canonical page: Armor; revision: 26210; timestamp: 2026-06-21T05:37:30Z -->
+{| class="wikitable"
+!Equipment Name
+!Level
+!Defense Stat
+!Dexterity Stat
+!How to Obtain
+|-
+|[[Beginner Armor]]
+|1
+|0.5
+|3
+|Starter Inventory, [[Shops#Floor 1 Shop|Floor 1 Shop]]
+|}

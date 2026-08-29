@@ -46,11 +46,13 @@ import RestoreBuildRevisionReducer from "./restore_build_revision_reducer";
 import RevokeBuildShareReducer from "./revoke_build_share_reducer";
 import RevokeCuratorReducer from "./revoke_curator_reducer";
 import SaveBuildRevisionReducer from "./save_build_revision_reducer";
+import StageWikiFixtureForLocalTestReducer from "./stage_wiki_fixture_for_local_test_reducer";
 import UpsertDraftEquipmentReducer from "./upsert_draft_equipment_reducer";
 import UpsertDraftFormulaReducer from "./upsert_draft_formula_reducer";
 import UpsertDraftSourceReferenceReducer from "./upsert_draft_source_reference_reducer";
 
 // Import all procedure arg schemas
+import * as FetchWikiCandidateProcedure from "./fetch_wiki_candidate_procedure";
 
 // Import all table schema definitions
 import DatasetReleaseRow from "./dataset_release_table";
@@ -273,6 +275,7 @@ const reducersSchema = __reducers(
   __reducerSchema("revoke_build_share", RevokeBuildShareReducer),
   __reducerSchema("revoke_curator", RevokeCuratorReducer),
   __reducerSchema("save_build_revision", SaveBuildRevisionReducer),
+  __reducerSchema("stage_wiki_fixture_for_local_test", StageWikiFixtureForLocalTestReducer),
   __reducerSchema("upsert_draft_equipment", UpsertDraftEquipmentReducer),
   __reducerSchema("upsert_draft_formula", UpsertDraftFormulaReducer),
   __reducerSchema("upsert_draft_source_reference", UpsertDraftSourceReferenceReducer),
@@ -280,6 +283,7 @@ const reducersSchema = __reducers(
 
 /** The schema information for all procedures in this module. This is defined the same way as the procedures would have been defined in the server. */
 const proceduresSchema = __procedures(
+  __procedureSchema("fetch_wiki_candidate", FetchWikiCandidateProcedure.params, FetchWikiCandidateProcedure.returnType),
 );
 
 /** The remote SpacetimeDB module schema, both runtime and type information. */

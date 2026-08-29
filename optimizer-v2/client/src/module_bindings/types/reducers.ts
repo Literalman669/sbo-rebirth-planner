@@ -18,6 +18,7 @@ import RestoreBuildRevisionReducer from "../restore_build_revision_reducer";
 import RevokeBuildShareReducer from "../revoke_build_share_reducer";
 import RevokeCuratorReducer from "../revoke_curator_reducer";
 import SaveBuildRevisionReducer from "../save_build_revision_reducer";
+import StageWikiFixtureForLocalTestReducer from "../stage_wiki_fixture_for_local_test_reducer";
 import UpsertDraftEquipmentReducer from "../upsert_draft_equipment_reducer";
 import UpsertDraftFormulaReducer from "../upsert_draft_formula_reducer";
 import UpsertDraftSourceReferenceReducer from "../upsert_draft_source_reference_reducer";
@@ -34,6 +35,7 @@ export type RestoreBuildRevisionParams = __Infer<typeof RestoreBuildRevisionRedu
 export type RevokeBuildShareParams = __Infer<typeof RevokeBuildShareReducer>;
 export type RevokeCuratorParams = __Infer<typeof RevokeCuratorReducer>;
 export type SaveBuildRevisionParams = __Infer<typeof SaveBuildRevisionReducer>;
+export type StageWikiFixtureForLocalTestParams = __Infer<typeof StageWikiFixtureForLocalTestReducer>;
 export type UpsertDraftEquipmentParams = __Infer<typeof UpsertDraftEquipmentReducer>;
 export type UpsertDraftFormulaParams = __Infer<typeof UpsertDraftFormulaReducer>;
 export type UpsertDraftSourceReferenceParams = __Infer<typeof UpsertDraftSourceReferenceReducer>;

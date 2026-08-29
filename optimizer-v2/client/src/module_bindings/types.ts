@@ -332,6 +332,13 @@ export const WikiCandidate = __t.object("WikiCandidate", {
 });
 export type WikiCandidate = __Infer<typeof WikiCandidate>;
 
+export const WikiCheckJob = __t.object("WikiCheckJob", {
+  scheduledId: __t.u64(),
+  scheduledAt: __t.scheduleAt(),
+  pageTitle: __t.string(),
+});
+export type WikiCheckJob = __Infer<typeof WikiCheckJob>;
+
 export const WikiSourceState = __t.object("WikiSourceState", {
   pageTitle: __t.string(),
   lastRevisionId: __t.string(),

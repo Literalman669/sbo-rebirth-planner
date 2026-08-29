@@ -35,6 +35,11 @@ export {
   myReviewDecisions,
   myWikiCandidates,
 } from './curationViews';
+export {
+  fetchScheduledWikiCandidate,
+  fetchWikiCandidate,
+  stageWikiFixtureForLocalTest,
+} from './wikiProcedures';
 
 export const init = spacetimedb.init((ctx) => {
   ctx.db.appConfig.insert({ ownerIdentity: ctx.sender });

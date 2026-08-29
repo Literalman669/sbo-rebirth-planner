@@ -6,5 +6,8 @@
 import { type Infer as __Infer } from "spacetimedb";
 
 // Import all procedure arg schemas
+import * as FetchWikiCandidateProcedure from "../fetch_wiki_candidate_procedure";
 
+export type FetchWikiCandidateArgs = __Infer<typeof FetchWikiCandidateProcedure.params>;
+export type FetchWikiCandidateResult = __Infer<typeof FetchWikiCandidateProcedure.returnType>;
 

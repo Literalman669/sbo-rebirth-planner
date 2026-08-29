@@ -132,3 +132,89 @@ test('owner controls curator access and private draft mutations', async ({}, tes
     disconnect(owner);
   }
 });
+
+test('stages allowlisted wiki revisions as pending candidates only', async ({}, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop', 'Procedure integration runs once.');
+  const ownerToken = process.env.SBO_TEST_OWNER_TOKEN;
+  if (!ownerToken) throw new Error('SBO_TEST_OWNER_TOKEN is required');
+
+  const owner = await connect(ownerToken);
+  const curator = await connect();
+  const ordinary = await connect();
+  try {
+    await owner.connection.reducers.configureAuth({
+      mode: 'development',
+      issuer: '',
+      audience: '',
+    });
+    await owner.connection.reducers.grantCurator({ identity: curator.identity });
+    const statsResponseBody = JSON.stringify({
+      query: {
+        pages: [
+          {
+            title: 'Stats',
+            revisions: [
+              {
+                revid: 23125,
+                timestamp: '2025-11-03T13:14:55Z',
+                slots: { main: { content: 'Stats fixture fragment' } },
+              },
+            ],
+          },
+        ],
+      },
+    });
+    await expect(
+      ordinary.connection.reducers.stageWikiFixtureForLocalTest({
+        pageTitle: 'Stats',
+        responseBody: statsResponseBody,
+      }),
+    ).rejects.toThrow(/Owner authorization required/);
+    await subscribeToCurationViews(curator);
+
+    await expect(
+      curator.connection.procedures.fetchWikiCandidate({ pageTitle: 'Admin' }),
+    ).rejects.toMatch(/allowlisted/);
+    await owner.connection.reducers.stageWikiFixtureForLocalTest({
+      pageTitle: 'Stats',
+      responseBody: statsResponseBody,
+    });
+    const candidateId = 'stats:23125';
+    await expect
+      .poll(() => [...curator.connection.db.myWikiCandidates.iter()].length)
+      .toBe(1);
+    expect([...curator.connection.db.myWikiCandidates.iter()][0]).toMatchObject({
+      id: candidateId,
+      pageTitle: 'Stats',
+      revisionId: '23125',
+      status: 'pending',
+    });
+
+    await owner.connection.reducers.stageWikiFixtureForLocalTest({
+      pageTitle: 'Stats',
+      responseBody: statsResponseBody,
+    });
+    expect([...curator.connection.db.myWikiCandidates.iter()]).toHaveLength(1);
+    await expect(
+      owner.connection.reducers.stageWikiFixtureForLocalTest({
+        pageTitle: 'Bestiary',
+        responseBody: 'x'.repeat(2_000_001),
+      }),
+    ).rejects.toThrow(/2 MB/);
+    await owner.connection.reducers.configureAuth({
+      mode: 'locked',
+      issuer: '',
+      audience: '',
+    });
+    await expect(
+      owner.connection.reducers.stageWikiFixtureForLocalTest({
+        pageTitle: 'Stats',
+        responseBody: statsResponseBody,
+      }),
+    ).rejects.toThrow(/development auth/);
+  } finally {
+    disconnect(ordinary);
+    disconnect(curator);
+    disconnect(owner);
+  }
+});

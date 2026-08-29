@@ -260,6 +260,15 @@ export const wikiSourceState = table(
   },
 );
 
+export const wikiCheckJob = table(
+  { name: 'wiki_check_job' },
+  {
+    scheduledId: t.u64().primaryKey().autoInc(),
+    scheduledAt: t.scheduleAt(),
+    pageTitle: t.string(),
+  },
+);
+
 export const wikiCandidate = table(
   {
     name: 'wiki_candidate',
@@ -505,6 +514,7 @@ const spacetimedb = schema({
   sharedBuildOwnedItem,
   curatorRole,
   wikiSourceState,
+  wikiCheckJob,
   wikiCandidate,
   reviewDecision,
   releaseDraft,
