@@ -89,15 +89,17 @@ export function ResultsScreen() {
       active = false;
     };
   }, [getSnapshot, planVersion, snapshot]);
-  const effectiveSnapshot = planSnapshot ?? snapshot;
   const stale = isPlanStale(planVersion, snapshot.version);
   const plan = useMemo(
-    () => optimizeBuild(draft, effectiveSnapshot),
-    [draft, effectiveSnapshot],
+    () => (planSnapshot ? optimizeBuild(draft, planSnapshot) : null),
+    [draft, planSnapshot],
   );
   const equipmentById = useMemo(
-    () => new Map(effectiveSnapshot.equipment.map((item) => [item.id, item])),
-    [effectiveSnapshot.equipment],
+    () =>
+      planSnapshot
+        ? new Map(planSnapshot.equipment.map((item) => [item.id, item]))
+        : null,
+    [planSnapshot],
   );
 
   const submitSave = (event: FormEvent) => {
@@ -152,6 +154,8 @@ export function ResultsScreen() {
       </section>
     );
   }
+
+  if (!plan || !equipmentById) return null;
 
   return (
     <section className="planner-screen results-screen">

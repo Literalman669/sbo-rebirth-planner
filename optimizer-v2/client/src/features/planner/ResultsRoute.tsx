@@ -8,7 +8,10 @@ export function ResultsRoute() {
   const { draft, isHydrated } = useBuildDraft();
   const { snapshot } = useDataset();
   if (!isHydrated) return <p>Loading draft</p>;
-  const incomplete = firstIncompleteStep(draft, snapshot);
+  const incomplete =
+    draft.datasetVersion === snapshot.version
+      ? firstIncompleteStep(draft, snapshot)
+      : null;
   if (incomplete) return <Navigate to={incomplete} replace />;
 
   return <ResultsScreen />;

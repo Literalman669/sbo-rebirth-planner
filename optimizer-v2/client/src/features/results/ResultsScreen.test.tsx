@@ -74,7 +74,8 @@ describe('ResultsScreen', () => {
       ...bootstrapRelease,
       version: '2026.08.29.2',
       equipment: bootstrapRelease.equipment.filter(
-        (item) => item.id !== 'steel-greatsword',
+        (item) =>
+          item.id !== 'steel-greatsword' && item.id !== 'iron-greatsword',
       ),
     };
     const tree = (historicalSnapshots: readonly DatasetSnapshot[]) => (
