@@ -63,6 +63,44 @@ select {
   white-space: nowrap;
 }
 
+.app-header-row,
+.auth-control {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.app-header-row {
+  justify-content: space-between;
+}
+
+.auth-button,
+.auth-control button {
+  border: 1px solid var(--color-brass, #b79a55);
+  border-radius: 0.25rem;
+  background: rgba(10, 19, 24, 0.76);
+  color: inherit;
+  cursor: pointer;
+  padding: 0.45rem 0.85rem;
+}
+
+.auth-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.auth-control--error {
+  color: #efc8b4;
+  font-size: 0.85rem;
+}
+
+.auth-callback {
+  margin: 4rem auto;
+  max-width: 40rem;
+  padding: 2rem;
+  text-align: center;
+}
+
 ::selection {
   background: rgb(85 214 194 / 28%);
   color: var(--color-parchment);

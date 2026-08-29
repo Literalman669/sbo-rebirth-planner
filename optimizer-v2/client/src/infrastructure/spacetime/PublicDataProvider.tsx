@@ -4,9 +4,8 @@ import {
   useMemo,
   type PropsWithChildren,
 } from 'react';
-import { SpacetimeDBProvider, useTable } from 'spacetimedb/react';
+import { useTable } from 'spacetimedb/react';
 import { tables } from '../../module_bindings';
-import { createPublicConnectionBuilder } from './connection';
 import {
   parseFormulaSetVersion,
   selectCurrentRelease,
@@ -55,13 +54,7 @@ function PublicReleaseSubscription({ children }: PropsWithChildren) {
 }
 
 export function PublicDataProvider({ children }: PropsWithChildren) {
-  const builder = useMemo(() => createPublicConnectionBuilder(), []);
-
-  return (
-    <SpacetimeDBProvider connectionBuilder={builder}>
-      <PublicReleaseSubscription>{children}</PublicReleaseSubscription>
-    </SpacetimeDBProvider>
-  );
+  return <PublicReleaseSubscription>{children}</PublicReleaseSubscription>;
 }
 
 export function usePublicRelease(): PublicReleaseState {

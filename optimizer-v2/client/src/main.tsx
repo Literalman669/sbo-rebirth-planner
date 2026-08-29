@@ -6,6 +6,8 @@ import '@fontsource/cinzel/latin-600.css';
 import '@fontsource/source-sans-3/latin-400.css';
 import '@fontsource/source-sans-3/latin-600.css';
 import { BuildDraftProvider } from './app/providers/BuildDraftProvider';
+import { AuthProvider } from './app/providers/AuthProvider';
+import { CloudDataProvider } from './app/providers/CloudDataProvider';
 import { DatasetProvider } from './app/providers/DatasetProvider';
 import { appRouter } from './app/router';
 import { PublicDataProvider } from './infrastructure/spacetime/PublicDataProvider';
@@ -13,12 +15,16 @@ import './styles/global.css';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <PublicDataProvider>
-      <DatasetProvider>
-        <BuildDraftProvider>
-          <RouterProvider router={appRouter} />
-        </BuildDraftProvider>
-      </DatasetProvider>
-    </PublicDataProvider>
+    <AuthProvider>
+      <CloudDataProvider>
+        <PublicDataProvider>
+          <DatasetProvider>
+            <BuildDraftProvider>
+              <RouterProvider router={appRouter} />
+            </BuildDraftProvider>
+          </DatasetProvider>
+        </PublicDataProvider>
+      </CloudDataProvider>
+    </AuthProvider>
   </StrictMode>,
 );

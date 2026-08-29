@@ -10,6 +10,7 @@ import { EquipmentScreen } from '../features/planner/EquipmentScreen';
 import { PlannerFrame } from '../features/planner/PlannerFrame';
 import { ResultsRoute } from '../features/planner/ResultsRoute';
 import { StatsScreen } from '../features/planner/StatsScreen';
+import { AuthCallbackScreen } from '../features/auth/AuthCallbackScreen';
 
 export function createAppRoutes(
   rootElement: ReactNode = <ConnectedApp />,
@@ -20,6 +21,7 @@ export function createAppRoutes(
       element: rootElement,
       children: [
         { index: true, element: <HomeScreen /> },
+        { path: 'auth/callback', element: <AuthCallbackScreen /> },
         {
           element: <PlannerFrame />,
           children: [
