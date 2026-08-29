@@ -1,7 +1,9 @@
 import 'fake-indexeddb/auto';
+import { openDB } from 'idb';
 import { describe, expect, it } from 'vitest';
 import type { CharacterProfile } from '../../domain/build/model';
 import { createPendingRevisionQueue } from './pendingRevisionQueue';
+import { GUEST_DATABASE_VERSION } from '../storage/guestBuildStore';
 
 function profile(id: string): CharacterProfile {
   return {
@@ -53,6 +55,35 @@ describe('PendingRevisionQueue', () => {
     await queue.acknowledge('account-a', 'revision-1');
     expect(await queue.list('account-a')).toHaveLength(0);
     expect(await queue.list('account-b')).toHaveLength(1);
+  });
+
+  it('surfaces legacy unscoped revisions for an explicit account claim', async () => {
+    const databaseName = `pending-legacy-${crypto.randomUUID()}`;
+    const queue = createPendingRevisionQueue({ databaseName });
+    await queue.list(subject);
+    const database = await openDB(databaseName, GUEST_DATABASE_VERSION);
+    await database.put(
+      'pending-revisions',
+      {
+        revisionId: 'legacy-revision',
+        buildId: 'legacy-build',
+        profile: profile('legacy-build'),
+        enqueuedAt: '2026-08-29T10:00:01.000Z',
+        attempts: 2,
+      },
+      'legacy-revision',
+    );
+    database.close();
+
+    expect(await queue.listLegacyUnscoped()).toMatchObject([
+      { revisionId: 'legacy-revision', buildId: 'legacy-build' },
+    ]);
+    await queue.claimLegacyUnscoped(subject);
+
+    expect(await queue.listLegacyUnscoped()).toHaveLength(0);
+    expect(await queue.list(subject)).toMatchObject([
+      { subject, revisionId: 'legacy-revision', attempts: 2 },
+    ]);
   });
 
   it('lists pending revisions in enqueue order and acknowledges one', async () => {

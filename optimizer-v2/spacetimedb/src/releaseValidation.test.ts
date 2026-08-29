@@ -135,6 +135,24 @@ describe('validateReleaseDraft', () => {
     );
   });
 
+  it('allows verified weapon equipment from the gamepass and badge page', () => {
+    const input = validDraft();
+    const gamepassCandidate = candidate('Gamepass and Badge Equipment', '200');
+    input.candidates.push(gamepassCandidate);
+    input.sources[0] = {
+      ...input.sources[0]!,
+      sourceUrl: gamepassCandidate.sourceUrl,
+      sourceRevision: gamepassCandidate.revisionId,
+      candidateId: gamepassCandidate.id,
+    };
+    input.equipment[0] = {
+      ...input.equipment[0]!,
+      candidateId: gamepassCandidate.id,
+    };
+
+    expect(validateReleaseDraft(input)).toEqual([]);
+  });
+
   it('rejects a source revision that differs from its candidate', () => {
     const input = validDraft();
     input.sources[0] = { ...input.sources[0]!, sourceRevision: '999' };
@@ -210,6 +228,38 @@ describe('validateReleaseDraft', () => {
       sourceRevision: 'owner-gameplay-attestation:2026-08-29',
     };
     expect(validateReleaseDraft(input)).toEqual([]);
+  });
+
+  it('rejects a known-gap identifier the public dataset mapper cannot read', () => {
+    const input = validDraft();
+    input.sources.push({
+      id: 'source-gap-invalid',
+      entityKind: 'gap',
+      entityId: 'gap:two-handed:not-a-band',
+      sourceUrl: `${wiki}/Two-Handed`,
+      sourceRevision: '100',
+      candidateId: 'two-handed:100',
+    });
+
+    expect(validateReleaseDraft(input)).toContain(
+      'Source source-gap-invalid has an invalid known-gap identifier',
+    );
+  });
+
+  it('rejects a known gap sourced from the wrong candidate page', () => {
+    const input = validDraft();
+    input.sources.push({
+      id: 'source-gap-wrong-page',
+      entityKind: 'gap',
+      entityId: 'gap:two-handed:250-299',
+      sourceUrl: `${wiki}/Stats`,
+      sourceRevision: '23125',
+      candidateId: 'stats:23125',
+    });
+
+    expect(validateReleaseDraft(input)).toContain(
+      'Source source-gap-wrong-page must use the Two-Handed candidate page',
+    );
   });
 });
 

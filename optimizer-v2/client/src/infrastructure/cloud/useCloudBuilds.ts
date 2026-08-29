@@ -36,7 +36,9 @@ export type CloudBuildsState = {
   isReady: boolean;
   needsGuestImport: boolean;
   pendingCount: number;
+  legacyPendingCount: number;
   refreshPending(): Promise<void>;
+  claimLegacyPending(): Promise<void>;
   createShare(buildId: string): Promise<string>;
   revokeShare(shareId: string): Promise<void>;
 };
@@ -63,6 +65,7 @@ export function useCloudBuilds({
   };
   const selectorRef = useRef(createCloudBuildSelector());
   const [pendingCount, setPendingCount] = useState(0);
+  const [legacyPendingCount, setLegacyPendingCount] = useState(0);
 
   const reducers = useMemo<CloudReducers | undefined>(() => {
     if (
@@ -100,10 +103,21 @@ export function useCloudBuilds({
     [cloud.builds, cloud.equipment, cloud.ownedItems, cloud.revisions],
   );
   const refreshPending = useCallback(async () => {
-    setPendingCount(
-      auth.subject ? (await pendingQueue.list(auth.subject)).length : 0,
-    );
+    const [scoped, legacy] = await Promise.all([
+      auth.subject ? pendingQueue.list(auth.subject) : Promise.resolve([]),
+      pendingQueue.listLegacyUnscoped(),
+    ]);
+    setPendingCount(scoped.length);
+    setLegacyPendingCount(legacy.length);
   }, [auth.subject, pendingQueue]);
+  const claimLegacyPending = useCallback(async () => {
+    if (auth.status !== 'authenticated' || !auth.subject) {
+      throw new Error('Sign in is required to assign pending revisions');
+    }
+    await pendingQueue.claimLegacyUnscoped(auth.subject);
+    await repository.retryPending();
+    await refreshPending();
+  }, [auth.status, auth.subject, pendingQueue, refreshPending, repository]);
   const createShare = useCallback(
     async (buildId: string) => {
       if (
@@ -160,7 +174,9 @@ export function useCloudBuilds({
       cloud.isReady &&
       cloud.profiles.length === 0,
     pendingCount,
+    legacyPendingCount,
     refreshPending,
+    claimLegacyPending,
     createShare,
     revokeShare,
   };

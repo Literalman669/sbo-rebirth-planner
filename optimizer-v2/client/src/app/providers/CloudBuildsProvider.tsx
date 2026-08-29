@@ -1,4 +1,4 @@
-import { useEffect, type PropsWithChildren } from 'react';
+import { useEffect, useState, type PropsWithChildren } from 'react';
 import type { GuestBuildStore } from '../../infrastructure/storage/guestBuildStore';
 import type { PendingRevisionQueue } from '../../infrastructure/cloud/pendingRevisionQueue';
 import { useCloudBuilds } from '../../infrastructure/cloud/useCloudBuilds';
@@ -16,6 +16,7 @@ export function CloudBuildsProvider({
   pendingQueue,
 }: CloudBuildsProviderProps) {
   const cloud = useCloudBuilds({ guestStore, pendingQueue });
+  const [legacyError, setLegacyError] = useState<string | null>(null);
   const { draft, hasActiveDraft, isHydrated } = useBuildDraft();
   const isCloudEnrolled = cloud.cloudBuilds.some(
     (build) => build.profile.id === draft.id,
@@ -52,6 +53,28 @@ export function CloudBuildsProvider({
 
   return (
     <CloudBuildsContext.Provider value={cloud}>
+      {cloud.isAuthenticated && cloud.legacyPendingCount > 0 ? (
+        <aside className="dataset-warning" role="status">
+          <p>
+            An older pending cloud revision is stored without an account. Assign
+            it only if it belongs to the account you just signed into.
+          </p>
+          <button
+            type="button"
+            onClick={() => {
+              setLegacyError(null);
+              void cloud.claimLegacyPending().catch((error: unknown) =>
+                setLegacyError(
+                  error instanceof Error ? error.message : 'Assignment failed',
+                ),
+              );
+            }}
+          >
+            Assign to this account
+          </button>
+          {legacyError ? <p role="alert">{legacyError}</p> : null}
+        </aside>
+      ) : null}
       {children}
     </CloudBuildsContext.Provider>
   );

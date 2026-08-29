@@ -7,12 +7,23 @@ for (const directPath of [
   test(`recovers ${directPath} through the built GitHub Pages artifact`, async ({
     page,
   }) => {
-    await page.route('**/assets/*.js', (route) => route.abort());
+    const pageErrors: string[] = [];
+    page.on('pageerror', (error) => pageErrors.push(error.message));
     const directUrl =
       `http://127.0.0.1:4174/sbo-rebirth-planner${directPath}`;
     await page.goto(directUrl);
 
     await expect(page).toHaveURL(directUrl);
-    await expect(page.locator('#root')).toHaveCount(1);
+    await expect(
+      page.getByRole('link', { name: 'SBO:Rebirth Build Optimizer' }),
+    ).toBeVisible();
+    if (directPath.startsWith('/auth/callback')) {
+      await expect(
+        page.getByRole('heading', { name: 'Sign-in was not completed' }),
+      ).toBeVisible();
+    } else {
+      await expect(page.getByText('Loading shared build…')).toBeVisible();
+    }
+    expect(pageErrors).toEqual([]);
   });
 }

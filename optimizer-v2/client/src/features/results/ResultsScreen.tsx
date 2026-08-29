@@ -1,7 +1,10 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useBuildDraft } from '../../app/providers/BuildDraftContext';
-import { useDataset } from '../../app/providers/DatasetProvider';
+import {
+  resolveDatasetSnapshot,
+  useDataset,
+} from '../../app/providers/DatasetProvider';
 import type { EquipmentSlot, StatName } from '../../domain/build/model';
 import type { ProjectedMetrics } from '../../domain/optimizer/projections';
 import { optimizeBuild } from '../../domain/optimizer/optimizeBuild';
@@ -55,7 +58,7 @@ export function ResultsScreen() {
   const navigate = useNavigate();
   const cloud = useOptionalCloudBuilds();
   const { snapshot, getSnapshot } = useDataset();
-  const { draft, resetDraft, saveNamedBuild } = useBuildDraft();
+  const { draft, resetDraft, saveNamedBuild, updateDraft } = useBuildDraft();
   const [showSaveForm, setShowSaveForm] = useState(false);
   const [buildName, setBuildName] = useState(draft.name ?? '');
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
@@ -75,7 +78,7 @@ export function ResultsScreen() {
     setPlanSnapshot((current) =>
       current?.version === draft.datasetVersion ? current : undefined,
     );
-    void getSnapshot(draft.datasetVersion).then((resolved) => {
+    void resolveDatasetSnapshot(getSnapshot, draft.datasetVersion).then((resolved) => {
       if (active) setPlanSnapshot(resolved);
     });
     return () => {
@@ -118,6 +121,11 @@ export function ResultsScreen() {
       });
   };
 
+  const recalculateWithCurrentDataset = () => {
+    setPlanSnapshot(snapshot);
+    updateDraft({ datasetVersion: snapshot.version });
+  };
+
   if (planSnapshot === undefined) {
     return (
       <section className="planner-screen results-screen">
@@ -133,7 +141,7 @@ export function ResultsScreen() {
           Dataset {draft.datasetVersion} is unavailable.
         </h2>
         <p>The saved plan cannot be reproduced safely with a substitute release.</p>
-        <button type="button" onClick={() => setPlanSnapshot(snapshot)}>
+        <button type="button" onClick={recalculateWithCurrentDataset}>
           Recalculate with dataset {snapshot.version}
         </button>
       </section>
@@ -158,7 +166,7 @@ export function ResultsScreen() {
             This plan was created with dataset {planVersion}. A newer verified
             release is available.
           </p>
-          <button type="button" onClick={() => setPlanSnapshot(snapshot)}>
+          <button type="button" onClick={recalculateWithCurrentDataset}>
             Recalculate with dataset {snapshot.version}
           </button>
         </aside>

@@ -58,8 +58,22 @@ test('keeps the four-step optimizer routed and the beginner inputs focused', asy
 test('supports keyboard focus and reduced-motion preferences', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/');
-  await page.keyboard.press('Tab');
-  await expect(page.locator(':focus')).toBeVisible();
+  const focusedLabels: string[] = [];
+  for (let index = 0; index < 6; index += 1) {
+    await page.keyboard.press('Tab');
+    const focused = page.locator(':focus');
+    await expect(focused).toBeVisible();
+    focusedLabels.push(
+      await focused.evaluate((element) =>
+        (element.getAttribute('aria-label') ?? element.textContent ?? '').trim(),
+      ),
+    );
+    if (focusedLabels.at(-1) === 'Create Build') break;
+  }
+  expect(new Set(focusedLabels).size).toBeGreaterThanOrEqual(3);
+  expect(focusedLabels).toContain('Create Build');
+  await page.keyboard.press('Enter');
+  await expect(page).toHaveURL(/\/character$/);
 
   const transitionSeconds = await page.locator('body').evaluate((element) => {
     const duration = getComputedStyle(element).transitionDuration;

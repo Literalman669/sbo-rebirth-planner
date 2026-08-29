@@ -1,5 +1,5 @@
 import 'fake-indexeddb/auto';
-import { render, screen, within } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createMemoryRouter, RouterProvider } from 'react-router-dom';
 import { describe, expect, it } from 'vitest';
@@ -57,6 +57,7 @@ async function renderResults(snapshot?: DatasetSnapshot) {
       </BuildDraftProvider>
     </DatasetProvider>,
   );
+  return store;
 }
 
 describe('ResultsScreen', () => {
@@ -119,7 +120,7 @@ describe('ResultsScreen', () => {
 
   it('offers recalculation without silently mutating the saved dataset version', async () => {
     const user = userEvent.setup();
-    await renderResults({
+    const store = await renderResults({
       ...bootstrapRelease,
       version: '2026.08.29.2',
       publishedAt: '2026-08-29T12:00:00.000Z',
@@ -139,6 +140,8 @@ describe('ResultsScreen', () => {
 
     expect(button).not.toBeInTheDocument();
     expect(screen.queryByText('Equip Steel Greatsword now')).not.toBeInTheDocument();
-    expect(profile.datasetVersion).toBe('bootstrap-0');
+    await waitFor(async () => {
+      expect((await store.loadDraft())?.datasetVersion).toBe('2026.08.29.2');
+    });
   });
 });

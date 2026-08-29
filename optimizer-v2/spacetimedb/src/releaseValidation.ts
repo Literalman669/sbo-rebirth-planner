@@ -48,6 +48,16 @@ const canonicalWikiSourcePattern =
 const officialGameUrl =
   'https://www.roblox.com/games/4733278992/Sword-Blox-Online-Rebirth';
 const ownerAttestationPattern = /^owner-gameplay-attestation:\d{4}-\d{2}-\d{2}$/;
+const knownGapPattern =
+  /^gap:(two-handed|one-handed|rapier|dagger|dual-wield|melee):(1-49|50-99|100-149|150-199|200-249|250-299|300\+)$/;
+const gapCandidatePages: Record<string, string> = {
+  'two-handed': 'Two-Handed',
+  'one-handed': 'One-Handed',
+  rapier: 'Rapier',
+  dagger: 'Dagger',
+  'dual-wield': 'One-Handed',
+  melee: 'Melee',
+};
 
 export interface ReleaseEquipmentValidationRow {
   itemId: string;
@@ -128,22 +138,27 @@ function canonicalPageTitle(sourceUrl: string): string | undefined {
   }
 }
 
-function expectedEquipmentCandidatePage(
+function expectedEquipmentCandidatePages(
   equipment: ReleaseEquipmentValidationRow,
-): string | undefined {
-  if (equipment.slot === 'armor') return 'Armor';
-  if (equipment.slot === 'shield') return 'Shields';
-  if (equipment.slot === 'upper-head') return 'Upper Headwear';
-  if (equipment.slot === 'lower-head') return 'Lower Headwear';
+): readonly string[] {
+  const gamepassPage = 'Gamepass and Badge Equipment';
+  if (equipment.slot === 'armor') return ['Armor', gamepassPage];
+  if (equipment.slot === 'shield') return ['Shields', gamepassPage];
+  if (equipment.slot === 'upper-head') return ['Upper Headwear', gamepassPage];
+  if (equipment.slot === 'lower-head') return ['Lower Headwear', gamepassPage];
   const paths = new Set(
     equipment.weaponPaths.split(',').map((path) => path.trim()),
   );
-  if (paths.has('two-handed')) return 'Two-Handed';
-  if (paths.has('one-handed') || paths.has('dual-wield')) return 'One-Handed';
-  if (paths.has('rapier')) return 'Rapier';
-  if (paths.has('dagger')) return 'Dagger';
-  if (paths.has('melee')) return equipment.itemId === 'fists' ? 'Fists' : 'Melee';
-  return undefined;
+  if (paths.has('two-handed')) return ['Two-Handed', gamepassPage];
+  if (paths.has('one-handed') || paths.has('dual-wield')) {
+    return ['One-Handed', gamepassPage];
+  }
+  if (paths.has('rapier')) return ['Rapier', gamepassPage];
+  if (paths.has('dagger')) return ['Dagger', gamepassPage];
+  if (paths.has('melee')) {
+    return [equipment.itemId === 'fists' ? 'Fists' : 'Melee', gamepassPage];
+  }
+  return [];
 }
 
 export function validateReleaseDraft(
@@ -195,6 +210,19 @@ export function validateReleaseDraft(
         `Source ${source.id} does not match candidate ${source.candidateId}`,
       );
     }
+    if (source.entityKind === 'gap') {
+      const match = knownGapPattern.exec(source.entityId);
+      if (!match) {
+        errors.push(`Source ${source.id} has an invalid known-gap identifier`);
+      } else {
+        const expectedPage = gapCandidatePages[match[1]!];
+        if (candidate && candidate.pageTitle !== expectedPage) {
+          errors.push(
+            `Source ${source.id} must use the ${expectedPage} candidate page`,
+          );
+        }
+      }
+    }
   }
 
   const itemIds = new Set<string>();
@@ -223,10 +251,14 @@ export function validateReleaseDraft(
       errors.push(`Equipment ${equipment.itemId} candidate does not match its source`);
     }
     const candidate = candidatesById.get(equipment.candidateId);
-    const expectedPage = expectedEquipmentCandidatePage(equipment);
-    if (candidate && expectedPage && candidate.pageTitle !== expectedPage) {
+    const expectedPages = expectedEquipmentCandidatePages(equipment);
+    if (
+      candidate &&
+      expectedPages.length > 0 &&
+      !expectedPages.includes(candidate.pageTitle)
+    ) {
       errors.push(
-        `Equipment ${equipment.itemId} must use the ${expectedPage} candidate page`,
+        `Equipment ${equipment.itemId} must use the ${expectedPages[0]} candidate page`,
       );
     }
     if (

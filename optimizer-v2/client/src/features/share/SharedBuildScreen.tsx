@@ -1,7 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useTable } from 'spacetimedb/react';
-import { useDataset } from '../../app/providers/DatasetProvider';
+import {
+  resolveDatasetSnapshot,
+  useDataset,
+} from '../../app/providers/DatasetProvider';
 import type { CharacterProfile } from '../../domain/build/model';
 import { characterProfileSchema } from '../../domain/build/schema';
 import type { DatasetSnapshot } from '../../domain/dataset/model';
@@ -101,7 +104,7 @@ export function ResolvedSharedBuild({
   useEffect(() => {
     let active = true;
     setHistoricalSnapshot(undefined);
-    void getSnapshot(build.datasetVersion).then((resolved) => {
+    void resolveDatasetSnapshot(getSnapshot, build.datasetVersion).then((resolved) => {
       if (active) setHistoricalSnapshot(resolved);
     });
     return () => {

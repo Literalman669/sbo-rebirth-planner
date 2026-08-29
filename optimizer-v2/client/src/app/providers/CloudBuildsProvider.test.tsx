@@ -1,4 +1,6 @@
 import { act, render } from '@testing-library/react';
+import { screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { CharacterProfile } from '../../domain/build/model';
 import { CloudBuildsProvider } from './CloudBuildsProvider';
@@ -25,6 +27,8 @@ const cloud = vi.hoisted(() => ({
   refreshPending: vi.fn(async () => undefined),
   needsGuestImport: false,
   cloudBuilds: [] as Array<{ profile: CharacterProfile; headRevisionId: string }>,
+  legacyPendingCount: 0,
+  claimLegacyPending: vi.fn(async () => undefined),
 }));
 
 vi.mock('../../infrastructure/cloud/useCloudBuilds', () => ({
@@ -41,6 +45,8 @@ vi.mock('../../infrastructure/cloud/useCloudBuilds', () => ({
     isReady: true,
     needsGuestImport: cloud.needsGuestImport,
     pendingCount: 0,
+    legacyPendingCount: cloud.legacyPendingCount,
+    claimLegacyPending: cloud.claimLegacyPending,
     refreshPending: cloud.refreshPending,
   }),
 }));
@@ -50,6 +56,7 @@ afterEach(() => {
   vi.clearAllMocks();
   cloud.needsGuestImport = false;
   cloud.cloudBuilds = [];
+  cloud.legacyPendingCount = 0;
 });
 
 describe('CloudBuildsProvider', () => {
@@ -141,5 +148,35 @@ describe('CloudBuildsProvider', () => {
     await act(async () => vi.advanceTimersByTimeAsync(1_000));
 
     expect(cloud.save).not.toHaveBeenCalled();
+  });
+
+  it('asks before assigning a legacy pending revision to the signed-in account', async () => {
+    const user = userEvent.setup();
+    cloud.legacyPendingCount = 1;
+    render(
+      <BuildDraftContext.Provider
+        value={{
+          draft: profile,
+          updateDraft: vi.fn(),
+          replaceDraft: vi.fn(),
+          saveNamedBuild: vi.fn(),
+          resetDraft: vi.fn(),
+          isHydrated: true,
+          hasActiveDraft: true,
+          storageError: null,
+          savedBuilds: [],
+          loadSavedBuild: vi.fn(),
+          deleteSavedBuild: vi.fn(),
+        }}
+      >
+        <CloudBuildsProvider>
+          <p>Planner</p>
+        </CloudBuildsProvider>
+      </BuildDraftContext.Provider>,
+    );
+
+    expect(screen.getByText(/older pending cloud revision/i)).toBeVisible();
+    await user.click(screen.getByRole('button', { name: 'Assign to this account' }));
+    expect(cloud.claimLegacyPending).toHaveBeenCalledOnce();
   });
 });

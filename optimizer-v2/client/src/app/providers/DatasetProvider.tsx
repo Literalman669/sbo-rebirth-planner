@@ -24,6 +24,17 @@ type DatasetProviderProps = PropsWithChildren<{
 
 const DatasetContext = createContext<DatasetContextValue | null>(null);
 
+export async function resolveDatasetSnapshot(
+  resolver: (version: string) => Promise<DatasetSnapshot | null>,
+  version: string,
+): Promise<DatasetSnapshot | null> {
+  try {
+    return await resolver(version);
+  } catch {
+    return null;
+  }
+}
+
 export function DatasetProvider({
   children,
   snapshot,

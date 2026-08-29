@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { bootstrapRelease } from '../../data/bootstrapRelease';
 import {
   DatasetProvider,
+  resolveDatasetSnapshot,
   useDataset,
 } from './DatasetProvider';
 
@@ -24,6 +25,15 @@ function HistoricalConsumer({ version }: { version: string }) {
 }
 
 describe('DatasetProvider', () => {
+  it('turns an unavailable cache adapter into an explicit missing snapshot', async () => {
+    await expect(
+      resolveDatasetSnapshot(
+        async () => Promise.reject(new Error('IndexedDB unavailable')),
+        '2026.08.29.1',
+      ),
+    ).resolves.toBeNull();
+  });
+
   it('exposes the validated bundled dataset', () => {
     render(
       <DatasetProvider>
