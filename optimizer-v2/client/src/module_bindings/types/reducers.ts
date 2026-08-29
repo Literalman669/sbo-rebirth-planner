@@ -8,13 +8,17 @@ import { type Infer as __Infer } from "spacetimedb";
 // Import all reducer arg schemas
 import CompleteGuestImportReducer from "../complete_guest_import_reducer";
 import ConfigureAuthReducer from "../configure_auth_reducer";
+import CreateBuildShareReducer from "../create_build_share_reducer";
 import DeleteBuildReducer from "../delete_build_reducer";
 import RestoreBuildRevisionReducer from "../restore_build_revision_reducer";
+import RevokeBuildShareReducer from "../revoke_build_share_reducer";
 import SaveBuildRevisionReducer from "../save_build_revision_reducer";
 
 export type CompleteGuestImportParams = __Infer<typeof CompleteGuestImportReducer>;
 export type ConfigureAuthParams = __Infer<typeof ConfigureAuthReducer>;
+export type CreateBuildShareParams = __Infer<typeof CreateBuildShareReducer>;
 export type DeleteBuildParams = __Infer<typeof DeleteBuildReducer>;
 export type RestoreBuildRevisionParams = __Infer<typeof RestoreBuildRevisionReducer>;
+export type RevokeBuildShareParams = __Infer<typeof RevokeBuildShareReducer>;
 export type SaveBuildRevisionParams = __Infer<typeof SaveBuildRevisionReducer>;
 

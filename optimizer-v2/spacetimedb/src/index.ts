@@ -15,6 +15,7 @@ export {
   myRevisionEquipment,
   myRevisionOwnedItems,
 } from './playerViews';
+export { createBuildShare, revokeBuildShare } from './sharing';
 
 export const init = spacetimedb.init((ctx) => {
   ctx.db.appConfig.insert({ ownerIdentity: ctx.sender });

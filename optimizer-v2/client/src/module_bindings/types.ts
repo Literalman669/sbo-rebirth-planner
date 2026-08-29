@@ -54,6 +54,14 @@ export const BuildRevision = __t.object("BuildRevision", {
 });
 export type BuildRevision = __Infer<typeof BuildRevision>;
 
+export const BuildShareOwner = __t.object("BuildShareOwner", {
+  shareId: __t.string(),
+  owner: __t.identity(),
+  buildId: __t.string(),
+  createdAt: __t.timestamp(),
+});
+export type BuildShareOwner = __Infer<typeof BuildShareOwner>;
+
 export const CloudEquipmentInput = __t.object("CloudEquipmentInput", {
   slot: __t.string(),
   itemId: __t.string(),
@@ -118,6 +126,40 @@ export const RevisionOwnedItem = __t.object("RevisionOwnedItem", {
   itemId: __t.string(),
 });
 export type RevisionOwnedItem = __Infer<typeof RevisionOwnedItem>;
+
+export const SharedBuild = __t.object("SharedBuild", {
+  shareId: __t.string(),
+  name: __t.string(),
+  schemaVersion: __t.u32(),
+  level: __t.u32(),
+  maxFloor: __t.u32(),
+  weaponPath: __t.string(),
+  goal: __t.string(),
+  weaponSkill: __t.option(__t.u32()),
+  str: __t.u32(),
+  def: __t.u32(),
+  agi: __t.u32(),
+  vit: __t.u32(),
+  luk: __t.u32(),
+  datasetVersion: __t.string(),
+  createdAt: __t.timestamp(),
+});
+export type SharedBuild = __Infer<typeof SharedBuild>;
+
+export const SharedBuildEquipment = __t.object("SharedBuildEquipment", {
+  id: __t.string(),
+  shareId: __t.string(),
+  slot: __t.string(),
+  itemId: __t.string(),
+});
+export type SharedBuildEquipment = __Infer<typeof SharedBuildEquipment>;
+
+export const SharedBuildOwnedItem = __t.object("SharedBuildOwnedItem", {
+  id: __t.string(),
+  shareId: __t.string(),
+  itemId: __t.string(),
+});
+export type SharedBuildOwnedItem = __Infer<typeof SharedBuildOwnedItem>;
 
 export const UserProfile = __t.object("UserProfile", {
   identity: __t.identity(),

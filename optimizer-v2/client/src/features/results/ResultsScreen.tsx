@@ -57,6 +57,8 @@ export function ResultsScreen() {
   const [showSaveForm, setShowSaveForm] = useState(false);
   const [buildName, setBuildName] = useState(draft.name ?? '');
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
+  const [shareId, setShareId] = useState<string | null>(null);
+  const [shareMessage, setShareMessage] = useState<string | null>(null);
   const plan = useMemo(
     () => optimizeBuild(draft, snapshot),
     [draft, snapshot],
@@ -214,7 +216,57 @@ export function ResultsScreen() {
         >
           Start another build
         </button>
+        {cloud?.isAuthenticated &&
+        cloud.cloudBuilds.some((record) => record.profile.id === draft.id) ? (
+          shareId ? (
+            <button
+              type="button"
+              onClick={() => {
+                void cloud
+                  .revokeShare(shareId)
+                  .then(() => {
+                    setShareId(null);
+                    setShareMessage('Shared link revoked');
+                  })
+                  .catch((error: unknown) =>
+                    setShareMessage(
+                      error instanceof Error ? error.message : 'Revoke failed',
+                    ),
+                  );
+              }}
+            >
+              Revoke shared link
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => {
+                void cloud
+                  .createShare(draft.id)
+                  .then((createdShareId) => {
+                    setShareId(createdShareId);
+                    setShareMessage('Read-only shared link created');
+                  })
+                  .catch((error: unknown) =>
+                    setShareMessage(
+                      error instanceof Error ? error.message : 'Share failed',
+                    ),
+                  );
+              }}
+            >
+              Share Build
+            </button>
+          )
+        ) : null}
       </div>
+      {shareId ? (
+        <p className="share-link">
+          <a href={`${import.meta.env.BASE_URL}shared/${shareId}`}>
+            Open read-only shared build
+          </a>
+        </p>
+      ) : null}
+      {shareMessage ? <p role="status">{shareMessage}</p> : null}
     </section>
   );
 }

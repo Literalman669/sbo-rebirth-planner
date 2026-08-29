@@ -154,6 +154,94 @@ export const revisionOwnedItem = table(
   },
 );
 
+export const buildShareOwner = table(
+  {
+    name: 'build_share_owner',
+    indexes: [
+      {
+        accessor: 'buildShareOwnerIdentity',
+        name: 'build_share_owner_identity',
+        algorithm: 'btree',
+        columns: ['owner'],
+      },
+      {
+        accessor: 'buildShareBuildId',
+        name: 'build_share_build_id',
+        algorithm: 'btree',
+        columns: ['buildId'],
+      },
+    ],
+  },
+  {
+    shareId: t.string().primaryKey(),
+    owner: t.identity(),
+    buildId: t.string(),
+    createdAt: t.timestamp(),
+  },
+);
+
+export const sharedBuild = table(
+  { name: 'shared_build', public: true },
+  {
+    shareId: t.string().primaryKey(),
+    name: t.string(),
+    schemaVersion: t.u32(),
+    level: t.u32(),
+    maxFloor: t.u32(),
+    weaponPath: t.string(),
+    goal: t.string(),
+    weaponSkill: t.u32().optional(),
+    str: t.u32(),
+    def: t.u32(),
+    agi: t.u32(),
+    vit: t.u32(),
+    luk: t.u32(),
+    datasetVersion: t.string(),
+    createdAt: t.timestamp(),
+  },
+);
+
+export const sharedBuildEquipment = table(
+  {
+    name: 'shared_build_equipment',
+    public: true,
+    indexes: [
+      {
+        accessor: 'sharedBuildEquipmentShareId',
+        name: 'shared_build_equipment_share_id',
+        algorithm: 'btree',
+        columns: ['shareId'],
+      },
+    ],
+  },
+  {
+    id: t.string().primaryKey(),
+    shareId: t.string(),
+    slot: t.string(),
+    itemId: t.string(),
+  },
+);
+
+export const sharedBuildOwnedItem = table(
+  {
+    name: 'shared_build_owned_item',
+    public: true,
+    indexes: [
+      {
+        accessor: 'sharedBuildOwnedItemShareId',
+        name: 'shared_build_owned_item_share_id',
+        algorithm: 'btree',
+        columns: ['shareId'],
+      },
+    ],
+  },
+  {
+    id: t.string().primaryKey(),
+    shareId: t.string(),
+    itemId: t.string(),
+  },
+);
+
 const spacetimedb = schema({
   appConfig,
   datasetRelease,
@@ -163,6 +251,10 @@ const spacetimedb = schema({
   buildRevision,
   revisionEquipment,
   revisionOwnedItem,
+  buildShareOwner,
+  sharedBuild,
+  sharedBuildEquipment,
+  sharedBuildOwnedItem,
 });
 
 export type AppSchema = (typeof spacetimedb)['schemaType'];

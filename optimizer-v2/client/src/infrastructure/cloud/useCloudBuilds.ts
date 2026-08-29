@@ -19,6 +19,7 @@ import {
   createPendingRevisionQueue,
   type PendingRevisionQueue,
 } from './pendingRevisionQueue';
+import { generateShareId } from '../../features/share/shareId';
 
 const defaultGuestStore = createGuestBuildStore();
 const defaultPendingQueue = createPendingRevisionQueue();
@@ -36,6 +37,8 @@ export type CloudBuildsState = {
   needsGuestImport: boolean;
   pendingCount: number;
   refreshPending(): Promise<void>;
+  createShare(buildId: string): Promise<string>;
+  revokeShare(shareId: string): Promise<void>;
 };
 
 export function useCloudBuilds({
@@ -97,6 +100,32 @@ export function useCloudBuilds({
   const refreshPending = useCallback(async () => {
     setPendingCount((await pendingQueue.list()).length);
   }, [pendingQueue]);
+  const createShare = useCallback(
+    async (buildId: string) => {
+      if (
+        auth.status !== 'authenticated' ||
+        !connectionState.isActive ||
+        !connection
+      ) {
+        throw new Error('Sign in is required to share a build');
+      }
+      const shareId = generateShareId();
+      await connection.reducers.createBuildShare({ buildId, shareId });
+      return shareId;
+    }, [auth.status, connection, connectionState.isActive],
+  );
+  const revokeShare = useCallback(
+    async (shareId: string) => {
+      if (
+        auth.status !== 'authenticated' ||
+        !connectionState.isActive ||
+        !connection
+      ) {
+        throw new Error('Sign in is required to revoke a share');
+      }
+      await connection.reducers.revokeBuildShare({ shareId });
+    }, [auth.status, connection, connectionState.isActive],
+  );
 
   useEffect(() => {
     void refreshPending();
@@ -128,5 +157,7 @@ export function useCloudBuilds({
       cloud.profiles.length === 0,
     pendingCount,
     refreshPending,
+    createShare,
+    revokeShare,
   };
 }

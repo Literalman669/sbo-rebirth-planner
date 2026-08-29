@@ -36,8 +36,10 @@ import {
 // Import all reducer arg schemas
 import CompleteGuestImportReducer from "./complete_guest_import_reducer";
 import ConfigureAuthReducer from "./configure_auth_reducer";
+import CreateBuildShareReducer from "./create_build_share_reducer";
 import DeleteBuildReducer from "./delete_build_reducer";
 import RestoreBuildRevisionReducer from "./restore_build_revision_reducer";
+import RevokeBuildShareReducer from "./revoke_build_share_reducer";
 import SaveBuildRevisionReducer from "./save_build_revision_reducer";
 
 // Import all procedure arg schemas
@@ -49,6 +51,9 @@ import MyBuildsRow from "./my_builds_table";
 import MyProfileRow from "./my_profile_table";
 import MyRevisionEquipmentRow from "./my_revision_equipment_table";
 import MyRevisionOwnedItemsRow from "./my_revision_owned_items_table";
+import SharedBuildRow from "./shared_build_table";
+import SharedBuildEquipmentRow from "./shared_build_equipment_table";
+import SharedBuildOwnedItemRow from "./shared_build_owned_item_table";
 
 /** Type-only namespace exports for generated type groups. */
 
@@ -69,6 +74,45 @@ const tablesSchema = __schema({
       { name: 'dataset_release_version_key', constraint: 'unique', columns: ['version'] },
     ],
   }, DatasetReleaseRow),
+  sharedBuild: __table({
+    name: 'shared_build',
+    indexes: [
+      { accessor: 'shareId', name: 'shared_build_share_id_idx_btree', algorithm: 'btree', columns: [
+        'shareId',
+      ] },
+    ],
+    constraints: [
+      { name: 'shared_build_share_id_key', constraint: 'unique', columns: ['shareId'] },
+    ],
+  }, SharedBuildRow),
+  sharedBuildEquipment: __table({
+    name: 'shared_build_equipment',
+    indexes: [
+      { accessor: 'id', name: 'shared_build_equipment_id_idx_btree', algorithm: 'btree', columns: [
+        'id',
+      ] },
+      { accessor: 'sharedBuildEquipmentShareId', name: 'shared_build_equipment_share_id_idx_btree', algorithm: 'btree', columns: [
+        'shareId',
+      ] },
+    ],
+    constraints: [
+      { name: 'shared_build_equipment_id_key', constraint: 'unique', columns: ['id'] },
+    ],
+  }, SharedBuildEquipmentRow),
+  sharedBuildOwnedItem: __table({
+    name: 'shared_build_owned_item',
+    indexes: [
+      { accessor: 'id', name: 'shared_build_owned_item_id_idx_btree', algorithm: 'btree', columns: [
+        'id',
+      ] },
+      { accessor: 'sharedBuildOwnedItemShareId', name: 'shared_build_owned_item_share_id_idx_btree', algorithm: 'btree', columns: [
+        'shareId',
+      ] },
+    ],
+    constraints: [
+      { name: 'shared_build_owned_item_id_key', constraint: 'unique', columns: ['id'] },
+    ],
+  }, SharedBuildOwnedItemRow),
   myBuildRevisions: __table({
     name: 'my_build_revisions',
     indexes: [
@@ -110,8 +154,10 @@ const tablesSchema = __schema({
 const reducersSchema = __reducers(
   __reducerSchema("complete_guest_import", CompleteGuestImportReducer),
   __reducerSchema("configure_auth", ConfigureAuthReducer),
+  __reducerSchema("create_build_share", CreateBuildShareReducer),
   __reducerSchema("delete_build", DeleteBuildReducer),
   __reducerSchema("restore_build_revision", RestoreBuildRevisionReducer),
+  __reducerSchema("revoke_build_share", RevokeBuildShareReducer),
   __reducerSchema("save_build_revision", SaveBuildRevisionReducer),
 );
 
