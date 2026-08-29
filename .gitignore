@@ -8,6 +8,7 @@ Thumbs.db
 
 # Optional local tooling folders
 .netlify
+.worktrees/
 
 # Environment and secrets
 .env
