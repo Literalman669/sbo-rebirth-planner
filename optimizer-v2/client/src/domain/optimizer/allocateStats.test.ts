@@ -58,6 +58,19 @@ describe('allocateNextTenLevels', () => {
     expect(Object.values(result.added).filter((value) => value > 0).length).toBeGreaterThanOrEqual(3);
   });
 
+  it('does not let low-level mobility gains erase a balanced defense deficit', () => {
+    const result = allocateNextTenLevels({
+      level: 8,
+      stats: { str: 14, def: 0, agi: 3, vit: 7, luk: 0 },
+      gear: { attack: 3, defense: 0.5, dexterity: 3 },
+      goal: 'balanced',
+    });
+
+    expect(result.added.def).toBeGreaterThan(0);
+    expect(result.added.agi).toBeLessThan(25);
+    expect(Object.values(result.added).filter((value) => value > 0).length).toBeGreaterThanOrEqual(3);
+  });
+
   it('lets focused goals emphasize their defining stat group', () => {
     const damage = allocateNextTenLevels({ ...standardInput, goal: 'damage' });
     const survival = allocateNextTenLevels({

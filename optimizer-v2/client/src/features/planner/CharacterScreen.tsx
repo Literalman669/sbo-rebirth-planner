@@ -1,10 +1,11 @@
 import type { ChangeEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useBuildDraft } from '../../app/providers/BuildDraftProvider';
+import { useBuildDraft } from '../../app/providers/BuildDraftContext';
 import type {
   OptimizationGoal,
   WeaponPath,
 } from '../../domain/build/model';
+import { WeaponPathIcon } from './WeaponPathIcon';
 
 const weaponPaths: Array<{ value: WeaponPath; label: string }> = [
   { value: 'two-handed', label: 'Two-Handed' },
@@ -79,7 +80,10 @@ export function CharacterScreen() {
                   updateDraft({ weaponPath: weapon.value, equipped: {} })
                 }
               />
-              <span>{weapon.label}</span>
+              <span className="weapon-icon">
+                <WeaponPathIcon path={weapon.value} />
+              </span>
+              <span className="weapon-label">{weapon.label}</span>
             </label>
           ))}
         </div>

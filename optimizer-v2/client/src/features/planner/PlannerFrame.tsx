@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
+import { StepIcon } from './StepIcon';
 
 const steps = [
   { label: 'Character', path: '/character' },
@@ -12,7 +13,11 @@ export function PlannerFrame() {
   const location = useLocation();
 
   useEffect(() => {
-    document.querySelector<HTMLElement>('[data-screen-heading]')?.focus();
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+    document
+      .querySelector<HTMLElement>('[data-screen-heading]')
+      ?.focus({ preventScroll: true });
   }, [location.pathname]);
 
   return (
@@ -25,7 +30,10 @@ export function PlannerFrame() {
                 to={step.path}
                 aria-current={location.pathname === step.path ? 'step' : undefined}
               >
-                {step.label}
+                <span className="step-marker">
+                  <StepIcon step={step.label} />
+                </span>
+                <span>{step.label}</span>
               </NavLink>
             </li>
           ))}

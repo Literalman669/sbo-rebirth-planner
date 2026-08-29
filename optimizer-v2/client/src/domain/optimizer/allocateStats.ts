@@ -6,6 +6,7 @@ import type {
 import {
   scoreMetricDelta,
   STAT_TIE_BREAK_ORDER,
+  TARGET_ALIGNMENT_WEIGHT,
   TARGET_SHARES,
 } from './goalConfig';
 import {
@@ -63,6 +64,17 @@ function targetShareCorrection(
   return clamp(1 + (desiredShare - currentShare) * 4, 0.5, 2.5);
 }
 
+function targetAlignmentBonus(
+  stats: StatBlock,
+  stat: StatName,
+  goal: OptimizationGoal,
+) {
+  const total = Math.max(sumStats(stats), 1);
+  const currentShare = stats[stat] / total;
+  const deficit = Math.max(TARGET_SHARES[goal][stat] - currentShare, 0);
+  return deficit * TARGET_ALIGNMENT_WEIGHT[goal];
+}
+
 function chooseNextStat(
   level: number,
   stats: StatBlock,
@@ -80,7 +92,8 @@ function chooseNextStat(
     const candidate = projectMetrics({ level, stats: candidateStats, gear });
     const score =
       scoreMetricDelta(current, candidate, goal) *
-      targetShareCorrection(stats, stat, goal);
+        targetShareCorrection(stats, stat, goal) +
+      targetAlignmentBonus(stats, stat, goal);
 
     if (score > bestScore) {
       bestStat = stat;

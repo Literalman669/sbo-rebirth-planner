@@ -1,7 +1,5 @@
 import {
-  createContext,
   useCallback,
-  useContext,
   useEffect,
   useMemo,
   useRef,
@@ -11,9 +9,14 @@ import {
 import type { CharacterProfile } from '../../domain/build/model';
 import {
   createGuestBuildStore,
+  type GuestBuildListResult,
   type GuestBuildStore,
 } from '../../infrastructure/storage/guestBuildStore';
 import { useDataset } from './DatasetProvider';
+import {
+  BuildDraftContext,
+  type BuildDraftContextValue,
+} from './BuildDraftContext';
 
 const defaultStore = createGuestBuildStore();
 
@@ -32,22 +35,9 @@ function createEmptyProfile(datasetVersion: string): CharacterProfile {
   };
 }
 
-export type BuildDraftContextValue = {
-  draft: CharacterProfile;
-  updateDraft(patch: Partial<CharacterProfile>): void;
-  replaceDraft(profile: CharacterProfile): void;
-  saveNamedBuild(name: string): Promise<void>;
-  resetDraft(): Promise<void>;
-  isHydrated: boolean;
-  hasActiveDraft: boolean;
-  storageError: string | null;
-};
-
 type BuildDraftProviderProps = PropsWithChildren<{
   store?: GuestBuildStore;
 }>;
-
-const BuildDraftContext = createContext<BuildDraftContextValue | null>(null);
 
 export function BuildDraftProvider({
   children,
@@ -60,6 +50,7 @@ export function BuildDraftProvider({
   const [isHydrated, setIsHydrated] = useState(false);
   const [hasActiveDraft, setHasActiveDraft] = useState(false);
   const [storageError, setStorageError] = useState<string | null>(null);
+  const [savedBuilds, setSavedBuilds] = useState<GuestBuildListResult[]>([]);
   const draftRef = useRef(draft);
   const hydratedRef = useRef(false);
   const activeDraftRef = useRef(false);
@@ -71,9 +62,9 @@ export function BuildDraftProvider({
   useEffect(() => {
     let active = true;
 
-    void store
-      .loadDraft()
-      .then((storedDraft) => {
+    void Promise.all([store.loadDraft(), store.listBuilds()])
+      .then(([storedDraft, storedBuilds]) => {
+        if (active) setSavedBuilds(storedBuilds);
         if (active && storedDraft) {
           draftRef.current = storedDraft;
           activeDraftRef.current = true;
@@ -149,6 +140,22 @@ export function BuildDraftProvider({
         id: crypto.randomUUID(),
         name: trimmedName,
       });
+      setSavedBuilds(await store.listBuilds());
+    },
+    [store],
+  );
+
+  const loadSavedBuild = useCallback((profile: CharacterProfile) => {
+    draftRef.current = profile;
+    activeDraftRef.current = true;
+    setDraft(profile);
+    setHasActiveDraft(true);
+  }, []);
+
+  const deleteSavedBuild = useCallback(
+    async (id: string) => {
+      await store.deleteBuild(id);
+      setSavedBuilds(await store.listBuilds());
     },
     [store],
   );
@@ -172,14 +179,20 @@ export function BuildDraftProvider({
       isHydrated,
       hasActiveDraft,
       storageError,
+      savedBuilds,
+      loadSavedBuild,
+      deleteSavedBuild,
     }),
     [
       draft,
       hasActiveDraft,
       isHydrated,
+      deleteSavedBuild,
+      loadSavedBuild,
       replaceDraft,
       resetDraft,
       saveNamedBuild,
+      savedBuilds,
       storageError,
       updateDraft,
     ],
@@ -190,12 +203,4 @@ export function BuildDraftProvider({
       {children}
     </BuildDraftContext.Provider>
   );
-}
-
-export function useBuildDraft(): BuildDraftContextValue {
-  const value = useContext(BuildDraftContext);
-  if (!value) {
-    throw new Error('useBuildDraft must be used inside BuildDraftProvider');
-  }
-  return value;
 }

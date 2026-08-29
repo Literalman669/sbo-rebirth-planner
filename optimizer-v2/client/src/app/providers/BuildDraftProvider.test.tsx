@@ -5,9 +5,9 @@ import type { CharacterProfile } from '../../domain/build/model';
 import { createGuestBuildStore } from '../../infrastructure/storage/guestBuildStore';
 import { DatasetProvider } from './DatasetProvider';
 import {
-  BuildDraftProvider,
   useBuildDraft,
-} from './BuildDraftProvider';
+} from './BuildDraftContext';
+import { BuildDraftProvider } from './BuildDraftProvider';
 
 function profile(): CharacterProfile {
   return {

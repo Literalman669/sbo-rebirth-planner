@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { useBuildDraft } from '../../app/providers/BuildDraftProvider';
+import { useBuildDraft } from '../../app/providers/BuildDraftContext';
 import type { StatName } from '../../domain/build/model';
 import { expectedInvestedPoints } from './completeness';
 

@@ -29,6 +29,14 @@ export const TARGET_SHARES: Record<OptimizationGoal, StatBlock> = {
   farming: { str: 0.2, def: 0.1, agi: 0.15, vit: 0.1, luk: 0.45 },
 };
 
+export const TARGET_ALIGNMENT_WEIGHT: Record<OptimizationGoal, number> = {
+  balanced: 0.025,
+  damage: 0.018,
+  survivability: 0.02,
+  mobility: 0.018,
+  farming: 0.018,
+};
+
 export const STAT_TIE_BREAK_ORDER: readonly StatName[] = [
   'str',
   'def',

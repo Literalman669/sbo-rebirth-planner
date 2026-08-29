@@ -1,8 +1,13 @@
+@import './tokens.css';
+@import './planner.css';
+
 :root {
   color-scheme: dark;
-  font-family: system-ui, sans-serif;
+  font-family: var(--font-ui);
   background: #090d11;
-  color: #eee6d2;
+  color: var(--color-parchment);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
 }
 
 * {
@@ -13,7 +18,7 @@ body {
   min-width: 320px;
   min-height: 100vh;
   margin: 0;
-  background: #090d11 url('/assets/floating-castles-desktop.png') center / cover fixed;
+  background: var(--color-void) url('/assets/floating-castles-desktop.png') center / cover fixed;
 }
 
 button,
@@ -24,17 +29,59 @@ select {
 
 .app-shell {
   min-height: 100vh;
-  padding: 2rem;
+}
+
+.app-shell > header {
+  display: flex;
+  min-height: 4.75rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  padding: 0.85rem clamp(1rem, 3vw, 3rem);
+  border-bottom: 1px solid rgb(184 149 93 / 65%);
+  background: rgb(7 11 15 / 94%);
+  box-shadow: 0 10px 30px rgb(0 0 0 / 25%);
 }
 
 .app-shell h1 {
   margin: 0;
-  font-family: Georgia, 'Times New Roman', serif;
+  font-family: var(--font-display);
+  font-size: clamp(1.05rem, 2.4vw, 1.75rem);
   font-weight: 500;
+  letter-spacing: -0.025em;
+}
+
+.app-shell h1 a {
+  color: var(--color-parchment);
+  text-decoration: none;
+}
+
+.dataset-status {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: 0.82rem;
+  white-space: nowrap;
+}
+
+::selection {
+  background: rgb(85 214 194 / 28%);
+  color: var(--color-parchment);
 }
 
 @media (max-width: 48rem) {
   body {
     background-image: url('/assets/floating-castles-mobile.png');
+    background-attachment: scroll;
+  }
+
+  .app-shell > header {
+    min-height: 4rem;
+    padding-inline: 0.85rem;
+  }
+
+  .dataset-status {
+    max-width: 9rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 }

@@ -1,6 +1,6 @@
 import { useRef, useState, type ChangeEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useBuildDraft } from '../../app/providers/BuildDraftProvider';
+import { useBuildDraft } from '../../app/providers/BuildDraftContext';
 import { useDataset } from '../../app/providers/DatasetProvider';
 import type { EquipmentSlot } from '../../domain/build/model';
 import {

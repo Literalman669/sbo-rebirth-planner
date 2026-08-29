@@ -36,12 +36,15 @@ function savedDraft(): CharacterProfile {
 
 async function renderRoute(
   path: string,
-  options: { saved?: CharacterProfile } = {},
+  options: { saved?: CharacterProfile; named?: CharacterProfile[] } = {},
 ) {
   const store = createGuestBuildStore({
     databaseName: `planner-route-${crypto.randomUUID()}`,
   });
   if (options.saved) await store.saveDraft(options.saved);
+  for (const namedBuild of options.named ?? []) {
+    await store.saveBuild(namedBuild);
+  }
   const router = createMemoryRouter(
     createAppRoutes(<App release={release} source="fallback" />),
     { initialEntries: [path] },
@@ -66,6 +69,27 @@ describe('planner routes', () => {
 
     await renderRoute('/', { saved: savedDraft() });
     expect(await screen.findByRole('button', { name: 'Resume Build' })).toBeVisible();
+  });
+
+  it('loads and deletes named builds from Home through the provider', async () => {
+    const user = userEvent.setup();
+    const namedBuild = { ...savedDraft(), id: 'named-build', name: 'Floor 2 Route' };
+    await renderRoute('/', { named: [namedBuild] });
+
+    expect(await screen.findByText('Floor 2 Route')).toBeVisible();
+    await user.click(screen.getByRole('button', { name: 'Load Floor 2 Route' }));
+    expect(
+      await screen.findByRole('heading', {
+        name: 'Tell us where your adventurer stands.',
+      }),
+    ).toBeVisible();
+    expect(screen.getByLabelText('Current Level')).toHaveValue(8);
+
+    await user.click(screen.getByRole('button', { name: 'Back' }));
+    await user.click(screen.getByRole('button', { name: 'Delete Floor 2 Route' }));
+    await waitFor(() =>
+      expect(screen.queryByText('Floor 2 Route')).not.toBeInTheDocument(),
+    );
   });
 
   it('keeps Character inputs focused on the first setup decision', async () => {
