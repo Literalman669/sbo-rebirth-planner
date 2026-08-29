@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { useBuildDraft } from '../../app/providers/BuildDraftContext';
 import {
   resolveDatasetSnapshot,
@@ -12,6 +12,7 @@ import { WeaponPathIcon } from '../planner/WeaponPathIcon';
 import { useOptionalCloudBuilds } from '../../app/providers/CloudBuildsContext';
 import { isPlanStale } from './planStaleness';
 import type { DatasetSnapshot } from '../../domain/dataset/model';
+import { firstIncompleteEquipmentStep } from '../planner/completeness';
 
 const statLabels: Array<{ key: StatName; label: string }> = [
   { key: 'str', label: 'STR' },
@@ -90,9 +91,15 @@ export function ResultsScreen() {
     };
   }, [getSnapshot, planVersion, snapshot]);
   const stale = isPlanStale(planVersion, snapshot.version);
+  const incompleteEquipment = planSnapshot
+    ? firstIncompleteEquipmentStep(draft, planSnapshot)
+    : null;
   const plan = useMemo(
-    () => (planSnapshot ? optimizeBuild(draft, planSnapshot) : null),
-    [draft, planSnapshot],
+    () =>
+      planSnapshot && !incompleteEquipment
+        ? optimizeBuild(draft, planSnapshot)
+        : null,
+    [draft, incompleteEquipment, planSnapshot],
   );
   const equipmentById = useMemo(
     () =>
@@ -153,6 +160,10 @@ export function ResultsScreen() {
         </button>
       </section>
     );
+  }
+
+  if (incompleteEquipment) {
+    return <Navigate to={incompleteEquipment} replace />;
   }
 
   if (!plan || !equipmentById) return null;

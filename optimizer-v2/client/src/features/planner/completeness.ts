@@ -39,6 +39,15 @@ export function firstIncompleteStep(
   profile: CharacterProfile,
   dataset: DatasetSnapshot,
 ): '/character' | '/stats' | '/equipment' | null {
+  return (
+    firstIncompleteProfileStep(profile) ??
+    firstIncompleteEquipmentStep(profile, dataset)
+  );
+}
+
+export function firstIncompleteProfileStep(
+  profile: CharacterProfile,
+): '/character' | '/stats' | null {
   if (
     profile.level < 1 ||
     profile.maxFloor < 1 ||
@@ -56,6 +65,13 @@ export function firstIncompleteStep(
     return '/stats';
   }
 
+  return null;
+}
+
+export function firstIncompleteEquipmentStep(
+  profile: CharacterProfile,
+  dataset: DatasetSnapshot,
+): '/equipment' | null {
   const equipmentById = new Map(
     dataset.equipment.map((item) => [item.id, item]),
   );

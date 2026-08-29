@@ -9,6 +9,8 @@ import { DatasetProvider } from '../../app/providers/DatasetProvider';
 import { createAppRoutes } from '../../app/router';
 import type { CharacterProfile } from '../../domain/build/model';
 import { createGuestBuildStore } from '../../infrastructure/storage/guestBuildStore';
+import { bootstrapRelease } from '../../data/bootstrapRelease';
+import type { DatasetSnapshot } from '../../domain/dataset/model';
 
 const release = {
   version: 'bootstrap-0',
@@ -36,7 +38,11 @@ function savedDraft(): CharacterProfile {
 
 async function renderRoute(
   path: string,
-  options: { saved?: CharacterProfile; named?: CharacterProfile[] } = {},
+  options: {
+    saved?: CharacterProfile;
+    named?: CharacterProfile[];
+    historicalSnapshots?: readonly DatasetSnapshot[];
+  } = {},
 ) {
   const store = createGuestBuildStore({
     databaseName: `planner-route-${crypto.randomUUID()}`,
@@ -51,7 +57,7 @@ async function renderRoute(
   );
 
   render(
-    <DatasetProvider>
+    <DatasetProvider historicalSnapshots={options.historicalSnapshots}>
       <BuildDraftProvider store={store}>
         <RouterProvider router={router} />
       </BuildDraftProvider>
@@ -138,6 +144,21 @@ describe('planner routes', () => {
 
   it('redirects an incomplete direct Results visit to Equipment', async () => {
     const { router } = await renderRoute('/results');
+
+    expect(await screen.findByRole('heading', { name: 'Equipment' })).toBeVisible();
+    expect(router.state.location.pathname).toBe('/equipment');
+  });
+
+  it('validates historical equipment only after its exact dataset resolves', async () => {
+    const historicalDraft = {
+      ...savedDraft(),
+      datasetVersion: bootstrapRelease.version,
+      equipped: {},
+    };
+    const { router } = await renderRoute('/results', {
+      saved: historicalDraft,
+      historicalSnapshots: [bootstrapRelease],
+    });
 
     expect(await screen.findByRole('heading', { name: 'Equipment' })).toBeVisible();
     expect(router.state.location.pathname).toBe('/equipment');
