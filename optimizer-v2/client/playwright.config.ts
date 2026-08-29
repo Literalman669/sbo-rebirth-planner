@@ -23,6 +23,7 @@ export default defineConfig({
     env: {
       VITE_SPACETIME_URI: 'http://127.0.0.1:3000',
       VITE_SPACETIME_DATABASE: 'sbo-rebirth-optimizer-v2-test',
+      VITE_TEST_AUTH_TOKEN: process.env.SBO_TEST_USER_TOKEN ?? '',
     },
   },
 });

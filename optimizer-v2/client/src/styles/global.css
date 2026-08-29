@@ -136,9 +136,28 @@ select {
 }
 
 @media (max-width: 600px) {
+  .app-shell > header {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 0.45rem;
+  }
+
   .app-header-row {
     align-items: flex-start;
     flex-direction: column;
+    width: 100%;
+  }
+
+  .auth-control {
+    justify-content: space-between;
+    width: 100%;
+  }
+
+  .dataset-status {
+    max-width: none;
+    overflow: visible;
+    text-overflow: clip;
+    white-space: normal;
   }
 }
 

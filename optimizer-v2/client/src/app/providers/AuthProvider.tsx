@@ -1,6 +1,7 @@
 import {
   useCallback,
   useMemo,
+  useState,
   type PropsWithChildren,
 } from 'react';
 import {
@@ -25,7 +26,43 @@ const guestSession: AuthSession = {
   signOut: async () => undefined,
 };
 
-type AuthProviderProps = PropsWithChildren<{ clientId?: string | null }>;
+type AuthProviderProps = PropsWithChildren<{
+  clientId?: string | null;
+  testToken?: string | null;
+}>;
+
+const testAuthStorageKey = 'sbo-rebirth-test-authenticated';
+
+function LocalTestAuthProvider({
+  children,
+  token,
+}: PropsWithChildren<{ token: string }>) {
+  const [isAuthenticated, setIsAuthenticated] = useState(
+    () => window.localStorage.getItem(testAuthStorageKey) === 'true',
+  );
+  const session = useMemo<AuthSession>(
+    () => ({
+      status: isAuthenticated ? 'authenticated' : 'guest',
+      preferredUsername: isAuthenticated ? 'Local Test Player' : undefined,
+      idToken: isAuthenticated ? token : undefined,
+      signIn: async () => {
+        window.localStorage.setItem(testAuthStorageKey, 'true');
+        setIsAuthenticated(true);
+      },
+      signOut: async () => {
+        window.localStorage.removeItem(testAuthStorageKey);
+        setIsAuthenticated(false);
+      },
+    }),
+    [isAuthenticated, token],
+  );
+
+  return (
+    <AuthSessionContext.Provider value={session}>
+      {children}
+    </AuthSessionContext.Provider>
+  );
+}
 
 function ConfiguredSession({ children }: PropsWithChildren) {
   const auth = useAuth();
@@ -90,7 +127,15 @@ function ConfiguredAuthProvider({
 export function AuthProvider({
   children,
   clientId = appEnv.spacetimeAuthClientId,
+  testToken = appEnv.testAuthToken,
 }: AuthProviderProps) {
+  if (testToken) {
+    return (
+      <LocalTestAuthProvider token={testToken}>
+        {children}
+      </LocalTestAuthProvider>
+    );
+  }
   if (!clientId) {
     return (
       <AuthSessionContext.Provider value={guestSession}>

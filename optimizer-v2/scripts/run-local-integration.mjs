@@ -96,6 +96,21 @@ try {
   ) {
     throw new Error('The local server returned an invalid publisher credential');
   }
+  const testUserIdentityResponse = await fetch(`${uri}/v1/identity`, {
+    method: 'POST',
+  });
+  if (!testUserIdentityResponse.ok) {
+    throw new Error('Failed to create the browser test identity');
+  }
+  const testUserCredential = await testUserIdentityResponse.json();
+  if (
+    typeof testUserCredential !== 'object' ||
+    testUserCredential === null ||
+    typeof testUserCredential.token !== 'string' ||
+    testUserCredential.token.length === 0
+  ) {
+    throw new Error('The local server returned an invalid browser credential');
+  }
 
   execFileSync(
     spacetimeCliExecutable,
@@ -125,6 +140,23 @@ try {
     { cwd: root, stdio: 'inherit' },
   );
 
+  const configureResponse = await fetch(
+    `${uri}/v1/database/${database}/call/configure_auth`,
+    {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${ownerCredential.token}`,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify(['development', '', '']),
+    },
+  );
+  if (!configureResponse.ok) {
+    throw new Error(
+      `Failed to configure local development auth (${configureResponse.status})`,
+    );
+  }
+
   const result = spawnSync(
     'npm',
     ['run', 'test:e2e', '--workspace', '@sbo/optimizer-client'],
@@ -135,6 +167,7 @@ try {
       env: {
         ...process.env,
         SBO_TEST_OWNER_TOKEN: ownerCredential.token,
+        SBO_TEST_USER_TOKEN: testUserCredential.token,
       },
     },
   );

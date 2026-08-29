@@ -75,6 +75,19 @@ describe('optional authentication', () => {
     ).toBeVisible();
   });
 
+  it('allows the fixed local test adapter to switch guest mode on demand', () => {
+    render(
+      <AuthProvider clientId={null} testToken="local-test-token">
+        <SessionProbe />
+        <SignInControl />
+      </AuthProvider>,
+    );
+
+    expect(screen.getByText('guest · sign-in ready')).toBeVisible();
+    fireEvent.click(screen.getByRole('button', { name: 'Sign in' }));
+    expect(screen.getByText('authenticated · sign-in ready')).toBeVisible();
+  });
+
   it('starts the configured redirect flow from the sign-in control', () => {
     render(
       <AuthProvider clientId="public-client-id">

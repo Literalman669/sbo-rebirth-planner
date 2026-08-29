@@ -68,4 +68,21 @@ describe('PendingRevisionQueue', () => {
       { revisionId: 'revision-1', attempts: 1 },
     ]);
   });
+
+  it('treats a concurrently acknowledged retry as already resolved', async () => {
+    const queue = createPendingRevisionQueue({
+      databaseName: `pending-race-${crypto.randomUUID()}`,
+    });
+    await queue.enqueue({
+      revisionId: 'revision-1',
+      buildId: 'build-a',
+      profile: profile('build-a'),
+      enqueuedAt: '2026-08-29T10:00:01.000Z',
+      attempts: 0,
+    });
+    await queue.acknowledge('revision-1');
+
+    await expect(queue.incrementAttempts('revision-1')).resolves.toBeUndefined();
+    expect(await queue.list()).toHaveLength(0);
+  });
 });

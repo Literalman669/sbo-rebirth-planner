@@ -78,6 +78,11 @@ test('enforces identity isolation and immutable revision recovery', async ({}, t
   let userASecond: TestConnection | undefined;
 
   try {
+    await owner.connection.reducers.configureAuth({
+      mode: 'locked',
+      issuer: '',
+      audience: '',
+    });
     await expect(
       userA.connection.reducers.saveBuildRevision({
         buildId: 'build-a',

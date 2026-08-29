@@ -78,12 +78,14 @@ export function createPendingRevisionQueue({
     async incrementAttempts(revisionId) {
       const database = await databasePromise;
       const transaction = database.transaction('pending-revisions', 'readwrite');
-      const current = pendingRevisionSchema.safeParse(
-        await transaction.store.get(revisionId),
-      );
-      if (!current.success) throw new Error('Pending revision not found');
+      const raw = await transaction.store.get(revisionId);
+      if (raw === undefined) {
+        await transaction.done;
+        return;
+      }
+      const current = pendingRevisionSchema.parse(raw);
       await transaction.store.put(
-        { ...current.data, attempts: current.data.attempts + 1 },
+        { ...current, attempts: current.attempts + 1 },
         revisionId,
       );
       await transaction.done;

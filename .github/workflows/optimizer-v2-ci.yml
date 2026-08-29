@@ -1,5 +1,8 @@
 name: Optimizer V2 CI
 
+permissions:
+  contents: read
+
 on:
   push:
     paths:
@@ -13,6 +16,7 @@ on:
 jobs:
   verify:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

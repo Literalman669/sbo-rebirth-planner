@@ -22,6 +22,7 @@ export function CloudBuildsProvider({
     if (
       !cloud.isAuthenticated ||
       !cloud.isReady ||
+      cloud.needsGuestImport ||
       !isHydrated ||
       !hasActiveDraft
     ) {
@@ -36,6 +37,7 @@ export function CloudBuildsProvider({
   }, [
     cloud.isAuthenticated,
     cloud.isReady,
+    cloud.needsGuestImport,
     cloud.repository,
     cloud.refreshPending,
     draft,

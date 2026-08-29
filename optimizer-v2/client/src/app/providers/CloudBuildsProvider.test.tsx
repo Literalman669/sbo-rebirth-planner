@@ -23,6 +23,7 @@ const cloud = vi.hoisted(() => ({
     location: 'cloud' as const,
   })),
   refreshPending: vi.fn(async () => undefined),
+  needsGuestImport: false,
 }));
 
 vi.mock('../../infrastructure/cloud/useCloudBuilds', () => ({
@@ -37,7 +38,7 @@ vi.mock('../../infrastructure/cloud/useCloudBuilds', () => ({
     cloudBuilds: [],
     isAuthenticated: true,
     isReady: true,
-    needsGuestImport: false,
+    needsGuestImport: cloud.needsGuestImport,
     pendingCount: 0,
     refreshPending: cloud.refreshPending,
   }),
@@ -46,6 +47,7 @@ vi.mock('../../infrastructure/cloud/useCloudBuilds', () => ({
 afterEach(() => {
   vi.useRealTimers();
   vi.clearAllMocks();
+  cloud.needsGuestImport = false;
 });
 
 describe('CloudBuildsProvider', () => {
@@ -77,5 +79,35 @@ describe('CloudBuildsProvider', () => {
 
     expect(cloud.save).toHaveBeenCalledWith(profile);
     expect(cloud.refreshPending).toHaveBeenCalledOnce();
+  });
+
+  it('pauses active-draft sync until the guest import decision is complete', async () => {
+    vi.useFakeTimers();
+    cloud.needsGuestImport = true;
+    render(
+      <BuildDraftContext.Provider
+        value={{
+          draft: profile,
+          updateDraft: vi.fn(),
+          replaceDraft: vi.fn(),
+          saveNamedBuild: vi.fn(),
+          resetDraft: vi.fn(),
+          isHydrated: true,
+          hasActiveDraft: true,
+          storageError: null,
+          savedBuilds: [],
+          loadSavedBuild: vi.fn(),
+          deleteSavedBuild: vi.fn(),
+        }}
+      >
+        <CloudBuildsProvider>
+          <p>Planner</p>
+        </CloudBuildsProvider>
+      </BuildDraftContext.Provider>,
+    );
+
+    await act(async () => vi.advanceTimersByTimeAsync(1_000));
+
+    expect(cloud.save).not.toHaveBeenCalled();
   });
 });

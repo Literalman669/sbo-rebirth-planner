@@ -43,9 +43,10 @@ export function GuestImportDialog({
                   type="checkbox"
                   checked={selected.has(build.id)}
                   onChange={(event) => {
+                    const isChecked = event.currentTarget.checked;
                     setSelected((current) => {
                       const next = new Set(current);
-                      if (event.currentTarget.checked) next.add(build.id);
+                      if (isChecked) next.add(build.id);
                       else next.delete(build.id);
                       return next;
                     });
