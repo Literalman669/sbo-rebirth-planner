@@ -1,6 +1,11 @@
 name: Deploy Optimizer V2
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - 'optimizer-v2/**'
+      - '.github/workflows/optimizer-v2-deploy.yml'
   workflow_dispatch:
 
 permissions:

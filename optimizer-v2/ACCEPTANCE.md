@@ -19,7 +19,7 @@ Evidence captured for release `2026.08.29.1` with SpacetimeDB 2.8.3.
 | 13 | Players can create and revoke owner-free public build snapshots, and historical shares recompute only with their stored dataset version. | `client/e2e/sharing-module.spec.ts`, `client/e2e/cloud-flow.spec.ts`, `client/src/features/share/SharedBuildScreen.test.tsx` | Pass |
 | 14 | The CLI, server package, client SDK, generated bindings, local tests, and CI all use SpacetimeDB 2.8.3. | `npm run check:toolchain`, generated `client/src/module_bindings/index.ts`, `.github/workflows/optimizer-v2-ci.yml` | Pass |
 | 15 | Mobile, desktop, keyboard, reduced-motion, offline, reconnect, and cross-session flows pass their planned checks. | Both Playwright projects; `client/e2e/acceptance.spec.ts`, `client/e2e/cloud-flow.spec.ts`, `client/e2e/guest-flow.spec.ts` | Pass |
-| 16 | GitHub Actions validates and deploys the Maincloud module and GitHub Pages client through separate controlled stages, including direct nested-route recovery from the built Pages artifact. | `.github/workflows/optimizer-v2-ci.yml`, `.github/workflows/optimizer-v2-deploy.yml`, `client/e2e-pages/deep-links.spec.ts`; first deploy run and production smoke check must be recorded here after deployment. | Pending first manual deployment |
+| 16 | GitHub Actions validates and deploys the Maincloud module and GitHub Pages client through separate controlled stages, including direct nested-route recovery from the built Pages artifact. | `.github/workflows/optimizer-v2-ci.yml`, `.github/workflows/optimizer-v2-deploy.yml`, `client/e2e-pages/deep-links.spec.ts`, production run `33282000719` | Pass |
 
 ## Pre-deployment regression gates
 
@@ -40,6 +40,12 @@ Evidence captured for release `2026.08.29.1` with SpacetimeDB 2.8.3.
 - Local callback: `http://localhost:5173/auth/callback`
 - GitHub Actions secret `SPACETIMEDB_LOGIN_TOKEN` and variable
   `SPACETIMEAUTH_CLIENT_ID` are configured; secret values are never recorded.
+- Successful controlled deployment: https://github.com/Literalman669/sbo-rebirth-planner/actions/runs/33282000719
+- Live client: https://literalman669.github.io/sbo-rebirth-planner/
+- Production smoke: the home page rendered release `2026.08.29.1` from the
+  live backend; Create Build reached `/character`; direct `/character` refresh
+  and `/shared/smoke-missing` both rendered correctly; no browser warnings or
+  errors were recorded.
 
 Third-party social providers remain disabled until their provider-specific
 OAuth client IDs and secrets are supplied. Magic-link email login and guest
