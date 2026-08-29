@@ -309,7 +309,7 @@ export const SourceReference = __t.object("SourceReference", {
   sourceRevision: __t.string(),
   capturedAt: __t.string(),
   lastReviewedAt: __t.string(),
-  candidateId: __t.option(__t.string()),
+  candidateId: __t.string(),
 });
 export type SourceReference = __Infer<typeof SourceReference>;
 
