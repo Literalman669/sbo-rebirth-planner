@@ -35,6 +35,8 @@ jobs:
         working-directory: optimizer-v2
       - run: npm run typecheck
         working-directory: optimizer-v2
+      - run: npm run validate:coverage
+        working-directory: optimizer-v2
       - run: spacetime build
         working-directory: optimizer-v2
       - run: spacetime generate --lang typescript --out-dir ./client/src/module_bindings --module-path ./spacetimedb --yes
