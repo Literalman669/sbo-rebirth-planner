@@ -1,10 +1,13 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import { App } from './app/App';
+import { ConnectedApp } from './app/App';
+import { PublicDataProvider } from './infrastructure/spacetime/PublicDataProvider';
 import './styles/global.css';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <App />
+    <PublicDataProvider>
+      <ConnectedApp />
+    </PublicDataProvider>
   </StrictMode>,
 );
