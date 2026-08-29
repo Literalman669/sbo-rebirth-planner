@@ -109,7 +109,10 @@ describe('parseArmorListPage', () => {
   });
 
   it('warns and excludes malformed table rows', () => {
-    const malformed = fixture('armor').replace('|3\n|Starter', '|unknown\n|Starter');
+    const malformed = fixture('armor').replace(
+      /\|3\r?\n\|Starter/,
+      '|unknown\n|Starter',
+    );
     const result = parseArmorListPage(malformed);
 
     expect(result).toHaveLength(0);
