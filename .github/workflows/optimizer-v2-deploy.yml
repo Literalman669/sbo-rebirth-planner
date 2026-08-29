@@ -78,7 +78,7 @@ jobs:
       - name: Lock production authentication
         working-directory: optimizer-v2
         run: >-
-          spacetime call sbo-rebirth-optimizer-v2 configure_auth
+          spacetime call --no-config sbo-rebirth-optimizer-v2 configure_auth
           '"production"'
           '"https://auth.spacetimedb.com/oidc"'
           "\"$SPACETIMEAUTH_CLIENT_ID\""

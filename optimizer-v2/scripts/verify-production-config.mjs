@@ -79,6 +79,7 @@ async function main() {
     'spacetime',
     [
       'sql',
+      '--no-config',
       expected.database,
       "SELECT mode, issuer, audience FROM auth_config WHERE key = 'primary'",
       '--server',
