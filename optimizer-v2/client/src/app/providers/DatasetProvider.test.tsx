@@ -1,5 +1,7 @@
+import { useEffect, useState } from 'react';
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
+import { bootstrapRelease } from '../../data/bootstrapRelease';
 import {
   DatasetProvider,
   useDataset,
@@ -8,6 +10,17 @@ import {
 function DatasetConsumer() {
   const { snapshot, source } = useDataset();
   return <p>{snapshot.version} · {source}</p>;
+}
+
+function HistoricalConsumer({ version }: { version: string }) {
+  const { getSnapshot } = useDataset();
+  const [resolved, setResolved] = useState('loading');
+  useEffect(() => {
+    void getSnapshot(version).then((snapshot) =>
+      setResolved(snapshot?.version ?? 'missing'),
+    );
+  }, [getSnapshot, version]);
+  return <p>Historical: {resolved}</p>;
 }
 
 describe('DatasetProvider', () => {
@@ -34,5 +47,19 @@ describe('DatasetProvider', () => {
       }),
     ).toBeVisible();
     expect(screen.queryByText('broken · bundled')).not.toBeInTheDocument();
+  });
+
+  it('resolves an exact historical dataset instead of substituting the current one', async () => {
+    const current = { ...bootstrapRelease, version: '2026.08.29.2' };
+    const historical = { ...bootstrapRelease, version: '2026.08.29.1' };
+    render(
+      <DatasetProvider snapshot={current} historicalSnapshots={[historical]}>
+        <HistoricalConsumer version="2026.08.29.1" />
+      </DatasetProvider>,
+    );
+
+    expect(
+      await screen.findByText('Historical: 2026.08.29.1'),
+    ).toBeVisible();
   });
 });

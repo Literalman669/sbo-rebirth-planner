@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useTable } from 'spacetimedb/react';
 import { useDataset } from '../../app/providers/DatasetProvider';
@@ -66,9 +66,94 @@ export function SharedBuildView({ profile, snapshot }: SharedBuildViewProps) {
   );
 }
 
+type SharedBuildRow = {
+  shareId: string;
+  schemaVersion: number;
+  name: string;
+  level: number;
+  maxFloor: number;
+  weaponPath: string;
+  goal: string;
+  weaponSkill?: number;
+  str: number;
+  def: number;
+  agi: number;
+  vit: number;
+  luk: number;
+  datasetVersion: string;
+};
+
+export function ResolvedSharedBuild({
+  shareId,
+  build,
+  equipment,
+  ownedItems,
+}: {
+  shareId: string;
+  build: SharedBuildRow;
+  equipment: readonly { slot: string; itemId: string }[];
+  ownedItems: readonly { itemId: string }[];
+}) {
+  const { getSnapshot } = useDataset();
+  const [historicalSnapshot, setHistoricalSnapshot] = useState<
+    DatasetSnapshot | null | undefined
+  >(undefined);
+  useEffect(() => {
+    let active = true;
+    setHistoricalSnapshot(undefined);
+    void getSnapshot(build.datasetVersion).then((resolved) => {
+      if (active) setHistoricalSnapshot(resolved);
+    });
+    return () => {
+      active = false;
+    };
+  }, [build.datasetVersion, getSnapshot]);
+
+  const parsed = characterProfileSchema.safeParse({
+    schemaVersion: build.schemaVersion,
+    id: `shared:${shareId}`,
+    name: build.name,
+    level: build.level,
+    maxFloor: build.maxFloor,
+    weaponPath: build.weaponPath,
+    goal: build.goal,
+    weaponSkill: build.weaponSkill,
+    stats: {
+      str: build.str,
+      def: build.def,
+      agi: build.agi,
+      vit: build.vit,
+      luk: build.luk,
+    },
+    equipped: Object.fromEntries(
+      equipment.map((row) => [row.slot, row.itemId]),
+    ),
+    ownedItemIds: ownedItems.map((row) => row.itemId),
+    datasetVersion: build.datasetVersion,
+  });
+  if (historicalSnapshot === undefined) {
+    return <main className="planner-screen"><p>Loading verified dataset…</p></main>;
+  }
+  if (historicalSnapshot === null) {
+    return (
+      <main className="planner-screen">
+        <h2>Verified dataset {build.datasetVersion} is unavailable.</h2>
+        <p>This snapshot cannot be recomputed safely on this app version.</p>
+      </main>
+    );
+  }
+  if (!parsed.success) {
+    return (
+      <main className="planner-screen">
+        <h2>This shared build is unavailable.</h2>
+      </main>
+    );
+  }
+  return <SharedBuildView profile={parsed.data} snapshot={historicalSnapshot} />;
+}
+
 export function SharedBuildScreen() {
   const { shareId = '' } = useParams();
-  const { snapshot } = useDataset();
   const buildQuery = useMemo(
     () => tables.sharedBuild.where((row) => row.shareId.eq(shareId)),
     [shareId],
@@ -97,43 +182,12 @@ export function SharedBuildScreen() {
       </main>
     );
   }
-  if (snapshot.version !== build.datasetVersion) {
-    return (
-      <main className="planner-screen">
-        <h2>Verified dataset {build.datasetVersion} is not bundled.</h2>
-        <p>This snapshot cannot be recomputed safely on this app version.</p>
-      </main>
-    );
-  }
-
-  const parsed = characterProfileSchema.safeParse({
-    schemaVersion: build.schemaVersion,
-    id: `shared:${shareId}`,
-    name: build.name,
-    level: build.level,
-    maxFloor: build.maxFloor,
-    weaponPath: build.weaponPath,
-    goal: build.goal,
-    weaponSkill: build.weaponSkill,
-    stats: {
-      str: build.str,
-      def: build.def,
-      agi: build.agi,
-      vit: build.vit,
-      luk: build.luk,
-    },
-    equipped: Object.fromEntries(
-      equipment.map((row) => [row.slot, row.itemId]),
-    ),
-    ownedItemIds: ownedItems.map((row) => row.itemId),
-    datasetVersion: build.datasetVersion,
-  });
-  if (!parsed.success) {
-    return (
-      <main className="planner-screen">
-        <h2>This shared build is unavailable.</h2>
-      </main>
-    );
-  }
-  return <SharedBuildView profile={parsed.data} snapshot={snapshot} />;
+  return (
+    <ResolvedSharedBuild
+      shareId={shareId}
+      build={build}
+      equipment={equipment}
+      ownedItems={ownedItems}
+    />
+  );
 }

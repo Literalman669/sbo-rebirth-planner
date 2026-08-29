@@ -1,4 +1,5 @@
 import {
+  useCallback,
   createContext,
   useContext,
   useMemo,
@@ -13,10 +14,12 @@ import type { DatasetSource } from '../../infrastructure/spacetime/datasetSelect
 export type DatasetContextValue = {
   snapshot: DatasetSnapshot;
   source: DatasetSource;
+  getSnapshot(version: string): Promise<DatasetSnapshot | null>;
 };
 
 type DatasetProviderProps = PropsWithChildren<{
   snapshot?: unknown;
+  historicalSnapshots?: readonly unknown[];
 }>;
 
 const DatasetContext = createContext<DatasetContextValue | null>(null);
@@ -24,6 +27,7 @@ const DatasetContext = createContext<DatasetContextValue | null>(null);
 export function DatasetProvider({
   children,
   snapshot,
+  historicalSnapshots = [],
 }: DatasetProviderProps) {
   const publicDataset = useOptionalPublicDataset();
   const selectedSnapshot = snapshot ?? publicDataset?.snapshot ?? fallbackRelease;
@@ -31,6 +35,25 @@ export function DatasetProvider({
   const parsed = useMemo(
     () => datasetSnapshotSchema.safeParse(selectedSnapshot),
     [selectedSnapshot],
+  );
+  const parsedHistorical = useMemo(
+    () =>
+      historicalSnapshots.flatMap((candidate) => {
+        const result = datasetSnapshotSchema.safeParse(candidate);
+        return result.success ? [result.data] : [];
+      }),
+    [historicalSnapshots],
+  );
+  const getSnapshot = useCallback(
+    async (version: string) => {
+      if (parsed.success && parsed.data.version === version) return parsed.data;
+      const historical = parsedHistorical.find(
+        (candidate) => candidate.version === version,
+      );
+      if (historical) return historical;
+      return publicDataset?.getSnapshot(version) ?? null;
+    },
+    [parsed, parsedHistorical, publicDataset],
   );
 
   if (!parsed.success) {
@@ -43,7 +66,7 @@ export function DatasetProvider({
 
   return (
     <DatasetContext.Provider
-      value={{ snapshot: parsed.data, source }}
+      value={{ snapshot: parsed.data, source, getSnapshot }}
     >
       {children}
     </DatasetContext.Provider>

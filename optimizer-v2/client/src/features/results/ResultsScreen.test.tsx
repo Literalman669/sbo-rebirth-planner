@@ -48,7 +48,10 @@ async function renderResults(snapshot?: DatasetSnapshot) {
   );
 
   render(
-    <DatasetProvider snapshot={snapshot}>
+    <DatasetProvider
+      snapshot={snapshot}
+      historicalSnapshots={[bootstrapRelease]}
+    >
       <BuildDraftProvider store={store}>
         <RouterProvider router={router} />
       </BuildDraftProvider>
@@ -120,6 +123,9 @@ describe('ResultsScreen', () => {
       ...bootstrapRelease,
       version: '2026.08.29.2',
       publishedAt: '2026-08-29T12:00:00.000Z',
+      equipment: bootstrapRelease.equipment.filter(
+        (item) => item.id !== 'steel-greatsword',
+      ),
     });
     await screen.findByRole('heading', {
       name: 'Your next ten levels, made clear.',
@@ -128,9 +134,11 @@ describe('ResultsScreen', () => {
     const button = screen.getByRole('button', {
       name: 'Recalculate with dataset 2026.08.29.2',
     });
+    expect(screen.getByText('Equip Steel Greatsword now')).toBeVisible();
     await user.click(button);
 
     expect(button).not.toBeInTheDocument();
+    expect(screen.queryByText('Equip Steel Greatsword now')).not.toBeInTheDocument();
     expect(profile.datasetVersion).toBe('bootstrap-0');
   });
 });

@@ -1,4 +1,5 @@
 import {
+  useCallback,
   createContext,
   useContext,
   useEffect,
@@ -27,6 +28,7 @@ export type PublicDatasetState = DatasetSelection & {
   release: DatasetRelease;
   isReady: boolean;
   warning: string | null;
+  getSnapshot(version: string): Promise<DatasetSnapshot | null>;
 };
 
 const bundledSnapshot = datasetSnapshotSchema.parse(fallbackRelease);
@@ -61,6 +63,9 @@ function PublicDatasetSubscription({
     source: 'bundled',
   });
   const [warning, setWarning] = useState<string | null>(null);
+  const [liveSnapshots, setLiveSnapshots] = useState<
+    ReadonlyMap<string, DatasetSnapshot>
+  >(() => new Map([[bundled.version, bundled]]));
 
   useEffect(() => {
     let active = true;
@@ -86,21 +91,33 @@ function PublicDatasetSubscription({
       );
       return;
     }
-    try {
-      const snapshot = mapPublishedRelease(
-        currentRows[0]!,
-        equipmentRows,
-        formulaRows,
-        sourceRows,
-      );
+    const mapped = new Map<string, DatasetSnapshot>();
+    for (const release of releaseRows) {
+      try {
+        const snapshot = mapPublishedRelease(
+          release,
+          equipmentRows,
+          formulaRows,
+          sourceRows,
+        );
+        mapped.set(snapshot.version, snapshot);
+        void cache.put(snapshot).catch(() => {
+          setWarning(
+            'Live data is valid, but its offline cache could not be updated.',
+          );
+        });
+      } catch {
+        // One invalid historical release must not replace or hide valid releases.
+      }
+    }
+    setLiveSnapshots(mapped);
+    const snapshot = mapped.get(currentRows[0]!.version);
+    if (snapshot) {
       setSelection((current) =>
         selectPreferredDataset(current, { snapshot, source: 'live' }),
       );
       setWarning(null);
-      void cache.put(snapshot).catch(() => {
-        setWarning('Live data is valid, but its offline cache could not be updated.');
-      });
-    } catch {
+    } else {
       setWarning(
         'Live dataset failed complete validation; using the last valid local release.',
       );
@@ -114,14 +131,26 @@ function PublicDatasetSubscription({
     sourceRows,
   ]);
 
+  const getSnapshot = useCallback(
+    async (version: string) => {
+      if (selection.snapshot.version === version) return selection.snapshot;
+      if (bundled.version === version) return bundled;
+      const live = liveSnapshots.get(version);
+      if (live) return live;
+      return cache.get(version);
+    },
+    [bundled, cache, liveSnapshots, selection.snapshot],
+  );
+
   const value = useMemo<PublicDatasetState>(
     () => ({
       ...selection,
       release: releaseFromSnapshot(selection.snapshot),
       isReady: allReady,
       warning,
+      getSnapshot,
     }),
-    [allReady, selection, warning],
+    [allReady, getSnapshot, selection, warning],
   );
   return (
     <PublicDatasetContext.Provider value={value}>

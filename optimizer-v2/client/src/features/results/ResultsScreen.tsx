@@ -8,6 +8,7 @@ import { optimizeBuild } from '../../domain/optimizer/optimizeBuild';
 import { WeaponPathIcon } from '../planner/WeaponPathIcon';
 import { useOptionalCloudBuilds } from '../../app/providers/CloudBuildsContext';
 import { isPlanStale } from './planStaleness';
+import type { DatasetSnapshot } from '../../domain/dataset/model';
 
 const statLabels: Array<{ key: StatName; label: string }> = [
   { key: 'str', label: 'STR' },
@@ -53,25 +54,44 @@ function formatDelta(delta: Partial<ProjectedMetrics>) {
 export function ResultsScreen() {
   const navigate = useNavigate();
   const cloud = useOptionalCloudBuilds();
-  const { snapshot } = useDataset();
+  const { snapshot, getSnapshot } = useDataset();
   const { draft, resetDraft, saveNamedBuild } = useBuildDraft();
   const [showSaveForm, setShowSaveForm] = useState(false);
   const [buildName, setBuildName] = useState(draft.name ?? '');
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
   const [shareId, setShareId] = useState<string | null>(null);
   const [shareMessage, setShareMessage] = useState<string | null>(null);
-  const [planVersion, setPlanVersion] = useState(draft.datasetVersion);
+  const [planSnapshot, setPlanSnapshot] = useState<
+    DatasetSnapshot | null | undefined
+  >(() => (draft.datasetVersion === snapshot.version ? snapshot : undefined));
   useEffect(() => {
-    setPlanVersion(draft.datasetVersion);
-  }, [draft.datasetVersion, draft.id]);
+    let active = true;
+    if (draft.datasetVersion === snapshot.version) {
+      setPlanSnapshot(snapshot);
+      return () => {
+        active = false;
+      };
+    }
+    setPlanSnapshot((current) =>
+      current?.version === draft.datasetVersion ? current : undefined,
+    );
+    void getSnapshot(draft.datasetVersion).then((resolved) => {
+      if (active) setPlanSnapshot(resolved);
+    });
+    return () => {
+      active = false;
+    };
+  }, [draft.datasetVersion, draft.id, getSnapshot, snapshot]);
+  const effectiveSnapshot = planSnapshot ?? snapshot;
+  const planVersion = planSnapshot?.version ?? draft.datasetVersion;
   const stale = isPlanStale(planVersion, snapshot.version);
   const plan = useMemo(
-    () => optimizeBuild(draft, snapshot),
-    [draft, snapshot],
+    () => optimizeBuild(draft, effectiveSnapshot),
+    [draft, effectiveSnapshot],
   );
   const equipmentById = useMemo(
-    () => new Map(snapshot.equipment.map((item) => [item.id, item])),
-    [snapshot.equipment],
+    () => new Map(effectiveSnapshot.equipment.map((item) => [item.id, item])),
+    [effectiveSnapshot.equipment],
   );
 
   const submitSave = (event: FormEvent) => {
@@ -98,6 +118,28 @@ export function ResultsScreen() {
       });
   };
 
+  if (planSnapshot === undefined) {
+    return (
+      <section className="planner-screen results-screen">
+        <h2 data-screen-heading tabIndex={-1}>Loading the plan's verified dataset…</h2>
+      </section>
+    );
+  }
+
+  if (planSnapshot === null) {
+    return (
+      <section className="planner-screen results-screen">
+        <h2 data-screen-heading tabIndex={-1}>
+          Dataset {draft.datasetVersion} is unavailable.
+        </h2>
+        <p>The saved plan cannot be reproduced safely with a substitute release.</p>
+        <button type="button" onClick={() => setPlanSnapshot(snapshot)}>
+          Recalculate with dataset {snapshot.version}
+        </button>
+      </section>
+    );
+  }
+
   return (
     <section className="planner-screen results-screen">
       <h2 data-screen-heading tabIndex={-1}>
@@ -116,7 +158,7 @@ export function ResultsScreen() {
             This plan was created with dataset {planVersion}. A newer verified
             release is available.
           </p>
-          <button type="button" onClick={() => setPlanVersion(snapshot.version)}>
+          <button type="button" onClick={() => setPlanSnapshot(snapshot)}>
             Recalculate with dataset {snapshot.version}
           </button>
         </aside>
