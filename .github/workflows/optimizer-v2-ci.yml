@@ -8,10 +8,12 @@ on:
     paths:
       - 'optimizer-v2/**'
       - '.github/workflows/optimizer-v2-ci.yml'
+      - '.github/workflows/optimizer-v2-deploy.yml'
   pull_request:
     paths:
       - 'optimizer-v2/**'
       - '.github/workflows/optimizer-v2-ci.yml'
+      - '.github/workflows/optimizer-v2-deploy.yml'
 
 jobs:
   verify:
@@ -48,4 +50,6 @@ jobs:
       - run: npm run test:integration
         working-directory: optimizer-v2
       - run: npm run build
+        working-directory: optimizer-v2
+      - run: npm run test:pages --workspace @sbo/optimizer-client
         working-directory: optimizer-v2

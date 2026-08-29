@@ -93,6 +93,10 @@ jobs:
         working-directory: optimizer-v2
         run: npm run build
 
+      - name: Verify GitHub Pages deep links
+        working-directory: optimizer-v2
+        run: npm run test:pages --workspace @sbo/optimizer-client
+
       - uses: actions/configure-pages@v4
 
       - uses: actions/upload-pages-artifact@v3
