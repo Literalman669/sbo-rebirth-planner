@@ -42,6 +42,7 @@ function validDraft(): ReleaseValidationInput {
         entityKind: 'gap',
         entityId: 'shared-test-source',
         sourceUrl: 'https://swordbloxonlinerebirth.fandom.com/wiki/Stats',
+        sourceRevision: '23125',
         candidateId: 'stats:23125',
       },
     ],
@@ -134,6 +135,20 @@ describe('validateReleaseDraft', () => {
     expect(validateReleaseDraft(input)).toContain(
       'Source source-stats has no accepted candidate',
     );
+  });
+
+  it('accepts the owner gameplay attestation only for points per level', () => {
+    const input = validDraft();
+    input.sources[0] = {
+      ...input.sources[0]!,
+      entityKind: 'formula',
+      entityId: 'points-per-level',
+      sourceUrl:
+        'https://www.roblox.com/games/4733278992/Sword-Blox-Online-Rebirth',
+      sourceRevision: 'owner-gameplay-attestation:2026-08-29',
+    };
+
+    expect(validateReleaseDraft(input)).toEqual([]);
   });
 });
 

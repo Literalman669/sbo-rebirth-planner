@@ -16,7 +16,8 @@
     "test:e2e": "npm run test:e2e --workspace @sbo/optimizer-client",
     "test:integration": "node scripts/run-local-integration.mjs",
     "validate:coverage": "node scripts/validate-release-coverage.mjs client/src/data/fallback-release.json",
-    "export:fallback": "tsx scripts/export-fallback-release.mjs"
+    "export:fallback": "tsx scripts/export-fallback-release.mjs",
+    "build:fallback:local": "node scripts/build-local-fallback.mjs"
   },
   "engines": {
     "node": ">=22.0.0 <23"

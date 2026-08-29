@@ -13,6 +13,9 @@ const datePattern = /^\d{4}-\d{2}-\d{2}$/;
 const releasePattern = /^\d{4}\.\d{2}\.\d{2}\.\d+$/;
 const canonicalSourcePattern =
   /^https:\/\/swordbloxonlinerebirth\.fandom\.com\/wiki\/[A-Za-z0-9_%().,'-]+$/;
+const officialGameUrl =
+  'https://www.roblox.com/games/4733278992/Sword-Blox-Online-Rebirth';
+const ownerAttestationPattern = /^owner-gameplay-attestation:\d{4}-\d{2}-\d{2}$/;
 const slots = new Set([
   'main-hand',
   'off-hand',
@@ -303,8 +306,17 @@ export const upsertDraftSourceReference = spacetimedb.reducer(
     if (!['equipment', 'formula', 'gap'].includes(row.entityKind)) {
       throw new SenderError('Source entity kind is invalid');
     }
-    if (!canonicalSourcePattern.test(row.sourceUrl)) {
-      throw new SenderError('Source URL must use the canonical wiki host');
+    const isOwnerPointsAttestation =
+      row.entityKind === 'formula' &&
+      row.entityId === 'points-per-level' &&
+      row.sourceUrl === officialGameUrl &&
+      ownerAttestationPattern.test(row.sourceRevision);
+    if (isOwnerPointsAttestation) {
+      assertOwner(ctx);
+    } else if (!canonicalSourcePattern.test(row.sourceUrl)) {
+      throw new SenderError(
+        'Source must use the canonical wiki or the owner gameplay attestation',
+      );
     }
     assertDate(row.lastReviewedAt, 'Last reviewed date');
     const current = ctx.db.draftSourceReference.id.find(row.id);

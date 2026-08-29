@@ -18,7 +18,7 @@ describe('DatasetProvider', () => {
       </DatasetProvider>,
     );
 
-    expect(screen.getByText('bootstrap-0 · bundled')).toBeVisible();
+    expect(screen.getByText('2026.08.29.1 · bundled')).toBeVisible();
   });
 
   it('blocks optimizer children when game data is invalid', () => {

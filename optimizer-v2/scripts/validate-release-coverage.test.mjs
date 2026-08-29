@@ -57,6 +57,7 @@ function completeRelease() {
       acquisitionType: 'starter',
       availability: 'always',
       sourceUrl: canonical,
+      sourceRevision: '23125',
       verificationStatus: 'verified',
     },
     {
@@ -122,7 +123,19 @@ test('rejects non-canonical formula provenance', () => {
 
   assert.ok(
     validateReleaseCoverage(release).includes(
-      'Formula points-per-level is not canonically sourced',
+      'Formula points-per-level does not have approved provenance',
     ),
   );
+});
+
+test('accepts the owner gameplay attestation for points per level', () => {
+  const release = completeRelease();
+  release.formulas[0] = {
+    ...release.formulas[0],
+    sourceUrl:
+      'https://www.roblox.com/games/4733278992/Sword-Blox-Online-Rebirth',
+    sourceRevision: 'owner-gameplay-attestation:2026-08-29',
+  };
+
+  assert.deepEqual(validateReleaseCoverage(release), []);
 });

@@ -7,7 +7,7 @@ import {
   type PropsWithChildren,
 } from 'react';
 import { useTable } from 'spacetimedb/react';
-import { bootstrapRelease } from '../../data/bootstrapRelease';
+import { fallbackRelease } from '../../data/fallbackRelease';
 import type { DatasetSnapshot } from '../../domain/dataset/model';
 import { datasetSnapshotSchema } from '../../domain/dataset/schema';
 import { tables } from '../../module_bindings';
@@ -29,7 +29,7 @@ export type PublicDatasetState = DatasetSelection & {
   warning: string | null;
 };
 
-const bundledSnapshot = datasetSnapshotSchema.parse(bootstrapRelease);
+const bundledSnapshot = datasetSnapshotSchema.parse(fallbackRelease);
 const PublicDatasetContext = createContext<PublicDatasetState | null>(null);
 
 function releaseFromSnapshot(snapshot: DatasetSnapshot): DatasetRelease {

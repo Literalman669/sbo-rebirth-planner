@@ -45,6 +45,9 @@ const availabilityValues = new Set([
 ]);
 const canonicalWikiSourcePattern =
   /^https:\/\/swordbloxonlinerebirth\.fandom\.com\/wiki\/[A-Za-z0-9_%().,'-]+$/;
+const officialGameUrl =
+  'https://www.roblox.com/games/4733278992/Sword-Blox-Online-Rebirth';
+const ownerAttestationPattern = /^owner-gameplay-attestation:\d{4}-\d{2}-\d{2}$/;
 
 export interface ReleaseEquipmentValidationRow {
   itemId: string;
@@ -73,6 +76,7 @@ export interface ReleaseSourceValidationRow {
   entityKind: string;
   entityId: string;
   sourceUrl: string;
+  sourceRevision: string;
   candidateId: string;
 }
 
@@ -90,8 +94,14 @@ export interface ReleaseValidationInput {
   candidates: ReleaseCandidateValidationRow[];
 }
 
-function hasCanonicalSourceUrl(url: string): boolean {
-  return canonicalWikiSourcePattern.test(url);
+function hasApprovedSource(source: ReleaseSourceValidationRow): boolean {
+  return (
+    canonicalWikiSourcePattern.test(source.sourceUrl) ||
+    (source.entityKind === 'formula' &&
+      source.entityId === 'points-per-level' &&
+      source.sourceUrl === officialGameUrl &&
+      ownerAttestationPattern.test(source.sourceRevision))
+  );
 }
 
 export function validateReleaseDraft(
@@ -122,8 +132,8 @@ export function validateReleaseDraft(
       errors.push(`Duplicate source reference ID: ${source.id}`);
     }
     sourceIds.add(source.id);
-    if (!hasCanonicalSourceUrl(source.sourceUrl)) {
-      errors.push(`Source ${source.id} is not canonical HTTPS`);
+    if (!hasApprovedSource(source)) {
+      errors.push(`Source ${source.id} does not have approved provenance`);
     }
     if (candidateStatuses.get(source.candidateId) !== 'accepted') {
       errors.push(`Source ${source.id} has no accepted candidate`);

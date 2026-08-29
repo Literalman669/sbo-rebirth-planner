@@ -4,7 +4,7 @@ import {
   useMemo,
   type PropsWithChildren,
 } from 'react';
-import { bootstrapRelease } from '../../data/bootstrapRelease';
+import { fallbackRelease } from '../../data/fallbackRelease';
 import type { DatasetSnapshot } from '../../domain/dataset/model';
 import { datasetSnapshotSchema } from '../../domain/dataset/schema';
 import { useOptionalPublicDataset } from '../../infrastructure/spacetime/PublicDataProvider';
@@ -26,7 +26,7 @@ export function DatasetProvider({
   snapshot,
 }: DatasetProviderProps) {
   const publicDataset = useOptionalPublicDataset();
-  const selectedSnapshot = snapshot ?? publicDataset?.snapshot ?? bootstrapRelease;
+  const selectedSnapshot = snapshot ?? publicDataset?.snapshot ?? fallbackRelease;
   const source = snapshot ? 'bundled' : (publicDataset?.source ?? 'bundled');
   const parsed = useMemo(
     () => datasetSnapshotSchema.safeParse(selectedSnapshot),

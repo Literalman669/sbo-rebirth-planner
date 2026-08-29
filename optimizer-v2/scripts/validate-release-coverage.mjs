@@ -34,12 +34,25 @@ export const PROGRESSION_BANDS = [
 
 const canonicalSource =
   /^https:\/\/swordbloxonlinerebirth\.fandom\.com\/wiki\/[A-Za-z0-9_%().,'-]+$/;
+const officialGameUrl =
+  'https://www.roblox.com/games/4733278992/Sword-Blox-Online-Rebirth';
+const ownerAttestation = /^owner-gameplay-attestation:\d{4}-\d{2}-\d{2}$/;
 
 function isVerifiedCanonical(row) {
   return (
     row?.verificationStatus === 'verified' &&
     typeof row.sourceUrl === 'string' &&
     canonicalSource.test(row.sourceUrl)
+  );
+}
+
+function hasVerifiedFormulaProvenance(formula) {
+  return (
+    isVerifiedCanonical(formula) ||
+    (formula?.id === 'points-per-level' &&
+      formula.verificationStatus === 'verified' &&
+      formula.sourceUrl === officialGameUrl &&
+      ownerAttestation.test(formula.sourceRevision ?? ''))
   );
 }
 
@@ -80,8 +93,8 @@ export function validateReleaseCoverage(snapshot) {
       errors.push(`Required formula ${formulaId} must appear exactly once`);
       continue;
     }
-    if (!isVerifiedCanonical(matches[0])) {
-      errors.push(`Formula ${formulaId} is not canonically sourced`);
+    if (!hasVerifiedFormulaProvenance(matches[0])) {
+      errors.push(`Formula ${formulaId} does not have approved provenance`);
     }
   }
   for (const item of equipment) {
