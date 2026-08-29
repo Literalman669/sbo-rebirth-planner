@@ -1,0 +1,12 @@
+{
+  "name": "@sbo/optimizer-v2",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": ["client", "spacetimedb"],
+  "scripts": {
+    "check:toolchain": "node scripts/check-toolchain.mjs"
+  },
+  "engines": {
+    "node": ">=22.0.0 <23"
+  }
+}
