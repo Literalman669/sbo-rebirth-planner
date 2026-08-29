@@ -1,0 +1,40 @@
+:root {
+  color-scheme: dark;
+  font-family: system-ui, sans-serif;
+  background: #090d11;
+  color: #eee6d2;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  margin: 0;
+  background: #090d11 url('/assets/floating-castles-desktop.png') center / cover fixed;
+}
+
+button,
+input,
+select {
+  font: inherit;
+}
+
+.app-shell {
+  min-height: 100vh;
+  padding: 2rem;
+}
+
+.app-shell h1 {
+  margin: 0;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-weight: 500;
+}
+
+@media (max-width: 48rem) {
+  body {
+    background-image: url('/assets/floating-castles-mobile.png');
+  }
+}
