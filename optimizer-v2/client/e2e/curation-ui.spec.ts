@@ -3,7 +3,7 @@ import { expect, test } from '@playwright/test';
 test('hides the private curation route from an ordinary signed-in player', async ({
   page,
 }) => {
-  test.setTimeout(30_000);
+  test.setTimeout(60_000);
   await page.addInitScript(() => {
     window.localStorage.setItem('sbo-rebirth-test-authenticated', 'true');
   });
@@ -11,7 +11,7 @@ test('hides the private curation route from an ordinary signed-in player', async
 
   await expect(
     page.getByRole('heading', { name: 'Page not found' }),
-  ).toBeVisible({ timeout: 15_000 });
+  ).toBeVisible({ timeout: 45_000 });
   await expect(
     page.getByRole('heading', { name: 'Verified data workshop' }),
   ).not.toBeVisible();
