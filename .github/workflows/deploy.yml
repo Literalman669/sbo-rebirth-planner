@@ -1,8 +1,6 @@
-name: Deploy to GitHub Pages
+name: Legacy Planner Manual Deploy
 
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
 
 permissions:
