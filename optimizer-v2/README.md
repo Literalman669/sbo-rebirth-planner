@@ -70,3 +70,33 @@ Never put an OIDC client secret, ID token, server-issued identity token, Mainclo
 - Never commit SpacetimeAuth ID tokens, server-issued tokens, Maincloud login tokens, or OIDC client secrets.
 - The OIDC client ID is public configuration and must be supplied per deployment.
 - Visual references live in `design/concepts/`; production background assets live in `client/public/assets/`.
+
+## Verified release and fallback
+
+`client/src/data/fallback-release.json` is generated from a locally published,
+typed SpacetimeDB release. Rebuild it with `npm run build:fallback:local`; this
+stages the pinned canonical wiki revisions, records private review decisions,
+publishes atomically to a disposable local database, exports the public rows,
+and runs `npm run validate:coverage`.
+
+The three-points-per-level rule is stored separately from wiki-derived formulas
+as `owner-gameplay-attestation:2026-08-29`, linked to the official Roblox
+experience. Only the module owner can submit that narrowly scoped attestation.
+
+## Production deployment
+
+Production routing is checked into `spacetime.production.json` without
+credentials. The manual `Deploy Optimizer V2` workflow refuses to deploy unless:
+
+- `SPACETIMEDB_LOGIN_TOKEN` exists as a GitHub Actions secret;
+- `SPACETIMEAUTH_CLIENT_ID` exists as a GitHub Actions variable and begins with
+  `client_`;
+- Maincloud auth is locked to `production`, issuer
+  `https://auth.spacetimedb.com/oidc`, and that exact client ID;
+- the module, generated bindings, tests, integration suite, fallback coverage,
+  and production client build all pass.
+
+The workflow publishes the Maincloud module before uploading only
+`optimizer-v2/client/dist` to GitHub Pages. It never passes a data-deletion flag.
+Automatic deployment from `main` remains disabled until the first manual
+production smoke test passes.

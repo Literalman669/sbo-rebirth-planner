@@ -1,0 +1,104 @@
+name: Deploy Optimizer V2
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: optimizer-v2-pages
+  cancel-in-progress: false
+
+jobs:
+  verify-publish-deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    env:
+      SPACETIMEAUTH_CLIENT_ID: ${{ vars.SPACETIMEAUTH_CLIENT_ID }}
+      VITE_SPACETIMEAUTH_CLIENT_ID: ${{ vars.SPACETIMEAUTH_CLIENT_ID }}
+      VITE_SPACETIME_URI: https://maincloud.spacetimedb.com
+      VITE_SPACETIME_DATABASE: sbo-rebirth-optimizer-v2
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: optimizer-v2/package-lock.json
+
+      - name: Install SpacetimeDB CLI
+        run: |
+          curl -sSf https://install.spacetimedb.com | sh
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Pin SpacetimeDB 2.8.3
+        run: |
+          spacetime version install 2.8.3
+          spacetime version use 2.8.3
+
+      - name: Install dependencies
+        working-directory: optimizer-v2
+        run: npm ci
+
+      - name: Verify source, generated bindings, and local integration
+        working-directory: optimizer-v2
+        run: |
+          npm run check:toolchain
+          npm run validate:coverage
+          npm run test:unit
+          npm run typecheck
+          spacetime build
+          spacetime generate --lang typescript --out-dir ./client/src/module_bindings --module-path ./spacetimedb --yes
+          git diff --exit-code -- client/src/module_bindings
+          npx playwright install --with-deps chromium
+          npm run test:integration
+
+      - name: Authenticate SpacetimeDB CLI
+        env:
+          SPACETIMEDB_LOGIN_TOKEN: ${{ secrets.SPACETIMEDB_LOGIN_TOKEN }}
+        run: |
+          test -n "$SPACETIMEDB_LOGIN_TOKEN"
+          spacetime login --token "$SPACETIMEDB_LOGIN_TOKEN" --no-browser
+
+      - name: Publish Maincloud module without data deletion
+        working-directory: optimizer-v2
+        run: >-
+          spacetime publish sbo-rebirth-optimizer-v2
+          --server maincloud
+          --module-path ./spacetimedb
+          --yes=remote,migrate,skip-login
+
+      - name: Lock production authentication
+        working-directory: optimizer-v2
+        run: >-
+          spacetime call sbo-rebirth-optimizer-v2 configure_auth
+          '"production"'
+          '"https://auth.spacetimedb.com/oidc"'
+          "\"$SPACETIMEAUTH_CLIENT_ID\""
+          --server maincloud
+          --yes
+
+      - name: Verify Maincloud production configuration
+        working-directory: optimizer-v2
+        run: node scripts/verify-production-config.mjs
+
+      - name: Build production client
+        working-directory: optimizer-v2
+        run: npm run build
+
+      - uses: actions/configure-pages@v4
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: optimizer-v2/client/dist
+
+      - name: Deploy GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
