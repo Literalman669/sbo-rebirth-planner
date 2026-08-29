@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
+import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useBuildDraft } from '../../app/providers/BuildDraftContext';
 import {
@@ -67,31 +67,29 @@ export function ResultsScreen() {
   const [planSnapshot, setPlanSnapshot] = useState<
     DatasetSnapshot | null | undefined
   >(() => (draft.datasetVersion === snapshot.version ? snapshot : undefined));
-  const snapshotResolverRef = useRef(getSnapshot);
-  snapshotResolverRef.current = getSnapshot;
+  const [planVersion, setPlanVersion] = useState(draft.datasetVersion);
+  useEffect(() => {
+    setPlanVersion(draft.datasetVersion);
+  }, [draft.datasetVersion, draft.id]);
   useEffect(() => {
     let active = true;
-    if (draft.datasetVersion === snapshot.version) {
+    if (planVersion === snapshot.version) {
       setPlanSnapshot(snapshot);
       return () => {
         active = false;
       };
     }
     setPlanSnapshot((current) =>
-      current?.version === draft.datasetVersion ? current : undefined,
+      current?.version === planVersion ? current : undefined,
     );
-    void resolveDatasetSnapshot(
-      snapshotResolverRef.current,
-      draft.datasetVersion,
-    ).then((resolved) => {
+    void resolveDatasetSnapshot(getSnapshot, planVersion).then((resolved) => {
       if (active) setPlanSnapshot(resolved);
     });
     return () => {
       active = false;
     };
-  }, [draft.datasetVersion, draft.id]);
+  }, [getSnapshot, planVersion, snapshot]);
   const effectiveSnapshot = planSnapshot ?? snapshot;
-  const planVersion = planSnapshot?.version ?? draft.datasetVersion;
   const stale = isPlanStale(planVersion, snapshot.version);
   const plan = useMemo(
     () => optimizeBuild(draft, effectiveSnapshot),
@@ -129,6 +127,7 @@ export function ResultsScreen() {
   };
 
   const recalculateWithCurrentDataset = () => {
+    setPlanVersion(snapshot.version);
     setPlanSnapshot(snapshot);
   };
 
@@ -144,7 +143,7 @@ export function ResultsScreen() {
     return (
       <section className="planner-screen results-screen">
         <h2 data-screen-heading tabIndex={-1}>
-          Dataset {draft.datasetVersion} is unavailable.
+          Dataset {planVersion} is unavailable.
         </h2>
         <p>The saved plan cannot be reproduced safely with a substitute release.</p>
         <button type="button" onClick={recalculateWithCurrentDataset}>

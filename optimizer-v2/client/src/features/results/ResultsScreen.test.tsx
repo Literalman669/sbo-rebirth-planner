@@ -61,6 +61,44 @@ async function renderResults(snapshot?: DatasetSnapshot) {
 }
 
 describe('ResultsScreen', () => {
+  it('recovers when a saved historical release arrives after the first lookup', async () => {
+    const store = createGuestBuildStore({
+      databaseName: `results-late-history-${crypto.randomUUID()}`,
+    });
+    await store.saveDraft(profile);
+    const router = createMemoryRouter(
+      createAppRoutes(<App release={release} source="bundled" />),
+      { initialEntries: ['/results'] },
+    );
+    const current = {
+      ...bootstrapRelease,
+      version: '2026.08.29.2',
+      equipment: bootstrapRelease.equipment.filter(
+        (item) => item.id !== 'steel-greatsword',
+      ),
+    };
+    const tree = (historicalSnapshots: readonly DatasetSnapshot[]) => (
+      <DatasetProvider
+        snapshot={current}
+        historicalSnapshots={historicalSnapshots}
+      >
+        <BuildDraftProvider store={store}>
+          <RouterProvider router={router} />
+        </BuildDraftProvider>
+      </DatasetProvider>
+    );
+    const view = render(tree([]));
+    expect(
+      await screen.findByRole('heading', {
+        name: 'Dataset bootstrap-0 is unavailable.',
+      }),
+    ).toBeVisible();
+
+    view.rerender(tree([bootstrapRelease]));
+
+    expect(await screen.findByText('Equip Steel Greatsword now')).toBeVisible();
+  });
+
   it('renders one prioritized action and the thirty-point plan', async () => {
     await renderResults();
 

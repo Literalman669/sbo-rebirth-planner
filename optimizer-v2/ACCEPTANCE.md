@@ -24,7 +24,7 @@ Evidence captured for release `2026.08.29.1` with SpacetimeDB 2.8.3.
 ## Pre-deployment regression gates
 
 - Clean `npm ci`: zero reported package vulnerabilities.
-- Unit suites: 174 client tests, 25 SpacetimeDB module tests, and 12 script tests.
+- Unit suites: 175 client tests, 25 SpacetimeDB module tests, and 12 script tests.
 - Local SpacetimeDB integration: 14 passing checks; six duplicate mobile module checks intentionally skipped.
 - Production-shaped Pages artifact: direct `/auth/callback` and `/shared/:id` recovery both pass with query and hash preservation.
 - Generated TypeScript bindings are regenerated with SpacetimeDB 2.8.3 and must leave no Git diff.
