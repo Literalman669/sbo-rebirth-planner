@@ -4,6 +4,7 @@
   "private": true,
   "workspaces": ["client", "spacetimedb"],
   "scripts": {
+    "postinstall": "npm ci --prefix spacetimedb --workspaces=false --ignore-scripts",
     "check:toolchain": "node scripts/check-toolchain.mjs",
     "dev": "npm run dev --workspace @sbo/optimizer-client",
     "build": "npm run build --workspace @sbo/optimizer-client",

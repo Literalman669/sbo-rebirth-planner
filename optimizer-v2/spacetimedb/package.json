@@ -1,0 +1,19 @@
+{
+  "name": "@sbo/optimizer-module",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "spacetime build --module-path .",
+    "typecheck": "tsc --noEmit --pretty false",
+    "test:unit": "vitest run src/validation.test.ts"
+  },
+  "dependencies": {
+    "@sbo/optimizer-v2": "file:..",
+    "spacetimedb": "2.8.3"
+  },
+  "devDependencies": {
+    "typescript": "7.0.2",
+    "vitest": "4.1.11"
+  }
+}

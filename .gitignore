@@ -20,6 +20,7 @@ optimizer-v2/spacetime.*.local.json
 optimizer-v2/client/.env.local
 optimizer-v2/client/.env.*.local
 optimizer-v2/.spacetime/
+optimizer-v2/spacetimedb/dist/
 optimizer-v2/client/dist/
 optimizer-v2/client/coverage/
 optimizer-v2/client/test-results/

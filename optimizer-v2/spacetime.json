@@ -1,0 +1,14 @@
+{
+  "database": "sbo-rebirth-optimizer-v2-dev",
+  "server": "local",
+  "module-path": "./spacetimedb",
+  "generate": [
+    {
+      "language": "typescript",
+      "out-dir": "./client/src/module_bindings"
+    }
+  ],
+  "dev": {
+    "run": "npm run dev --workspace @sbo/optimizer-client"
+  }
+}
