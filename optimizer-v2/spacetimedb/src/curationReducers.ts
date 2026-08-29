@@ -4,6 +4,7 @@ import { assertCurator } from './curationAuth';
 import {
   OPTIMIZER_WEAPON_PATHS,
   REQUIRED_FORMULA_IDS,
+  validateReleaseDraft,
 } from './releaseValidation';
 import spacetimedb from './schema';
 
@@ -348,6 +349,125 @@ export const recordReviewDecision = spacetimedb.reducer(
     ctx.db.wikiCandidate.id.update({
       ...candidate,
       status: args.decision === 'accept' ? 'accepted' : 'rejected',
+    });
+  },
+);
+
+export const publishRelease = spacetimedb.reducer(
+  { version: t.string() },
+  (ctx, { version }) => {
+    assertCurator(ctx);
+    const draft = ctx.db.releaseDraft.version.find(version);
+    if (!draft) throw new SenderError('Release draft not found');
+    if (draft.status === 'published' || ctx.db.datasetRelease.version.find(version)) {
+      throw new SenderError('Release version is already published');
+    }
+
+    const equipmentRows = Array.from(
+      ctx.db.draftEquipment.draftEquipmentReleaseVersion.filter(version),
+    );
+    const formulaRows = Array.from(
+      ctx.db.draftFormula.draftFormulaReleaseVersion.filter(version),
+    );
+    const sourceRows = Array.from(
+      ctx.db.draftSourceReference.draftSourceReferenceReleaseVersion.filter(
+        version,
+      ),
+    );
+    const candidateIds = new Set([
+      ...equipmentRows.map((row) => row.candidateId),
+      ...formulaRows.map((row) => row.candidateId),
+      ...sourceRows.map((row) => row.candidateId),
+    ]);
+    const candidates = [...candidateIds].flatMap((id) => {
+      const candidate = ctx.db.wikiCandidate.id.find(id);
+      return candidate ? [{ id: candidate.id, status: candidate.status }] : [];
+    });
+
+    const errors = validateReleaseDraft({
+      version,
+      formulaSetVersion: draft.formulaSetVersion,
+      equipment: equipmentRows,
+      formulas: formulaRows,
+      sources: sourceRows,
+      candidates,
+    });
+    const publicSourceIds = new Map<string, string>();
+    const seenPublicSourceIds = new Set<string>();
+    for (const source of sourceRows) {
+      const publicId = `${version}:${source.entityId}`;
+      if (seenPublicSourceIds.has(publicId)) {
+        errors.push(`Duplicate public source reference ID: ${publicId}`);
+      }
+      seenPublicSourceIds.add(publicId);
+      publicSourceIds.set(source.id, publicId);
+    }
+    if (errors.length > 0) throw new SenderError(errors.join('; '));
+
+    for (const release of ctx.db.datasetRelease.iter()) {
+      if (release.isCurrent) {
+        ctx.db.datasetRelease.id.update({ ...release, isCurrent: false });
+      }
+    }
+    for (const source of sourceRows) {
+      ctx.db.sourceReference.insert({
+        id: publicSourceIds.get(source.id)!,
+        releaseVersion: version,
+        entityKind: source.entityKind,
+        entityId: source.entityId,
+        sourceUrl: source.sourceUrl,
+        sourceRevision: source.sourceRevision,
+        capturedAt: source.capturedAt,
+        lastReviewedAt: source.lastReviewedAt,
+      });
+    }
+    for (const row of equipmentRows) {
+      ctx.db.equipment.insert({
+        id: `${version}:${row.itemId}`,
+        releaseVersion: version,
+        itemId: row.itemId,
+        name: row.name,
+        slot: row.slot,
+        weaponPaths: row.weaponPaths,
+        attack: row.attack,
+        defense: row.defense,
+        dexterity: row.dexterity,
+        levelRequirement: row.levelRequirement,
+        skillRequirement: row.skillRequirement,
+        floor: row.floor,
+        acquisitionType: row.acquisitionType,
+        acquisitionDetail: row.acquisitionDetail,
+        availability: row.availability,
+        sourceRefId: publicSourceIds.get(row.sourceRefId)!,
+        lastReviewedAt: row.lastReviewedAt,
+      });
+    }
+    for (const row of formulaRows) {
+      ctx.db.formula.insert({
+        id: `${version}:${row.formulaId}`,
+        releaseVersion: version,
+        formulaId: row.formulaId,
+        expression: row.expression,
+        units: row.units,
+        applicability: row.applicability,
+        boundaryBehavior: row.boundaryBehavior,
+        sourceRefId: publicSourceIds.get(row.sourceRefId)!,
+        lastReviewedAt: row.lastReviewedAt,
+      });
+    }
+    ctx.db.datasetRelease.insert({
+      id: 0n,
+      version,
+      formulaSetVersion: draft.formulaSetVersion,
+      publishedAt: ctx.timestamp,
+      lastReviewedAt: draft.lastReviewedAt,
+      sourceSummary: draft.sourceSummary,
+      isCurrent: true,
+    });
+    ctx.db.releaseDraft.version.update({
+      ...draft,
+      status: 'published',
+      updatedAt: ctx.timestamp,
     });
   },
 );

@@ -29,17 +29,23 @@ function validDraft(): ReleaseValidationInput {
       acquisitionType: 'starter',
       availability: 'always',
       sourceRefId: sourceId,
+      candidateId: 'stats:23125',
     })),
     formulas: REQUIRED_FORMULA_IDS.map((formulaId) => ({
       formulaId,
       sourceRefId: sourceId,
+      candidateId: 'stats:23125',
     })),
     sources: [
       {
         id: sourceId,
+        entityKind: 'gap',
+        entityId: 'shared-test-source',
         sourceUrl: 'https://swordbloxonlinerebirth.fandom.com/wiki/Stats',
+        candidateId: 'stats:23125',
       },
     ],
+    candidates: [{ id: 'stats:23125', status: 'accepted' }],
   };
 }
 
@@ -106,6 +112,27 @@ describe('validateReleaseDraft', () => {
 
     expect(validateReleaseDraft(input)).toContain(
       'Missing weapon-path coverage: rapier',
+    );
+  });
+
+  it('rejects rows linked to an unaccepted wiki candidate', () => {
+    const input = validDraft();
+    input.candidates[0] = { id: 'stats:23125', status: 'pending' };
+
+    expect(validateReleaseDraft(input)).toContain(
+      'Candidate stats:23125 is not accepted',
+    );
+  });
+
+  it('rejects a source reference linked to a missing candidate', () => {
+    const input = validDraft();
+    input.sources[0] = {
+      ...input.sources[0]!,
+      candidateId: 'stats:missing',
+    };
+
+    expect(validateReleaseDraft(input)).toContain(
+      'Source source-stats has no accepted candidate',
     );
   });
 });

@@ -40,6 +40,7 @@ import CreateBuildShareReducer from "./create_build_share_reducer";
 import CreateReleaseDraftReducer from "./create_release_draft_reducer";
 import DeleteBuildReducer from "./delete_build_reducer";
 import GrantCuratorReducer from "./grant_curator_reducer";
+import PublishReleaseReducer from "./publish_release_reducer";
 import RecordReviewDecisionReducer from "./record_review_decision_reducer";
 import RemoveDraftEquipmentReducer from "./remove_draft_equipment_reducer";
 import RestoreBuildRevisionReducer from "./restore_build_revision_reducer";
@@ -269,6 +270,7 @@ const reducersSchema = __reducers(
   __reducerSchema("create_release_draft", CreateReleaseDraftReducer),
   __reducerSchema("delete_build", DeleteBuildReducer),
   __reducerSchema("grant_curator", GrantCuratorReducer),
+  __reducerSchema("publish_release", PublishReleaseReducer),
   __reducerSchema("record_review_decision", RecordReviewDecisionReducer),
   __reducerSchema("remove_draft_equipment", RemoveDraftEquipmentReducer),
   __reducerSchema("restore_build_revision", RestoreBuildRevisionReducer),

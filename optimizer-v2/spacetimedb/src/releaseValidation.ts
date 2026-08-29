@@ -43,7 +43,8 @@ const availabilityValues = new Set([
   'active-event',
   'inactive-event',
 ]);
-const canonicalWikiHost = 'swordbloxonlinerebirth.fandom.com';
+const canonicalWikiSourcePattern =
+  /^https:\/\/swordbloxonlinerebirth\.fandom\.com\/wiki\/[A-Za-z0-9_%().,'-]+$/;
 
 export interface ReleaseEquipmentValidationRow {
   itemId: string;
@@ -58,16 +59,26 @@ export interface ReleaseEquipmentValidationRow {
   acquisitionType: string;
   availability: string;
   sourceRefId: string;
+  candidateId: string;
 }
 
 export interface ReleaseFormulaValidationRow {
   formulaId: string;
   sourceRefId: string;
+  candidateId: string;
 }
 
 export interface ReleaseSourceValidationRow {
   id: string;
+  entityKind: string;
+  entityId: string;
   sourceUrl: string;
+  candidateId: string;
+}
+
+export interface ReleaseCandidateValidationRow {
+  id: string;
+  status: string;
 }
 
 export interface ReleaseValidationInput {
@@ -76,15 +87,11 @@ export interface ReleaseValidationInput {
   equipment: ReleaseEquipmentValidationRow[];
   formulas: ReleaseFormulaValidationRow[];
   sources: ReleaseSourceValidationRow[];
+  candidates: ReleaseCandidateValidationRow[];
 }
 
 function hasCanonicalSourceUrl(url: string): boolean {
-  try {
-    const parsed = new URL(url);
-    return parsed.protocol === 'https:' && parsed.hostname === canonicalWikiHost;
-  } catch {
-    return false;
-  }
+  return canonicalWikiSourcePattern.test(url);
 }
 
 export function validateReleaseDraft(
@@ -98,6 +105,17 @@ export function validateReleaseDraft(
     errors.push('Formula set version is unsupported');
   }
 
+  const candidateStatuses = new Map<string, string>();
+  for (const candidate of input.candidates) {
+    if (candidateStatuses.has(candidate.id)) {
+      errors.push(`Duplicate candidate ID: ${candidate.id}`);
+    }
+    candidateStatuses.set(candidate.id, candidate.status);
+    if (candidate.status !== 'accepted') {
+      errors.push(`Candidate ${candidate.id} is not accepted`);
+    }
+  }
+
   const sourceIds = new Set<string>();
   for (const source of input.sources) {
     if (sourceIds.has(source.id)) {
@@ -106,6 +124,9 @@ export function validateReleaseDraft(
     sourceIds.add(source.id);
     if (!hasCanonicalSourceUrl(source.sourceUrl)) {
       errors.push(`Source ${source.id} is not canonical HTTPS`);
+    }
+    if (candidateStatuses.get(source.candidateId) !== 'accepted') {
+      errors.push(`Source ${source.id} has no accepted candidate`);
     }
   }
 
@@ -118,6 +139,9 @@ export function validateReleaseDraft(
     itemIds.add(equipment.itemId);
     if (!sourceIds.has(equipment.sourceRefId)) {
       errors.push(`Equipment ${equipment.itemId} has no source reference`);
+    }
+    if (candidateStatuses.get(equipment.candidateId) !== 'accepted') {
+      errors.push(`Equipment ${equipment.itemId} has no accepted candidate`);
     }
     if (
       !Number.isInteger(equipment.floor) ||
@@ -183,6 +207,9 @@ export function validateReleaseDraft(
     formulaIds.add(formula.formulaId);
     if (!sourceIds.has(formula.sourceRefId)) {
       errors.push(`Formula ${formula.formulaId} has no source reference`);
+    }
+    if (candidateStatuses.get(formula.candidateId) !== 'accepted') {
+      errors.push(`Formula ${formula.formulaId} has no accepted candidate`);
     }
   }
   for (const formulaId of REQUIRED_FORMULA_IDS) {

@@ -13,6 +13,7 @@ import { StatsScreen } from '../features/planner/StatsScreen';
 import { AuthCallbackScreen } from '../features/auth/AuthCallbackScreen';
 import { BuildHistoryScreen } from '../features/builds/BuildHistoryScreen';
 import { SharedBuildScreen } from '../features/share/SharedBuildScreen';
+import { CurationScreen } from '../features/curation/CurationScreen';
 
 export function createAppRoutes(
   rootElement: ReactNode = <ConnectedApp />,
@@ -26,6 +27,7 @@ export function createAppRoutes(
         { path: 'auth/callback', element: <AuthCallbackScreen /> },
         { path: 'builds/:buildId/history', element: <BuildHistoryScreen /> },
         { path: 'shared/:shareId', element: <SharedBuildScreen /> },
+        { path: 'curation', element: <CurationScreen /> },
         {
           element: <PlannerFrame />,
           children: [
