@@ -73,7 +73,7 @@ jobs:
           spacetime publish sbo-rebirth-optimizer-v2
           --server maincloud
           --module-path ./spacetimedb
-          --yes=remote,migrate,skip-login
+          --yes=remote,migrate,break-clients,skip-login
 
       - name: Lock production authentication
         working-directory: optimizer-v2
