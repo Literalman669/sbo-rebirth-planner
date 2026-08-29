@@ -132,11 +132,12 @@ export function BuildDraftProvider({
   }, []);
 
   const saveNamedBuild = useCallback(
-    async (name: string) => {
+    async (name: string, overrides?: Partial<CharacterProfile>) => {
       const trimmedName = name.trim();
       if (!trimmedName) throw new Error('Build name is required');
       const savedBuild = {
         ...draftRef.current,
+        ...overrides,
         id: crypto.randomUUID(),
         name: trimmedName,
       };

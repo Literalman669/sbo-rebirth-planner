@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type FormEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useBuildDraft } from '../../app/providers/BuildDraftContext';
 import {
@@ -58,7 +58,7 @@ export function ResultsScreen() {
   const navigate = useNavigate();
   const cloud = useOptionalCloudBuilds();
   const { snapshot, getSnapshot } = useDataset();
-  const { draft, resetDraft, saveNamedBuild, updateDraft } = useBuildDraft();
+  const { draft, resetDraft, saveNamedBuild } = useBuildDraft();
   const [showSaveForm, setShowSaveForm] = useState(false);
   const [buildName, setBuildName] = useState(draft.name ?? '');
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
@@ -67,6 +67,8 @@ export function ResultsScreen() {
   const [planSnapshot, setPlanSnapshot] = useState<
     DatasetSnapshot | null | undefined
   >(() => (draft.datasetVersion === snapshot.version ? snapshot : undefined));
+  const snapshotResolverRef = useRef(getSnapshot);
+  snapshotResolverRef.current = getSnapshot;
   useEffect(() => {
     let active = true;
     if (draft.datasetVersion === snapshot.version) {
@@ -78,13 +80,16 @@ export function ResultsScreen() {
     setPlanSnapshot((current) =>
       current?.version === draft.datasetVersion ? current : undefined,
     );
-    void resolveDatasetSnapshot(getSnapshot, draft.datasetVersion).then((resolved) => {
+    void resolveDatasetSnapshot(
+      snapshotResolverRef.current,
+      draft.datasetVersion,
+    ).then((resolved) => {
       if (active) setPlanSnapshot(resolved);
     });
     return () => {
       active = false;
     };
-  }, [draft.datasetVersion, draft.id, getSnapshot, snapshot]);
+  }, [draft.datasetVersion, draft.id]);
   const effectiveSnapshot = planSnapshot ?? snapshot;
   const planVersion = planSnapshot?.version ?? draft.datasetVersion;
   const stale = isPlanStale(planVersion, snapshot.version);
@@ -99,7 +104,9 @@ export function ResultsScreen() {
 
   const submitSave = (event: FormEvent) => {
     event.preventDefault();
-    void saveNamedBuild(buildName)
+    void saveNamedBuild(buildName, {
+      datasetVersion: planSnapshot?.version ?? draft.datasetVersion,
+    })
       .then(async (savedBuild) => {
         if (!cloud?.isAuthenticated) return 'local' as const;
         const result = await cloud.repository.save(savedBuild);
@@ -123,7 +130,6 @@ export function ResultsScreen() {
 
   const recalculateWithCurrentDataset = () => {
     setPlanSnapshot(snapshot);
-    updateDraft({ datasetVersion: snapshot.version });
   };
 
   if (planSnapshot === undefined) {

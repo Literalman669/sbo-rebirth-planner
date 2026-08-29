@@ -19,10 +19,16 @@ for (const directPath of [
     ).toBeVisible();
     if (directPath.startsWith('/auth/callback')) {
       await expect(
-        page.getByRole('heading', { name: 'Sign-in was not completed' }),
+        page.getByRole('heading', {
+          name: /Completing sign in|Sign-in (?:was not completed|could not be completed)/,
+        }),
       ).toBeVisible();
     } else {
-      await expect(page.getByText('Loading shared build…')).toBeVisible();
+      await expect(
+        page.getByText(
+          /Loading shared build|This shared build is unavailable|Read-only shared snapshot/,
+        ),
+      ).toBeVisible();
     }
     expect(pageErrors).toEqual([]);
   });

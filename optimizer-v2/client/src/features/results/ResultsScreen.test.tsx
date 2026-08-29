@@ -118,7 +118,7 @@ describe('ResultsScreen', () => {
     );
   });
 
-  it('offers recalculation without silently mutating the saved dataset version', async () => {
+  it('persists a recalculated dataset only when the player saves the build', async () => {
     const user = userEvent.setup();
     const store = await renderResults({
       ...bootstrapRelease,
@@ -140,8 +140,18 @@ describe('ResultsScreen', () => {
 
     expect(button).not.toBeInTheDocument();
     expect(screen.queryByText('Equip Steel Greatsword now')).not.toBeInTheDocument();
+    await new Promise((resolve) => window.setTimeout(resolve, 400));
     await waitFor(async () => {
-      expect((await store.loadDraft())?.datasetVersion).toBe('2026.08.29.2');
+      expect((await store.loadDraft())?.datasetVersion).toBe('bootstrap-0');
+    });
+
+    await user.click(screen.getByRole('button', { name: 'Save Build' }));
+    await user.type(screen.getByLabelText('Build Name'), 'Recalculated Route');
+    const saveForm = screen.getByLabelText('Build Name').closest('form')!;
+    await user.click(within(saveForm).getByRole('button', { name: 'Save Build' }));
+    await waitFor(async () => {
+      const saved = (await store.listBuilds()).find((result) => result.ok);
+      expect(saved?.value.profile.datasetVersion).toBe('2026.08.29.2');
     });
   });
 });
