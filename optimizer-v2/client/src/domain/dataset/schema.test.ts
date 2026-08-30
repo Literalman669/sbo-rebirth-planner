@@ -91,6 +91,21 @@ describe('datasetSnapshotSchema', () => {
     expect(dataset.formulas).toHaveLength(9);
   });
 
+  it('rejects a snapshot that changes the verified points-per-level rate', () => {
+    expect(() =>
+      datasetSnapshotSchema.parse({
+        version: 'bootstrap-1',
+        publishedAt: '2026-08-29T00:00:00.000Z',
+        lastReviewedAt: '2026-08-29',
+        sourceSummary: 'Reviewed wiki snapshot',
+        formulaSetVersion: 'sbor-stats-v1',
+        pointsPerLevel: 4,
+        formulas,
+        equipment: [],
+      }),
+    ).toThrow();
+  });
+
   it('rejects duplicate formula identifiers', () => {
     expect(() =>
       datasetSnapshotSchema.parse({

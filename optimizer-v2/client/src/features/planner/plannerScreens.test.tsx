@@ -5,7 +5,11 @@ import { createMemoryRouter, RouterProvider } from 'react-router-dom';
 import { describe, expect, it } from 'vitest';
 import { App } from '../../app/App';
 import { BuildDraftProvider } from '../../app/providers/BuildDraftProvider';
-import { DatasetProvider } from '../../app/providers/DatasetProvider';
+import {
+  DatasetContext,
+  DatasetProvider,
+  type DatasetContextValue,
+} from '../../app/providers/DatasetProvider';
 import { createAppRoutes } from '../../app/router';
 import type { CharacterProfile } from '../../domain/build/model';
 import { createGuestBuildStore } from '../../infrastructure/storage/guestBuildStore';
@@ -42,6 +46,7 @@ async function renderRoute(
     saved?: CharacterProfile;
     named?: CharacterProfile[];
     snapshot?: DatasetSnapshot;
+    testOnlySnapshot?: DatasetSnapshot;
     historicalSnapshots?: readonly DatasetSnapshot[];
   } = {},
 ) {
@@ -57,15 +62,36 @@ async function renderRoute(
     { initialEntries: [path] },
   );
 
+  const planner = (
+    <BuildDraftProvider store={store}>
+      <RouterProvider router={router} />
+    </BuildDraftProvider>
+  );
+  const testOnlyDataset: DatasetContextValue | undefined =
+    options.testOnlySnapshot
+      ? {
+          snapshot: options.testOnlySnapshot,
+          source: 'bundled',
+          getSnapshot: async (version) =>
+            version === options.testOnlySnapshot?.version
+              ? options.testOnlySnapshot
+              : null,
+        }
+      : undefined;
+
   render(
-    <DatasetProvider
-      snapshot={options.snapshot}
-      historicalSnapshots={options.historicalSnapshots}
-    >
-      <BuildDraftProvider store={store}>
-        <RouterProvider router={router} />
-      </BuildDraftProvider>
-    </DatasetProvider>,
+    testOnlyDataset ? (
+      <DatasetContext.Provider value={testOnlyDataset}>
+        {planner}
+      </DatasetContext.Provider>
+    ) : (
+      <DatasetProvider
+        snapshot={options.snapshot}
+        historicalSnapshots={options.historicalSnapshots}
+      >
+        {planner}
+      </DatasetProvider>
+    ),
   );
 
   return { router, store };
@@ -285,7 +311,7 @@ describe('planner routes', () => {
       pointsPerLevel: 4,
     } as unknown as DatasetSnapshot;
 
-    await renderRoute('/stats', { snapshot: fourPointSnapshot });
+    await renderRoute('/stats', { testOnlySnapshot: fourPointSnapshot });
 
     expect(
       await screen.findByText('Expected 4 · Entered 0 · Difference 4'),

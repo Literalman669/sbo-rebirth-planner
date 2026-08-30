@@ -81,7 +81,7 @@ export const datasetSnapshotSchema = z.object({
   lastReviewedAt: z.iso.date(),
   sourceSummary: z.string().min(1),
   formulaSetVersion: z.literal('sbor-stats-v1'),
-  pointsPerLevel: z.number().int().positive(),
+  pointsPerLevel: z.literal(3),
   dualWieldSkillGate: z.literal(200).default(200),
   knownGaps: z
     .array(

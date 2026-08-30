@@ -22,7 +22,7 @@ type DatasetProviderProps = PropsWithChildren<{
   historicalSnapshots?: readonly unknown[];
 }>;
 
-const DatasetContext = createContext<DatasetContextValue | null>(null);
+export const DatasetContext = createContext<DatasetContextValue | null>(null);
 
 export async function resolveDatasetSnapshot(
   resolver: (version: string) => Promise<DatasetSnapshot | null>,
