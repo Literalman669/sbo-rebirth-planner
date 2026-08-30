@@ -33,3 +33,15 @@ for (const directPath of [
     expect(pageErrors).toEqual([]);
   });
 }
+
+test('serves the configured base-aware favicon from the Pages artifact', async ({
+  page,
+}) => {
+  const pageUrl = 'http://127.0.0.1:4174/sbo-rebirth-planner/';
+  await page.goto(pageUrl);
+
+  const iconHref = await page.locator('link[rel~="icon"]').getAttribute('href');
+  expect(iconHref).toBe('/sbo-rebirth-planner/favicon.svg');
+  const response = await page.request.get(new URL(iconHref!, pageUrl).href);
+  expect(response.ok()).toBe(true);
+});
