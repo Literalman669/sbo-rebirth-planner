@@ -19,15 +19,23 @@ Evidence captured for release `2026.08.29.1` with SpacetimeDB 2.8.3.
 | 13 | Players can create and revoke owner-free public build snapshots, and historical shares recompute only with their stored dataset version. | `client/e2e/sharing-module.spec.ts`, `client/e2e/cloud-flow.spec.ts`, `client/src/features/share/SharedBuildScreen.test.tsx` | Pass |
 | 14 | The CLI, server package, client SDK, generated bindings, local tests, and CI all use SpacetimeDB 2.8.3. | `npm run check:toolchain`, generated `client/src/module_bindings/index.ts`, `.github/workflows/optimizer-v2-ci.yml` | Pass |
 | 15 | Mobile, desktop, keyboard, reduced-motion, offline, reconnect, and cross-session flows pass their planned checks. | Both Playwright projects; `client/e2e/acceptance.spec.ts`, `client/e2e/cloud-flow.spec.ts`, `client/e2e/guest-flow.spec.ts` | Pass |
-| 16 | GitHub Actions validates and deploys the Maincloud module and GitHub Pages client through separate controlled stages, including direct nested-route recovery from the built Pages artifact. | `.github/workflows/optimizer-v2-ci.yml`, `.github/workflows/optimizer-v2-deploy.yml`, `client/e2e-pages/deep-links.spec.ts`, production run `33282000719` | Pass |
+| 16 | GitHub Actions validates and deploys the Maincloud module and GitHub Pages client through separate controlled stages, including direct nested-route recovery from the built Pages artifact. | `.github/workflows/optimizer-v2-ci.yml`, `.github/workflows/optimizer-v2-deploy.yml`, `client/e2e-pages/deep-links.spec.ts`; the current CI run, deployment, and live smoke remain owner-authorized external steps. | Pending owner authorization |
 
 ## Pre-deployment regression gates
 
-- Clean `npm ci`: zero reported package vulnerabilities.
-- Unit suites: 176 client tests, 25 SpacetimeDB module tests, and 12 script tests.
-- Local SpacetimeDB integration: 14 passing checks; six duplicate mobile module checks intentionally skipped.
-- Production-shaped Pages artifact: direct `/auth/callback` and `/shared/:id` recovery both pass with query and hash preservation.
+- Clean `npm ci`: 0 reported package vulnerabilities (2026-08-29 local gate).
+- Toolchain: Node 22.22.2 and SpacetimeDB 2.8.3 (2026-08-29 local gate).
+- Reliability runner: all 6 layers passed — 254 client unit tests, 53 SpacetimeDB module tests, 15 script tests, typecheck, coverage, and module build.
+- Fixed-local SpacetimeDB integration: 24 passed, 8 intentionally skipped, against `http://127.0.0.1:3000` / `sbo-rebirth-optimizer-v2-test` only.
+- Production-shaped Pages artifact: direct `/auth/callback` and `/shared/:id` recovery both pass with query and hash preservation (2 passed).
 - Generated TypeScript bindings are regenerated with SpacetimeDB 2.8.3 and must leave no Git diff.
+
+## Pending owner-authorized external evidence
+
+- GitHub Actions CI run URL and status: pending; no CI run was dispatched during the local gate.
+- Maincloud module publish and production-auth configuration verification: pending.
+- GitHub Pages artifact upload and deployment URL: pending.
+- Read-only live-browser smoke, including console and responsive checks: pending.
 
 ## One-time production evidence
 
@@ -40,12 +48,9 @@ Evidence captured for release `2026.08.29.1` with SpacetimeDB 2.8.3.
 - Local callback: `http://localhost:5173/auth/callback`
 - GitHub Actions secret `SPACETIMEDB_LOGIN_TOKEN` and variable
   `SPACETIMEAUTH_CLIENT_ID` are configured; secret values are never recorded.
-- Successful controlled deployment: https://github.com/Literalman669/sbo-rebirth-planner/actions/runs/33282000719
-- Live client: https://literalman669.github.io/sbo-rebirth-planner/
-- Production smoke: the home page rendered release `2026.08.29.1` from the
-  live backend; Create Build reached `/character`; direct `/character` refresh
-  and `/shared/smoke-missing` both rendered correctly; no browser warnings or
-  errors were recorded.
+- Current controlled-deployment URL: pending owner-authorized external step.
+- Current live-client URL verification: pending owner-authorized external step.
+- Current production smoke: pending owner-authorized external step.
 
 Third-party social providers remain disabled until their provider-specific
 OAuth client IDs and secrets are supplied. Magic-link email login and guest

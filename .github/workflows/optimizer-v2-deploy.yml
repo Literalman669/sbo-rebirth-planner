@@ -52,18 +52,18 @@ jobs:
         working-directory: optimizer-v2
         run: npm ci
 
-      - name: Verify source, generated bindings, and local integration
+      - name: Verify source and generated bindings
         working-directory: optimizer-v2
         run: |
           npm run check:toolchain
-          npm run validate:coverage
-          npm run test:unit
-          npm run typecheck
           spacetime build
           spacetime generate --lang typescript --out-dir ./client/src/module_bindings --module-path ./spacetimedb --yes
           git diff --exit-code -- client/src/module_bindings
           npx playwright install --with-deps chromium
-          npm run test:integration
+
+      - name: Run fixed-local reliability gate
+        working-directory: optimizer-v2
+        run: npm run test:reliability
 
       - name: Authenticate SpacetimeDB CLI
         env:

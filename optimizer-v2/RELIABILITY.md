@@ -70,3 +70,25 @@ the JSON summary reports direct child exit-code outcomes only. It does not
 parse this ledger, test prose, or timing diagnostics to determine pass/fail.
 Generated `optimizer-v2/test-results/` remains untracked and must not be
 staged.
+
+## Task 12 local release gate (2026-08-29)
+
+The clean local release gate completed after `npm ci` (0 reported
+vulnerabilities) and `npm run check:toolchain` (Node 22.22.2, SpacetimeDB
+2.8.3). `npm run test:reliability` passed all 6 child layers: 39 client test
+files / 254 tests, 3 module test files / 53 tests, 15 script tests, typecheck,
+coverage validation for release `2026.08.29.1`, and the SpacetimeDB module
+build. The fixed-local browser integration reported 24 passed and 8 expected
+skips; the built Pages deep-link suite reported 2 passed. The runner used only
+`http://127.0.0.1:3000` and `sbo-rebirth-optimizer-v2-test`, and
+`git diff --exit-code -- client/src/module_bindings` remained clean.
+
+Both CI workflows now require that same fixed-local reliability command after
+dependency installation, the exact 2.8.3 toolchain pin/check, module build,
+binding generation, and binding-diff verification. In the deploy workflow it
+precedes SpacetimeDB authentication, Maincloud publish, production auth lock,
+Pages artifact upload, and deployment.
+
+The GitHub CI run URL/status, Maincloud publish, Pages deployment URL, and
+read-only live-browser smoke are pending owner-authorized external steps; no
+links or external statuses are asserted by this local record.

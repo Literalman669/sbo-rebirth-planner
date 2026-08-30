@@ -33,12 +33,6 @@ jobs:
         working-directory: optimizer-v2
       - run: npm run check:toolchain
         working-directory: optimizer-v2
-      - run: npm run test:unit
-        working-directory: optimizer-v2
-      - run: npm run typecheck
-        working-directory: optimizer-v2
-      - run: npm run validate:coverage
-        working-directory: optimizer-v2
       - run: spacetime build
         working-directory: optimizer-v2
       - run: spacetime generate --lang typescript --out-dir ./client/src/module_bindings --module-path ./spacetimedb --yes
@@ -47,9 +41,6 @@ jobs:
         working-directory: optimizer-v2
       - run: npx playwright install --with-deps chromium
         working-directory: optimizer-v2
-      - run: npm run test:integration
-        working-directory: optimizer-v2
-      - run: npm run build
-        working-directory: optimizer-v2
-      - run: npm run test:pages --workspace @sbo/optimizer-client
+      - name: Run fixed-local reliability gate
+        run: npm run test:reliability
         working-directory: optimizer-v2
