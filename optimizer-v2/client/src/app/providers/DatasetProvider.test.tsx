@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { bootstrapRelease } from '../../data/bootstrapRelease';
+import { fallbackRelease } from '../../data/fallbackRelease';
 import {
   DatasetProvider,
   resolveDatasetSnapshot,
@@ -41,7 +42,9 @@ describe('DatasetProvider', () => {
       </DatasetProvider>,
     );
 
-    expect(screen.getByText('2026.08.29.1 · bundled')).toBeVisible();
+    expect(
+      screen.getByText(`${fallbackRelease.version} · bundled`),
+    ).toBeVisible();
   });
 
   it('blocks optimizer children when game data is invalid', () => {

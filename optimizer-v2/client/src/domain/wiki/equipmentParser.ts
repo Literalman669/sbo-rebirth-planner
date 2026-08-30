@@ -117,9 +117,36 @@ function resultFromBatch(
 
 function infoboxValues(content: string) {
   const values = new Map<string, string>();
-  for (const line of content.split(/\r?\n/)) {
-    const match = /^\|\s*([^=|]+?)\s*=\s*(.*?)\s*$/.exec(line.trim());
-    if (match) values.set(match[1]!.trim().toLowerCase(), cleanWikiText(match[2]!));
+  const start = content.indexOf('{{');
+  let template = content;
+  if (start >= 0) {
+    let depth = 0;
+    for (let index = start; index < content.length - 1; index += 1) {
+      const token = content.slice(index, index + 2);
+      if (token === '{{') {
+        depth += 1;
+        index += 1;
+      } else if (token === '}}') {
+        depth -= 1;
+        index += 1;
+        if (depth === 0) {
+          template = content.slice(start, index + 1);
+          break;
+        }
+      }
+    }
+  }
+  const fields = template.split(/\|(?=\s*[\w -]+\s*=)/);
+  for (const field of fields) {
+    const match = /^\s*([^=|]+?)\s*=\s*([\s\S]*?)\s*$/.exec(field.trim());
+    if (!match) continue;
+    const key = match[1]!
+      .trim()
+      .toLowerCase()
+      .replace(/[_-]+/g, ' ')
+      .replace(/\s+/g, ' ');
+    const value = match[2]!.replace(/}}\s*$/, '');
+    values.set(key, cleanWikiText(value));
   }
   return values;
 }
@@ -133,8 +160,23 @@ function first(values: Map<string, string>, keys: string[]) {
 }
 
 function strictNumber(value: string | undefined) {
-  if (!value || !/^\d+(?:\.\d+)?$/.test(value)) return null;
-  return Number(value);
+  if (!value) return null;
+  const normalized = value.replace(/,/g, '');
+  const minimum = /(\d+(?:\.\d+)?)\s*\[Min\]/i.exec(normalized)?.[1];
+  if (minimum !== undefined) return Number(minimum);
+  const matches = normalized.match(/\d+(?:\.\d+)?/g);
+  if (!matches || matches.length !== 1) return null;
+  return Number(matches[0]);
+}
+
+function currencyValue(value: string | undefined) {
+  if (!value) return null;
+  const match = /(\d[\d,]*(?:\.\d+)?)\s*(Col|Robux)\b/i.exec(value);
+  if (!match) return null;
+  return {
+    cost: Number(match[1]!.replace(/,/g, '')),
+    currency: match[2]!,
+  };
 }
 
 function slotAndPaths(type: string | undefined): {
@@ -185,6 +227,7 @@ function parseAcquisition(
   detail: string | undefined,
   page: WikiPageSnapshot,
   itemId: string,
+  price: ReturnType<typeof currencyValue>,
 ) {
   if (!detail) return null;
   let type: AcquisitionType;
@@ -200,15 +243,15 @@ function parseAcquisition(
   else return null;
 
   const floor = /Floor\s+(\d+)/i.exec(detail)?.[1];
-  const price = /(\d[\d,]*)\s*(Col|Robux)/i.exec(detail);
+  const resolvedPrice = currencyValue(detail) ?? price;
   const access = acquisitionAccess(type);
   return {
     id: `${itemId}:acquisition:0`,
     type,
     detail,
     ...(floor ? { floor: Number(floor) } : {}),
-    ...(price
-      ? { cost: Number(price[1]!.replace(/,/g, '')), currency: price[2]! }
+    ...(resolvedPrice
+      ? { cost: resolvedPrice.cost, currency: resolvedPrice.currency }
       : {}),
     ...access,
     sourceUrl: page.sourceUrl,
@@ -238,7 +281,7 @@ function parseInfobox(page: WikiPageSnapshot): ParsedCatalogPage {
   }
 
   const attack = strictNumber(
-    first(values, ['attack damage', 'attack stat', 'attack']),
+    first(values, ['attack damage', 'attack stat', 'attack', 'damage']),
   );
   const defense = strictNumber(
     first(values, ['defense stat', 'defense']),
@@ -246,12 +289,20 @@ function parseInfobox(page: WikiPageSnapshot): ParsedCatalogPage {
   const dexterity = strictNumber(
     first(values, ['dexterity stat', 'dexterity']),
   );
-  const level = strictNumber(first(values, ['level requirement', 'level']));
-  const skill = strictNumber(first(values, ['max skill', 'skill level']));
+  const level = strictNumber(
+    first(values, ['level requirement', 'level req', 'level']),
+  );
+  const skill = strictNumber(
+    first(values, ['max skill', 'skill level', 'max level']),
+  );
+  const price = currencyValue(
+    first(values, ['price', 'cost', 'worth', 'col value']),
+  );
   const acquisition = parseAcquisition(
     first(values, ['how to obtain', 'obtain', 'location']),
     page,
     id,
+    price,
   );
 
   const item: CatalogEquipmentRecord = {

@@ -3,6 +3,7 @@ import { useBuildDraft } from '../../app/providers/BuildDraftContext';
 import { useOptionalCloudBuilds } from '../../app/providers/CloudBuildsContext';
 import { CloudBuildList } from '../builds/CloudBuildList';
 import { GuestImportDialog } from '../builds/GuestImportDialog';
+import { LocalBuildList } from '../builds/LocalBuildList';
 
 export function HomeScreen() {
   const navigate = useNavigate();
@@ -57,51 +58,14 @@ export function HomeScreen() {
         {savedBuilds.length > 0 ? (
           <section className="saved-builds" aria-labelledby="saved-builds-heading">
             <h2 id="saved-builds-heading">Saved Builds</h2>
-            <ul>
-              {savedBuilds.map((result) => {
-                if (!result.ok) {
-                  return (
-                    <li key={result.id}>
-                      <span>Unavailable build {result.id}</span>
-                      <button
-                        type="button"
-                        aria-label={`Delete unavailable build ${result.id}`}
-                        onClick={() => void deleteSavedBuild(result.id)}
-                      >
-                        Delete
-                      </button>
-                    </li>
-                  );
-                }
-                const build = result.value.profile;
-                const name = build.name ?? `Level ${build.level} build`;
-                return (
-                  <li key={build.id}>
-                    <div>
-                      <strong>{name}</strong>
-                      <span>Level {build.level} · Floor {build.maxFloor}</span>
-                    </div>
-                    <button
-                      type="button"
-                      aria-label={`Load ${name}`}
-                      onClick={() => {
-                        loadSavedBuild(build);
-                        navigate('/character');
-                      }}
-                    >
-                      Load
-                    </button>
-                    <button
-                      type="button"
-                      aria-label={`Delete ${name}`}
-                      onClick={() => void deleteSavedBuild(build.id)}
-                    >
-                      Delete
-                    </button>
-                  </li>
-                );
-              })}
-            </ul>
+            <LocalBuildList
+              builds={savedBuilds}
+              onLoad={(build) => {
+                loadSavedBuild(build);
+                navigate('/character');
+              }}
+              onDelete={(id) => void deleteSavedBuild(id)}
+            />
           </section>
         ) : null}
         {cloud?.needsGuestImport && localProfiles.length > 0 ? (

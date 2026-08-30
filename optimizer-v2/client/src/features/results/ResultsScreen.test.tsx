@@ -138,6 +138,11 @@ describe('ResultsScreen', () => {
       }),
     ).toBeVisible();
     expect(screen.getAllByTestId('immediate-action')).toHaveLength(1);
+    expect(
+      screen.getByText(
+        'This plan recalculates from your current inputs. Saved builds do not change unless you save again.',
+      ),
+    ).toBeVisible();
     expect(screen.getByText('Equip Steel Greatsword now')).toBeVisible();
     expect(screen.getByText('30 future points')).toBeVisible();
     const table = screen.getByRole('table', { name: 'Next ten levels' });
@@ -172,6 +177,18 @@ describe('ResultsScreen', () => {
     const table = screen.getByRole('table', { name: 'Next ten levels' });
     expect(within(table).getByRole('rowheader', { name: 'Level 2' })).toBeVisible();
     expect(within(table).getByRole('rowheader', { name: 'Level 11' })).toBeVisible();
+  });
+
+  it('does not show an unchanged after-spending comparison when no points are unspent', async () => {
+    await renderResults();
+
+    const spendNow = await screen.findByRole('region', { name: 'Spend now' });
+    expect(
+      within(spendNow).getByText(
+        'All 24 earned points are invested. Your next allocation begins at Level 9.',
+      ),
+    ).toBeVisible();
+    expect(within(spendNow).queryByText('After spending')).not.toBeInTheDocument();
   });
 
   it('turns unspent points into an action and labels unknown-skill targets for confirmation', async () => {
@@ -229,11 +246,83 @@ describe('ResultsScreen', () => {
     expect(rows.length).toBeGreaterThan(0);
     expect(rows.length).toBeLessThanOrEqual(3);
     for (const link of within(upgradeRegion).getAllByRole('link', {
-      name: 'View wiki source',
+      name: 'View item wiki page',
     })) {
       expect(link).toHaveAttribute('target', '_blank');
       expect(link).toHaveAttribute('rel', 'noreferrer');
     }
+    expect(within(rows[0]!).getByText('Price')).toBeVisible();
+  });
+
+  it('shows a verified price and the exact item page when catalog evidence provides them', async () => {
+    const fieldsWarrior = bootstrapRelease.catalog.find(
+      (item) => item.id === 'fields-warrior',
+    )!;
+    const pricedCatalog = bootstrapRelease.catalog.map((item) =>
+      item.id === fieldsWarrior.id
+        ? {
+            ...item,
+            sourceUrl:
+              'https://swordbloxonlinerebirth.fandom.com/wiki/Fields_Warrior',
+            acquisitions: item.acquisitions.map((acquisition) => ({
+              ...acquisition,
+              cost: 1440,
+              currency: 'Col',
+              sourceUrl:
+                'https://swordbloxonlinerebirth.fandom.com/wiki/Fields_Warrior',
+            })),
+          }
+        : item,
+    );
+
+    await renderResults({ ...bootstrapRelease, catalog: pricedCatalog });
+
+    const fieldsRow = (await screen.findByText('Fields Warrior')).closest(
+      '[data-testid="upgrade-target"]',
+    ) as HTMLElement;
+    expect(within(fieldsRow).getByText('1,440 Col')).toBeVisible();
+    expect(within(fieldsRow).getByRole('link', { name: 'View item wiki page' })).toHaveAttribute(
+      'href',
+      'https://swordbloxonlinerebirth.fandom.com/wiki/Fields_Warrior',
+    );
+  });
+
+  it('loads a named local build directly from the results screen', async () => {
+    const user = userEvent.setup();
+    const store = createGuestBuildStore({
+      databaseName: `results-load-${crypto.randomUUID()}`,
+    });
+    const named = {
+      ...profile,
+      id: 'saved-melee-route',
+      name: 'Saved Melee Route',
+      level: 5,
+      weaponPath: 'melee' as const,
+      weaponSkill: 1,
+      stats: { str: 5, def: 5, agi: 2, vit: 2, luk: 1 },
+      equipped: { 'main-hand': 'fists', armor: 'beginner-armor' },
+    };
+    await store.saveDraft(profile);
+    await store.saveBuild(named);
+    const router = createMemoryRouter(
+      createAppRoutes(<App release={release} source="bundled" />),
+      { initialEntries: ['/results'] },
+    );
+    render(
+      <DatasetProvider historicalSnapshots={[bootstrapRelease]}>
+        <BuildDraftProvider store={store}>
+          <RouterProvider router={router} />
+        </BuildDraftProvider>
+      </DatasetProvider>,
+    );
+
+    await screen.findByRole('heading', { name: 'Your next ten levels, made clear.' });
+    await user.click(screen.getByRole('button', { name: 'Load Build' }));
+    await user.click(screen.getByRole('button', { name: 'Load Saved Melee Route' }));
+
+    expect(router.state.location.pathname).toBe('/character');
+    expect(await screen.findByLabelText('Current Level')).toHaveValue(5);
+    expect(screen.getByRole('radio', { name: 'Melee' })).toBeChecked();
   });
 
   it('keeps reasoning collapsed and provides edit routes', async () => {

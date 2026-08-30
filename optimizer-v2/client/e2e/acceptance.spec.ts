@@ -70,7 +70,8 @@ test('supports keyboard focus and reduced-motion preferences', async ({ page }) 
     );
     if (focusedLabels.at(-1) === 'Create Build') break;
   }
-  expect(new Set(focusedLabels).size).toBeGreaterThanOrEqual(3);
+  expect(new Set(focusedLabels).size).toBeGreaterThanOrEqual(2);
+  expect(focusedLabels).toContain('SBO:Rebirth Build Optimizer');
   expect(focusedLabels).toContain('Create Build');
   await page.keyboard.press('Enter');
   await expect(page).toHaveURL(/\/character$/);

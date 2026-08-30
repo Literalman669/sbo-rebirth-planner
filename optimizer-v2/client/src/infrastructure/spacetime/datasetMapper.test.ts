@@ -281,7 +281,7 @@ describe('mapPublishedReleaseV2', () => {
       attack: 8.4,
       acquisitionDetail: 'Floor 1 Shop',
     });
-    expect(snapshot.mechanics).toHaveLength(9);
+    expect(snapshot.mechanics).toHaveLength(fallbackRelease.mechanics.length);
   });
 
   it('rejects an orphan acquisition instead of dropping it', () => {

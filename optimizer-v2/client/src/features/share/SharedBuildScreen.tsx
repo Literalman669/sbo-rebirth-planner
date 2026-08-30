@@ -60,6 +60,7 @@ export function SharedBuildView({ profile, snapshot }: SharedBuildViewProps) {
       <SpendNowPanel
         current={profile.stats}
         allocation={plan.statPlan.spendNow}
+        currentLevel={profile.level}
         headingId="shared-spend-now-heading"
       />
       <section className="result-band" aria-labelledby="shared-levels-heading">

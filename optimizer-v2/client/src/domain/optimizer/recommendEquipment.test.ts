@@ -188,4 +188,32 @@ describe('recommendEquipment', () => {
     );
     expect(result.upgradeTargets[0]).not.toHaveProperty('eligibilityNote');
   });
+
+  it('keeps the immediate action in the detailed targets when a future item scores higher for the same slot', () => {
+    const futureArmor = equipment({
+      id: 'future-armor',
+      name: 'Future Armor',
+      slot: 'armor',
+      defense: 100,
+      dexterity: 500,
+      levelRequirement: 15,
+    });
+    const result = recommendEquipment(
+      {
+        ...profile,
+        level: 5,
+        goal: 'survivability',
+        stats: { str: 5, def: 5, agi: 2, vit: 2, luk: 1 },
+      },
+      dataset([currentSword, currentArmor, fieldsWarrior, futureArmor]),
+    );
+
+    expect(result.immediateAction).toMatchObject({
+      kind: 'obtain-upgrade',
+      itemId: fieldsWarrior.id,
+    });
+    expect(result.upgradeTargets.map((target) => target.itemId)).toContain(
+      fieldsWarrior.id,
+    );
+  });
 });

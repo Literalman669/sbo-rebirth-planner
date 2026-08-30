@@ -26,6 +26,27 @@ export const DEFAULT_EXPLICIT_PAGES = [
   'Stats',
 ];
 
+const explicitEquipmentPages = new Set([
+  'One-Handed',
+  'Two-Handed',
+  'Rapier',
+  'Dagger',
+  'Melee',
+  'Fists',
+  'Armor',
+  'Upper Headwear',
+  'Lower Headwear',
+  'Shields',
+  'Gamepass and Badge Equipment',
+]);
+
+export function kindForExplicitPage(pageTitle) {
+  if (pageTitle === 'Stats') return 'mechanics';
+  if (pageTitle === 'Shops') return 'acquisition';
+  if (explicitEquipmentPages.has(pageTitle)) return 'equipment';
+  return 'index';
+}
+
 function reconcile(entries) {
   const byPageId = new Map();
   for (const entry of entries) {
@@ -63,7 +84,10 @@ export async function buildWikiInventory({
   for (const category of categories) {
     categoryEntries.push(...(await fetchCategory(category)));
   }
-  const explicitEntries = await resolvePages(explicitPages);
+  const explicitEntries = (await resolvePages(explicitPages)).map((entry) => ({
+    ...entry,
+    kind: kindForExplicitPage(entry.pageTitle),
+  }));
   return reconcile([...categoryEntries, ...explicitEntries]);
 }
 

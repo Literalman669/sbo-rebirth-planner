@@ -24,6 +24,7 @@
     "build:fallback:local": "node scripts/build-local-fallback.mjs",
     "audit:wiki-inventory": "tsx scripts/wiki/inventory.mjs",
     "audit:wiki": "tsx scripts/audit-wiki-catalog.mjs",
+    "export:verified-wiki-release": "tsx scripts/export-verified-wiki-release.mjs",
     "test:wiki-tools": "node --import tsx --test scripts/wiki/*.test.mjs"
   },
   "engines": {

@@ -43,8 +43,13 @@ export function EquipmentScreen() {
     slot: EquipmentSlot,
     label: string,
     required = false,
-  ) => (
-    <label key={slot}>
+  ) => {
+    const items = visibleItems(slot);
+    const emptyLabel = search.trim()
+      ? `No verified ${label.toLocaleLowerCase()} matches your search`
+      : `No verified ${label.toLocaleLowerCase()} matches Level ${draft.level} and Floor ${draft.maxFloor}`;
+    return (
+      <label key={slot}>
       {label}
       <select
         ref={(element) => {
@@ -56,16 +61,19 @@ export function EquipmentScreen() {
         value={draft.equipped[slot] ?? ''}
         onChange={(event) => setEquipment(slot, event.currentTarget.value)}
       >
-        <option value="">Choose verified equipment</option>
-        {visibleItems(slot).map((item) => (
+        <option value="">
+          {items.length > 0 ? 'Choose verified equipment' : emptyLabel}
+        </option>
+        {items.map((item) => (
           <option key={item.id} value={item.id}>
             {item.name}
           </option>
         ))}
       </select>
       {errors[slot] ? <span role="alert">{errors[slot]}</span> : null}
-    </label>
-  );
+      </label>
+    );
+  };
 
   const continueToResults = () => {
     const requiredSlots = requiredEquipmentSlots(draft);

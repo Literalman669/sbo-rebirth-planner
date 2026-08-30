@@ -28,12 +28,19 @@ function addedSummary(stats: StatBlock) {
 export function SpendNowPanel({
   current,
   allocation,
+  currentLevel,
   headingId = 'spend-now-heading',
 }: {
   current: StatBlock;
   allocation: SpendNowAllocation;
+  currentLevel: number;
   headingId?: string;
 }) {
+  const earnedPoints = statLabels.reduce(
+    (total, { key }) => total + current[key],
+    allocation.points,
+  );
+
   return (
     <section
       aria-labelledby={headingId}
@@ -46,20 +53,32 @@ export function SpendNowPanel({
         </strong>
       </div>
       {allocation.points > 0 ? (
-        <p className="spend-now-action">Add {addedSummary(allocation.added)}</p>
+        <>
+          <p className="spend-now-action">Add {addedSummary(allocation.added)}</p>
+          <dl className="spend-now-totals">
+            <div>
+              <dt>Before</dt>
+              <dd>{statSummary(current)}</dd>
+            </div>
+            <div>
+              <dt>After spending</dt>
+              <dd>{statSummary(allocation.totals)}</dd>
+            </div>
+          </dl>
+        </>
       ) : (
-        <p className="spend-now-action">Your earned points are already represented.</p>
+        <>
+          <p className="spend-now-action">
+            All {earnedPoints} earned points are invested. Your next allocation begins at Level {currentLevel + 1}.
+          </p>
+          <dl className="spend-now-totals spend-now-current">
+            <div>
+              <dt>Current stats</dt>
+              <dd>{statSummary(current)}</dd>
+            </div>
+          </dl>
+        </>
       )}
-      <dl className="spend-now-totals">
-        <div>
-          <dt>Before</dt>
-          <dd>{statSummary(current)}</dd>
-        </div>
-        <div>
-          <dt>After spending</dt>
-          <dd>{statSummary(allocation.totals)}</dd>
-        </div>
-      </dl>
     </section>
   );
 }

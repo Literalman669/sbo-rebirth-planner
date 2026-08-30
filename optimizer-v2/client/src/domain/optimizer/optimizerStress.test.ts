@@ -161,9 +161,8 @@ describe('optimizer cross-product stress', () => {
     const profile = boundaryProfile(dataset);
     const plan = optimizeBuild(profile, dataset);
 
-    expect(dataset.version).toBe('2026.08.29.1');
-    expect(profile.datasetVersion).toBe('2026.08.29.1');
-    expect(plan.datasetVersion).toBe('2026.08.29.1');
+    expect(profile.datasetVersion).toBe(dataset.version);
+    expect(plan.datasetVersion).toBe(dataset.version);
     expect(plan.immediateAction).toMatchObject({
       kind: 'obtain-upgrade',
       itemId: 'steel-sword',

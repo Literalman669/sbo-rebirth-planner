@@ -70,6 +70,67 @@ describe('parseEquipmentSnapshot', () => {
     });
   });
 
+  it('normalizes compact underscored armor fields with a sourced Col value', () => {
+    const content = [
+      '{{Armor',
+      '  | title1=Fields Warrior',
+      '  | level_req=Level 3',
+      '  | defense=1.5',
+      '  | dexterity=6',
+      '  |equipment_type=[[Armor]]|worth=1,440 Col|can_be_sold=✔|how_to_obtain=[[Shops#Floor 1 Shop|Floor 1 Shop]]}}',
+    ].join('\n');
+    const result = parseEquipmentSnapshot(snapshot('Fields Warrior', content));
+
+    expect(result.unresolved).toEqual([]);
+    expect(result.equipment[0]).toMatchObject({
+      id: 'fields-warrior',
+      slot: 'armor',
+      defense: 1.5,
+      dexterity: 6,
+      levelRequirement: 3,
+      verificationStatus: 'verified',
+      sourceUrl:
+        'https://swordbloxonlinerebirth.fandom.com/wiki/Fields%20Warrior',
+      acquisitions: [
+        expect.objectContaining({
+          type: 'shop',
+          floor: 1,
+          cost: 1440,
+          currency: 'Col',
+        }),
+      ],
+    });
+  });
+
+  it('reads the minimum Fists values without swallowing page content after the infobox', () => {
+    const content = [
+      '{{Weapon',
+      '  | weapon_type=[[Melee|Melee]]',
+      "  | skill_level= Skill 1 '''[Min]'''",
+      "Skill 30 '''[Max]'''",
+      "  | damage= 2.5 '''[Min]'''",
+      "40 '''[Max]'''",
+      '  | location= Starter Inventory',
+      '}}',
+      '== Weapon Information ==',
+      'The starting Melee weapon every player begins with.',
+    ].join('\n');
+    const result = parseEquipmentSnapshot(snapshot('Fists', content));
+
+    expect(result.equipment[0]).toMatchObject({
+      id: 'fists',
+      attack: 2.5,
+      skillRequirement: 1,
+      acquisitions: [
+        expect.objectContaining({ detail: 'Starter Inventory' }),
+      ],
+      sourceUrl: 'https://swordbloxonlinerebirth.fandom.com/wiki/Fists',
+    });
+    expect(result.equipment[0]?.acquisitions[0]?.detail).not.toContain(
+      'Weapon Information',
+    );
+  });
+
   it('classifies gamepass access instead of ordinary free acquisition', () => {
     const content = [
       '{{Equipment',

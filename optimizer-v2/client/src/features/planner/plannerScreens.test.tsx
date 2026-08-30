@@ -14,6 +14,7 @@ import { createAppRoutes } from '../../app/router';
 import type { CharacterProfile } from '../../domain/build/model';
 import { createGuestBuildStore } from '../../infrastructure/storage/guestBuildStore';
 import { bootstrapRelease } from '../../data/bootstrapRelease';
+import { fallbackRelease } from '../../data/fallbackRelease';
 import type { DatasetSnapshot } from '../../domain/dataset/model';
 
 const release = {
@@ -205,6 +206,32 @@ describe('planner routes', () => {
 
     const statsHeading = await screen.findByRole('heading', { name: 'Stats' });
     await waitFor(() => expect(statsHeading).toHaveFocus());
+  });
+
+  it('filters current equipment by both level and unlocked floor and explains empty optional slots', async () => {
+    await renderRoute('/equipment', {
+      saved: {
+        ...savedDraft(),
+        level: 5,
+        maxFloor: 2,
+        stats: { str: 5, def: 5, agi: 2, vit: 2, luk: 1 },
+        datasetVersion: fallbackRelease.version,
+      },
+      snapshot: fallbackRelease,
+    });
+
+    expect(await screen.findByRole('option', { name: 'Midnight Platemail' })).toBeInTheDocument();
+    expect(screen.queryByRole('option', { name: 'Combat Armor' })).not.toBeInTheDocument();
+    expect(
+      screen.getByRole('option', {
+        name: 'No verified upper headwear matches Level 5 and Floor 2',
+      }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('option', {
+        name: 'No verified lower headwear matches Level 5 and Floor 2',
+      }),
+    ).toBeInTheDocument();
   });
 
   it('blocks Character Continue and focuses an invalid level', async () => {

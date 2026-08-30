@@ -44,7 +44,9 @@ test('completes and resumes the focused guest optimizer flow', async ({ page }) 
   await page.getByLabel('Main-hand weapon').selectOption('iron-greatsword');
   await page.getByLabel('Armor', { exact: true }).selectOption('beginner-armor');
   await page.getByText('Owned items').click();
-  await page.getByRole('checkbox', { name: 'Steel Greatsword' }).check();
+  await page
+    .getByRole('checkbox', { name: 'Steel Greatsword', exact: true })
+    .check();
   await page.getByRole('button', { name: 'Continue' }).click();
 
   await expect(

@@ -7,6 +7,7 @@ import { fetchPageSnapshots } from './wiki/mediawiki-api.mjs';
 import { parseEquipmentSnapshot } from '../client/src/domain/wiki/equipmentParser.ts';
 import { parseMechanicsSnapshot } from '../client/src/domain/wiki/mechanicsParser.ts';
 import { buildCoverageManifest } from '../client/src/domain/wiki/coverage.ts';
+import { reconcileCatalogPages } from '../client/src/domain/wiki/catalogReconciliation.ts';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const manifestRoot = path.join(root, 'data', 'wiki-manifests');
@@ -73,12 +74,20 @@ export async function auditWikiCatalog({
     }
   }
 
-  const coverage = buildCoverageManifest({
+  const rawCoverage = buildCoverageManifest({
     inventory: resolvedInventory,
     parsed,
   });
-  const catalog = parsed.flatMap((page) => page.equipment);
-  return {
+  const catalog = reconcileCatalogPages(parsed);
+  const coverage = {
+    ...rawCoverage,
+    normalized: catalog.length,
+    verified: catalog.filter((item) => item.verificationStatus === 'verified').length,
+    partial: catalog.filter((item) => item.verificationStatus === 'partial').length,
+    conflicting: catalog.filter((item) => item.verificationStatus === 'conflicting').length,
+    legacy: catalog.filter((item) => item.verificationStatus === 'legacy').length,
+  };
+  const report = {
     generatedAt: new Date().toISOString(),
     wikiOrigin: 'https://swordbloxonlinerebirth.fandom.com',
     coverage,
@@ -100,11 +109,19 @@ export async function auditWikiCatalog({
       sourceRevision: item.sourceRevision,
     })),
   };
+  return {
+    report,
+    catalogRecords: catalog,
+    verifiedCatalog: catalog.filter(
+      (item) => item.verificationStatus === 'verified',
+    ),
+    mechanicRecords,
+  };
 }
 
 async function main() {
   const output = outputPathFromArgs(process.argv.slice(2));
-  const report = await auditWikiCatalog();
+  const { report } = await auditWikiCatalog();
   if (output) {
     await mkdir(path.dirname(output), { recursive: true });
     await writeFile(output, `${JSON.stringify(report, null, 2)}\n`, 'utf8');

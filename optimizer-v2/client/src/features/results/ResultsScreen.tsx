@@ -15,6 +15,7 @@ import { isPlanStale } from './planStaleness';
 import type { DatasetSnapshot } from '../../domain/dataset/model';
 import { firstIncompleteEquipmentStep } from '../planner/completeness';
 import { LevelAllocationTable, SpendNowPanel } from './LevelAllocationTable';
+import { LocalBuildList } from '../builds/LocalBuildList';
 
 const slotLabels: Record<EquipmentSlot, string> = {
   'main-hand': 'Main hand',
@@ -74,8 +75,16 @@ export function ResultsScreen() {
   const navigate = useNavigate();
   const cloud = useOptionalCloudBuilds();
   const { snapshot, getSnapshot } = useDataset();
-  const { draft, resetDraft, saveNamedBuild } = useBuildDraft();
+  const {
+    deleteSavedBuild,
+    draft,
+    loadSavedBuild,
+    resetDraft,
+    saveNamedBuild,
+    savedBuilds,
+  } = useBuildDraft();
   const [showSaveForm, setShowSaveForm] = useState(false);
+  const [showLoadBuilds, setShowLoadBuilds] = useState(false);
   const [buildName, setBuildName] = useState(draft.name ?? '');
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
   const [shareId, setShareId] = useState<string | null>(null);
@@ -210,6 +219,9 @@ export function ResultsScreen() {
         <Link to="/stats">Edit Stats</Link>
         <Link to="/equipment">Edit Equipment</Link>
       </nav>
+      <p className="plan-update-note">
+        This plan recalculates from your current inputs. Saved builds do not change unless you save again.
+      </p>
 
       {stale && (
         <aside className="stale-plan-banner" role="status">
@@ -233,7 +245,11 @@ export function ResultsScreen() {
         </div>
       </section>
 
-      <SpendNowPanel current={draft.stats} allocation={plan.statPlan.spendNow} />
+      <SpendNowPanel
+        current={draft.stats}
+        allocation={plan.statPlan.spendNow}
+        currentLevel={draft.level}
+      />
 
       <section aria-labelledby="next-levels-heading" className="result-band">
         <div className="result-band-heading">
@@ -280,6 +296,10 @@ export function ResultsScreen() {
                     <strong>{target.acquisitionDetail}</strong>
                   </div>
                   <div>
+                    <span>Price</span>
+                    <strong>{target.priceText ?? 'Price not verified'}</strong>
+                  </div>
+                  <div>
                     <span>Projected improvement</span>
                     <strong>{formatDelta(target.delta)}</strong>
                   </div>
@@ -294,7 +314,7 @@ export function ResultsScreen() {
                     </div>
                   ) : null}
                   <a href={target.sourceUrl} target="_blank" rel="noreferrer">
-                    View wiki source
+                    View item wiki page
                   </a>
                 </article>
               );
@@ -325,9 +345,32 @@ export function ResultsScreen() {
       ) : null}
       {saveMessage ? <p role="status">{saveMessage}</p> : null}
 
+      {showLoadBuilds ? (
+        <section className="saved-builds results-saved-builds" aria-labelledby="results-saved-builds-heading">
+          <div className="result-band-heading">
+            <h3 id="results-saved-builds-heading">Saved builds</h3>
+            <button type="button" onClick={() => setShowLoadBuilds(false)}>
+              Close
+            </button>
+          </div>
+          <LocalBuildList
+            builds={savedBuilds}
+            onLoad={(build) => {
+              loadSavedBuild(build);
+              setShowLoadBuilds(false);
+              navigate('/character');
+            }}
+            onDelete={(id) => void deleteSavedBuild(id)}
+          />
+        </section>
+      ) : null}
+
       <div className="screen-actions results-actions">
         <button type="button" onClick={() => setShowSaveForm(true)}>
           Save Build
+        </button>
+        <button type="button" onClick={() => setShowLoadBuilds(true)}>
+          Load Build
         </button>
         <button
           type="button"

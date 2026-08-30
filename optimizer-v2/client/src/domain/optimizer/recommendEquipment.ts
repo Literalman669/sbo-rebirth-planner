@@ -23,6 +23,7 @@ export interface UpgradeTarget {
   acquisitionDetail: string;
   requirementText: string;
   sourceUrl: string;
+  priceText?: string;
   delta: Partial<ProjectedMetrics>;
   rawDelta: ReturnType<typeof compareGearEffects>['rawDelta'];
   unmodeledEffects: string[];
@@ -205,6 +206,10 @@ function rankUpgrades(
       if (score <= 1e-12) continue;
 
       const catalogItem = catalogById.get(item.id)!;
+      const pricedAcquisition = catalogItem.acquisitions.find(
+        (acquisition) =>
+          acquisition.cost !== undefined && acquisition.currency !== undefined,
+      );
       const comparison = compareGearEffects(
         profile.equipped[slot]
           ? catalogById.get(profile.equipped[slot]!)
@@ -223,7 +228,12 @@ function rankUpgrades(
         score,
         acquisitionDetail: item.acquisitionDetail,
         requirementText: requirementText(item),
-        sourceUrl: item.sourceUrl,
+        sourceUrl: catalogItem.sourceUrl,
+        ...(pricedAcquisition
+          ? {
+              priceText: `${pricedAcquisition.cost!.toLocaleString('en-US')} ${pricedAcquisition.currency}`,
+            }
+          : {}),
         delta: projectedDelta(currentMetrics, candidateMetrics),
         rawDelta: comparison.rawDelta,
         unmodeledEffects: comparison.unmodeledEffects,
@@ -243,6 +253,19 @@ export function recommendEquipment(
   const selectedItems = new Set<string>();
   const selected: RankedUpgrade[] = [];
 
+  const ownedImmediate = ranked.find(
+    (candidate) => candidate.owned && candidate.immediate,
+  );
+  const obtainableImmediate = ranked.find(
+    (candidate) => !candidate.owned && candidate.immediate,
+  );
+  const immediateTarget = ownedImmediate ?? obtainableImmediate;
+  if (immediateTarget) {
+    selected.push(immediateTarget);
+    selectedSlots.add(immediateTarget.slot);
+    selectedItems.add(immediateTarget.itemId);
+  }
+
   for (const candidate of ranked) {
     if (
       selectedSlots.has(candidate.slot) ||
@@ -255,13 +278,6 @@ export function recommendEquipment(
     selectedItems.add(candidate.itemId);
     if (selected.length === 3) break;
   }
-
-  const ownedImmediate = ranked.find(
-    (candidate) => candidate.owned && candidate.immediate,
-  );
-  const obtainableImmediate = ranked.find(
-    (candidate) => !candidate.owned && candidate.immediate,
-  );
 
   let immediateAction: ImmediateAction;
   if (ownedImmediate) {

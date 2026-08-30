@@ -1,6 +1,25 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { buildWikiInventory } from './inventory.mjs';
+import { buildWikiInventory, kindForExplicitPage } from './inventory.mjs';
+
+test('classifies explicit equipment roots as equipment inputs', () => {
+  for (const pageTitle of [
+    'One-Handed',
+    'Two-Handed',
+    'Rapier',
+    'Dagger',
+    'Melee',
+    'Fists',
+    'Armor',
+    'Upper Headwear',
+    'Lower Headwear',
+    'Shields',
+  ]) {
+    assert.equal(kindForExplicitPage(pageTitle), 'equipment');
+  }
+  assert.equal(kindForExplicitPage('Stats'), 'mechanics');
+  assert.equal(kindForExplicitPage('Shops'), 'acquisition');
+});
 
 test('combines category members with explicit build-relevant roots', async () => {
   const inventory = await buildWikiInventory({
