@@ -138,7 +138,7 @@
 }
 
 .cloud-explainer summary {
-  min-height: 2.5rem;
+  min-height: var(--touch-target);
   color: var(--color-parchment);
   font-family: var(--font-display);
   cursor: pointer;
@@ -200,7 +200,7 @@
 }
 
 .saved-builds button {
-  min-height: 2.5rem;
+  min-height: var(--touch-target);
   padding: 0.45rem 0.75rem;
   border: 1px solid rgb(184 149 93 / 55%);
   background: var(--color-ink-deep);
@@ -258,6 +258,17 @@
 
 .build-summary-bar .save-status {
   color: var(--color-aether-bright);
+}
+
+.status-badge {
+  display: inline-flex;
+  min-height: 1.7rem;
+  align-items: center;
+  width: fit-content;
+  padding: 0.18rem 0.5rem;
+  border: 1px solid rgb(85 214 194 / 38%);
+  border-radius: 999px;
+  background: rgb(85 214 194 / 8%);
 }
 
 .build-summary-bar .save-status-error {
@@ -538,7 +549,7 @@
 .build-rename-form button,
 .recovered-data-list button,
 .dialog-actions button {
-  min-height: 2.65rem;
+  min-height: var(--touch-target);
   padding: 0.5rem 0.75rem;
   border: 1px solid rgb(184 149 93 / 55%);
   border-radius: 0.25rem;
@@ -615,7 +626,7 @@
 .save-build-dialog fieldset label {
   display: flex;
   align-items: center;
-  min-height: 2.5rem;
+  min-height: var(--touch-target);
   gap: 0.65rem;
 }
 
@@ -781,7 +792,7 @@
 }
 
 .stat-control-heading input {
-  min-height: 2.5rem;
+  min-height: var(--touch-target);
 }
 
 .stat-control p {
@@ -794,7 +805,7 @@
 .stat-lock,
 .stat-adjustments button,
 .stat-workspace-actions button {
-  min-height: 2.35rem;
+  min-height: var(--touch-target);
   border: 1px solid rgb(184 149 93 / 55%);
   border-radius: 0.3rem;
   background: rgb(13 22 29 / 88%);
@@ -960,7 +971,7 @@
 .equipment-dialog-shell > header button,
 .equipment-detail-actions button,
 .equipment-detail-actions a {
-  min-height: 2.4rem;
+  min-height: var(--touch-target);
   padding: 0.5rem 0.75rem;
   border: 1px solid rgb(184 149 93 / 55%);
   border-radius: 0.3rem;
@@ -986,7 +997,7 @@
 
 .equipment-filter-bar input,
 .equipment-filter-bar select {
-  min-height: 2.6rem;
+  min-height: var(--touch-target);
   padding: 0.5rem 0.65rem;
   border: 1px solid rgb(184 149 93 / 58%);
   border-radius: 0.3rem;
@@ -1618,7 +1629,7 @@
 .show-all-levels,
 .level-allocation-table button,
 .plan-export-actions button {
-  min-height: 2.25rem;
+  min-height: var(--touch-target);
   padding: 0.45rem 0.65rem;
   border: 1px solid rgb(184 149 93 / 48%);
   border-radius: 0.3rem;
@@ -1675,7 +1686,30 @@
 }
 
 .results-saved-builds .result-band-heading button {
-  min-height: 2.25rem;
+  min-height: var(--touch-target);
+}
+
+.compact-density .planner-screen {
+  padding-block: 1.25rem;
+}
+
+.compact-density .planner-screen fieldset {
+  margin-block: 1.25rem;
+}
+
+.compact-density .goal-card,
+.compact-density .stat-control,
+.compact-density .equipment-picker-trigger {
+  padding: 0.65rem;
+}
+
+.compact-weapon-paths .weapon-path-options label {
+  min-height: 6rem;
+}
+
+.compact-weapon-paths .weapon-icon {
+  width: 3rem;
+  height: 3rem;
 }
 
 .results-screen .result-band {
@@ -1961,6 +1995,10 @@
     padding: 0.9rem 0 max(0.9rem, env(safe-area-inset-bottom));
     margin-bottom: -0.8rem;
     background: linear-gradient(180deg, transparent, var(--color-ink-deep) 28%);
+  }
+
+  :where(button, input, select, summary, a):focus-visible {
+    scroll-margin-bottom: 6rem;
   }
 
   .screen-actions button {

@@ -61,6 +61,7 @@ describe('BuildsScreen', () => {
     await user.click(screen.getByRole('button', { name: 'Save name' }));
     expect(await screen.findByText('Frontline Melee')).toBeVisible();
     await user.click(screen.getByRole('button', { name: 'Archive Frontline Melee' }));
+    expect(await screen.findByText('Build archived.')).toBeVisible();
     expect(screen.queryByText('Frontline Melee')).not.toBeInTheDocument();
     await user.selectOptions(screen.getByLabelText('Build status'), 'archived');
     expect(await screen.findByText('Frontline Melee')).toBeVisible();

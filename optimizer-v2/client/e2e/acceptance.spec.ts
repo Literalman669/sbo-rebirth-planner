@@ -24,17 +24,16 @@ test('keeps the four-step optimizer routed and the beginner inputs focused', asy
   for (const path of weaponPaths) {
     await expect(page.getByRole('radio', { name: path })).toBeVisible();
   }
-  const goal = page.getByLabel('Optimization Goal');
-  await expect(goal).toHaveValue('balanced');
-  for (const value of [
-    'balanced',
-    'damage',
-    'survivability',
-    'mobility',
-    'farming',
+  await expect(page.getByRole('radio', { name: 'Balanced' })).toBeChecked();
+  for (const goal of [
+    'Balanced',
+    'Damage',
+    'Survivability',
+    'Mobility',
+    'Farming',
   ]) {
-    await goal.selectOption(value);
-    await expect(goal).toHaveValue(value);
+    await page.getByRole('radio', { name: goal }).click();
+    await expect(page.getByRole('radio', { name: goal })).toBeChecked();
   }
   await expect(page.getByLabel('Weapon Skill')).not.toBeVisible();
   await page.getByText('Improve accuracy').click();
@@ -46,8 +45,8 @@ test('keeps the four-step optimizer routed and the beginner inputs focused', asy
   await page.getByRole('button', { name: 'Continue' }).click();
   await expect(page).toHaveURL(/\/equipment$/);
   await expect(page.getByRole('heading', { name: 'Equipment' })).toBeVisible();
-  await page.getByLabel('Main-hand weapon').selectOption('iron-greatsword');
-  await page.getByLabel('Armor', { exact: true }).selectOption('beginner-armor');
+  await expect(page.getByRole('button', { name: 'Change Main-hand weapon' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Change Armor' })).toBeVisible();
   await page.getByRole('button', { name: 'Continue' }).click();
   await expect(page).toHaveURL(/\/results$/);
   await expect(

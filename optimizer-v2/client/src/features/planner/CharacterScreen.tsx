@@ -51,7 +51,7 @@ export function CharacterScreen() {
           draft.weaponSkill === undefined ? '' : String(draft.weaponSkill),
       });
     }
-  }, [isHydrated]);
+  }, [draft.id, isHydrated]);
 
   if (!isHydrated) return <p>Loading draft</p>;
 

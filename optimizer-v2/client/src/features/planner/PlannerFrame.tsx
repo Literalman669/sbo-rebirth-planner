@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { StepIcon } from './StepIcon';
 import { BuildSummaryBar } from '../shell/BuildSummaryBar';
+import { useOptionalPlannerState } from '../../app/providers/PlannerStateContext';
 
 const steps = [
   { label: 'Character', path: '/character' },
@@ -12,6 +13,13 @@ const steps = [
 
 export function PlannerFrame() {
   const location = useLocation();
+  const plannerState = useOptionalPlannerState();
+  const densityClass = plannerState?.preferences.density === 'compact'
+    ? ' compact-density'
+    : '';
+  const compactPathsClass = plannerState?.preferences.compactWeaponPathsAfterFirstUse
+    ? ' compact-weapon-paths'
+    : '';
 
   useEffect(() => {
     document.documentElement.scrollTop = 0;
@@ -22,7 +30,7 @@ export function PlannerFrame() {
   }, [location.pathname]);
 
   return (
-    <main className="planner-frame">
+    <main className={`planner-frame${densityClass}${compactPathsClass}`}>
       <BuildSummaryBar />
       <nav aria-label="Planner progress">
         <ol className="progress-steps">

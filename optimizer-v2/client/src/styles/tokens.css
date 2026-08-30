@@ -16,4 +16,6 @@
   --font-display: 'Cinzel', Georgia, serif;
   --font-ui: 'Source Sans 3', system-ui, sans-serif;
   --content-width: 70rem;
+  --focus-ring: 2px solid var(--color-aether-bright);
+  --touch-target: 2.75rem;
 }

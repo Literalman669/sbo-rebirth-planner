@@ -15,6 +15,10 @@
   box-sizing: border-box;
 }
 
+html {
+  scroll-padding-bottom: 6rem;
+}
+
 body {
   min-width: 320px;
   min-height: 100vh;
@@ -26,6 +30,23 @@ button,
 input,
 select {
   font: inherit;
+}
+
+button,
+select,
+input:not([type='checkbox']):not([type='radio']),
+summary {
+  min-height: var(--touch-target);
+}
+
+:where(a, button, input, select, summary, [tabindex]):focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 3px;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
 }
 
 .app-shell {
@@ -96,7 +117,7 @@ select {
 .global-navigation a,
 .global-navigation > span {
   display: inline-flex;
-  min-height: 2.5rem;
+  min-height: var(--touch-target);
   align-items: center;
   gap: 0.45rem;
   padding: 0.45rem 0.75rem;
@@ -123,9 +144,9 @@ select {
   opacity: 0.48;
 }
 
-.global-navigation a:focus-visible {
-  outline: 2px solid var(--color-aether-bright);
-  outline-offset: 2px;
+.focus-ring:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 3px;
 }
 
 .auth-button,
@@ -248,4 +269,15 @@ select {
     flex: 0 0 auto;
     padding-inline: 0.65rem;
   }
+}
+
+.section-heading-row a,
+.text-link,
+.edit-links a,
+.upgrade-row a,
+.action-checklist a,
+.equipment-detail-actions a {
+  display: inline-flex;
+  min-height: var(--touch-target);
+  align-items: center;
 }

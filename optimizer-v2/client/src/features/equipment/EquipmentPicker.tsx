@@ -220,9 +220,11 @@ export function EquipmentPicker({
                 </div>
               ))}
               {limit < results.length ? (
-                <button type="button" onClick={() => setLimit((current) => current + PAGE_SIZE)}>
-                  Show more results
-                </button>
+                <div role="listitem" className="equipment-show-more">
+                  <button type="button" onClick={() => setLimit((current) => current + PAGE_SIZE)}>
+                    Show more results
+                  </button>
+                </div>
               ) : null}
             </div>
             {selected ? (

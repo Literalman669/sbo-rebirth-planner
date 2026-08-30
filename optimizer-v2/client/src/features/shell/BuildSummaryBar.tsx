@@ -49,7 +49,10 @@ export function BuildSummaryBar() {
           Equipment {completedSlots}/{requiredSlots.length}
         </span>
         <span>Dataset {draft.datasetVersion || snapshot.version}</span>
-        <span className={`save-status save-status-${persistenceStatus}`}>
+        <span
+          className={`status-badge save-status save-status-${persistenceStatus}`}
+          aria-live="polite"
+        >
           {statusLabels[persistenceStatus]}
         </span>
       </div>
