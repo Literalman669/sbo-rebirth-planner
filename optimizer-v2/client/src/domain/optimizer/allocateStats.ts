@@ -55,6 +55,7 @@ export interface StatAllocationInput {
   gear: GearTotals;
   goal: OptimizationGoal;
   mechanics: CompiledMechanics;
+  lockedStats?: ReadonlySet<StatName>;
 }
 
 function emptyStats(): StatBlock {
@@ -105,12 +106,14 @@ function chooseNextStat(
   gear: GearTotals,
   goal: OptimizationGoal,
   mechanics: CompiledMechanics,
+  lockedStats?: ReadonlySet<StatName>,
 ): StatName {
   const current = projectMetrics({ level, stats, gear }, mechanics);
   let bestStat: StatName | undefined;
   let bestScore = Number.NEGATIVE_INFINITY;
 
   for (const stat of STAT_TIE_BREAK_ORDER) {
+    if (lockedStats?.has(stat)) continue;
     if (stats[stat] >= mechanics.statCap) continue;
 
     const candidateStats = { ...stats, [stat]: stats[stat] + 1 };
@@ -150,6 +153,7 @@ function allocatePoints(
       input.gear,
       input.goal,
       input.mechanics,
+      input.lockedStats,
     );
     final[selectedStat] += 1;
     added[selectedStat] += 1;

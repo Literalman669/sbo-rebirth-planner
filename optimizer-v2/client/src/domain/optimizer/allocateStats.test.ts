@@ -100,6 +100,19 @@ describe('allocateNextTenLevels', () => {
 });
 
 describe('allocateStatPlan', () => {
+  it('skips workspace-locked stats without changing default allocation behavior', () => {
+    const plan = allocateStatPlan({
+      ...standardInput,
+      goal: 'survivability',
+      unspentPoints: 3,
+      lockedStats: new Set<StatName>(['def', 'vit']),
+    });
+
+    expect(plan.spendNow.added.def).toBe(0);
+    expect(plan.spendNow.added.vit).toBe(0);
+    expect(sum(plan.spendNow.added)).toBe(3);
+  });
+
   it('allocates three current Level-1 points before ten future levels', () => {
     const plan = allocateStatPlan({
       level: 1,

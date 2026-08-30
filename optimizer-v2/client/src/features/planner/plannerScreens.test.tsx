@@ -205,6 +205,29 @@ describe('planner routes', () => {
     expect(screen.getByText('Available 3 · Invested 0 · Unspent 3')).toBeVisible();
   });
 
+  it('applies recommended current points around a locked stat and supports reset and undo', async () => {
+    const user = userEvent.setup();
+    await renderRoute('/stats', {
+      saved: {
+        ...savedDraft(),
+        level: 10,
+        stats: { str: 5, def: 5, agi: 5, vit: 5, luk: 0 },
+      },
+    });
+    await screen.findByRole('heading', { name: 'Stats' });
+
+    await user.click(screen.getByRole('button', { name: 'Lock STR' }));
+    await user.click(
+      screen.getByRole('button', { name: 'Apply recommended current points' }),
+    );
+    expect(screen.getByLabelText('STR')).toHaveValue(5);
+    expect(screen.getByText('Unspent 0')).toBeVisible();
+    await user.click(screen.getByRole('button', { name: 'Reset stats' }));
+    expect(screen.getByLabelText('STR')).toHaveValue(0);
+    await user.click(screen.getByRole('button', { name: 'Undo stat change' }));
+    expect(screen.getByLabelText('STR')).toHaveValue(5);
+  });
+
   it('filters equipment to the selected weapon path and exposes required slots', async () => {
     await renderRoute('/equipment');
 
