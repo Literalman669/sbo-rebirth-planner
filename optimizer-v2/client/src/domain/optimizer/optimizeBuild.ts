@@ -2,7 +2,7 @@ import type { CharacterProfile } from '../build/model';
 import type { DatasetSnapshot } from '../dataset/model';
 import { analyzeStatBudget } from '../../features/planner/completeness';
 import {
-  allocateNextTenLevels,
+  allocateStatPlan,
   type StatAllocationPlan,
 } from './allocateStats';
 import {
@@ -36,17 +36,12 @@ export function optimizeBuild(
 
   const equipment = recommendEquipment(profile, dataset);
   const statBudget = analyzeStatBudget(profile, dataset.pointsPerLevel);
-  const warnings =
-    statBudget.status === 'unaccounted'
-      ? [
-          `The optimizer sees ${statBudget.difference} points not represented in invested stats and will treat plan precision as reduced.`,
-        ]
-      : [];
+  const warnings: string[] = [];
 
   return {
     datasetVersion: dataset.version,
     immediateAction: equipment.immediateAction,
-    statPlan: allocateNextTenLevels({
+    statPlan: allocateStatPlan({
       level: profile.level,
       stats: profile.stats,
       gear: dataset.equipment.reduce(
@@ -60,6 +55,7 @@ export function optimizeBuild(
         { attack: 0, defense: 0, dexterity: 0 },
       ),
       goal: profile.goal,
+      unspentPoints: statBudget.difference,
     }),
     upgradeTargets: equipment.upgradeTargets,
     warnings,

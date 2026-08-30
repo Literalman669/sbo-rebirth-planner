@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { StatBlock, StatName } from '../build/model';
-import { allocateNextTenLevels } from './allocateStats';
+import { allocateNextTenLevels, allocateStatPlan } from './allocateStats';
 
 const standardInput = {
   level: 20,
@@ -89,5 +89,51 @@ describe('allocateNextTenLevels', () => {
     );
     expect(mobility.added.agi).toBeGreaterThan(mobility.added.def);
     expect(farming.added.luk).toBeGreaterThan(farming.added.str);
+  });
+});
+
+describe('allocateStatPlan', () => {
+  it('allocates three current Level-1 points before ten future levels', () => {
+    const plan = allocateStatPlan({
+      level: 1,
+      stats: { str: 0, def: 0, agi: 0, vit: 0, luk: 0 },
+      gear: { attack: 2.5, defense: 0.5, dexterity: 3 },
+      goal: 'balanced',
+      unspentPoints: 3,
+    });
+
+    expect(sum(plan.spendNow.added)).toBe(3);
+    expect(plan.spendNow.totals).toEqual(plan.spendNow.added);
+    expect(plan.levelRows.map((row) => row.level)).toEqual([
+      2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
+    ]);
+    expect(plan.levelRows).toHaveLength(10);
+    expect(plan.levelRows.every((row) => sum(row.added) === 3)).toBe(true);
+    expect(sum(plan.final)).toBe(33);
+  });
+
+  it('reconciles every running total from spend-now through Level +10', () => {
+    const plan = allocateStatPlan({
+      ...standardInput,
+      level: 8,
+      stats: { str: 14, def: 0, agi: 3, vit: 7, luk: 0 },
+      goal: 'balanced',
+      unspentPoints: 0,
+    });
+    let previous = plan.spendNow.totals;
+
+    for (const row of plan.levelRows) {
+      expect(row.totals).toEqual({
+        str: previous.str + row.added.str,
+        def: previous.def + row.added.def,
+        agi: previous.agi + row.added.agi,
+        vit: previous.vit + row.added.vit,
+        luk: previous.luk + row.added.luk,
+      });
+      previous = row.totals;
+    }
+
+    expect(plan.final).toEqual(previous);
+    expect(sum(plan.futureAdded)).toBe(30);
   });
 });

@@ -14,7 +14,8 @@ describe('stress fixtures', () => {
     const plan = optimizeBuild(profile, dataset);
 
     expect(() => assertRecommendationInvariants(plan, profile, dataset)).not.toThrow();
-    expect(plan.statPlan.totalPoints).toBe(30);
+    expect(plan.statPlan.futurePoints).toBe(30);
+    expect(plan.statPlan.levelRows).toHaveLength(10);
   });
 
   it('rejects a target whose source URL does not match its verified dataset record', () => {

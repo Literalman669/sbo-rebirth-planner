@@ -81,7 +81,22 @@ describe('optimizeBuild', () => {
         dataset,
       ),
     ).toThrowError(
-      'The next ten levels require 30 open stat slots, but only 0 remain.',
+      'Current unspent points and the next ten levels require 32 open stat slots, but only 0 remain.',
+    );
+  });
+
+  it('reserves capacity for current unspent points before the future plan', () => {
+    expect(() =>
+      optimizeBuild(
+        {
+          ...profile,
+          level: 834,
+          stats: { str: 500, def: 500, agi: 500, vit: 500, luk: 460 },
+        },
+        dataset,
+      ),
+    ).toThrowError(
+      'Current unspent points and the next ten levels require 72 open stat slots, but only 40 remain.',
     );
   });
 
@@ -89,8 +104,10 @@ describe('optimizeBuild', () => {
     const result = optimizeBuild(profile, dataset);
 
     expect(result.datasetVersion).toBe('test-release');
-    expect(result.statPlan.totalPoints).toBe(30);
-    expect(Object.values(result.statPlan.added).reduce((sum, value) => sum + value, 0)).toBe(30);
+    expect(result.statPlan.futurePoints).toBe(30);
+    expect(Object.values(result.statPlan.futureAdded).reduce((sum, value) => sum + value, 0)).toBe(30);
+    expect(result.statPlan.spendNow.points).toBe(0);
+    expect(result.statPlan.levelRows).toHaveLength(10);
     expect(result).toEqual(optimizeBuild(profile, dataset));
   });
 
@@ -135,15 +152,20 @@ describe('optimizeBuild', () => {
     );
   });
 
-  it('warns when current stat points are not represented in a level-eight profile', () => {
+  it('turns current unspent points into an actionable allocation', () => {
     const result = optimizeBuild(
       { ...profile, stats: { str: 0, def: 0, agi: 0, vit: 0, luk: 0 } },
       dataset,
     );
 
-    expect(result.warnings).toContain(
-      'The optimizer sees 24 points not represented in invested stats and will treat plan precision as reduced.',
-    );
-    expect(result.statPlan.totalPoints).toBe(30);
+    expect(result.warnings).toEqual([]);
+    expect(result.statPlan.spendNow.points).toBe(24);
+    expect(
+      Object.values(result.statPlan.spendNow.added).reduce(
+        (sum, value) => sum + value,
+        0,
+      ),
+    ).toBe(24);
+    expect(result.statPlan.futurePoints).toBe(30);
   });
 });

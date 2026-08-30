@@ -154,10 +154,35 @@ export function assertRecommendationInvariants(
   invariant(profile.datasetVersion === dataset.version, 'profile dataset version must exactly match the dataset');
   invariant(plan.datasetVersion === dataset.version, 'plan dataset version must exactly match the dataset');
   invariant(plan.statPlan.levels === 10, 'plan must cover ten future levels');
-  invariant(plan.statPlan.totalPoints === 30, 'plan must allocate thirty future points');
+  invariant(plan.statPlan.futurePoints === 30, 'plan must allocate thirty future points');
   invariant(
-    Object.values(plan.statPlan.added).reduce((total, value) => total + value, 0) === 30,
+    Object.values(plan.statPlan.futureAdded).reduce((total, value) => total + value, 0) === 30,
     'added stats must total thirty future points',
+  );
+  const invested = Object.values(profile.stats).reduce(
+    (total, value) => total + value,
+    0,
+  );
+  const unspent = profile.level * dataset.pointsPerLevel - invested;
+  invariant(
+    plan.statPlan.spendNow.points === unspent,
+    'spend-now points must match the current unspent budget',
+  );
+  invariant(
+    Object.values(plan.statPlan.spendNow.added).reduce(
+      (total, value) => total + value,
+      0,
+    ) === unspent,
+    'spend-now additions must match the current unspent budget',
+  );
+  invariant(plan.statPlan.levelRows.length === 10, 'plan must contain ten exact level rows');
+  invariant(
+    plan.statPlan.levelRows.every(
+      (row, index) =>
+        row.level === profile.level + index + 1 &&
+        Object.values(row.added).reduce((total, value) => total + value, 0) === 3,
+    ),
+    'every future level row must identify the actual level and add three points',
   );
 
   assertImmediateAction(plan.immediateAction, profile, dataset);

@@ -14,16 +14,38 @@ import {
   type GearTotals,
 } from './projections';
 
+export interface SpendNowAllocation {
+  points: number;
+  added: StatBlock;
+  totals: StatBlock;
+}
+
+export interface LevelAllocationRow {
+  level: number;
+  added: StatBlock;
+  totals: StatBlock;
+}
+
 export interface StatAllocationPlan {
+  spendNow: SpendNowAllocation;
+  levels: 10;
+  futurePoints: 30;
+  futureAdded: StatBlock;
+  levelRows: LevelAllocationRow[];
+  final: StatBlock;
+  milestones: Array<{
+    afterLevel: 5 | 10;
+    added: StatBlock;
+    totals: StatBlock;
+  }>;
+}
+
+export interface NextTenLevelsPlan {
   levels: 10;
   totalPoints: 30;
   added: StatBlock;
   final: StatBlock;
-  milestones: Array<{
-    afterLevel: number;
-    added: StatBlock;
-    totals: StatBlock;
-  }>;
+  milestones: StatAllocationPlan['milestones'];
 }
 
 export interface StatAllocationInput {
@@ -108,38 +130,99 @@ function chooseNextStat(
   return bestStat;
 }
 
-export function allocateNextTenLevels(
+function allocatePoints(
+  count: number,
+  levelForPoint: (pointIndex: number) => number,
+  final: StatBlock,
+  added: StatBlock,
   input: StatAllocationInput,
-): StatAllocationPlan {
-  const final = copyStats(input.stats);
-  const added = emptyStats();
-  const milestones: StatAllocationPlan['milestones'] = [];
-
-  for (let pointIndex = 0; pointIndex < 30; pointIndex += 1) {
-    const projectedLevel = input.level + Math.floor(pointIndex / 3) + 1;
+) {
+  for (let pointIndex = 0; pointIndex < count; pointIndex += 1) {
     const selectedStat = chooseNextStat(
-      projectedLevel,
+      levelForPoint(pointIndex),
       final,
       input.gear,
       input.goal,
     );
     final[selectedStat] += 1;
     added[selectedStat] += 1;
+  }
+}
 
-    if (pointIndex === 14 || pointIndex === 29) {
+export function allocateStatPlan(
+  input: StatAllocationInput & { unspentPoints: number },
+): StatAllocationPlan {
+  if (!Number.isInteger(input.unspentPoints) || input.unspentPoints < 0) {
+    throw new Error('unspent points must be a nonnegative whole number');
+  }
+
+  const final = copyStats(input.stats);
+  const spendNowAdded = emptyStats();
+  allocatePoints(
+    input.unspentPoints,
+    () => input.level,
+    final,
+    spendNowAdded,
+    input,
+  );
+  const spendNow: SpendNowAllocation = {
+    points: input.unspentPoints,
+    added: copyStats(spendNowAdded),
+    totals: copyStats(final),
+  };
+
+  const futureAdded = emptyStats();
+  const levelRows: LevelAllocationRow[] = [];
+  const milestones: StatAllocationPlan['milestones'] = [];
+
+  for (let levelOffset = 1; levelOffset <= 10; levelOffset += 1) {
+    const rowAdded = emptyStats();
+    allocatePoints(
+      3,
+      () => input.level + levelOffset,
+      final,
+      rowAdded,
+      input,
+    );
+    for (const stat of STAT_TIE_BREAK_ORDER) {
+      futureAdded[stat] += rowAdded[stat];
+    }
+    const row = {
+      level: input.level + levelOffset,
+      added: copyStats(rowAdded),
+      totals: copyStats(final),
+    };
+    levelRows.push(row);
+    if (levelOffset === 5 || levelOffset === 10) {
       milestones.push({
-        afterLevel: pointIndex === 14 ? 5 : 10,
-        added: copyStats(added),
+        afterLevel: levelOffset,
+        added: copyStats(futureAdded),
         totals: copyStats(final),
       });
     }
   }
 
   return {
+    spendNow,
     levels: 10,
-    totalPoints: 30,
-    added,
+    futurePoints: 30,
+    futureAdded,
+    levelRows,
     final,
     milestones,
+  };
+}
+
+export function allocateNextTenLevels(
+  input: StatAllocationInput,
+): NextTenLevelsPlan {
+  const plan = allocateStatPlan({ ...input, unspentPoints: 0 });
+
+  return {
+    levels: 10,
+    totalPoints: 30,
+    added: plan.futureAdded,
+    final: plan.final,
+    milestones: plan.milestones,
   };
 }
