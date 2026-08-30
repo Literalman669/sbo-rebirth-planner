@@ -1,219 +1,175 @@
-import {
-  execFileSync,
-  spawn,
-  spawnSync,
-} from 'node:child_process';
+import { execFileSync, spawn, spawnSync } from 'node:child_process';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { createServer } from 'node:net';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import process from 'node:process';
+import { fileURLToPath } from 'node:url';
+import { playwrightArgumentsFor, runIntegrationPhases } from './integration-phase-plan.mjs';
 
 const uri = 'http://127.0.0.1:3000';
 const database = 'sbo-rebirth-optimizer-v2-test';
-const browserHost = '127.0.0.1';
+const host = '127.0.0.1';
 const browserPort = 4173;
+const serverPort = 3000;
+const root = new URL('../', import.meta.url);
+const temporaryPrefix = path.join(tmpdir(), 'sbo-optimizer-v2-stdb-');
+const spacetimeExecutable = process.platform === 'win32'
+  ? path.join(process.env.LOCALAPPDATA ?? '', 'SpacetimeDB', 'bin', 'current', 'spacetimedb-cli.exe')
+  : 'spacetime';
 
-if (uri !== 'http://127.0.0.1:3000' || database !== 'sbo-rebirth-optimizer-v2-test') {
-  throw new Error(
-    'Refusing integration publish outside the fixed local test database',
-  );
+export function assertFixedIntegrationTarget(targetUri, targetDatabase) {
+  if (targetUri !== uri || targetDatabase !== database) {
+    throw new Error('Refusing integration publish outside the fixed local test database');
+  }
 }
 
-async function assertBrowserPortAvailable() {
-  const reservation = createServer();
+const wait = (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds));
 
+async function assertPortAvailable(port, message) {
+  const reservation = createServer();
   try {
     await new Promise((resolve, reject) => {
       reservation.once('error', reject);
-      reservation.listen(browserPort, browserHost, resolve);
+      reservation.listen(port, host, resolve);
     });
   } catch (error) {
-    if (error && typeof error === 'object' && error.code === 'EADDRINUSE') {
-      throw new Error(
-        `Refusing to reuse an existing browser server at http://${browserHost}:${browserPort}`,
-      );
-    }
+    if (error && typeof error === 'object' && error.code === 'EADDRINUSE') throw new Error(message);
     throw error;
   } finally {
     if (reservation.listening) {
-      await new Promise((resolve, reject) => {
-        reservation.close((error) => (error ? reject(error) : resolve()));
-      });
+      await new Promise((resolve, reject) => reservation.close((error) => (error ? reject(error) : resolve())));
     }
   }
 }
 
-await assertBrowserPortAvailable();
-
-const root = new URL('../', import.meta.url);
-const temporaryPrefix = path.join(tmpdir(), 'sbo-optimizer-v2-stdb-');
-const serverDataDir = mkdtempSync(temporaryPrefix);
-const spacetimeServerExecutable =
-  process.platform === 'win32'
-    ? path.join(
-        process.env.LOCALAPPDATA ?? '',
-        'SpacetimeDB',
-        'bin',
-        'current',
-        'spacetimedb-cli.exe',
-      )
-    : 'spacetime';
-const spacetimeCliExecutable = spacetimeServerExecutable;
-const isolatedCliConfigPath = path.join(serverDataDir, 'integration-cli.toml');
+const assertBrowserPortAvailable = () => assertPortAvailable(
+  browserPort,
+  `Refusing to reuse an existing browser server at http://${host}:${browserPort}`,
+);
+const assertServerPortAvailable = () => assertPortAvailable(
+  serverPort,
+  `Refusing to reuse an existing service at ${uri}`,
+);
 
 async function isHealthy() {
   try {
-    const response = await fetch(`${uri}/v1/ping`);
-    return response.ok;
+    return (await fetch(`${uri}/v1/ping`)).ok;
   } catch {
     return false;
   }
 }
 
-async function waitForServer(serverProcess) {
+async function waitForServer(server) {
   const deadline = Date.now() + 15_000;
-
   while (Date.now() < deadline) {
-    if (serverProcess.exitCode !== null) {
-      throw new Error(`SpacetimeDB exited before becoming ready (${serverProcess.exitCode})`);
-    }
+    if (server.exitCode !== null) throw new Error(`SpacetimeDB exited before becoming ready (${server.exitCode})`);
     if (await isHealthy()) return;
-    await new Promise((resolve) => setTimeout(resolve, 100));
+    await wait(100);
   }
-
   throw new Error('Timed out waiting for local SpacetimeDB');
 }
 
-if (await isHealthy()) {
-  throw new Error(`Refusing to reuse an existing service at ${uri}`);
+async function waitForOwnedServerExit(server) {
+  const deadline = Date.now() + 15_000;
+  while (server.exitCode === null && Date.now() < deadline) await wait(100);
+  if (server.exitCode === null) throw new Error('Owned local SpacetimeDB did not exit');
 }
 
-const server = spawn(
-  spacetimeServerExecutable,
-  [
-    'start',
-    '--listen-addr',
-    '127.0.0.1:3000',
-    '--in-memory',
-    '--data-dir',
-    serverDataDir,
-    '--non-interactive',
-  ],
-  {
-    cwd: root,
-    stdio: ['ignore', 'pipe', 'pipe'],
-  },
-);
-
-server.stdout.on('data', (chunk) => process.stdout.write(chunk));
-server.stderr.on('data', (chunk) => process.stderr.write(chunk));
-
-try {
-  await waitForServer(server);
-
-  const identityResponse = await fetch(`${uri}/v1/identity`, { method: 'POST' });
-  if (!identityResponse.ok) {
-    throw new Error(`Failed to create the isolated publisher identity (${identityResponse.status})`);
+async function waitForServerPortRelease() {
+  const deadline = Date.now() + 15_000;
+  while (Date.now() < deadline) {
+    try {
+      await assertServerPortAvailable();
+      return;
+    } catch (error) {
+      if (!(error instanceof Error) || error.message !== `Refusing to reuse an existing service at ${uri}`) throw error;
+    }
+    await wait(100);
   }
-  const ownerCredential = await identityResponse.json();
-  if (
-    typeof ownerCredential !== 'object' ||
-    ownerCredential === null ||
-    typeof ownerCredential.token !== 'string' ||
-    ownerCredential.token.length === 0
-  ) {
-    throw new Error('The local server returned an invalid publisher credential');
+  throw new Error('Owned local SpacetimeDB did not release port 3000');
+}
+
+async function createCredential(label) {
+  const response = await fetch(`${uri}/v1/identity`, { method: 'POST' });
+  if (!response.ok) throw new Error(`Failed to create the isolated ${label} identity (${response.status})`);
+  const credential = await response.json();
+  if (typeof credential !== 'object' || credential === null || typeof credential.token !== 'string' || credential.token.length === 0) {
+    throw new Error(`The local server returned an invalid ${label} credential`);
   }
-  const testUserIdentityResponse = await fetch(`${uri}/v1/identity`, {
+  return credential;
+}
+
+async function configurePhaseDatabase(cliConfigPath) {
+  const owner = await createCredential('publisher');
+  const user = await createCredential('browser test');
+  execFileSync(spacetimeExecutable, ['--config-path', cliConfigPath, 'login', '--token', owner.token], { cwd: root, stdio: 'ignore' });
+  execFileSync(spacetimeExecutable, [
+    '--config-path', cliConfigPath, 'publish', database, '--server', 'local', '--module-path', './spacetimedb', '--yes=all',
+  ], { cwd: root, stdio: 'inherit' });
+  const response = await fetch(`${uri}/v1/database/${database}/call/configure_auth`, {
     method: 'POST',
+    headers: { authorization: `Bearer ${owner.token}`, 'content-type': 'application/json' },
+    body: JSON.stringify(['development', '', '']),
   });
-  if (!testUserIdentityResponse.ok) {
-    throw new Error('Failed to create the browser test identity');
+  if (!response.ok) throw new Error(`Failed to configure local development auth (${response.status})`);
+  return { ownerToken: owner.token, userToken: user.token };
+}
+
+async function startPhaseServer() {
+  await assertBrowserPortAvailable();
+  await assertServerPortAvailable();
+  const serverDataDir = mkdtempSync(temporaryPrefix);
+  const server = spawn(spacetimeExecutable, [
+    'start', '--listen-addr', '127.0.0.1:3000', '--in-memory', '--data-dir', serverDataDir, '--non-interactive',
+  ], { cwd: root, stdio: ['ignore', 'pipe', 'pipe'] });
+  server.stdout.on('data', (chunk) => process.stdout.write(chunk));
+  server.stderr.on('data', (chunk) => process.stderr.write(chunk));
+  return { server, serverDataDir, cliConfigPath: path.join(serverDataDir, 'integration-cli.toml') };
+}
+
+async function stopPhaseServer({ server, serverDataDir }) {
+  try {
+    if (server.exitCode === null) {
+      if (process.platform === 'win32' && server.pid) {
+        spawnSync('taskkill', ['/PID', String(server.pid), '/T', '/F'], { stdio: 'ignore' });
+      } else {
+        server.kill('SIGTERM');
+      }
+    }
+    await waitForOwnedServerExit(server);
+    await waitForServerPortRelease();
+  } finally {
+    if (serverDataDir.startsWith(temporaryPrefix)) rmSync(serverDataDir, { recursive: true, force: true });
   }
-  const testUserCredential = await testUserIdentityResponse.json();
-  if (
-    typeof testUserCredential !== 'object' ||
-    testUserCredential === null ||
-    typeof testUserCredential.token !== 'string' ||
-    testUserCredential.token.length === 0
-  ) {
-    throw new Error('The local server returned an invalid browser credential');
-  }
+}
 
-  execFileSync(
-    spacetimeCliExecutable,
-    [
-      '--config-path',
-      isolatedCliConfigPath,
-      'login',
-      '--token',
-      ownerCredential.token,
-    ],
-    { cwd: root, stdio: 'ignore' },
-  );
-
-  execFileSync(
-    spacetimeCliExecutable,
-    [
-      '--config-path',
-      isolatedCliConfigPath,
-      'publish',
-      database,
-      '--server',
-      'local',
-      '--module-path',
-      './spacetimedb',
-      '--yes=all',
-    ],
-    { cwd: root, stdio: 'inherit' },
-  );
-
-  const configureResponse = await fetch(
-    `${uri}/v1/database/${database}/call/configure_auth`,
-    {
-      method: 'POST',
-      headers: {
-        authorization: `Bearer ${ownerCredential.token}`,
-        'content-type': 'application/json',
-      },
-      body: JSON.stringify(['development', '', '']),
-    },
-  );
-  if (!configureResponse.ok) {
-    throw new Error(
-      `Failed to configure local development auth (${configureResponse.status})`,
-    );
-  }
-
-  const result = spawnSync(
-    'npm',
-    ['run', 'test:e2e', '--workspace', '@sbo/optimizer-client'],
-    {
+async function runPhase(phase) {
+  console.log(`[integration] phase ${phase.id}: starting`);
+  const lifecycle = await startPhaseServer();
+  try {
+    await waitForServer(lifecycle.server);
+    const credentials = await configurePhaseDatabase(lifecycle.cliConfigPath);
+    const result = spawnSync('npm', playwrightArgumentsFor(phase), {
       cwd: root,
       stdio: 'inherit',
       shell: process.platform === 'win32',
-      env: {
-        ...process.env,
-        SBO_TEST_OWNER_TOKEN: ownerCredential.token,
-        SBO_TEST_USER_TOKEN: testUserCredential.token,
-      },
-    },
-  );
+      env: { ...process.env, SBO_TEST_OWNER_TOKEN: credentials.ownerToken, SBO_TEST_USER_TOKEN: credentials.userToken },
+    });
+    if (result.error) throw result.error;
+    const exitCode = result.status ?? 1;
+    console.log(`[integration] phase ${phase.id}: ${exitCode === 0 ? 'passed' : 'failed'}`);
+    return exitCode;
+  } finally {
+    await stopPhaseServer(lifecycle);
+  }
+}
 
-  if (result.error) throw result.error;
-  if (result.status !== 0) process.exitCode = result.status ?? 1;
-} finally {
-  if (process.platform === 'win32' && server.pid) {
-    spawnSync(
-      'taskkill',
-      ['/PID', String(server.pid), '/T', '/F'],
-      { stdio: 'ignore' },
-    );
-  } else {
-    server.kill('SIGTERM');
-  }
-  if (serverDataDir.startsWith(temporaryPrefix)) {
-    rmSync(serverDataDir, { recursive: true, force: true });
-  }
+export async function runLocalIntegration({ runPhase: phaseRunner = runPhase } = {}) {
+  assertFixedIntegrationTarget(uri, database);
+  await runIntegrationPhases(phaseRunner);
+}
+
+if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
+  await runLocalIntegration();
 }

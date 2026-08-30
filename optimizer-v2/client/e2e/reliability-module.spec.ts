@@ -860,9 +860,9 @@ async function attachFailureEvidence(
 }
 
 test('keeps 100 immutable revisions converged across same-account subscriptions', async ({}, testInfo) => {
-  // CI must cover this bounded workload: 100 revisions, 50 share/revoke cycles,
-  // offline replay, and eight same-parent race pairs; local runs stay strict.
-  test.setTimeout(process.env.CI ? 300_000 : 120_000);
+  // This bounded workload covers 100 revisions, 50 share/revoke cycles, offline replay,
+  // and eight same-parent race pairs; phase isolation keeps this strict limit viable.
+  test.setTimeout(120_000);
   test.skip(testInfo.project.name !== 'desktop', 'Module integration runs once.');
 
   const reducerInputs: RevisionInput[] = [];
@@ -1375,9 +1375,8 @@ test('keeps 100 immutable revisions converged across same-account subscriptions'
 });
 
 test('rejects invalid publications atomically and carries one reviewed row into a second release', async ({}, testInfo) => {
-  // CI must cover 11 bounded rollback categories plus the carried-forward release;
-  // local runs stay strict.
-  test.setTimeout(process.env.CI ? 180_000 : 60_000);
+  // This bounded workload covers 11 rollback categories plus the carried-forward release.
+  test.setTimeout(60_000);
   test.skip(testInfo.project.name !== 'desktop', 'Module integration runs once.');
   const ownerToken = process.env.SBO_TEST_OWNER_TOKEN;
   if (!ownerToken) throw new Error('SBO_TEST_OWNER_TOKEN is required');

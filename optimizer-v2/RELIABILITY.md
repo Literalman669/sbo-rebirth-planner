@@ -214,3 +214,22 @@ gate passed all six layers again: 40 client files / 322 tests, 3 module files /
 2 passed. Independent Pages (2 passed, 1.4 s; build 210 ms), root typecheck,
 and binding diff also passed. Fourth GitHub reruns are pending this CI-watchdog
 commit; no external action was performed locally.
+
+The fourth [Optimizer V2 CI](https://github.com/Literalman669/sbo-rebirth-planner/actions/runs/33301520394)
+and [Deploy Optimizer V2](https://github.com/Literalman669/sbo-rebirth-planner/actions/runs/33301520388)
+runs showed that neither bounded workload started: each logged only its
+connect/subscriptions marker, then its first connection hung until the exact
+300-second or 180-second watchdog. The long-lived single local SpacetimeDB
+process had stopped accepting clients after earlier files; the sharing timeout
+was cascading and production steps were skipped. Phase isolation is the fix,
+not further timeout expansion.
+
+`run-local-integration.mjs` now starts four deterministic phases with a fresh
+in-memory owned server, data directory, identities, module publish, development
+auth, browser-port preflight, server-port reuse refusal, owned-process exit,
+and port-3000 release before the next phase: core, exact composite grep, exact
+publication grep, and sharing only. The pure phase-plan tests prove complete
+selectors and fail-fast ordering. The two watchdogs are restored to bounded
+120-second/60-second fallback for every environment; global and sharing limits
+are unchanged. Two final CI/GitHub-shaped runs passed the exact 24/8 aggregate;
+fifth GitHub reruns are pending this phase-isolation commit.
