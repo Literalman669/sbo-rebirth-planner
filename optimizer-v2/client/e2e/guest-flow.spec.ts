@@ -52,7 +52,9 @@ test('completes and resumes the focused guest optimizer flow', async ({ page }) 
   ).toBeVisible();
   await expect(page.getByText('Equip Steel Greatsword now')).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Do now' })).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Next levels' })).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: 'Next ten levels', exact: true }),
+  ).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Next upgrades' })).toBeVisible();
   await expect(page.getByText('Why this plan')).toBeVisible();
 
