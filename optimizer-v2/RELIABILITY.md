@@ -165,7 +165,7 @@ With `GITHUB_ACTIONS=true` scoped to the PowerShell integration command and
 restored afterward, fixed-local integration passed 24 tests with 8 intended
 skips in 44.4 s, including the direct-route and keyboard checks. The fresh
 full reliability command passed all six layers: 40 client files / 321 tests,
-3 module files / 62 tests, 15 script tests, typechecks, coverage validation,
+3 module files / 62 tests, 15 script tests (before the phase-plan tests were added), typechecks, coverage validation,
 module build, fixed-local integration (24 passed, 8 skipped, 43.7 s), and
 Pages (2 passed, 1.4 s). An independent `npm run test:pages` production build
 (203 ms) and deep-link suite (2 passed, 1.4 s) also passed, and
@@ -190,7 +190,7 @@ tests. Two further `GITHUB_ACTIONS=true` fixed-local integrations passed 24
 tests with 8 intended skips (46.9 s and 47.6 s); the two stress cases completed
 in 10.3/3.6 s and 9.5/3.4 s respectively, with suite cleanup intact. A fresh
 full reliability gate passed all six layers: 40 client files / 322 tests, 3
-module files / 62 tests, 15 scripts, fixed-local integration (24 passed, 8
+module files / 62 tests, 15 scripts (before the phase-plan tests were added), fixed-local integration (24 passed, 8
 skipped, 45.0 s), and Pages (2 passed, 1.5 s). Independent Pages, root
 typecheck, and binding-diff checks also passed. New GitHub reruns are pending
 the watchdog commit; no external action was performed locally.
@@ -210,10 +210,22 @@ The CI-and-GitHub-shaped local integration was repeated twice with both
 `CI=true` and `GITHUB_ACTIONS=true`: 24 passed with 8 intended skips in 44.1 s
 and 42.7 s, with every phase marker emitted. The strict local full reliability
 gate passed all six layers again: 40 client files / 322 tests, 3 module files /
-62 tests, 15 scripts, integration 24 passed / 8 skipped in 43.5 s, and Pages
+62 tests, 17 scripts, integration 24 passed / 8 skipped in 43.5 s, and Pages
 2 passed. Independent Pages (2 passed, 1.4 s; build 210 ms), root typecheck,
 and binding diff also passed. Fourth GitHub reruns are pending this CI-watchdog
 commit; no external action was performed locally.
+
+## Task 22 final phase-isolation gate (2026-08-30, `bec08b3`)
+
+The exact strict `npm run test:reliability` command completed at the committed
+phase-isolation head: 40 client files / 322 tests in 14.59 s, 3 module files /
+62 tests in 223 ms, and 17 script tests. Typechecks, coverage validation, and
+the module build passed. The owned-server phase output was core 21 passed / 5
+skipped in 29.5 s, composite 1 / 1 in 12.9 s, publication 1 / 1 in 7.0 s, and
+sharing 1 / 1 in 2.5 s, for the exact 24 passed / 8 intended skips aggregate.
+Pages passed 2 / 2 in 1.5 s, and `git diff --exit-code --
+client/src/module_bindings` exited 0. The older 15-script Task 22 entries above
+are historical pre-phase-plan gates; fifth GitHub reruns remain pending.
 
 The fourth [Optimizer V2 CI](https://github.com/Literalman669/sbo-rebirth-planner/actions/runs/33301520394)
 and [Deploy Optimizer V2](https://github.com/Literalman669/sbo-rebirth-planner/actions/runs/33301520388)
