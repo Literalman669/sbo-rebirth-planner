@@ -1,9 +1,9 @@
 import type {
-  DatasetSnapshot,
   EquipmentRecord,
   FormulaId,
   FormulaRecord,
 } from '../domain/dataset/model';
+import { datasetSnapshotSchema } from '../domain/dataset/schema';
 
 const reviewedAt = '2026-08-29';
 const statsSource =
@@ -57,7 +57,7 @@ function equipment(
   };
 }
 
-export const bootstrapRelease = {
+export const bootstrapRelease = datasetSnapshotSchema.parse({
   version: 'bootstrap-0',
   publishedAt: '2026-08-29T00:00:00.000Z',
   lastReviewedAt: reviewedAt,
@@ -352,4 +352,4 @@ export const bootstrapRelease = {
       sourceUrl: 'https://swordbloxonlinerebirth.fandom.com/wiki/Shields',
     }),
   ],
-} satisfies DatasetSnapshot;
+});

@@ -6,11 +6,14 @@ describe('fallbackRelease', () => {
     expect(fallbackRelease).toMatchObject({
       version: '2026.08.29.1',
       formulaSetVersion: 'sbor-stats-v1',
+      strategyPolicyVersion: 'sbor-policy-v1',
       pointsPerLevel: 3,
       dualWieldSkillGate: 200,
     });
     expect(fallbackRelease.formulas).toHaveLength(9);
     expect(fallbackRelease.equipment).toHaveLength(33);
+    expect(fallbackRelease.catalog).toHaveLength(33);
+    expect(fallbackRelease.mechanics).toHaveLength(9);
     expect(fallbackRelease.knownGaps).toHaveLength(11);
     expect(
       fallbackRelease.formulas.find(

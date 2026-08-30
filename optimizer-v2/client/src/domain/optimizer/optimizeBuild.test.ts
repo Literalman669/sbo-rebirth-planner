@@ -53,8 +53,11 @@ const dataset: DatasetSnapshot = {
   lastReviewedAt: '2026-08-29',
   sourceSummary: 'Test data',
   formulaSetVersion: 'sbor-stats-v1',
+  strategyPolicyVersion: 'sbor-policy-v1',
   pointsPerLevel: 3,
   formulas: [],
+  mechanics: [],
+  catalog: [],
   equipment: [sword],
 };
 

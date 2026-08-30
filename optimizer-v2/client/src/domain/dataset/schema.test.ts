@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
+  catalogEquipmentRecordSchema,
   datasetSnapshotSchema,
   equipmentRecordSchema,
   formulaRecordSchema,
 } from './schema';
+import { isOptimizerSafeEquipment } from './eligibility';
 
 const sourceUrl = 'https://swordbloxonlinerebirth.fandom.com/wiki/Stats';
 const gameUrl =
@@ -231,6 +233,169 @@ describe('formulaRecordSchema', () => {
 });
 
 describe('datasetSnapshotSchema', () => {
+  it('normalizes historical equipment into the catalog evidence model', () => {
+    const dataset = datasetSnapshotSchema.parse({
+      version: 'bootstrap-1',
+      publishedAt: '2026-08-29T00:00:00.000Z',
+      lastReviewedAt: '2026-08-29',
+      sourceSummary: 'Reviewed wiki snapshot',
+      formulaSetVersion: 'sbor-stats-v1',
+      pointsPerLevel: 3,
+      formulas,
+      equipment: [canonicalEquipment],
+    });
+
+    expect(dataset.strategyPolicyVersion).toBe('sbor-policy-v1');
+    expect(dataset.catalog).toHaveLength(1);
+    expect(dataset.catalog[0]).toMatchObject({
+      aliases: [],
+      verificationStatus: 'verified',
+      acquisitions: [
+        {
+          id: 'iron-dagger:acquisition:0',
+          type: 'starter',
+          detail: 'Starter Inventory',
+          floor: 1,
+          availability: 'always',
+          accessType: 'free',
+          sourceUrl,
+          sourceRevision: '23125',
+        },
+      ],
+      resistances: [],
+      specialEffects: [],
+    });
+    expect(dataset.equipment).toHaveLength(1);
+    expect(isOptimizerSafeEquipment(dataset.catalog[0]!)).toBe(true);
+  });
+
+  it('retains a partial catalog row without making it optimizer-safe', () => {
+    const item = catalogEquipmentRecordSchema.parse({
+      id: 'unknown-blade',
+      name: 'Unknown Blade',
+      aliases: [],
+      slot: 'main-hand',
+      weaponPaths: ['one-handed'],
+      attack: null,
+      defense: 0,
+      dexterity: 0,
+      levelRequirement: 1,
+      acquisitions: [],
+      resistances: [],
+      specialEffects: [],
+      sourceUrl,
+      sourceRevision: '23125',
+      lastReviewedAt: '2026-08-30',
+      verificationStatus: 'partial',
+    });
+
+    expect(isOptimizerSafeEquipment(item)).toBe(false);
+  });
+
+  it('rejects a verified weapon with an unknown attack value', () => {
+    expect(() =>
+      catalogEquipmentRecordSchema.parse({
+        id: 'invalid-verified-blade',
+        name: 'Invalid Verified Blade',
+        aliases: [],
+        slot: 'main-hand',
+        weaponPaths: ['one-handed'],
+        attack: null,
+        defense: 0,
+        dexterity: 0,
+        levelRequirement: 1,
+        acquisitions: [],
+        resistances: [],
+        specialEffects: [],
+        sourceUrl,
+        sourceRevision: '23125',
+        lastReviewedAt: '2026-08-30',
+        verificationStatus: 'verified',
+      }),
+    ).toThrow(/verified equipment requires complete numeric stats/i);
+  });
+
+  it('rejects duplicate acquisition identifiers', () => {
+    const acquisition = {
+      id: 'duplicate-source',
+      type: 'shop',
+      detail: 'Floor 1 Shop',
+      floor: 1,
+      availability: 'always',
+      accessType: 'free',
+      sourceUrl,
+      sourceRevision: '23125',
+    };
+    expect(() =>
+      catalogEquipmentRecordSchema.parse({
+        id: 'duplicate-acquisition-blade',
+        name: 'Duplicate Acquisition Blade',
+        aliases: [],
+        slot: 'main-hand',
+        weaponPaths: ['one-handed'],
+        attack: 1,
+        defense: 0,
+        dexterity: 0,
+        levelRequirement: 1,
+        acquisitions: [acquisition, acquisition],
+        resistances: [],
+        specialEffects: [],
+        sourceUrl,
+        sourceRevision: '23125',
+        lastReviewedAt: '2026-08-30',
+        verificationStatus: 'verified',
+      }),
+    ).toThrow(/acquisition IDs must be unique/i);
+  });
+
+  it('rejects invalid catalog child values and provenance', () => {
+    const base = {
+      id: 'catalog-armor',
+      name: 'Catalog Armor',
+      aliases: [],
+      slot: 'armor',
+      weaponPaths: [],
+      attack: 0,
+      defense: 1,
+      dexterity: 2,
+      levelRequirement: 1,
+      acquisitions: [],
+      resistances: [],
+      specialEffects: [],
+      sourceUrl,
+      sourceRevision: '23125',
+      lastReviewedAt: '2026-08-30',
+      verificationStatus: 'verified',
+    };
+
+    expect(
+      catalogEquipmentRecordSchema.safeParse({
+        ...base,
+        acquisitions: [{
+          id: 'bad-cost',
+          type: 'shop',
+          detail: 'Floor 1 Shop',
+          cost: -1,
+          availability: 'always',
+          accessType: 'free',
+          sourceUrl,
+          sourceRevision: '23125',
+        }],
+      }).success,
+    ).toBe(false);
+    expect(
+      catalogEquipmentRecordSchema.safeParse({
+        ...base,
+        resistances: [{
+          status: 'Poison',
+          percent: 101,
+          sourceUrl: 'https://example.com/not-canonical',
+          sourceRevision: '23125',
+        }],
+      }).success,
+    ).toBe(false);
+  });
+
   it('accepts each required verified formula exactly once', () => {
     const dataset = datasetSnapshotSchema.parse({
       version: 'bootstrap-1',
@@ -244,6 +409,7 @@ describe('datasetSnapshotSchema', () => {
     });
 
     expect(dataset.formulas).toHaveLength(9);
+    expect(dataset.mechanics).toHaveLength(9);
   });
 
   it('rejects a snapshot that changes the verified points-per-level rate', () => {
