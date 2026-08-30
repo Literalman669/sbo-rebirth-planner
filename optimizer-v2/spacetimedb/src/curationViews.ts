@@ -1,11 +1,20 @@
 import { t, type ViewCtx } from 'spacetimedb/server';
 import spacetimedb, {
+  coverageManifest,
+  draftCatalogEquipment,
+  draftEquipmentAcquisition,
+  draftEquipmentAlias,
+  draftEquipmentResistance,
+  draftEquipmentSpecialEffect,
   draftEquipment,
   draftFormula,
+  draftMechanic,
   draftSourceReference,
+  draftStrategyPolicy,
   releaseDraft,
   reviewDecision,
   wikiCandidate,
+  wikiPageSnapshot,
   type AppSchema,
 } from './schema';
 
@@ -70,4 +79,58 @@ export const myDraftSourceReferences = spacetimedb.view(
   t.array(draftSourceReference.rowType),
   (ctx) =>
     canCurate(ctx) ? Array.from(ctx.db.draftSourceReference.iter()) : [],
+);
+
+export const myWikiPageSnapshots = spacetimedb.view(
+  { name: 'my_wiki_page_snapshots', public: true },
+  t.array(wikiPageSnapshot.rowType),
+  (ctx) => (canCurate(ctx) ? Array.from(ctx.db.wikiPageSnapshot.iter()) : []),
+);
+
+export const myCoverageManifests = spacetimedb.view(
+  { name: 'my_coverage_manifests', public: true },
+  t.array(coverageManifest.rowType),
+  (ctx) => (canCurate(ctx) ? Array.from(ctx.db.coverageManifest.iter()) : []),
+);
+
+export const myDraftCatalogEquipment = spacetimedb.view(
+  { name: 'my_draft_catalog_equipment', public: true },
+  t.array(draftCatalogEquipment.rowType),
+  (ctx) => (canCurate(ctx) ? Array.from(ctx.db.draftCatalogEquipment.iter()) : []),
+);
+
+export const myDraftEquipmentAliases = spacetimedb.view(
+  { name: 'my_draft_equipment_aliases', public: true },
+  t.array(draftEquipmentAlias.rowType),
+  (ctx) => (canCurate(ctx) ? Array.from(ctx.db.draftEquipmentAlias.iter()) : []),
+);
+
+export const myDraftEquipmentAcquisitions = spacetimedb.view(
+  { name: 'my_draft_equipment_acquisitions', public: true },
+  t.array(draftEquipmentAcquisition.rowType),
+  (ctx) => (canCurate(ctx) ? Array.from(ctx.db.draftEquipmentAcquisition.iter()) : []),
+);
+
+export const myDraftEquipmentResistances = spacetimedb.view(
+  { name: 'my_draft_equipment_resistances', public: true },
+  t.array(draftEquipmentResistance.rowType),
+  (ctx) => (canCurate(ctx) ? Array.from(ctx.db.draftEquipmentResistance.iter()) : []),
+);
+
+export const myDraftEquipmentSpecialEffects = spacetimedb.view(
+  { name: 'my_draft_equipment_special_effects', public: true },
+  t.array(draftEquipmentSpecialEffect.rowType),
+  (ctx) => (canCurate(ctx) ? Array.from(ctx.db.draftEquipmentSpecialEffect.iter()) : []),
+);
+
+export const myDraftMechanics = spacetimedb.view(
+  { name: 'my_draft_mechanics', public: true },
+  t.array(draftMechanic.rowType),
+  (ctx) => (canCurate(ctx) ? Array.from(ctx.db.draftMechanic.iter()) : []),
+);
+
+export const myDraftStrategyPolicies = spacetimedb.view(
+  { name: 'my_draft_strategy_policies', public: true },
+  t.array(draftStrategyPolicy.rowType),
+  (ctx) => (canCurate(ctx) ? Array.from(ctx.db.draftStrategyPolicy.iter()) : []),
 );

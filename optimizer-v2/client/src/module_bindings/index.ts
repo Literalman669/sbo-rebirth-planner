@@ -41,6 +41,7 @@ import CreateReleaseDraftReducer from "./create_release_draft_reducer";
 import CreateReleaseDraftFromCurrentReducer from "./create_release_draft_from_current_reducer";
 import DeleteBuildReducer from "./delete_build_reducer";
 import GrantCuratorReducer from "./grant_curator_reducer";
+import PublishCatalogReleaseReducer from "./publish_catalog_release_reducer";
 import PublishReleaseReducer from "./publish_release_reducer";
 import RecordReviewDecisionReducer from "./record_review_decision_reducer";
 import RemoveDraftEquipmentReducer from "./remove_draft_equipment_reducer";
@@ -49,29 +50,54 @@ import RevokeBuildShareReducer from "./revoke_build_share_reducer";
 import RevokeCuratorReducer from "./revoke_curator_reducer";
 import SaveBuildRevisionReducer from "./save_build_revision_reducer";
 import StageWikiFixtureForLocalTestReducer from "./stage_wiki_fixture_for_local_test_reducer";
+import UpsertCoverageManifestReducer from "./upsert_coverage_manifest_reducer";
+import UpsertDraftCatalogEquipmentReducer from "./upsert_draft_catalog_equipment_reducer";
 import UpsertDraftEquipmentReducer from "./upsert_draft_equipment_reducer";
+import UpsertDraftEquipmentAcquisitionReducer from "./upsert_draft_equipment_acquisition_reducer";
+import UpsertDraftEquipmentAliasReducer from "./upsert_draft_equipment_alias_reducer";
+import UpsertDraftEquipmentResistanceReducer from "./upsert_draft_equipment_resistance_reducer";
+import UpsertDraftEquipmentSpecialEffectReducer from "./upsert_draft_equipment_special_effect_reducer";
 import UpsertDraftFormulaReducer from "./upsert_draft_formula_reducer";
+import UpsertDraftMechanicReducer from "./upsert_draft_mechanic_reducer";
 import UpsertDraftSourceReferenceReducer from "./upsert_draft_source_reference_reducer";
+import UpsertDraftStrategyPolicyReducer from "./upsert_draft_strategy_policy_reducer";
+import UpsertWikiPageSnapshotReducer from "./upsert_wiki_page_snapshot_reducer";
 
 // Import all procedure arg schemas
 import * as FetchWikiCandidateProcedure from "./fetch_wiki_candidate_procedure";
 
 // Import all table schema definitions
+import CatalogEquipmentRow from "./catalog_equipment_table";
 import DatasetReleaseRow from "./dataset_release_table";
 import EquipmentRow from "./equipment_table";
+import EquipmentAcquisitionRow from "./equipment_acquisition_table";
+import EquipmentAliasRow from "./equipment_alias_table";
+import EquipmentResistanceRow from "./equipment_resistance_table";
+import EquipmentSpecialEffectRow from "./equipment_special_effect_table";
 import FormulaRow from "./formula_table";
+import MechanicRow from "./mechanic_table";
 import MyBuildRevisionsRow from "./my_build_revisions_table";
 import MyBuildsRow from "./my_builds_table";
+import MyCoverageManifestsRow from "./my_coverage_manifests_table";
 import MyCuratorAccessRow from "./my_curator_access_table";
+import MyDraftCatalogEquipmentRow from "./my_draft_catalog_equipment_table";
 import MyDraftEquipmentRow from "./my_draft_equipment_table";
+import MyDraftEquipmentAcquisitionsRow from "./my_draft_equipment_acquisitions_table";
+import MyDraftEquipmentAliasesRow from "./my_draft_equipment_aliases_table";
+import MyDraftEquipmentResistancesRow from "./my_draft_equipment_resistances_table";
+import MyDraftEquipmentSpecialEffectsRow from "./my_draft_equipment_special_effects_table";
 import MyDraftFormulasRow from "./my_draft_formulas_table";
+import MyDraftMechanicsRow from "./my_draft_mechanics_table";
 import MyDraftSourceReferencesRow from "./my_draft_source_references_table";
+import MyDraftStrategyPoliciesRow from "./my_draft_strategy_policies_table";
 import MyProfileRow from "./my_profile_table";
 import MyReleaseDraftsRow from "./my_release_drafts_table";
 import MyReviewDecisionsRow from "./my_review_decisions_table";
 import MyRevisionEquipmentRow from "./my_revision_equipment_table";
 import MyRevisionOwnedItemsRow from "./my_revision_owned_items_table";
 import MyWikiCandidatesRow from "./my_wiki_candidates_table";
+import MyWikiPageSnapshotsRow from "./my_wiki_page_snapshots_table";
+import ReleaseStrategyPolicyRow from "./release_strategy_policy_table";
 import SharedBuildRow from "./shared_build_table";
 import SharedBuildEquipmentRow from "./shared_build_equipment_table";
 import SharedBuildOwnedItemRow from "./shared_build_owned_item_table";
@@ -81,6 +107,20 @@ import SourceReferenceRow from "./source_reference_table";
 
 /** The schema information for all tables in this module. This is defined the same was as the tables would have been defined in the server. */
 const tablesSchema = __schema({
+  catalogEquipment: __table({
+    name: 'catalog_equipment',
+    indexes: [
+      { accessor: 'id', name: 'catalog_equipment_id_idx_btree', algorithm: 'btree', columns: [
+        'id',
+      ] },
+      { accessor: 'catalogEquipmentReleaseVersion', name: 'catalog_equipment_release_version_idx_btree', algorithm: 'btree', columns: [
+        'releaseVersion',
+      ] },
+    ],
+    constraints: [
+      { name: 'catalog_equipment_id_key', constraint: 'unique', columns: ['id'] },
+    ],
+  }, CatalogEquipmentRow),
   datasetRelease: __table({
     name: 'dataset_release',
     indexes: [
@@ -110,6 +150,62 @@ const tablesSchema = __schema({
       { name: 'equipment_id_key', constraint: 'unique', columns: ['id'] },
     ],
   }, EquipmentRow),
+  equipmentAcquisition: __table({
+    name: 'equipment_acquisition',
+    indexes: [
+      { accessor: 'id', name: 'equipment_acquisition_id_idx_btree', algorithm: 'btree', columns: [
+        'id',
+      ] },
+      { accessor: 'equipmentAcquisitionReleaseVersion', name: 'equipment_acquisition_release_version_idx_btree', algorithm: 'btree', columns: [
+        'releaseVersion',
+      ] },
+    ],
+    constraints: [
+      { name: 'equipment_acquisition_id_key', constraint: 'unique', columns: ['id'] },
+    ],
+  }, EquipmentAcquisitionRow),
+  equipmentAlias: __table({
+    name: 'equipment_alias',
+    indexes: [
+      { accessor: 'id', name: 'equipment_alias_id_idx_btree', algorithm: 'btree', columns: [
+        'id',
+      ] },
+      { accessor: 'equipmentAliasReleaseVersion', name: 'equipment_alias_release_version_idx_btree', algorithm: 'btree', columns: [
+        'releaseVersion',
+      ] },
+    ],
+    constraints: [
+      { name: 'equipment_alias_id_key', constraint: 'unique', columns: ['id'] },
+    ],
+  }, EquipmentAliasRow),
+  equipmentResistance: __table({
+    name: 'equipment_resistance',
+    indexes: [
+      { accessor: 'id', name: 'equipment_resistance_id_idx_btree', algorithm: 'btree', columns: [
+        'id',
+      ] },
+      { accessor: 'equipmentResistanceReleaseVersion', name: 'equipment_resistance_release_version_idx_btree', algorithm: 'btree', columns: [
+        'releaseVersion',
+      ] },
+    ],
+    constraints: [
+      { name: 'equipment_resistance_id_key', constraint: 'unique', columns: ['id'] },
+    ],
+  }, EquipmentResistanceRow),
+  equipmentSpecialEffect: __table({
+    name: 'equipment_special_effect',
+    indexes: [
+      { accessor: 'id', name: 'equipment_special_effect_id_idx_btree', algorithm: 'btree', columns: [
+        'id',
+      ] },
+      { accessor: 'equipmentSpecialEffectReleaseVersion', name: 'equipment_special_effect_release_version_idx_btree', algorithm: 'btree', columns: [
+        'releaseVersion',
+      ] },
+    ],
+    constraints: [
+      { name: 'equipment_special_effect_id_key', constraint: 'unique', columns: ['id'] },
+    ],
+  }, EquipmentSpecialEffectRow),
   formula: __table({
     name: 'formula',
     indexes: [
@@ -124,6 +220,31 @@ const tablesSchema = __schema({
       { name: 'formula_id_key', constraint: 'unique', columns: ['id'] },
     ],
   }, FormulaRow),
+  mechanic: __table({
+    name: 'mechanic',
+    indexes: [
+      { accessor: 'id', name: 'mechanic_id_idx_btree', algorithm: 'btree', columns: [
+        'id',
+      ] },
+      { accessor: 'mechanicReleaseVersion', name: 'mechanic_release_version_idx_btree', algorithm: 'btree', columns: [
+        'releaseVersion',
+      ] },
+    ],
+    constraints: [
+      { name: 'mechanic_id_key', constraint: 'unique', columns: ['id'] },
+    ],
+  }, MechanicRow),
+  releaseStrategyPolicy: __table({
+    name: 'release_strategy_policy',
+    indexes: [
+      { accessor: 'releaseVersion', name: 'release_strategy_policy_release_version_idx_btree', algorithm: 'btree', columns: [
+        'releaseVersion',
+      ] },
+    ],
+    constraints: [
+      { name: 'release_strategy_policy_release_version_key', constraint: 'unique', columns: ['releaseVersion'] },
+    ],
+  }, ReleaseStrategyPolicyRow),
   sharedBuild: __table({
     name: 'shared_build',
     indexes: [
@@ -191,6 +312,13 @@ const tablesSchema = __schema({
     constraints: [
     ],
   }, MyBuildsRow),
+  myCoverageManifests: __table({
+    name: 'my_coverage_manifests',
+    indexes: [
+    ],
+    constraints: [
+    ],
+  }, MyCoverageManifestsRow),
   myCuratorAccess: __table({
     name: 'my_curator_access',
     indexes: [
@@ -198,6 +326,13 @@ const tablesSchema = __schema({
     constraints: [
     ],
   }, MyCuratorAccessRow),
+  myDraftCatalogEquipment: __table({
+    name: 'my_draft_catalog_equipment',
+    indexes: [
+    ],
+    constraints: [
+    ],
+  }, MyDraftCatalogEquipmentRow),
   myDraftEquipment: __table({
     name: 'my_draft_equipment',
     indexes: [
@@ -205,6 +340,34 @@ const tablesSchema = __schema({
     constraints: [
     ],
   }, MyDraftEquipmentRow),
+  myDraftEquipmentAcquisitions: __table({
+    name: 'my_draft_equipment_acquisitions',
+    indexes: [
+    ],
+    constraints: [
+    ],
+  }, MyDraftEquipmentAcquisitionsRow),
+  myDraftEquipmentAliases: __table({
+    name: 'my_draft_equipment_aliases',
+    indexes: [
+    ],
+    constraints: [
+    ],
+  }, MyDraftEquipmentAliasesRow),
+  myDraftEquipmentResistances: __table({
+    name: 'my_draft_equipment_resistances',
+    indexes: [
+    ],
+    constraints: [
+    ],
+  }, MyDraftEquipmentResistancesRow),
+  myDraftEquipmentSpecialEffects: __table({
+    name: 'my_draft_equipment_special_effects',
+    indexes: [
+    ],
+    constraints: [
+    ],
+  }, MyDraftEquipmentSpecialEffectsRow),
   myDraftFormulas: __table({
     name: 'my_draft_formulas',
     indexes: [
@@ -212,6 +375,13 @@ const tablesSchema = __schema({
     constraints: [
     ],
   }, MyDraftFormulasRow),
+  myDraftMechanics: __table({
+    name: 'my_draft_mechanics',
+    indexes: [
+    ],
+    constraints: [
+    ],
+  }, MyDraftMechanicsRow),
   myDraftSourceReferences: __table({
     name: 'my_draft_source_references',
     indexes: [
@@ -219,6 +389,13 @@ const tablesSchema = __schema({
     constraints: [
     ],
   }, MyDraftSourceReferencesRow),
+  myDraftStrategyPolicies: __table({
+    name: 'my_draft_strategy_policies',
+    indexes: [
+    ],
+    constraints: [
+    ],
+  }, MyDraftStrategyPoliciesRow),
   myProfile: __table({
     name: 'my_profile',
     indexes: [
@@ -261,6 +438,13 @@ const tablesSchema = __schema({
     constraints: [
     ],
   }, MyWikiCandidatesRow),
+  myWikiPageSnapshots: __table({
+    name: 'my_wiki_page_snapshots',
+    indexes: [
+    ],
+    constraints: [
+    ],
+  }, MyWikiPageSnapshotsRow),
 });
 
 /** The schema information for all reducers in this module. This is defined the same way as the reducers would have been defined in the server, except the body of the reducer is omitted in code generation. */
@@ -272,6 +456,7 @@ const reducersSchema = __reducers(
   __reducerSchema("create_release_draft_from_current", CreateReleaseDraftFromCurrentReducer),
   __reducerSchema("delete_build", DeleteBuildReducer),
   __reducerSchema("grant_curator", GrantCuratorReducer),
+  __reducerSchema("publish_catalog_release", PublishCatalogReleaseReducer),
   __reducerSchema("publish_release", PublishReleaseReducer),
   __reducerSchema("record_review_decision", RecordReviewDecisionReducer),
   __reducerSchema("remove_draft_equipment", RemoveDraftEquipmentReducer),
@@ -280,9 +465,18 @@ const reducersSchema = __reducers(
   __reducerSchema("revoke_curator", RevokeCuratorReducer),
   __reducerSchema("save_build_revision", SaveBuildRevisionReducer),
   __reducerSchema("stage_wiki_fixture_for_local_test", StageWikiFixtureForLocalTestReducer),
+  __reducerSchema("upsert_coverage_manifest", UpsertCoverageManifestReducer),
+  __reducerSchema("upsert_draft_catalog_equipment", UpsertDraftCatalogEquipmentReducer),
   __reducerSchema("upsert_draft_equipment", UpsertDraftEquipmentReducer),
+  __reducerSchema("upsert_draft_equipment_acquisition", UpsertDraftEquipmentAcquisitionReducer),
+  __reducerSchema("upsert_draft_equipment_alias", UpsertDraftEquipmentAliasReducer),
+  __reducerSchema("upsert_draft_equipment_resistance", UpsertDraftEquipmentResistanceReducer),
+  __reducerSchema("upsert_draft_equipment_special_effect", UpsertDraftEquipmentSpecialEffectReducer),
   __reducerSchema("upsert_draft_formula", UpsertDraftFormulaReducer),
+  __reducerSchema("upsert_draft_mechanic", UpsertDraftMechanicReducer),
   __reducerSchema("upsert_draft_source_reference", UpsertDraftSourceReferenceReducer),
+  __reducerSchema("upsert_draft_strategy_policy", UpsertDraftStrategyPolicyReducer),
+  __reducerSchema("upsert_wiki_page_snapshot", UpsertWikiPageSnapshotReducer),
 );
 
 /** The schema information for all procedures in this module. This is defined the same way as the procedures would have been defined in the server. */

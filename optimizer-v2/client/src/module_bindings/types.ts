@@ -62,6 +62,25 @@ export const BuildShareOwner = __t.object("BuildShareOwner", {
 });
 export type BuildShareOwner = __Infer<typeof BuildShareOwner>;
 
+export const CatalogEquipment = __t.object("CatalogEquipment", {
+  id: __t.string(),
+  releaseVersion: __t.string(),
+  itemId: __t.string(),
+  name: __t.string(),
+  variantGroupId: __t.option(__t.string()),
+  slot: __t.string(),
+  weaponPaths: __t.string(),
+  attack: __t.option(__t.f64()),
+  defense: __t.option(__t.f64()),
+  dexterity: __t.option(__t.f64()),
+  levelRequirement: __t.option(__t.u32()),
+  skillRequirement: __t.option(__t.u32()),
+  verificationStatus: __t.string(),
+  sourceRefId: __t.string(),
+  lastReviewedAt: __t.string(),
+});
+export type CatalogEquipment = __Infer<typeof CatalogEquipment>;
+
 export const CloudEquipmentInput = __t.object("CloudEquipmentInput", {
   slot: __t.string(),
   itemId: __t.string(),
@@ -83,6 +102,23 @@ export const CloudProfileInput = __t.object("CloudProfileInput", {
   datasetVersion: __t.string(),
 });
 export type CloudProfileInput = __Infer<typeof CloudProfileInput>;
+
+export const CoverageManifest = __t.object("CoverageManifest", {
+  releaseVersion: __t.string(),
+  discovered: __t.u32(),
+  fetched: __t.u32(),
+  parsed: __t.u32(),
+  normalized: __t.u32(),
+  verified: __t.u32(),
+  partial: __t.u32(),
+  conflicting: __t.u32(),
+  unknown: __t.u32(),
+  legacy: __t.u32(),
+  unresolvedJson: __t.string(),
+  manifestHash: __t.string(),
+  createdAt: __t.timestamp(),
+});
+export type CoverageManifest = __Infer<typeof CoverageManifest>;
 
 export const CuratorAccess = __t.object("CuratorAccess", {
   identity: __t.identity(),
@@ -108,6 +144,26 @@ export const DatasetRelease = __t.object("DatasetRelease", {
 });
 export type DatasetRelease = __Infer<typeof DatasetRelease>;
 
+export const DraftCatalogEquipment = __t.object("DraftCatalogEquipment", {
+  id: __t.string(),
+  releaseVersion: __t.string(),
+  itemId: __t.string(),
+  name: __t.string(),
+  variantGroupId: __t.option(__t.string()),
+  slot: __t.string(),
+  weaponPaths: __t.string(),
+  attack: __t.option(__t.f64()),
+  defense: __t.option(__t.f64()),
+  dexterity: __t.option(__t.f64()),
+  levelRequirement: __t.option(__t.u32()),
+  skillRequirement: __t.option(__t.u32()),
+  verificationStatus: __t.string(),
+  sourceRefId: __t.string(),
+  lastReviewedAt: __t.string(),
+  candidateId: __t.string(),
+});
+export type DraftCatalogEquipment = __Infer<typeof DraftCatalogEquipment>;
+
 export const DraftEquipment = __t.object("DraftEquipment", {
   id: __t.string(),
   releaseVersion: __t.string(),
@@ -130,6 +186,53 @@ export const DraftEquipment = __t.object("DraftEquipment", {
 });
 export type DraftEquipment = __Infer<typeof DraftEquipment>;
 
+export const DraftEquipmentAcquisition = __t.object("DraftEquipmentAcquisition", {
+  id: __t.string(),
+  releaseVersion: __t.string(),
+  itemId: __t.string(),
+  acquisitionType: __t.string(),
+  detail: __t.string(),
+  floor: __t.option(__t.u32()),
+  cost: __t.option(__t.f64()),
+  currency: __t.option(__t.string()),
+  availability: __t.string(),
+  accessType: __t.string(),
+  sourceRefId: __t.string(),
+  candidateId: __t.string(),
+});
+export type DraftEquipmentAcquisition = __Infer<typeof DraftEquipmentAcquisition>;
+
+export const DraftEquipmentAlias = __t.object("DraftEquipmentAlias", {
+  id: __t.string(),
+  releaseVersion: __t.string(),
+  itemId: __t.string(),
+  alias: __t.string(),
+  sourceRefId: __t.string(),
+  candidateId: __t.string(),
+});
+export type DraftEquipmentAlias = __Infer<typeof DraftEquipmentAlias>;
+
+export const DraftEquipmentResistance = __t.object("DraftEquipmentResistance", {
+  id: __t.string(),
+  releaseVersion: __t.string(),
+  itemId: __t.string(),
+  status: __t.string(),
+  percent: __t.f64(),
+  sourceRefId: __t.string(),
+  candidateId: __t.string(),
+});
+export type DraftEquipmentResistance = __Infer<typeof DraftEquipmentResistance>;
+
+export const DraftEquipmentSpecialEffect = __t.object("DraftEquipmentSpecialEffect", {
+  id: __t.string(),
+  releaseVersion: __t.string(),
+  itemId: __t.string(),
+  description: __t.string(),
+  sourceRefId: __t.string(),
+  candidateId: __t.string(),
+});
+export type DraftEquipmentSpecialEffect = __Infer<typeof DraftEquipmentSpecialEffect>;
+
 export const DraftFormula = __t.object("DraftFormula", {
   id: __t.string(),
   releaseVersion: __t.string(),
@@ -144,6 +247,23 @@ export const DraftFormula = __t.object("DraftFormula", {
 });
 export type DraftFormula = __Infer<typeof DraftFormula>;
 
+export const DraftMechanic = __t.object("DraftMechanic", {
+  id: __t.string(),
+  releaseVersion: __t.string(),
+  mechanicId: __t.string(),
+  expression: __t.string(),
+  units: __t.string(),
+  applicability: __t.string(),
+  boundaryBehavior: __t.string(),
+  computability: __t.string(),
+  parametersJson: __t.string(),
+  verificationStatus: __t.string(),
+  sourceRefId: __t.string(),
+  lastReviewedAt: __t.string(),
+  candidateId: __t.string(),
+});
+export type DraftMechanic = __Infer<typeof DraftMechanic>;
+
 export const DraftSourceReference = __t.object("DraftSourceReference", {
   id: __t.string(),
   releaseVersion: __t.string(),
@@ -156,6 +276,14 @@ export const DraftSourceReference = __t.object("DraftSourceReference", {
   candidateId: __t.string(),
 });
 export type DraftSourceReference = __Infer<typeof DraftSourceReference>;
+
+export const DraftStrategyPolicy = __t.object("DraftStrategyPolicy", {
+  releaseVersion: __t.string(),
+  policyVersion: __t.string(),
+  policyJson: __t.string(),
+  lastReviewedAt: __t.string(),
+});
+export type DraftStrategyPolicy = __Infer<typeof DraftStrategyPolicy>;
 
 export const Equipment = __t.object("Equipment", {
   id: __t.string(),
@@ -178,6 +306,49 @@ export const Equipment = __t.object("Equipment", {
 });
 export type Equipment = __Infer<typeof Equipment>;
 
+export const EquipmentAcquisition = __t.object("EquipmentAcquisition", {
+  id: __t.string(),
+  releaseVersion: __t.string(),
+  itemId: __t.string(),
+  acquisitionType: __t.string(),
+  detail: __t.string(),
+  floor: __t.option(__t.u32()),
+  cost: __t.option(__t.f64()),
+  currency: __t.option(__t.string()),
+  availability: __t.string(),
+  accessType: __t.string(),
+  sourceRefId: __t.string(),
+});
+export type EquipmentAcquisition = __Infer<typeof EquipmentAcquisition>;
+
+export const EquipmentAlias = __t.object("EquipmentAlias", {
+  id: __t.string(),
+  releaseVersion: __t.string(),
+  itemId: __t.string(),
+  alias: __t.string(),
+  sourceRefId: __t.string(),
+});
+export type EquipmentAlias = __Infer<typeof EquipmentAlias>;
+
+export const EquipmentResistance = __t.object("EquipmentResistance", {
+  id: __t.string(),
+  releaseVersion: __t.string(),
+  itemId: __t.string(),
+  status: __t.string(),
+  percent: __t.f64(),
+  sourceRefId: __t.string(),
+});
+export type EquipmentResistance = __Infer<typeof EquipmentResistance>;
+
+export const EquipmentSpecialEffect = __t.object("EquipmentSpecialEffect", {
+  id: __t.string(),
+  releaseVersion: __t.string(),
+  itemId: __t.string(),
+  description: __t.string(),
+  sourceRefId: __t.string(),
+});
+export type EquipmentSpecialEffect = __Infer<typeof EquipmentSpecialEffect>;
+
 export const Formula = __t.object("Formula", {
   id: __t.string(),
   releaseVersion: __t.string(),
@@ -191,23 +362,63 @@ export const Formula = __t.object("Formula", {
 });
 export type Formula = __Infer<typeof Formula>;
 
+export const Mechanic = __t.object("Mechanic", {
+  id: __t.string(),
+  releaseVersion: __t.string(),
+  mechanicId: __t.string(),
+  expression: __t.string(),
+  units: __t.string(),
+  applicability: __t.string(),
+  boundaryBehavior: __t.string(),
+  computability: __t.string(),
+  parametersJson: __t.string(),
+  verificationStatus: __t.string(),
+  sourceRefId: __t.string(),
+  lastReviewedAt: __t.string(),
+});
+export type Mechanic = __Infer<typeof Mechanic>;
+
 export const MyBuildRevisions = __t.object("MyBuildRevisions", {});
 export type MyBuildRevisions = __Infer<typeof MyBuildRevisions>;
 
 export const MyBuilds = __t.object("MyBuilds", {});
 export type MyBuilds = __Infer<typeof MyBuilds>;
 
+export const MyCoverageManifests = __t.object("MyCoverageManifests", {});
+export type MyCoverageManifests = __Infer<typeof MyCoverageManifests>;
+
 export const MyCuratorAccess = __t.object("MyCuratorAccess", {});
 export type MyCuratorAccess = __Infer<typeof MyCuratorAccess>;
+
+export const MyDraftCatalogEquipment = __t.object("MyDraftCatalogEquipment", {});
+export type MyDraftCatalogEquipment = __Infer<typeof MyDraftCatalogEquipment>;
 
 export const MyDraftEquipment = __t.object("MyDraftEquipment", {});
 export type MyDraftEquipment = __Infer<typeof MyDraftEquipment>;
 
+export const MyDraftEquipmentAcquisitions = __t.object("MyDraftEquipmentAcquisitions", {});
+export type MyDraftEquipmentAcquisitions = __Infer<typeof MyDraftEquipmentAcquisitions>;
+
+export const MyDraftEquipmentAliases = __t.object("MyDraftEquipmentAliases", {});
+export type MyDraftEquipmentAliases = __Infer<typeof MyDraftEquipmentAliases>;
+
+export const MyDraftEquipmentResistances = __t.object("MyDraftEquipmentResistances", {});
+export type MyDraftEquipmentResistances = __Infer<typeof MyDraftEquipmentResistances>;
+
+export const MyDraftEquipmentSpecialEffects = __t.object("MyDraftEquipmentSpecialEffects", {});
+export type MyDraftEquipmentSpecialEffects = __Infer<typeof MyDraftEquipmentSpecialEffects>;
+
 export const MyDraftFormulas = __t.object("MyDraftFormulas", {});
 export type MyDraftFormulas = __Infer<typeof MyDraftFormulas>;
 
+export const MyDraftMechanics = __t.object("MyDraftMechanics", {});
+export type MyDraftMechanics = __Infer<typeof MyDraftMechanics>;
+
 export const MyDraftSourceReferences = __t.object("MyDraftSourceReferences", {});
 export type MyDraftSourceReferences = __Infer<typeof MyDraftSourceReferences>;
+
+export const MyDraftStrategyPolicies = __t.object("MyDraftStrategyPolicies", {});
+export type MyDraftStrategyPolicies = __Infer<typeof MyDraftStrategyPolicies>;
 
 export const MyProfile = __t.object("MyProfile", {});
 export type MyProfile = __Infer<typeof MyProfile>;
@@ -227,6 +438,9 @@ export type MyRevisionOwnedItems = __Infer<typeof MyRevisionOwnedItems>;
 export const MyWikiCandidates = __t.object("MyWikiCandidates", {});
 export type MyWikiCandidates = __Infer<typeof MyWikiCandidates>;
 
+export const MyWikiPageSnapshots = __t.object("MyWikiPageSnapshots", {});
+export type MyWikiPageSnapshots = __Infer<typeof MyWikiPageSnapshots>;
+
 export const ReleaseDraft = __t.object("ReleaseDraft", {
   version: __t.string(),
   createdBy: __t.identity(),
@@ -238,6 +452,14 @@ export const ReleaseDraft = __t.object("ReleaseDraft", {
   updatedAt: __t.timestamp(),
 });
 export type ReleaseDraft = __Infer<typeof ReleaseDraft>;
+
+export const ReleaseStrategyPolicy = __t.object("ReleaseStrategyPolicy", {
+  releaseVersion: __t.string(),
+  policyVersion: __t.string(),
+  policyJson: __t.string(),
+  lastReviewedAt: __t.string(),
+});
+export type ReleaseStrategyPolicy = __Infer<typeof ReleaseStrategyPolicy>;
 
 export const ReviewDecision = __t.object("ReviewDecision", {
   id: __t.string(),
@@ -339,6 +561,20 @@ export const WikiCheckJob = __t.object("WikiCheckJob", {
   pageTitle: __t.string(),
 });
 export type WikiCheckJob = __Infer<typeof WikiCheckJob>;
+
+export const WikiPageSnapshot = __t.object("WikiPageSnapshot", {
+  id: __t.string(),
+  pageId: __t.u64(),
+  pageTitle: __t.string(),
+  sourceUrl: __t.string(),
+  revisionId: __t.string(),
+  revisionTimestamp: __t.string(),
+  contentHash: __t.string(),
+  redirectTarget: __t.option(__t.string()),
+  content: __t.string(),
+  fetchedAt: __t.timestamp(),
+});
+export type WikiPageSnapshot = __Infer<typeof WikiPageSnapshot>;
 
 export const WikiSourceState = __t.object("WikiSourceState", {
   pageTitle: __t.string(),

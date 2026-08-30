@@ -6,6 +6,7 @@ import {
   REQUIRED_FORMULA_IDS,
   validateReleaseDraft,
 } from './releaseValidation';
+import { validateCatalogRelease } from './catalogReleaseValidation';
 import spacetimedb from './schema';
 
 const controlCharacters = /[\u0000-\u001f\u007f]/;
@@ -39,6 +40,33 @@ const availabilityValues = new Set([
   'always',
   'active-event',
   'inactive-event',
+]);
+const catalogVerificationValues = new Set([
+  'verified',
+  'partial',
+  'conflicting',
+  'unknown',
+  'legacy',
+]);
+const catalogAvailabilityValues = new Set([
+  'always',
+  'active-event',
+  'inactive-event',
+  'rotating',
+  'limited',
+  'gamepass',
+  'badge',
+  'legacy',
+  'unobtainable',
+  'unknown',
+]);
+const catalogAccessValues = new Set([
+  'free',
+  'event',
+  'gamepass',
+  'badge',
+  'limited',
+  'owned-only',
 ]);
 
 function assertText(value: string, label: string, maxLength: number): void {
@@ -510,11 +538,17 @@ export const upsertDraftSourceReference = spacetimedb.reducer(
     ] as const) {
       assertText(value, label, max);
     }
-    if (!['equipment', 'formula', 'gap'].includes(row.entityKind)) {
+    if (![
+      'equipment',
+      'formula',
+      'gap',
+      'catalog-equipment',
+      'mechanic',
+    ].includes(row.entityKind)) {
       throw new SenderError('Source entity kind is invalid');
     }
     const isOwnerPointsAttestation =
-      row.entityKind === 'formula' &&
+      (row.entityKind === 'formula' || row.entityKind === 'mechanic') &&
       row.entityId === 'points-per-level' &&
       row.sourceUrl === officialGameUrl &&
       ownerAttestationPattern.test(row.sourceRevision);
@@ -697,5 +731,284 @@ export const publishRelease = spacetimedb.reducer(
       status: 'published',
       updatedAt: ctx.timestamp,
     });
+  },
+);
+
+export const upsertWikiPageSnapshot = spacetimedb.reducer(
+  {
+    id: t.string(),
+    pageId: t.u64(),
+    pageTitle: t.string(),
+    sourceUrl: t.string(),
+    revisionId: t.string(),
+    revisionTimestamp: t.string(),
+    contentHash: t.string(),
+    redirectTarget: t.string().optional(),
+    content: t.string(),
+  },
+  (ctx, row) => {
+    assertCurator(ctx);
+    assertText(row.id, 'Wiki snapshot ID', 180);
+    assertText(row.pageTitle, 'Wiki page title', 180);
+    assertText(row.revisionId, 'Wiki revision ID', 100);
+    assertText(row.contentHash, 'Wiki content hash', 180);
+    if (!canonicalSourcePattern.test(row.sourceUrl)) {
+      throw new SenderError('Wiki snapshot source is not canonical');
+    }
+    if (row.content.length === 0 || row.content.length > 2_000_000) {
+      throw new SenderError('Wiki snapshot content is invalid');
+    }
+    const stored = { ...row, redirectTarget: row.redirectTarget, fetchedAt: ctx.timestamp };
+    if (ctx.db.wikiPageSnapshot.id.find(row.id)) {
+      ctx.db.wikiPageSnapshot.id.update(stored);
+    } else {
+      ctx.db.wikiPageSnapshot.insert(stored);
+    }
+  },
+);
+
+export const upsertCoverageManifest = spacetimedb.reducer(
+  {
+    releaseVersion: t.string(),
+    discovered: t.u32(),
+    fetched: t.u32(),
+    parsed: t.u32(),
+    normalized: t.u32(),
+    verified: t.u32(),
+    partial: t.u32(),
+    conflicting: t.u32(),
+    unknown: t.u32(),
+    legacy: t.u32(),
+    unresolvedJson: t.string(),
+    manifestHash: t.string(),
+  },
+  (ctx, row) => {
+    assertCurator(ctx);
+    editableDraft(ctx, row.releaseVersion);
+    assertText(row.manifestHash, 'Manifest hash', 180);
+    if (row.unresolvedJson.length === 0 || row.unresolvedJson.length > 1_000_000) {
+      throw new SenderError('Coverage unresolved JSON is invalid');
+    }
+    const stored = { ...row, createdAt: ctx.timestamp };
+    if (ctx.db.coverageManifest.releaseVersion.find(row.releaseVersion)) {
+      ctx.db.coverageManifest.releaseVersion.update(stored);
+    } else {
+      ctx.db.coverageManifest.insert(stored);
+    }
+    touchDraft(ctx, row.releaseVersion);
+  },
+);
+
+export const upsertDraftCatalogEquipment = spacetimedb.reducer(
+  {
+    id: t.string(),
+    releaseVersion: t.string(),
+    itemId: t.string(),
+    name: t.string(),
+    variantGroupId: t.string().optional(),
+    slot: t.string(),
+    weaponPaths: t.string(),
+    attack: t.f64().optional(),
+    defense: t.f64().optional(),
+    dexterity: t.f64().optional(),
+    levelRequirement: t.u32().optional(),
+    skillRequirement: t.u32().optional(),
+    verificationStatus: t.string(),
+    sourceRefId: t.string(),
+    lastReviewedAt: t.string(),
+    candidateId: t.string(),
+  },
+  (ctx, row) => {
+    assertCurator(ctx);
+    editableDraft(ctx, row.releaseVersion);
+    assertText(row.id, 'Draft catalog ID', 180);
+    assertText(row.itemId, 'Catalog item ID', 100);
+    assertText(row.name, 'Catalog item name', 180);
+    if (!slots.has(row.slot)) throw new SenderError('Catalog slot is invalid');
+    const paths = parseWeaponPaths(row.weaponPaths);
+    if ((row.slot === 'main-hand' || row.slot === 'off-hand') && paths.length === 0) {
+      throw new SenderError('Catalog weapon requires a compatible path');
+    }
+    if (!catalogVerificationValues.has(row.verificationStatus)) {
+      throw new SenderError('Catalog verification status is invalid');
+    }
+    for (const value of [row.attack, row.defense, row.dexterity]) {
+      if (value !== undefined && (!Number.isFinite(value) || value < 0)) {
+        throw new SenderError('Catalog numeric value is invalid');
+      }
+    }
+    assertDate(row.lastReviewedAt, 'Last reviewed date');
+    const stored = {
+      ...row,
+      variantGroupId: row.variantGroupId,
+      attack: row.attack,
+      defense: row.defense,
+      dexterity: row.dexterity,
+      levelRequirement: row.levelRequirement,
+      skillRequirement: row.skillRequirement,
+    };
+    if (ctx.db.draftCatalogEquipment.id.find(row.id)) {
+      ctx.db.draftCatalogEquipment.id.update(stored);
+    } else {
+      ctx.db.draftCatalogEquipment.insert(stored);
+    }
+    touchDraft(ctx, row.releaseVersion);
+  },
+);
+
+export const upsertDraftEquipmentAlias = spacetimedb.reducer(
+  {
+    id: t.string(), releaseVersion: t.string(), itemId: t.string(),
+    alias: t.string(), sourceRefId: t.string(), candidateId: t.string(),
+  },
+  (ctx, row) => {
+    assertCurator(ctx); editableDraft(ctx, row.releaseVersion);
+    assertText(row.alias, 'Equipment alias', 180);
+    if (ctx.db.draftEquipmentAlias.id.find(row.id)) ctx.db.draftEquipmentAlias.id.update(row);
+    else ctx.db.draftEquipmentAlias.insert(row);
+    touchDraft(ctx, row.releaseVersion);
+  },
+);
+
+export const upsertDraftEquipmentAcquisition = spacetimedb.reducer(
+  {
+    id: t.string(), releaseVersion: t.string(), itemId: t.string(),
+    acquisitionType: t.string(), detail: t.string(), floor: t.u32().optional(),
+    cost: t.f64().optional(), currency: t.string().optional(),
+    availability: t.string(), accessType: t.string(), sourceRefId: t.string(),
+    candidateId: t.string(),
+  },
+  (ctx, row) => {
+    assertCurator(ctx); editableDraft(ctx, row.releaseVersion);
+    assertText(row.detail, 'Acquisition detail', 1_000);
+    if (!acquisitionTypes.has(row.acquisitionType)) throw new SenderError('Acquisition type is invalid');
+    if (!catalogAvailabilityValues.has(row.availability)) throw new SenderError('Catalog availability is invalid');
+    if (!catalogAccessValues.has(row.accessType)) throw new SenderError('Catalog access type is invalid');
+    if (row.cost !== undefined && (!Number.isFinite(row.cost) || row.cost < 0)) throw new SenderError('Acquisition cost is invalid');
+    const stored = { ...row, floor: row.floor, cost: row.cost, currency: row.currency };
+    if (ctx.db.draftEquipmentAcquisition.id.find(row.id)) ctx.db.draftEquipmentAcquisition.id.update(stored);
+    else ctx.db.draftEquipmentAcquisition.insert(stored);
+    touchDraft(ctx, row.releaseVersion);
+  },
+);
+
+export const upsertDraftEquipmentResistance = spacetimedb.reducer(
+  {
+    id: t.string(), releaseVersion: t.string(), itemId: t.string(), status: t.string(),
+    percent: t.f64(), sourceRefId: t.string(), candidateId: t.string(),
+  },
+  (ctx, row) => {
+    assertCurator(ctx); editableDraft(ctx, row.releaseVersion);
+    assertText(row.status, 'Resistance status', 100);
+    if (!Number.isFinite(row.percent) || row.percent < 0 || row.percent > 100) throw new SenderError('Resistance percent is invalid');
+    if (ctx.db.draftEquipmentResistance.id.find(row.id)) ctx.db.draftEquipmentResistance.id.update(row);
+    else ctx.db.draftEquipmentResistance.insert(row);
+    touchDraft(ctx, row.releaseVersion);
+  },
+);
+
+export const upsertDraftEquipmentSpecialEffect = spacetimedb.reducer(
+  {
+    id: t.string(), releaseVersion: t.string(), itemId: t.string(),
+    description: t.string(), sourceRefId: t.string(), candidateId: t.string(),
+  },
+  (ctx, row) => {
+    assertCurator(ctx); editableDraft(ctx, row.releaseVersion);
+    assertText(row.description, 'Special effect', 2_000);
+    if (ctx.db.draftEquipmentSpecialEffect.id.find(row.id)) ctx.db.draftEquipmentSpecialEffect.id.update(row);
+    else ctx.db.draftEquipmentSpecialEffect.insert(row);
+    touchDraft(ctx, row.releaseVersion);
+  },
+);
+
+export const upsertDraftMechanic = spacetimedb.reducer(
+  {
+    id: t.string(), releaseVersion: t.string(), mechanicId: t.string(),
+    expression: t.string(), units: t.string(), applicability: t.string(),
+    boundaryBehavior: t.string(), computability: t.string(), parametersJson: t.string(),
+    verificationStatus: t.string(), sourceRefId: t.string(), lastReviewedAt: t.string(),
+    candidateId: t.string(),
+  },
+  (ctx, row) => {
+    assertCurator(ctx); editableDraft(ctx, row.releaseVersion);
+    if (!['exact', 'descriptive', 'conflicting', 'unknown'].includes(row.computability)) throw new SenderError('Mechanic computability is invalid');
+    if (!catalogVerificationValues.has(row.verificationStatus)) throw new SenderError('Mechanic verification status is invalid');
+    if (row.parametersJson.length === 0 || row.parametersJson.length > 20_000) throw new SenderError('Mechanic parameters JSON is invalid');
+    assertDate(row.lastReviewedAt, 'Last reviewed date');
+    if (ctx.db.draftMechanic.id.find(row.id)) ctx.db.draftMechanic.id.update(row);
+    else ctx.db.draftMechanic.insert(row);
+    touchDraft(ctx, row.releaseVersion);
+  },
+);
+
+export const upsertDraftStrategyPolicy = spacetimedb.reducer(
+  {
+    releaseVersion: t.string(), policyVersion: t.string(), policyJson: t.string(),
+    lastReviewedAt: t.string(),
+  },
+  (ctx, row) => {
+    assertCurator(ctx); editableDraft(ctx, row.releaseVersion);
+    if (row.policyVersion !== 'sbor-policy-v2' || row.policyJson.length === 0 || row.policyJson.length > 100_000) throw new SenderError('Strategy policy is invalid');
+    assertDate(row.lastReviewedAt, 'Last reviewed date');
+    if (ctx.db.draftStrategyPolicy.releaseVersion.find(row.releaseVersion)) ctx.db.draftStrategyPolicy.releaseVersion.update(row);
+    else ctx.db.draftStrategyPolicy.insert(row);
+    touchDraft(ctx, row.releaseVersion);
+  },
+);
+
+export const publishCatalogRelease = spacetimedb.reducer(
+  { version: t.string() },
+  (ctx, { version }) => {
+    assertCurator(ctx);
+    const draft = ctx.db.releaseDraft.version.find(version);
+    if (!draft) throw new SenderError('Release draft not found');
+    if (draft.formulaSetVersion !== 'sbor-stats-v2') throw new SenderError('Catalog publication requires sbor-stats-v2');
+    if (draft.status === 'published' || ctx.db.datasetRelease.version.find(version)) throw new SenderError('Release version is already published');
+
+    const equipmentRows = Array.from(ctx.db.draftCatalogEquipment.draftCatalogEquipmentReleaseVersion.filter(version));
+    const aliasRows = Array.from(ctx.db.draftEquipmentAlias.draftEquipmentAliasReleaseVersion.filter(version));
+    const acquisitionRows = Array.from(ctx.db.draftEquipmentAcquisition.draftEquipmentAcquisitionReleaseVersion.filter(version));
+    const resistanceRows = Array.from(ctx.db.draftEquipmentResistance.draftEquipmentResistanceReleaseVersion.filter(version));
+    const effectRows = Array.from(ctx.db.draftEquipmentSpecialEffect.draftEquipmentSpecialEffectReleaseVersion.filter(version));
+    const mechanicRows = Array.from(ctx.db.draftMechanic.draftMechanicReleaseVersion.filter(version));
+    const sourceRows = Array.from(ctx.db.draftSourceReference.draftSourceReferenceReleaseVersion.filter(version));
+    const manifest = ctx.db.coverageManifest.releaseVersion.find(version);
+    const policy = ctx.db.draftStrategyPolicy.releaseVersion.find(version);
+    if (!manifest) throw new SenderError('Coverage manifest is required');
+    if (!policy) throw new SenderError('Strategy policy is required');
+    const candidateIds = new Set([...equipmentRows, ...aliasRows, ...acquisitionRows, ...resistanceRows, ...effectRows, ...mechanicRows, ...sourceRows].map((row) => row.candidateId));
+    const candidates = [...candidateIds].flatMap((id) => {
+      const candidate = ctx.db.wikiCandidate.id.find(id);
+      return candidate ? [{ id: candidate.id, pageTitle: candidate.pageTitle, sourceUrl: candidate.sourceUrl, revisionId: candidate.revisionId, status: candidate.status }] : [];
+    });
+    const errors = validateCatalogRelease({
+      version,
+      formulaSetVersion: draft.formulaSetVersion,
+      manifest,
+      policy,
+      equipment: equipmentRows,
+      aliases: aliasRows,
+      acquisitions: acquisitionRows,
+      resistances: resistanceRows,
+      effects: effectRows,
+      mechanics: mechanicRows,
+      sources: sourceRows,
+      candidates,
+    });
+    const publicSourceIds = new Map(sourceRows.map((source) => [source.id, `${version}:${source.entityKind}:${source.entityId}`]));
+    if (new Set(publicSourceIds.values()).size !== sourceRows.length) errors.push('Duplicate public source reference ID');
+    if (errors.length > 0) throw new SenderError(errors.join('; '));
+
+    for (const release of ctx.db.datasetRelease.iter()) if (release.isCurrent) ctx.db.datasetRelease.id.update({ ...release, isCurrent: false });
+    for (const source of sourceRows) ctx.db.sourceReference.insert({ ...source, id: publicSourceIds.get(source.id)!, candidateId: source.candidateId });
+    for (const row of equipmentRows) ctx.db.catalogEquipment.insert({ ...row, id: `${version}:${row.itemId}`, sourceRefId: publicSourceIds.get(row.sourceRefId)!, candidateId: undefined } as never);
+    for (const row of aliasRows) ctx.db.equipmentAlias.insert({ id: `${version}:alias:${row.id}`, releaseVersion: version, itemId: row.itemId, alias: row.alias, sourceRefId: publicSourceIds.get(row.sourceRefId)! });
+    for (const row of acquisitionRows) ctx.db.equipmentAcquisition.insert({ id: `${version}:acquisition:${row.id}`, releaseVersion: version, itemId: row.itemId, acquisitionType: row.acquisitionType, detail: row.detail, floor: row.floor, cost: row.cost, currency: row.currency, availability: row.availability, accessType: row.accessType, sourceRefId: publicSourceIds.get(row.sourceRefId)! });
+    for (const row of resistanceRows) ctx.db.equipmentResistance.insert({ id: `${version}:resistance:${row.id}`, releaseVersion: version, itemId: row.itemId, status: row.status, percent: row.percent, sourceRefId: publicSourceIds.get(row.sourceRefId)! });
+    for (const row of effectRows) ctx.db.equipmentSpecialEffect.insert({ id: `${version}:effect:${row.id}`, releaseVersion: version, itemId: row.itemId, description: row.description, sourceRefId: publicSourceIds.get(row.sourceRefId)! });
+    for (const row of mechanicRows) ctx.db.mechanic.insert({ id: `${version}:mechanic:${row.mechanicId}`, releaseVersion: version, mechanicId: row.mechanicId, expression: row.expression, units: row.units, applicability: row.applicability, boundaryBehavior: row.boundaryBehavior, computability: row.computability, parametersJson: row.parametersJson, verificationStatus: row.verificationStatus, sourceRefId: publicSourceIds.get(row.sourceRefId)!, lastReviewedAt: row.lastReviewedAt });
+    ctx.db.releaseStrategyPolicy.insert({ releaseVersion: version, policyVersion: policy.policyVersion, policyJson: policy.policyJson, lastReviewedAt: policy.lastReviewedAt });
+    ctx.db.datasetRelease.insert({ id: 0n, version, formulaSetVersion: draft.formulaSetVersion, publishedAt: ctx.timestamp, lastReviewedAt: draft.lastReviewedAt, sourceSummary: draft.sourceSummary, isCurrent: true });
+    ctx.db.releaseDraft.version.update({ ...draft, status: 'published', updatedAt: ctx.timestamp });
   },
 );
