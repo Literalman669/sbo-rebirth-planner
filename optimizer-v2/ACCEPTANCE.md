@@ -27,10 +27,10 @@ remains pending.
 
 - Clean `npm ci`: 0 reported package vulnerabilities (2026-08-30 fresh local gate).
 - Toolchain: Node 22.22.2 and SpacetimeDB 2.8.3 (2026-08-30 fresh local gate).
-- Reliability runner (current owned-group-absence gate at `b447d03`): all 6 layers passed — 40 client unit files / 322 tests (14.26 s), 3 module unit files / 62 tests (223 ms), 19 script tests, typecheck, coverage, and module build. Timings are diagnostic only.
+- Reliability runner (current Linux-selector gate at `59ebda2`): all 6 layers passed — 40 client unit files / 322 tests (15.16 s), 3 module unit files / 62 tests (229 ms), 20 script tests, typecheck, coverage, and module build. Timings are diagnostic only.
 - Fixed-local SpacetimeDB integration: 24 passed, 8 intentionally skipped in 43.5 s, against a new `http://127.0.0.1:3000` / `sbo-rebirth-optimizer-v2-test` lifecycle only; an occupied `127.0.0.1:4173` fails closed without reusing, contacting, or terminating its owner.
 - CI base isolation and phase isolation: base and watchdog guards are green while the global timeout remains unset. Fourth-run markers proved a single long-lived local server stopped accepting new clients before either heavy workload began, so the integration runner now uses four fresh owned-server phases with exact heavy-test greps and fail-fast ordering. Two final `CI=true GITHUB_ACTIONS=true` integrations passed 24 tests with 8 intended skips; local watchdog fallbacks are 120s/60s for every environment, while global and sharing limits remain unchanged.
-- Auditable final full gate (2026-08-30, `b447d03`): core 21 passed/5 skipped (29.2 s), composite 1/1 (9.3 s; 12.0 s phase), publication 1/1 (4.0 s; ~6–7 s phase), sharing 1/1 (2.6 s), aggregate 24/8; Pages 2/2 in 1.4 s. `git diff --exit-code -- client/src/module_bindings` exited 0; 3000 and 4173 had no listeners after teardown.
+- Auditable final full gate (2026-08-30, `59ebda2`): core 21 passed/5 skipped (30.9 s), composite 1/1, publication 1/1 (6.5 s), sharing 1/1 (2.6 s), aggregate 24/8; Pages 2/2 in 1.6 s. `git diff --exit-code -- client/src/module_bindings` exited 0; 3000 and 4173 had no listeners after teardown.
 - Same-parent concurrency: 8 concurrent pairs produced 16 fulfilled siblings, +16 revisions, and +24 rows in each child table; no sibling winner is assumed.
 - Production-shaped Pages artifact: direct `/auth/callback` and `/shared/:id` recovery both pass with query and hash preservation (2 passed in 1.4 s; build 210 ms). The production GitHub Actions base remains `/sbo-rebirth-planner/` when no local override is supplied.
 - Generated TypeScript bindings are regenerated with SpacetimeDB 2.8.3 and `git diff --exit-code -- client/src/module_bindings` exited 0.
@@ -38,7 +38,7 @@ remains pending.
 
 ## Pending owner-authorized external evidence
 
-- Historical failed runs document the base, watchdog, connection-exhaustion, and teardown findings. The fifth [CI run](https://github.com/Literalman669/sbo-rebirth-planner/actions/runs/33302887655) and [deploy run](https://github.com/Literalman669/sbo-rebirth-planner/actions/runs/33302887685) passed core but left a launcher descendant tree alive; sixth [CI](https://github.com/Literalman669/sbo-rebirth-planner/actions/runs/33303354853) and [deploy](https://github.com/Literalman669/sbo-rebirth-planner/actions/runs/33303354862) passed core but falsely required detached launcher bookkeeping after the owned group was gone. Production steps were skipped. Seventh reruns are pending.
+- Historical failed runs include the seventh [CI](https://github.com/Literalman669/sbo-rebirth-planner/actions/runs/33304045365) and [deploy](https://github.com/Literalman669/sbo-rebirth-planner/actions/runs/33304045333): core and Linux cleanup passed, but leading-`^` greps returned No tests found against Linux full titles; production steps were skipped. Eighth reruns are pending.
 - Maincloud module publish and production-auth configuration verification: pending.
 - GitHub Pages artifact upload and deployment URL: pending.
 - Read-only live-browser smoke, including console and responsive checks: pending.

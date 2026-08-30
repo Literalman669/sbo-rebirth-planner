@@ -215,11 +215,11 @@ pre-phase-isolation gate passed all six layers again: 40 client files / 322 test
 and binding diff also passed. At that historical point, fourth GitHub reruns
 were pending the CI-watchdog commit; no external action was performed locally.
 
-## Task 22 current owned-group-absence gate (2026-08-30, `b447d03`)
+## Task 22 current Linux-selector gate (2026-08-30, `59ebda2`)
 
 The exact strict `npm run test:reliability` command completed at the committed
 owned-group-absence head: 40 client files / 322 tests in 14.26 s, 3 module files /
-62 tests in 223 ms, and 19 script tests. Typechecks, coverage validation, and
+62 tests in 229 ms, and 20 script tests. Typechecks, coverage validation, and
 the module build passed. The owned-server phase output was core 21 passed / 5
 skipped in 29.2 s, composite 1 / 1 in 9.3 s, publication 1 / 1 in 4.0 s, and
 sharing 1 / 1 in 2.6 s, for the exact 24 passed / 8 intended skips aggregate.
