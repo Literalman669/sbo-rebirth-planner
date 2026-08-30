@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type FormEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { useBuildDraft } from '../../app/providers/BuildDraftContext';
 import {
@@ -16,6 +16,17 @@ import type { DatasetSnapshot } from '../../domain/dataset/model';
 import { firstIncompleteEquipmentStep } from '../planner/completeness';
 import { LevelAllocationTable, SpendNowPanel } from './LevelAllocationTable';
 import { LocalBuildList } from '../builds/LocalBuildList';
+import { useOptionalPlannerState } from '../../app/providers/PlannerStateContext';
+import { fingerprintRecommendationInput } from '../../domain/optimizer/planFingerprint';
+import {
+  buildActionChecklist,
+  reconcileProfileToLevel,
+  replaceDismissedRecommendations,
+} from '../../domain/results/actionChecklist';
+import type { PlanProgress } from '../../domain/planner/state';
+import { summarizeDatasetImpact } from '../../domain/results/datasetImpact';
+import { ActionChecklist } from './ActionChecklist';
+import { PlanExportActions } from './PlanExportActions';
 
 const slotLabels: Record<EquipmentSlot, string> = {
   'main-hand': 'Main hand',
@@ -74,6 +85,7 @@ function formatRawDelta(delta: {
 export function ResultsScreen() {
   const navigate = useNavigate();
   const cloud = useOptionalCloudBuilds();
+  const plannerState = useOptionalPlannerState();
   const { snapshot, getSnapshot } = useDataset();
   const {
     deleteSavedBuild,
@@ -82,6 +94,7 @@ export function ResultsScreen() {
     resetDraft,
     saveNamedBuild,
     savedBuilds,
+    updateDraft,
   } = useBuildDraft();
   const [showSaveForm, setShowSaveForm] = useState(false);
   const [showLoadBuilds, setShowLoadBuilds] = useState(false);
@@ -89,6 +102,9 @@ export function ResultsScreen() {
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
   const [shareId, setShareId] = useState<string | null>(null);
   const [shareMessage, setShareMessage] = useState<string | null>(null);
+  const [checklistMessage, setChecklistMessage] = useState<string | null>(null);
+  const [fallbackShowAllLevels, setFallbackShowAllLevels] = useState(false);
+  const previousProgress = useRef<PlanProgress | null>(null);
   const [planSnapshot, setPlanSnapshot] = useState<
     DatasetSnapshot | null | undefined
   >(() => (draft.datasetVersion === snapshot.version ? snapshot : undefined));
@@ -139,6 +155,56 @@ export function ResultsScreen() {
         : null,
     [planSnapshot],
   );
+  const planFingerprint = useMemo(
+    () =>
+      planSnapshot
+        ? fingerprintRecommendationInput(draft, planSnapshot)
+        : '',
+    [draft, planSnapshot],
+  );
+  const itemNames = useMemo(() => {
+    const entries = [
+      ...(planSnapshot?.catalog ?? []).map((item) => [item.id, item.name] as const),
+      ...(planSnapshot?.equipment ?? []).map((item) => [item.id, item.name] as const),
+    ];
+    return new Map(entries);
+  }, [planSnapshot]);
+  const baseActions = useMemo(
+    () => (plan ? buildActionChecklist(draft, plan, itemNames) : []),
+    [draft, itemNames, plan],
+  );
+  const dismissedActionIds = useMemo(
+    () => new Set(plannerState?.progress.dismissedRecommendationIds ?? []),
+    [plannerState?.progress.dismissedRecommendationIds],
+  );
+  const actions = useMemo(
+    () =>
+      planSnapshot
+        ? replaceDismissedRecommendations(
+            baseActions,
+            dismissedActionIds,
+            draft,
+            planSnapshot ?? null,
+          )
+        : baseActions,
+    [baseActions, dismissedActionIds, draft, planSnapshot],
+  );
+  const completedActionIds = useMemo(
+    () => new Set(plannerState?.progress.completedActionIds ?? []),
+    [plannerState?.progress.completedActionIds],
+  );
+  const datasetImpact = useMemo(
+    () =>
+      plan
+        ? summarizeDatasetImpact(
+            draft,
+            plan.upgradeTargets.map((target) => target.itemId),
+            planSnapshot ?? null,
+            snapshot,
+          )
+        : null,
+    [draft, plan, planSnapshot, snapshot],
+  );
 
   const submitSave = (event: FormEvent) => {
     event.preventDefault();
@@ -169,6 +235,50 @@ export function ResultsScreen() {
   const recalculateWithCurrentDataset = () => {
     setPlanVersion(snapshot.version);
     setPlanSnapshot(snapshot);
+  };
+
+  const updateChecklistProgress = (
+    patch: Partial<Omit<PlanProgress, 'schemaVersion' | 'buildId'>>,
+    message: string,
+  ) => {
+    if (!plannerState) return;
+    previousProgress.current = {
+      ...plannerState.progress,
+      completedActionIds: [...plannerState.progress.completedActionIds],
+      dismissedRecommendationIds: [
+        ...plannerState.progress.dismissedRecommendationIds,
+      ],
+    };
+    plannerState.updateProgress(patch);
+    setChecklistMessage(message);
+  };
+
+  const toggleAction = (actionId: string) => {
+    const completed = new Set(plannerState?.progress.completedActionIds ?? []);
+    const wasCompleted = completed.delete(actionId);
+    if (!wasCompleted) completed.add(actionId);
+    updateChecklistProgress(
+      { completedActionIds: [...completed] },
+      wasCompleted ? 'Action marked incomplete' : 'Action completed',
+    );
+  };
+
+  const dismissAction = (actionId: string) => {
+    const dismissed = new Set(
+      plannerState?.progress.dismissedRecommendationIds ?? [],
+    );
+    dismissed.add(actionId);
+    updateChecklistProgress(
+      { dismissedRecommendationIds: [...dismissed] },
+      'Recommendation dismissed and replaced when another verified option exists',
+    );
+  };
+
+  const undoChecklistChange = () => {
+    if (!plannerState || !previousProgress.current) return;
+    plannerState.updateProgress(previousProgress.current);
+    previousProgress.current = null;
+    setChecklistMessage('Checklist change undone');
   };
 
   if (planSnapshot === undefined) {
@@ -225,15 +335,34 @@ export function ResultsScreen() {
 
       {stale && (
         <aside className="stale-plan-banner" role="status">
-          <p>
-            This plan was created with dataset {planVersion}. A newer verified
-            release is available.
-          </p>
+          <div>
+            <p>
+              This plan was created with dataset {planVersion}. A newer verified
+              release is available.
+            </p>
+            {datasetImpact?.changes.length ? (
+              <ul>
+                {datasetImpact.changes.map((change) => <li key={change}>{change}</li>)}
+              </ul>
+            ) : (
+              <p>No build-relevant dataset changes were detected.</p>
+            )}
+          </div>
           <button type="button" onClick={recalculateWithCurrentDataset}>
             Recalculate with dataset {snapshot.version}
           </button>
         </aside>
       )}
+
+      <ActionChecklist
+        actions={actions}
+        completedActionIds={completedActionIds}
+        onToggle={toggleAction}
+        onDismiss={dismissAction}
+        onUndo={undoChecklistChange}
+        canUndo={previousProgress.current !== null}
+      />
+      {checklistMessage ? <p role="status" aria-live="polite">{checklistMessage}</p> : null}
 
       <section aria-labelledby="do-now-heading" className="result-band">
         <h3 id="do-now-heading">Do now</h3>
@@ -261,7 +390,28 @@ export function ResultsScreen() {
             {plan.warnings.map((warning) => <p key={warning}>{warning}</p>)}
           </aside>
         ) : null}
-        <LevelAllocationTable rows={plan.statPlan.levelRows} />
+        <LevelAllocationTable
+          rows={plan.statPlan.levelRows}
+          showAllLevels={
+            plannerState?.preferences.showAllLevels ?? fallbackShowAllLevels
+          }
+          onShowAll={() => {
+            if (plannerState) plannerState.updatePreferences({ showAllLevels: true });
+            else setFallbackShowAllLevels(true);
+          }}
+          onAdvance={(level) => {
+            try {
+              const reconciled = reconcileProfileToLevel(draft, plan, level);
+              updateDraft(reconciled);
+              plannerState?.updateProgress({ reconciledThroughLevel: level });
+              setChecklistMessage(`Build advanced to Level ${level}`);
+            } catch (error) {
+              setChecklistMessage(
+                error instanceof Error ? error.message : 'Level update failed',
+              );
+            }
+          }}
+        />
       </section>
 
       <section
@@ -329,6 +479,16 @@ export function ResultsScreen() {
           {plan.explanation.map((reason) => <li key={reason}>{reason}</li>)}
         </ul>
       </details>
+
+      <PlanExportActions
+        input={{
+          profile: draft,
+          datasetVersion: planSnapshot.version,
+          fingerprint: planFingerprint,
+          actions,
+          plan,
+        }}
+      />
 
       {showSaveForm ? (
         <form className="save-build-form" onSubmit={submitSave}>

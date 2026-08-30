@@ -85,9 +85,16 @@ export function SpendNowPanel({
 
 export function LevelAllocationTable({
   rows,
+  showAllLevels = false,
+  onShowAll,
+  onAdvance,
 }: {
   rows: readonly LevelAllocationRow[];
+  showAllLevels?: boolean;
+  onShowAll?(): void;
+  onAdvance?(level: number): void;
 }) {
+  const visibleRows = showAllLevels ? rows : rows.slice(0, 3);
   return (
     <>
       <p className="level-allocation-note">
@@ -100,6 +107,7 @@ export function LevelAllocationTable({
               <th rowSpan={2} scope="col">Level</th>
               <th colSpan={5} scope="colgroup">Add this level</th>
               <th colSpan={5} scope="colgroup">Stats after spending</th>
+              {onAdvance ? <th rowSpan={2} scope="col">Update</th> : null}
             </tr>
             <tr>
               {statLabels.map(({ key, label }) => (
@@ -111,7 +119,7 @@ export function LevelAllocationTable({
             </tr>
           </thead>
           <tbody>
-            {rows.map((row) => (
+            {visibleRows.map((row) => (
               <tr key={row.level}>
                 <th scope="row">Level {row.level}</th>
                 {statLabels.map(({ key, label }) => (
@@ -124,11 +132,23 @@ export function LevelAllocationTable({
                     {row.totals[key]}
                   </td>
                 ))}
+                {onAdvance ? (
+                  <td data-label="Update">
+                    <button type="button" onClick={() => onAdvance(row.level)}>
+                      Advance to Level {row.level}
+                    </button>
+                  </td>
+                ) : null}
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+      {!showAllLevels && rows.length > visibleRows.length && onShowAll ? (
+        <button type="button" className="show-all-levels" onClick={onShowAll}>
+          Show all ten levels
+        </button>
+      ) : null}
     </>
   );
 }

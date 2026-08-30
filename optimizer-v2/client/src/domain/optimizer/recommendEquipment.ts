@@ -24,6 +24,7 @@ export interface UpgradeTarget {
   requirementText: string;
   sourceUrl: string;
   priceText?: string;
+  verifiedCost?: { amount: number; currency: string };
   delta: Partial<ProjectedMetrics>;
   rawDelta: ReturnType<typeof compareGearEffects>['rawDelta'];
   unmodeledEffects: string[];
@@ -39,7 +40,7 @@ export interface EquipmentRecommendation {
   upgradeTargets: UpgradeTarget[];
 }
 
-type RankedUpgrade = UpgradeTarget & {
+export type RankedEquipmentUpgradeCandidate = UpgradeTarget & {
   item: EquipmentRecord;
   owned: boolean;
   score: number;
@@ -108,7 +109,10 @@ function requirementText(item: EquipmentRecord) {
   return requirements.join(' · ');
 }
 
-function compareRankedUpgrades(left: RankedUpgrade, right: RankedUpgrade) {
+function compareRankedUpgrades(
+  left: RankedEquipmentUpgradeCandidate,
+  right: RankedEquipmentUpgradeCandidate,
+) {
   const leftOwnedImmediate = Number(left.owned && left.immediate);
   const rightOwnedImmediate = Number(right.owned && right.immediate);
   if (leftOwnedImmediate !== rightOwnedImmediate) {
@@ -125,10 +129,10 @@ function compareRankedUpgrades(left: RankedUpgrade, right: RankedUpgrade) {
   return itemOrder !== 0 ? itemOrder : left.slot.localeCompare(right.slot);
 }
 
-function rankUpgrades(
+export function rankEquipmentUpgradeCandidates(
   profile: CharacterProfile,
   dataset: DatasetSnapshot,
-): RankedUpgrade[] {
+): RankedEquipmentUpgradeCandidate[] {
   const equipmentById = indexEquipment(dataset);
   const mechanics = compileMechanics(dataset);
   const catalogById = new Map(dataset.catalog.map((item) => [item.id, item]));
@@ -175,7 +179,7 @@ function rankUpgrades(
       dexterity: currentEffects.dexterity,
     },
   }, mechanics);
-  const ranked: RankedUpgrade[] = [];
+  const ranked: RankedEquipmentUpgradeCandidate[] = [];
 
   for (const item of dataset.equipment) {
     if (equippedItemIds.has(item.id)) continue;
@@ -232,6 +236,10 @@ function rankUpgrades(
         ...(pricedAcquisition
           ? {
               priceText: `${pricedAcquisition.cost!.toLocaleString('en-US')} ${pricedAcquisition.currency}`,
+              verifiedCost: {
+                amount: pricedAcquisition.cost!,
+                currency: pricedAcquisition.currency!,
+              },
             }
           : {}),
         delta: projectedDelta(currentMetrics, candidateMetrics),
@@ -248,10 +256,10 @@ export function recommendEquipment(
   profile: CharacterProfile,
   dataset: DatasetSnapshot,
 ): EquipmentRecommendation {
-  const ranked = rankUpgrades(profile, dataset);
+  const ranked = rankEquipmentUpgradeCandidates(profile, dataset);
   const selectedSlots = new Set<EquipmentSlot>();
   const selectedItems = new Set<string>();
-  const selected: RankedUpgrade[] = [];
+  const selected: RankedEquipmentUpgradeCandidate[] = [];
 
   const ownedImmediate = ranked.find(
     (candidate) => candidate.owned && candidate.immediate,

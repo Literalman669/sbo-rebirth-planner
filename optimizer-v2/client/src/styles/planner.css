@@ -1335,6 +1335,105 @@
   text-align: center;
 }
 
+.action-checklist h4 {
+  margin: 0.8rem 0 0.45rem;
+  color: var(--color-gold);
+  font-family: var(--font-display);
+  font-weight: 500;
+}
+
+.action-checklist ul {
+  display: grid;
+  gap: 0.45rem;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.action-checklist li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid rgb(184 149 93 / 24%);
+  border-radius: 0.3rem;
+  background: rgb(8 13 18 / 56%);
+}
+
+.action-checklist li.completed {
+  opacity: 0.62;
+}
+
+.action-checklist li.completed strong {
+  text-decoration: line-through;
+}
+
+.action-checklist label {
+  display: flex;
+  min-width: 0;
+  align-items: flex-start;
+  gap: 0.65rem;
+  font-family: var(--font-ui);
+}
+
+.action-checklist label input {
+  width: 1.1rem;
+  min-height: 1.1rem;
+  margin-top: 0.15rem;
+}
+
+.action-checklist label span {
+  display: grid;
+  min-width: 0;
+}
+
+.action-checklist small {
+  color: var(--color-muted);
+}
+
+.action-checklist a,
+.action-checklist button,
+.show-all-levels,
+.level-allocation-table button,
+.plan-export-actions button {
+  min-height: 2.25rem;
+  padding: 0.45rem 0.65rem;
+  border: 1px solid rgb(184 149 93 / 48%);
+  border-radius: 0.3rem;
+  background: rgb(13 22 29 / 88%);
+  color: var(--color-parchment);
+  cursor: pointer;
+  font-size: 0.8rem;
+  text-decoration: none;
+}
+
+.verified-cost-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  color: var(--color-aether-bright);
+  font-size: 0.82rem;
+}
+
+.show-all-levels {
+  margin-top: 0.7rem;
+}
+
+.plan-export-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  padding: 0.9rem 0;
+  border-top: 1px solid rgb(184 149 93 / 25%);
+}
+
+.plan-export-actions p {
+  flex-basis: 100%;
+  margin: 0;
+  color: var(--color-aether-bright);
+}
+
 .results-saved-builds {
   padding: 1rem;
   margin-top: 1rem;
@@ -1590,6 +1689,14 @@
     text-align: right;
   }
 
+  .action-checklist li {
+    grid-template-columns: 1fr auto;
+  }
+
+  .action-checklist li label {
+    grid-column: 1 / -1;
+  }
+
   .level-allocation-table td::before {
     content: attr(data-label);
     color: var(--color-muted);
@@ -1632,5 +1739,31 @@
   *::after {
     scroll-behavior: auto !important;
     transition-duration: 0.01ms !important;
+  }
+}
+
+@media print {
+  body {
+    background: white;
+    color: black;
+  }
+
+  .app-shell > header,
+  .global-navigation,
+  .progress-steps,
+  .edit-links,
+  .screen-actions,
+  .plan-export-actions,
+  .action-checklist button,
+  .show-all-levels,
+  .level-allocation-table button {
+    display: none !important;
+  }
+
+  .planner-frame {
+    width: 100%;
+    margin: 0;
+    border: 0;
+    box-shadow: none;
   }
 }

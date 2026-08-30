@@ -5,6 +5,7 @@ import { createMemoryRouter, RouterProvider } from 'react-router-dom';
 import { describe, expect, it } from 'vitest';
 import { App } from '../../app/App';
 import { BuildDraftProvider } from '../../app/providers/BuildDraftProvider';
+import { PlannerStateProvider } from '../../app/providers/PlannerStateProvider';
 import { DatasetProvider } from '../../app/providers/DatasetProvider';
 import { createAppRoutes } from '../../app/router';
 import type { CharacterProfile } from '../../domain/build/model';
@@ -56,7 +57,9 @@ async function renderResults(
       historicalSnapshots={[bootstrapRelease]}
     >
       <BuildDraftProvider store={store}>
-        <RouterProvider router={router} />
+        <PlannerStateProvider store={store}>
+          <RouterProvider router={router} />
+        </PlannerStateProvider>
       </BuildDraftProvider>
     </DatasetProvider>,
   );
@@ -64,6 +67,31 @@ async function renderResults(
 }
 
 describe('ResultsScreen', () => {
+  it('persists checklist completion, expands levels, and reconciles to a chosen level', async () => {
+    const user = userEvent.setup();
+    const store = await renderResults();
+    await screen.findByRole('heading', {
+      name: 'Your next ten levels, made clear.',
+    });
+
+    expect(screen.getByRole('heading', { name: 'Action checklist' })).toBeVisible();
+    const completion = screen.getByRole('checkbox', {
+      name: /Complete Equip Steel Greatsword/i,
+    });
+    await user.click(completion);
+    await waitFor(async () => {
+      expect(await store.loadPlanProgress(profile.id)).toMatchObject({
+        completedActionIds: ['equipment:main-hand:steel-greatsword'],
+      });
+    });
+
+    await user.click(screen.getByRole('button', { name: 'Show all ten levels' }));
+    expect(screen.getByText('Level 18')).toBeVisible();
+    await user.click(screen.getByRole('button', { name: 'Advance to Level 10' }));
+    await waitFor(async () => {
+      expect((await store.loadDraft())?.level).toBe(10);
+    });
+  });
   it.each([
     [
       'overspent stats',
@@ -146,9 +174,10 @@ describe('ResultsScreen', () => {
     expect(screen.getByText('Equip Steel Greatsword now')).toBeVisible();
     expect(screen.getByText('30 future points')).toBeVisible();
     const table = screen.getByRole('table', { name: 'Next ten levels' });
-    expect(within(table).getAllByRole('rowheader')).toHaveLength(10);
+    expect(within(table).getAllByRole('rowheader')).toHaveLength(3);
     expect(within(table).getByRole('rowheader', { name: 'Level 9' })).toBeVisible();
-    expect(within(table).getByRole('rowheader', { name: 'Level 18' })).toBeVisible();
+    expect(within(table).queryByRole('rowheader', { name: 'Level 18' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Show all ten levels' })).toBeVisible();
     expect(
       screen.getByText(
         'Add this level is new spending for that level; totals are your stats after spending.',
@@ -158,6 +187,7 @@ describe('ResultsScreen', () => {
   });
 
   it('allocates a new character’s three current points before Levels 2 through 11', async () => {
+    const user = userEvent.setup();
     await renderResults(undefined, {
       ...profile,
       level: 1,
@@ -176,6 +206,7 @@ describe('ResultsScreen', () => {
     expect(within(spendNow).getByText('3 points available now')).toBeVisible();
     const table = screen.getByRole('table', { name: 'Next ten levels' });
     expect(within(table).getByRole('rowheader', { name: 'Level 2' })).toBeVisible();
+    await user.click(screen.getByRole('button', { name: 'Show all ten levels' }));
     expect(within(table).getByRole('rowheader', { name: 'Level 11' })).toBeVisible();
   });
 

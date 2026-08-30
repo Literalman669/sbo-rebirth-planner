@@ -70,7 +70,7 @@ export function SharedBuildView({ profile, snapshot }: SharedBuildViewProps) {
             {plan.warnings.map((warning) => <p key={warning}>{warning}</p>)}
           </aside>
         ) : null}
-        <LevelAllocationTable rows={plan.statPlan.levelRows} />
+        <LevelAllocationTable rows={plan.statPlan.levelRows} showAllLevels />
       </section>
       <section className="result-band" aria-labelledby="shared-upgrades-heading">
         <h3 id="shared-upgrades-heading">Next upgrades</h3>
