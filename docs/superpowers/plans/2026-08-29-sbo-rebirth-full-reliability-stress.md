@@ -1002,3 +1002,35 @@ git commit -m "docs: reconcile final reliability review"
 - [ ] **Step 4: Repeat whole-branch independent review**
 
 All Critical/Important findings must be closed before requesting owner authorization for push/deploy.
+
+### Task 21: Render Precision and Eligibility Metadata on Shared Plans
+
+**Findings:** The repeat whole-branch review proved `SharedBuildView` computes a correct plan but omits `plan.warnings`, `target.requirementText`, and `target.eligibilityNote`. Under-budget shared profiles therefore look authoritative, and future/unknown-skill upgrades lose their level and `confirm in game` guidance.
+
+**Files:**
+- Modify: `optimizer-v2/client/src/features/share/SharedBuildScreen.tsx`
+- Modify: `optimizer-v2/client/src/features/share/SharedBuildScreen.test.tsx`
+- Modify: `optimizer-v2/RELIABILITY.md`
+- Modify: `optimizer-v2/ACCEPTANCE.md`
+- Modify: `optimizer-v2/scripts/run-reliability.mjs` only if measured counts/chunks changed.
+
+- [ ] **Step 1: Add RED shared-view regressions**
+
+Render an allowed under-budget shared profile and assert its literal unrepresented-point/reduced-precision warning appears above the future stat plan. Render a future-level, omitted-skill target and assert both `requirementText` and `eligibilityNote` including `confirm in game` are visible.
+
+- [ ] **Step 2: Render existing plan metadata**
+
+Add the same warning semantics used by Results without duplicating optimizer logic. Each shared upgrade exposes requirement and optional eligibility note alongside acquisition/source. Preserve read-only behavior, exact historical dataset resolution, and owner-free presentation.
+
+- [ ] **Step 3: Verify focused and clean gates**
+
+Run focused shared/optimizer tests, full client unit/typecheck, then the full clean reliability gate and binding diff. Update exact counts/chunks and add a closed repeat-review finding while retaining the two external-open items.
+
+- [ ] **Step 4: Commit and re-review**
+
+```bash
+git add optimizer-v2/client/src/features/share/SharedBuildScreen.tsx optimizer-v2/client/src/features/share/SharedBuildScreen.test.tsx optimizer-v2/RELIABILITY.md optimizer-v2/ACCEPTANCE.md optimizer-v2/scripts/run-reliability.mjs
+git commit -m "fix: show shared plan precision metadata"
+```
+
+The repeat whole-branch reviewer must verify both omissions are closed before external authorization is requested.
