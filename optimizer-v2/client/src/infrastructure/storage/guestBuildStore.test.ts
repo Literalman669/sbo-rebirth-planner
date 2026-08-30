@@ -2,6 +2,7 @@ import 'fake-indexeddb/auto';
 import { openDB } from 'idb';
 import { describe, expect, it } from 'vitest';
 import type { CharacterProfile } from '../../domain/build/model';
+import { buildStressProfile } from '../../test/stressFixtures';
 import {
   createGuestBuildStore,
   GUEST_DATABASE_VERSION,
@@ -74,6 +75,46 @@ describe('GuestBuildStore', () => {
     ]);
   });
 
+  it('orders 250 controlled builds newest first and deletes only build 127', async () => {
+    const timestamps = Array.from({ length: 250 }, (_, index) =>
+      new Date(Date.UTC(2026, 7, 29, 0, index)).toISOString(),
+    );
+    const store = createGuestBuildStore({
+      databaseName: databaseName('volume'),
+      now: () => timestamps.shift()!,
+    });
+    const activeDraft = buildStressProfile({ id: 'active-draft' });
+    await store.saveDraft(activeDraft);
+
+    for (let index = 0; index < 250; index += 1) {
+      await store.saveBuild(
+        buildStressProfile({
+          id: `build-${index}`,
+          weaponPath: index % 2 === 0 ? 'two-handed' : 'one-handed',
+        }),
+      );
+    }
+
+    expect(
+      (await store.listBuilds())
+        .filter((result) => result.ok)
+        .map((result) => result.value.profile.id),
+    ).toEqual(Array.from({ length: 250 }, (_, index) => `build-${249 - index}`));
+
+    await store.deleteBuild('build-127');
+
+    expect(
+      (await store.listBuilds())
+        .filter((result) => result.ok)
+        .map((result) => result.value.profile.id),
+    ).toEqual(
+      Array.from({ length: 250 }, (_, index) => `build-${249 - index}`).filter(
+        (id) => id !== 'build-127',
+      ),
+    );
+    await expect(store.loadDraft()).resolves.toEqual(activeDraft);
+  });
+
   it('clears the active draft without deleting named builds', async () => {
     const store = createGuestBuildStore({ databaseName: databaseName('clear') });
     await store.saveDraft(profile('draft'));
@@ -110,6 +151,35 @@ describe('GuestBuildStore', () => {
     expect(results.find((result) => !result.ok)).toEqual({
       ok: false,
       id: 'broken',
+      error: 'Stored build is invalid',
+    });
+  });
+
+  it('isolates corrupt draft and named rows while retaining valid named neighbors', async () => {
+    const name = databaseName('corrupt-rows');
+    const store = createGuestBuildStore({ databaseName: name });
+    await store.saveBuild(buildStressProfile({ id: 'before-corruption' }));
+    await store.saveBuild(buildStressProfile({ id: 'after-corruption' }));
+
+    const database = await openDB(name, GUEST_DATABASE_VERSION);
+    await database.put('draft', { id: 'broken-draft' }, 'active');
+    await database.put(
+      'builds',
+      { profile: { id: 'broken-build' }, createdAt: 'not-a-date', updatedAt: 'not-a-date' },
+      'broken-build',
+    );
+    database.close();
+
+    await expect(store.loadDraft()).rejects.toThrow('Stored draft is invalid');
+    expect(
+      (await store.listBuilds())
+        .filter((result) => result.ok)
+        .map((result) => result.value.profile.id)
+        .sort(),
+    ).toEqual(['after-corruption', 'before-corruption']);
+    expect(await store.listBuilds()).toContainEqual({
+      ok: false,
+      id: 'broken-build',
       error: 'Stored build is invalid',
     });
   });

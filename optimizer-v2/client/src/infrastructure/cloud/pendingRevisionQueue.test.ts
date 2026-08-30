@@ -2,6 +2,7 @@ import 'fake-indexeddb/auto';
 import { openDB } from 'idb';
 import { describe, expect, it } from 'vitest';
 import type { CharacterProfile } from '../../domain/build/model';
+import { buildStressProfile } from '../../test/stressFixtures';
 import { createPendingRevisionQueue } from './pendingRevisionQueue';
 import { GUEST_DATABASE_VERSION } from '../storage/guestBuildStore';
 
@@ -83,6 +84,54 @@ describe('PendingRevisionQueue', () => {
     expect(await queue.listLegacyUnscoped()).toHaveLength(0);
     expect(await queue.list(subject)).toMatchObject([
       { subject, revisionId: 'legacy-revision', attempts: 2 },
+    ]);
+  });
+
+  it('isolates corrupt scoped and legacy rows while retaining valid pending revisions', async () => {
+    const databaseName = `pending-corrupt-${crypto.randomUUID()}`;
+    const queue = createPendingRevisionQueue({ databaseName });
+    await queue.list(subject);
+    const database = await openDB(databaseName, GUEST_DATABASE_VERSION);
+    await database.put(
+      'pending-revisions',
+      {
+        subject,
+        revisionId: 'scoped-valid',
+        buildId: 'scoped-build',
+        profile: buildStressProfile({ id: 'scoped-build' }),
+        enqueuedAt: '2026-08-29T10:00:00.000Z',
+        attempts: 0,
+      },
+      `${subject}:scoped-valid`,
+    );
+    await database.put(
+      'pending-revisions',
+      { subject, revisionId: 'scoped-corrupt' },
+      `${subject}:scoped-corrupt`,
+    );
+    await database.put(
+      'pending-revisions',
+      {
+        revisionId: 'legacy-valid',
+        buildId: 'legacy-build',
+        profile: buildStressProfile({ id: 'legacy-build' }),
+        enqueuedAt: '2026-08-29T10:00:01.000Z',
+        attempts: 0,
+      },
+      'legacy-valid',
+    );
+    await database.put(
+      'pending-revisions',
+      { revisionId: 'legacy-corrupt' },
+      'legacy-corrupt',
+    );
+    database.close();
+
+    await expect(queue.list(subject)).resolves.toMatchObject([
+      { subject, revisionId: 'scoped-valid', buildId: 'scoped-build' },
+    ]);
+    await expect(queue.listLegacyUnscoped()).resolves.toMatchObject([
+      { revisionId: 'legacy-valid', buildId: 'legacy-build' },
     ]);
   });
 

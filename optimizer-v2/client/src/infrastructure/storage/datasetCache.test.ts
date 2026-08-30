@@ -2,6 +2,7 @@ import 'fake-indexeddb/auto';
 import { openDB } from 'idb';
 import { describe, expect, it } from 'vitest';
 import { bootstrapRelease } from '../../data/bootstrapRelease';
+import { buildStressDataset } from '../../test/stressFixtures';
 import {
   createDatasetCache,
   type DatasetCache,
@@ -42,6 +43,30 @@ describe('DatasetCache', () => {
     await expect(cache.getLatest()).resolves.toMatchObject({
       version: '2026.08.29.1',
     });
+  });
+
+  it('isolates a corrupt release row while retaining valid release neighbors', async () => {
+    const name = databaseName('corrupt-neighbors');
+    const cache = createDatasetCache({ databaseName: name });
+    const earlier = buildStressDataset({
+      version: '2026.08.29.10',
+      publishedAt: '2026-08-29T10:00:00.000Z',
+    });
+    const later = buildStressDataset({
+      version: '2026.08.29.12',
+      publishedAt: '2026-08-29T12:00:00.000Z',
+    });
+    await cache.put(earlier);
+    await cache.put(later);
+
+    const database = await openDB(name, GUEST_DATABASE_VERSION);
+    await database.put('dataset-releases', { version: 'corrupt-release' }, '2026.08.29.11');
+    database.close();
+
+    await expect(cache.get('2026.08.29.10')).resolves.toEqual(earlier);
+    await expect(cache.get('2026.08.29.11')).resolves.toBeNull();
+    await expect(cache.get('2026.08.29.12')).resolves.toEqual(later);
+    await expect(cache.getLatest()).resolves.toEqual(later);
   });
 
   it('keeps every referenced historical release while pruning others', async () => {
