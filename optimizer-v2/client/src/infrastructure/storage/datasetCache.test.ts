@@ -96,6 +96,30 @@ describe('DatasetCache', () => {
     await expect(cache.getLatest()).resolves.toEqual(canonical);
   });
 
+  it('isolates a canonical-URL release with a provisional revision', async () => {
+    const name = databaseName('provisional-revision');
+    const cache = createDatasetCache({ databaseName: name });
+    const canonical = buildStressDataset({
+      version: '2026.08.29.30',
+      publishedAt: '2026-08-29T20:00:00.000Z',
+    });
+    const provisional = buildStressDataset({
+      version: '2026.08.29.31',
+      publishedAt: '2026-08-29T21:00:00.000Z',
+      equipment: buildStressDataset().equipment.map((item, index) =>
+        index === 0 ? { ...item, sourceRevision: 'pending-review' } : item,
+      ),
+    });
+    await cache.put(canonical);
+
+    const database = await openDB(name, GUEST_DATABASE_VERSION);
+    await database.put('dataset-releases', provisional, provisional.version);
+    database.close();
+
+    await expect(cache.get(provisional.version)).resolves.toBeNull();
+    await expect(cache.getLatest()).resolves.toEqual(canonical);
+  });
+
   it('keeps every referenced historical release while pruning others', async () => {
     const cache: DatasetCache = createDatasetCache({
       databaseName: databaseName('prune'),

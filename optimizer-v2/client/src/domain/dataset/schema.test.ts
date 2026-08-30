@@ -129,6 +129,36 @@ describe('equipmentRecordSchema', () => {
       ).toBe(false);
     },
   );
+
+  it.each([
+    ['a provisional revision', 'pending-review'],
+    ['an owner attestation', 'owner-gameplay-attestation:2026-08-29'],
+    ['a signed revision', '+23125'],
+    ['a negative revision', '-23125'],
+    ['a decimal revision', '23125.5'],
+    ['a zero revision', '0'],
+    ['a whitespace-padded revision', ' 23125 '],
+  ])('rejects canonical wiki equipment with %s', (_label, sourceRevision) => {
+    expect(() =>
+      equipmentRecordSchema.parse({ ...canonicalEquipment, sourceRevision }),
+    ).toThrow(/MediaWiki revision/);
+  });
+
+  it.each([
+    ['a raw dot segment', 'https://swordbloxonlinerebirth.fandom.com/wiki/..'],
+    ['an encoded dot segment', 'https://swordbloxonlinerebirth.fandom.com/wiki/%2e%2e'],
+    ['a root-normalizing path', 'https://swordbloxonlinerebirth.fandom.com/wiki/Stats/..'],
+    ['a credentialed URL', 'https://user@swordbloxonlinerebirth.fandom.com/wiki/Stats'],
+    ['a default port URL', 'https://swordbloxonlinerebirth.fandom.com:443/wiki/Stats'],
+    ['a fragment URL', `${sourceUrl}#revision`],
+  ])('rejects equipment with %s', (_label, invalidSourceUrl) => {
+    expect(() =>
+      equipmentRecordSchema.parse({
+        ...canonicalEquipment,
+        sourceUrl: invalidSourceUrl,
+      }),
+    ).toThrow(/canonical wiki/);
+  });
 });
 
 describe('formulaRecordSchema', () => {
@@ -159,6 +189,34 @@ describe('formulaRecordSchema', () => {
       ).toBe(false);
     },
   );
+
+  it.each([
+    ['a provisional wiki revision', 'pending-review'],
+    ['a misapplied owner attestation on a wiki source', 'owner-gameplay-attestation:2026-08-29'],
+  ])('rejects points-per-level with %s', (_label, sourceRevision) => {
+    expect(() =>
+      formulaRecordSchema.parse({
+        ...canonicalFormula,
+        id: 'points-per-level',
+        sourceRevision,
+      }),
+    ).toThrow(/formula must have canonical verified provenance/);
+  });
+
+  it.each([
+    ['a missing attestation', undefined],
+    ['a provisional attestation', 'pending-review'],
+    ['an impossible attestation date', 'owner-gameplay-attestation:2026-02-30'],
+  ])('rejects points-per-level official game provenance with %s', (_label, sourceRevision) => {
+    expect(() =>
+      formulaRecordSchema.parse({
+        ...canonicalFormula,
+        id: 'points-per-level',
+        sourceUrl: gameUrl,
+        sourceRevision,
+      }),
+    ).toThrow(/formula must have canonical verified provenance|source revision is required/);
+  });
 
   it('accepts the exact game URL and a valid owner attestation for points per level', () => {
     expect(
@@ -246,5 +304,34 @@ describe('datasetSnapshotSchema', () => {
         equipment: [],
       }).success,
     ).toBe(false);
+  });
+
+  it.each([
+    ['a provisional revision', 'pending-review'],
+    ['an owner attestation', 'owner-gameplay-attestation:2026-08-29'],
+  ])('rejects a known gap with %s', (_label, sourceRevision) => {
+    expect(() =>
+      datasetSnapshotSchema.parse({
+        version: 'bootstrap-1',
+        publishedAt: '2026-08-29T00:00:00.000Z',
+        lastReviewedAt: '2026-08-29',
+        sourceSummary: 'Reviewed wiki snapshot',
+        formulaSetVersion: 'sbor-stats-v1',
+        pointsPerLevel: 3,
+        knownGaps: [
+          {
+            path: 'dagger',
+            band: '1-49',
+            reason: 'No source-supported entry was found.',
+            sourceUrl,
+            sourceRevision,
+            lastReviewedAt: '2026-08-29',
+            verificationStatus: 'verified',
+          },
+        ],
+        formulas,
+        equipment: [],
+      }),
+    ).toThrow(/MediaWiki revision/);
   });
 });

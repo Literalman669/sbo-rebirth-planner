@@ -47,7 +47,7 @@ const canonicalWikiSourcePattern =
   /^https:\/\/swordbloxonlinerebirth\.fandom\.com\/wiki\/[A-Za-z0-9_%().,'-]+$/;
 const officialGameUrl =
   'https://www.roblox.com/games/4733278992/Sword-Blox-Online-Rebirth';
-const ownerAttestationPattern = /^owner-gameplay-attestation:\d{4}-\d{2}-\d{2}$/;
+const ownerAttestationPattern = /^owner-gameplay-attestation:(\d{4}-\d{2}-\d{2})$/;
 const knownGapPattern =
   /^gap:(two-handed|one-handed|rapier|dagger|dual-wield|melee):(1-49|50-99|100-149|150-199|200-249|250-299|300\+)$/;
 const gapCandidatePages: Record<string, string> = {
@@ -113,8 +113,15 @@ function hasApprovedSource(source: ReleaseSourceValidationRow): boolean {
     (source.entityKind === 'formula' &&
       source.entityId === 'points-per-level' &&
       source.sourceUrl === officialGameUrl &&
-      ownerAttestationPattern.test(source.sourceRevision))
+      isOwnerGameplayAttestation(source.sourceRevision))
   );
+}
+
+function isOwnerGameplayAttestation(sourceRevision: string): boolean {
+  const date = ownerAttestationPattern.exec(sourceRevision)?.[1];
+  if (!date) return false;
+  const parsed = new Date(`${date}T00:00:00.000Z`);
+  return Number.isFinite(parsed.getTime()) && parsed.toISOString().startsWith(date);
 }
 
 function isOwnerPointsAttestation(
@@ -124,7 +131,7 @@ function isOwnerPointsAttestation(
     source.entityKind === 'formula' &&
     source.entityId === 'points-per-level' &&
     source.sourceUrl === officialGameUrl &&
-    ownerAttestationPattern.test(source.sourceRevision)
+    isOwnerGameplayAttestation(source.sourceRevision)
   );
 }
 

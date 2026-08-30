@@ -9,6 +9,7 @@ import {
   hasApprovedKnownGapProvenance,
   hasNonblankSourceRevision,
   isCanonicalWikiSourceUrl,
+  isMediaWikiRevisionId,
 } from './provenance';
 
 const formulaIdSchema = z.enum([
@@ -49,7 +50,9 @@ export const equipmentRecordSchema = z
     acquisitionDetail: z.string().min(1),
     availability: z.enum(['always', 'active-event', 'inactive-event']),
     sourceUrl: z.url().refine(isCanonicalWikiSourceUrl, 'source must use the canonical wiki'),
-    sourceRevision: z.string().refine(hasNonblankSourceRevision, 'source revision is required'),
+    sourceRevision: z
+      .string()
+      .refine(isMediaWikiRevisionId, 'source revision must be a positive MediaWiki revision ID'),
     lastReviewedAt: z.iso.date(),
     verificationStatus: z.enum(['verified', 'candidate']),
   })
@@ -81,7 +84,9 @@ export const formulaRecordSchema = z
     applicability: z.string().min(1),
     boundaryBehavior: z.string().min(1),
     sourceUrl: z.url(),
-    sourceRevision: z.string().refine(hasNonblankSourceRevision, 'source revision is required'),
+    sourceRevision: z
+      .string({ error: 'source revision is required' })
+      .refine(hasNonblankSourceRevision, 'source revision is required'),
     lastReviewedAt: z.iso.date(),
     verificationStatus: z.literal('verified'),
   })
@@ -118,7 +123,9 @@ export const datasetSnapshotSchema = z.object({
         ]),
         reason: z.string().min(1),
         sourceUrl: z.url().refine(isCanonicalWikiSourceUrl, 'source must use the canonical wiki'),
-        sourceRevision: z.string().refine(hasNonblankSourceRevision, 'source revision is required'),
+        sourceRevision: z
+          .string()
+          .refine(isMediaWikiRevisionId, 'source revision must be a positive MediaWiki revision ID'),
         lastReviewedAt: z.iso.date(),
         verificationStatus: z.literal('verified'),
       }).superRefine((gap, context) => {

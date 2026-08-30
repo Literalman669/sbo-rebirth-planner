@@ -1,16 +1,56 @@
 export const OFFICIAL_GAME_URL =
   'https://www.roblox.com/games/4733278992/Sword-Blox-Online-Rebirth';
 
-const canonicalWikiSourcePattern =
-  /^https:\/\/swordbloxonlinerebirth\.fandom\.com\/wiki\/[A-Za-z0-9_%().,'-]+$/;
+const canonicalWikiOrigin = 'https://swordbloxonlinerebirth.fandom.com';
+const canonicalWikiPathPrefix = '/wiki/';
+const canonicalWikiPageToken = /^[A-Za-z0-9_%().,'-]+$/;
+const mediaWikiRevisionIdPattern = /^[1-9]\d*$/;
 const ownerAttestationPattern = /^owner-gameplay-attestation:(\d{4}-\d{2}-\d{2})$/;
 
 export function isCanonicalWikiSourceUrl(value: unknown): value is string {
-  return typeof value === 'string' && canonicalWikiSourcePattern.test(value);
+  if (typeof value !== 'string') return false;
+  let url: URL;
+  try {
+    url = new URL(value);
+  } catch {
+    return false;
+  }
+  if (
+    url.protocol !== 'https:' ||
+    url.hostname !== 'swordbloxonlinerebirth.fandom.com' ||
+    url.username ||
+    url.password ||
+    url.port ||
+    url.search ||
+    url.hash ||
+    !url.pathname.startsWith(canonicalWikiPathPrefix)
+  ) {
+    return false;
+  }
+  const pageToken = url.pathname.slice(canonicalWikiPathPrefix.length);
+  if (!canonicalWikiPageToken.test(pageToken)) return false;
+  try {
+    const decodedPageToken = decodeURIComponent(pageToken);
+    if (
+      decodedPageToken === '.' ||
+      decodedPageToken === '..' ||
+      decodedPageToken.includes('/') ||
+      decodedPageToken.includes('\\')
+    ) {
+      return false;
+    }
+  } catch {
+    return false;
+  }
+  return value === `${canonicalWikiOrigin}${url.pathname}`;
 }
 
 export function hasNonblankSourceRevision(value: unknown): value is string {
   return typeof value === 'string' && value.trim().length > 0;
+}
+
+export function isMediaWikiRevisionId(value: unknown): value is string {
+  return typeof value === 'string' && mediaWikiRevisionIdPattern.test(value);
 }
 
 export function isOwnerGameplayAttestation(value: unknown): value is string {
@@ -27,7 +67,7 @@ export function hasApprovedEquipmentProvenance(source: {
 }): boolean {
   return (
     isCanonicalWikiSourceUrl(source.sourceUrl) &&
-    hasNonblankSourceRevision(source.sourceRevision)
+    isMediaWikiRevisionId(source.sourceRevision)
   );
 }
 
@@ -38,7 +78,7 @@ export function hasApprovedFormulaProvenance(source: {
 }): boolean {
   return (
     (isCanonicalWikiSourceUrl(source.sourceUrl) &&
-      hasNonblankSourceRevision(source.sourceRevision)) ||
+      isMediaWikiRevisionId(source.sourceRevision)) ||
     (source.id === 'points-per-level' &&
       source.sourceUrl === OFFICIAL_GAME_URL &&
       isOwnerGameplayAttestation(source.sourceRevision))

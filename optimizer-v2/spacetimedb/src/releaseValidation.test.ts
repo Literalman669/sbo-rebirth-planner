@@ -384,6 +384,23 @@ describe('validateReleaseDraft', () => {
     expect(validateReleaseDraft(input)).toEqual([]);
   });
 
+  it('rejects an impossible owner gameplay attestation date', () => {
+    const input = validDraft();
+    const sourceIndex = input.sources.findIndex(
+      (source) => source.entityId === 'points-per-level',
+    );
+    input.sources[sourceIndex] = {
+      ...input.sources[sourceIndex]!,
+      sourceUrl:
+        'https://www.roblox.com/games/4733278992/Sword-Blox-Online-Rebirth',
+      sourceRevision: 'owner-gameplay-attestation:2026-02-30',
+    };
+
+    expect(validateReleaseDraft(input)).toContain(
+      'Source source-formula-points-per-level does not have approved provenance',
+    );
+  });
+
   it('rejects a known gap sourced from the wrong candidate page', () => {
     const input = validDraft();
     input.sources.push({
