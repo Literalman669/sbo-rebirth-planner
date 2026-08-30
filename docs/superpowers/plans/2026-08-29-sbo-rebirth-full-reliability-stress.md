@@ -54,6 +54,45 @@
 
 ---
 
+### Task 0: Stabilize the Calendar-Boundary Baseline
+
+**Finding:** `ReleaseDraftEditor` correctly derives a review date from the current UTC day, but `curationFlow.test.tsx` hard-codes `2026-08-29`. The suite therefore fails after the UTC calendar crosses into `2026-08-30`, before any reliability implementation runs.
+
+**Files:**
+- Modify: `optimizer-v2/client/src/features/curation/curationFlow.test.tsx`
+
+**Interfaces:**
+- Consumes: Vitest fake timers and the existing `ReleaseDraftEditor` behavior.
+- Produces: a deterministic calendar-boundary test without changing production date semantics.
+
+- [ ] **Step 1: Preserve the reproduced RED evidence**
+
+Run: `npm run test:unit --workspace @sbo/optimizer-client -- --run curationFlow.test.tsx`
+
+Expected: FAIL because the test expects `lastReviewedAt: '2026-08-29'` while the current UTC date produces `2026-08-30`.
+
+- [ ] **Step 2: Pin the test clock at an unambiguous UTC instant**
+
+Use Vitest fake timers or `vi.setSystemTime` in the affected test setup, restore real timers during cleanup, and keep the existing literal expectation. Do not change `ReleaseDraftEditor.tsx`.
+
+- [ ] **Step 3: Verify focused and complete unit tests**
+
+Run:
+
+```bash
+npm run test:unit --workspace @sbo/optimizer-client -- --run curationFlow.test.tsx
+npm run test:unit
+```
+
+Expected: PASS with no date-boundary failure.
+
+- [ ] **Step 4: Commit**
+
+```bash
+git add optimizer-v2/client/src/features/curation/curationFlow.test.tsx
+git commit -m "test: stabilize curation review date"
+```
+
 ### Task 1: Reliability Fixtures, Invariants, and Safe Runner
 
 **Files:**
