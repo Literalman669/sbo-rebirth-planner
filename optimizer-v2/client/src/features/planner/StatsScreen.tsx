@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useBuildDraft } from '../../app/providers/BuildDraftContext';
+import { useDataset } from '../../app/providers/DatasetProvider';
 import type { StatBlock, StatName } from '../../domain/build/model';
 import { analyzeStatBudget } from './completeness';
 
@@ -12,10 +13,19 @@ const stats: Array<{ key: StatName; label: string }> = [
   { key: 'luk', label: 'LUK' },
 ];
 
-const pointsPerLevel = 3;
+function isValidStatValue(value: string) {
+  const numberValue = Number(value);
+  return (
+    value.trim() !== '' &&
+    Number.isInteger(numberValue) &&
+    numberValue >= 0 &&
+    numberValue <= 500
+  );
+}
 
 export function StatsScreen() {
   const navigate = useNavigate();
+  const { snapshot } = useDataset();
   const { draft, isHydrated, updateDraft } = useBuildDraft();
   const [values, setValues] = useState<Record<StatName, string>>(() => ({
     str: String(draft.stats.str),
@@ -42,14 +52,14 @@ export function StatsScreen() {
 
   if (!isHydrated) return <p>Loading draft</p>;
 
-  const budget = analyzeStatBudget(draft, pointsPerLevel);
+  const budget = analyzeStatBudget(draft, snapshot.pointsPerLevel);
 
   const updateStat = (key: StatName, value: string) => {
     setValues((current) => ({ ...current, [key]: value }));
     setErrors((current) => ({ ...current, [key]: undefined }));
     setBudgetError(undefined);
     const numberValue = Number(value);
-    if (Number.isInteger(numberValue) && numberValue >= 0 && numberValue <= 500) {
+    if (isValidStatValue(value)) {
       updateDraft({
         stats: {
           ...draft.stats,
@@ -60,10 +70,7 @@ export function StatsScreen() {
   };
 
   const continueToEquipment = () => {
-    const invalidStat = stats.find(({ key }) => {
-      const value = Number(values[key]);
-      return !Number.isInteger(value) || value < 0 || value > 500;
-    });
+    const invalidStat = stats.find(({ key }) => !isValidStatValue(values[key]));
     if (invalidStat) {
       setErrors({
         [invalidStat.key]: `${invalidStat.label} must be a whole number from 0 to 500.`,
@@ -77,7 +84,7 @@ export function StatsScreen() {
     ) as StatBlock;
     const enteredBudget = analyzeStatBudget(
       { ...draft, stats: enteredStats },
-      pointsPerLevel,
+      snapshot.pointsPerLevel,
     );
     if (enteredBudget.status === 'overspent') {
       setBudgetError(

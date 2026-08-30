@@ -41,6 +41,7 @@ async function renderRoute(
   options: {
     saved?: CharacterProfile;
     named?: CharacterProfile[];
+    snapshot?: DatasetSnapshot;
     historicalSnapshots?: readonly DatasetSnapshot[];
   } = {},
 ) {
@@ -57,7 +58,10 @@ async function renderRoute(
   );
 
   render(
-    <DatasetProvider historicalSnapshots={options.historicalSnapshots}>
+    <DatasetProvider
+      snapshot={options.snapshot}
+      historicalSnapshots={options.historicalSnapshots}
+    >
       <BuildDraftProvider store={store}>
         <RouterProvider router={router} />
       </BuildDraftProvider>
@@ -228,6 +232,21 @@ describe('planner routes', () => {
     }
   });
 
+  it('blocks Stats Continue when a stat input is cleared', async () => {
+    const user = userEvent.setup();
+    const { router } = await renderRoute('/stats');
+    const strength = await screen.findByLabelText('STR');
+
+    await user.clear(strength);
+    await user.click(screen.getByRole('button', { name: 'Continue' }));
+
+    expect(router.state.location.pathname).toBe('/stats');
+    expect(strength).toHaveFocus();
+    expect(screen.getByRole('alert')).toHaveTextContent(
+      'STR must be a whole number from 0 to 500.',
+    );
+  });
+
   it('blocks Stats Continue when invested points exceed the budget', async () => {
     const user = userEvent.setup();
     const { router } = await renderRoute('/stats');
@@ -257,6 +276,25 @@ describe('planner routes', () => {
     await user.click(screen.getByRole('button', { name: 'Continue' }));
 
     expect(router.state.location.pathname).toBe('/equipment');
+  });
+
+  it('uses the verified provider point rate for budget feedback', async () => {
+    const fourPointSnapshot = {
+      ...bootstrapRelease,
+      version: 'four-points-per-level',
+      pointsPerLevel: 4,
+    } as unknown as DatasetSnapshot;
+
+    await renderRoute('/stats', { snapshot: fourPointSnapshot });
+
+    expect(
+      await screen.findByText('Expected 4 · Entered 0 · Difference 4'),
+    ).toBeVisible();
+    expect(
+      screen.getByText(
+        'The optimizer sees 4 points not represented in invested stats and will treat plan precision as reduced.',
+      ),
+    ).toBeVisible();
   });
 
   it('focuses the first missing required equipment control', async () => {

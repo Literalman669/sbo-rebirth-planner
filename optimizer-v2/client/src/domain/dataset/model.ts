@@ -62,7 +62,7 @@ export interface DatasetSnapshot {
   lastReviewedAt: string;
   sourceSummary: string;
   formulaSetVersion: 'sbor-stats-v1';
-  pointsPerLevel: 3;
+  pointsPerLevel: number;
   dualWieldSkillGate?: 200;
   knownGaps?: KnownGapRecord[];
   formulas: FormulaRecord[];
