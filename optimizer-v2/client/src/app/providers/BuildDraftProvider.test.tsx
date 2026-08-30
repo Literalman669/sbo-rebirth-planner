@@ -134,6 +134,20 @@ describe('BuildDraftProvider', () => {
       listBuilds: async () => [],
       saveBuild: async () => undefined,
       deleteBuild: async () => undefined,
+      loadPreferences: async () => ({
+        schemaVersion: 1,
+        mode: 'beginner',
+        density: 'comfortable',
+        showAllLevels: false,
+        compactWeaponPathsAfterFirstUse: false,
+      }),
+      savePreferences: async () => undefined,
+      loadPlanProgress: async () => null,
+      savePlanProgress: async () => undefined,
+      deletePlanProgress: async () => undefined,
+      listQuarantinedRecords: async () => [],
+      exportQuarantinedRecord: async () => null,
+      deleteQuarantinedRecord: async () => undefined,
     };
     renderProvider(store);
     await screen.findByText('Level 1');

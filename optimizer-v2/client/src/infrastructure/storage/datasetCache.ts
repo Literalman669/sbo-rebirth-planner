@@ -1,10 +1,9 @@
-import { openDB } from 'idb';
 import type { DatasetSnapshot } from '../../domain/dataset/model';
 import { datasetSnapshotSchema } from '../../domain/dataset/schema';
 import {
   DEFAULT_GUEST_DATABASE_NAME,
-  GUEST_DATABASE_VERSION,
-} from './guestBuildStore';
+  openPlannerDatabase,
+} from './plannerDatabase';
 
 export interface DatasetCache {
   put(snapshot: DatasetSnapshot): Promise<void>;
@@ -18,22 +17,7 @@ type DatasetCacheOptions = { databaseName?: string };
 export function createDatasetCache({
   databaseName = DEFAULT_GUEST_DATABASE_NAME,
 }: DatasetCacheOptions = {}): DatasetCache {
-  const databasePromise = openDB(databaseName, GUEST_DATABASE_VERSION, {
-    upgrade(database) {
-      if (!database.objectStoreNames.contains('draft')) {
-        database.createObjectStore('draft');
-      }
-      if (!database.objectStoreNames.contains('builds')) {
-        database.createObjectStore('builds');
-      }
-      if (!database.objectStoreNames.contains('pending-revisions')) {
-        database.createObjectStore('pending-revisions');
-      }
-      if (!database.objectStoreNames.contains('dataset-releases')) {
-        database.createObjectStore('dataset-releases');
-      }
-    },
-  });
+  const databasePromise = openPlannerDatabase(databaseName);
 
   return {
     async put(snapshot) {

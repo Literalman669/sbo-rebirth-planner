@@ -1,11 +1,10 @@
-import { openDB } from 'idb';
 import { z } from 'zod';
 import type { CharacterProfile } from '../../domain/build/model';
 import { characterProfileSchema } from '../../domain/build/schema';
 import {
   DEFAULT_GUEST_DATABASE_NAME,
-  GUEST_DATABASE_VERSION,
-} from '../storage/guestBuildStore';
+  openPlannerDatabase,
+} from '../storage/plannerDatabase';
 
 const legacyPendingRevisionSchema = z.object({
   revisionId: z.string().min(1).max(100),
@@ -45,22 +44,7 @@ type PendingRevisionQueueOptions = { databaseName?: string };
 export function createPendingRevisionQueue({
   databaseName = DEFAULT_GUEST_DATABASE_NAME,
 }: PendingRevisionQueueOptions = {}): PendingRevisionQueue {
-  const databasePromise = openDB(databaseName, GUEST_DATABASE_VERSION, {
-    upgrade(database) {
-      if (!database.objectStoreNames.contains('draft')) {
-        database.createObjectStore('draft');
-      }
-      if (!database.objectStoreNames.contains('builds')) {
-        database.createObjectStore('builds');
-      }
-      if (!database.objectStoreNames.contains('pending-revisions')) {
-        database.createObjectStore('pending-revisions');
-      }
-      if (!database.objectStoreNames.contains('dataset-releases')) {
-        database.createObjectStore('dataset-releases');
-      }
-    },
-  });
+  const databasePromise = openPlannerDatabase(databaseName);
 
   return {
     async enqueue(revision) {

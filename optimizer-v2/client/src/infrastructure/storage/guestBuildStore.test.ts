@@ -2,6 +2,8 @@ import 'fake-indexeddb/auto';
 import { openDB } from 'idb';
 import { describe, expect, it } from 'vitest';
 import type { CharacterProfile } from '../../domain/build/model';
+import type { PlanProgress } from '../../domain/planner/state';
+import { DEFAULT_PLANNER_PREFERENCES } from '../../domain/planner/stateSchema';
 import { buildStressProfile } from '../../test/stressFixtures';
 import {
   createGuestBuildStore,
@@ -31,7 +33,122 @@ function databaseName(label: string) {
   return `sbo-rebirth-optimizer-v2-${label}-${crypto.randomUUID()}`;
 }
 
+async function createVersionThreeFixture(
+  name: string,
+  storedProfile: CharacterProfile,
+) {
+  const database = await openDB(name, 3, {
+    upgrade(legacyDatabase) {
+      legacyDatabase.createObjectStore('draft');
+      legacyDatabase.createObjectStore('builds');
+      legacyDatabase.createObjectStore('pending-revisions');
+      legacyDatabase.createObjectStore('dataset-releases');
+    },
+  });
+  await database.put('draft', storedProfile, 'active');
+  return database;
+}
+
 describe('GuestBuildStore', () => {
+  it('adds preference and plan-progress stores without losing v3 builds', async () => {
+    const name = databaseName('v4-upgrade');
+    const legacy = await createVersionThreeFixture(name, profile('legacy-draft'));
+    legacy.close();
+
+    const store = createGuestBuildStore({ databaseName: name });
+
+    await expect(store.loadDraft()).resolves.toEqual(profile('legacy-draft'));
+    await expect(store.loadPreferences()).resolves.toEqual(
+      DEFAULT_PLANNER_PREFERENCES,
+    );
+  });
+
+  it('persists preferences and progress independently from the build profile', async () => {
+    const name = databaseName('planner-state');
+    const first = createGuestBuildStore({ databaseName: name });
+    const progress: PlanProgress = {
+      schemaVersion: 1,
+      buildId: 'build-1',
+      completedActionIds: ['level-2'],
+      dismissedRecommendationIds: ['upgrade-1'],
+      reconciledThroughLevel: 2,
+    };
+    await first.savePreferences({
+      ...DEFAULT_PLANNER_PREFERENCES,
+      mode: 'detailed',
+      density: 'compact',
+    });
+    await first.savePlanProgress(progress);
+
+    const second = createGuestBuildStore({ databaseName: name });
+    await expect(second.loadPreferences()).resolves.toMatchObject({
+      mode: 'detailed',
+      density: 'compact',
+    });
+    await expect(second.loadPlanProgress('build-1')).resolves.toEqual(progress);
+
+    await second.deletePlanProgress('build-1');
+    await expect(second.loadPlanProgress('build-1')).resolves.toBeNull();
+  });
+
+  it('quarantines malformed preferences before returning a recoverable error', async () => {
+    const name = databaseName('quarantine-preferences');
+    const store = createGuestBuildStore({
+      databaseName: name,
+      now: () => '2026-08-30T12:00:00.000Z',
+    });
+    await store.loadPreferences();
+    const database = await openDB(name, GUEST_DATABASE_VERSION);
+    await database.put(
+      'planner-preferences',
+      { schemaVersion: 1, mode: 'impossible' },
+      'primary',
+    );
+    database.close();
+
+    await expect(store.loadPreferences()).rejects.toThrow(
+      'Stored planner preferences are invalid',
+    );
+    const quarantined = await store.listQuarantinedRecords();
+    expect(quarantined).toHaveLength(1);
+    expect(quarantined[0]).toMatchObject({
+      kind: 'planner-preferences',
+      quarantinedAt: '2026-08-30T12:00:00.000Z',
+    });
+    await expect(store.exportQuarantinedRecord(quarantined[0]!.id)).resolves.toBe(
+      JSON.stringify({ schemaVersion: 1, mode: 'impossible' }),
+    );
+
+    await store.deleteQuarantinedRecord(quarantined[0]!.id);
+    await expect(store.listQuarantinedRecords()).resolves.toEqual([]);
+  });
+
+  it('quarantines malformed progress without deleting valid neighboring progress', async () => {
+    const name = databaseName('quarantine-progress');
+    const store = createGuestBuildStore({ databaseName: name });
+    await store.savePlanProgress({
+      schemaVersion: 1,
+      buildId: 'valid-build',
+      completedActionIds: [],
+      dismissedRecommendationIds: [],
+    });
+    const database = await openDB(name, GUEST_DATABASE_VERSION);
+    await database.put(
+      'plan-progress',
+      { schemaVersion: 1, buildId: 'broken-build', completedActionIds: 'bad' },
+      'broken-build',
+    );
+    database.close();
+
+    await expect(store.loadPlanProgress('broken-build')).rejects.toThrow(
+      'Stored plan progress is invalid',
+    );
+    await expect(store.loadPlanProgress('valid-build')).resolves.toMatchObject({
+      buildId: 'valid-build',
+    });
+    await expect(store.listQuarantinedRecords()).resolves.toHaveLength(1);
+  });
+
   it('restores the active draft through a fresh adapter instance', async () => {
     const name = databaseName('draft');
     await createGuestBuildStore({ databaseName: name }).saveDraft(profile('draft'));
