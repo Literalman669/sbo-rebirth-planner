@@ -6,8 +6,13 @@ import type { CharacterProfile } from '../../domain/build/model';
 import { createGuestBuildStore } from '../../infrastructure/storage/guestBuildStore';
 import { AuthProvider } from '../../app/providers/AuthProvider';
 import { useAuthSession } from '../../app/providers/AuthContext';
+import {
+  BuildDraftContext,
+  type BuildDraftContextValue,
+} from '../../app/providers/BuildDraftContext';
 import { AuthCallbackScreen } from './AuthCallbackScreen';
 import { SignInControl } from './SignInControl';
+import { HomeScreen } from '../home/HomeScreen';
 
 const oidc = vi.hoisted(() => ({
   current: {
@@ -44,6 +49,22 @@ function profile(): CharacterProfile {
   };
 }
 
+function homeDraftContext(): BuildDraftContextValue {
+  return {
+    draft: profile(),
+    updateDraft: () => undefined,
+    replaceDraft: () => undefined,
+    saveNamedBuild: async () => profile(),
+    resetDraft: async () => undefined,
+    isHydrated: true,
+    hasActiveDraft: false,
+    storageError: null,
+    savedBuilds: [],
+    loadSavedBuild: () => undefined,
+    deleteSavedBuild: async () => undefined,
+  };
+}
+
 function SessionProbe() {
   const session = useAuthSession();
   return (
@@ -71,12 +92,42 @@ describe('optional authentication', () => {
     render(
       <AuthProvider clientId={null}>
         <SessionProbe />
+        <SignInControl />
       </AuthProvider>,
     );
 
     expect(
       screen.getByText('guest · Authentication is not configured'),
     ).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Sign in' })).toBeDisabled();
+  });
+
+  it('explains that guest planning needs no sign-in and cloud sign-in is optional', () => {
+    render(
+      <MemoryRouter>
+        <BuildDraftContext.Provider value={homeDraftContext()}>
+          <HomeScreen />
+        </BuildDraftContext.Provider>
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByRole('button', { name: 'Create Build' })).toBeVisible();
+    expect(
+      screen.getByText(
+        'Sign in is optional for cloud sync, build history, and sharing.',
+      ),
+    ).toBeVisible();
+    expect(
+      screen.getByText(
+        /Email magic links are the configured durable way to sign in or create an account\./,
+      ),
+    ).toBeVisible();
+    expect(
+      screen.getByText(/Social sign-in requires future provider configuration\./),
+    ).toBeVisible();
+    expect(
+      screen.queryByRole('button', { name: /anonymous|create account|sign up/i }),
+    ).not.toBeInTheDocument();
   });
 
   it('allows the fixed local test adapter to switch guest mode on demand', () => {
@@ -158,7 +209,11 @@ describe('optional authentication', () => {
       </AuthProvider>,
     );
 
-    expect(screen.getByText('Sign-in failed; guest mode is still available.')).toBeVisible();
+    expect(
+      screen.getByText(
+        'Sign-in failed. Your local builds remain on this device; you can keep planning as a guest.',
+      ),
+    ).toBeVisible();
     const builds = await store.listBuilds();
     expect(builds.find((result) => result.ok)?.value.profile.name).toBe(
       'Local Build',

@@ -51,6 +51,20 @@ Guest mode is the default and retains the complete optimizer, IndexedDB drafts, 
 
 The browser uses OIDC Authorization Code with PKCE against `https://auth.spacetimedb.com/oidc` and requests only `openid profile`. It does not use a client secret. The resulting ID token is passed to the SpacetimeDB connection builder so private views and reducers use the authenticated identity.
 
+The planner remains fully usable as a guest: builds stay in browser IndexedDB
+and no sign-in is needed to plan. Sign-in is optional for cloud
+sync, build history, and sharing. The application routes sign-in to the hosted
+SpacetimeAuth page; email magic links are the configured durable sign-in and
+account-creation method, so there is no separate password sign-up flow in this
+client. Anonymous hosted sessions are not presented by the planner as durable
+registration.
+
+No social-provider names are configured or documented in this repository. If a
+future provider is enabled, create its OAuth client ID and secret in that
+provider's console and configure them in the SpacetimeAuth dashboard. Do not
+put those secrets in browser code, browser environment configuration, git, or
+nonfunctional provider buttons.
+
 Production cloud mutations remain locked until the database owner configures:
 
 - mode: `production`

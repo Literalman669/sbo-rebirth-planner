@@ -41,6 +41,18 @@ export function HomeScreen() {
           </button>
         ) : null}
         </div>
+        <section aria-label="Optional cloud sign-in">
+          <p>
+            Guest planning remains fully available on this device; create and
+            save builds without signing in.
+          </p>
+          <p>Sign in is optional for cloud sync, build history, and sharing.</p>
+          <p>
+            Sign-in opens SpacetimeAuth. Email magic links are the configured
+            durable way to sign in or create an account. Social sign-in
+            requires future provider configuration.
+          </p>
+        </section>
         {savedBuilds.length > 0 ? (
           <section className="saved-builds" aria-labelledby="saved-builds-heading">
             <h2 id="saved-builds-heading">Saved Builds</h2>

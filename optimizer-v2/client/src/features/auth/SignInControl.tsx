@@ -16,7 +16,10 @@ export function SignInControl() {
   if (session.status === 'error') {
     return (
       <div className="auth-control auth-control--error">
-        <span>Sign-in failed; guest mode is still available.</span>
+        <span>
+          Sign-in failed. Your local builds remain on this device; you can keep
+          planning as a guest.
+        </span>
         <button type="button" onClick={() => void session.signIn()}>
           Retry sign in
         </button>
