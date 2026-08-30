@@ -15,6 +15,8 @@
     "typecheck": "npm run typecheck --workspaces --if-present",
     "test:unit": "npm run test:unit --workspaces --if-present && node --test scripts/*.test.mjs",
     "test:e2e": "npm run test:e2e --workspace @sbo/optimizer-client",
+    "test:stress": "npm run test:unit --workspace @sbo/optimizer-client -- --run optimizerStress.test.ts",
+    "test:reliability": "node scripts/run-reliability.mjs",
     "test:integration": "node scripts/run-local-integration.mjs",
     "test:pages": "npm run build:pages && npm run test:pages --workspace @sbo/optimizer-client",
     "validate:coverage": "node scripts/validate-release-coverage.mjs client/src/data/fallback-release.json",
