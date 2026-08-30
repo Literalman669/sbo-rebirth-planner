@@ -1,5 +1,6 @@
 import type { CharacterProfile } from '../build/model';
 import type { DatasetSnapshot } from '../dataset/model';
+import { analyzeStatBudget } from '../../features/planner/completeness';
 import {
   allocateNextTenLevels,
   type StatAllocationPlan,
@@ -15,6 +16,7 @@ export interface RecommendationPlan {
   immediateAction: ImmediateAction;
   statPlan: StatAllocationPlan;
   upgradeTargets: UpgradeTarget[];
+  warnings: string[];
   explanation: string[];
 }
 
@@ -27,6 +29,13 @@ export function optimizeBuild(
   }
 
   const equipment = recommendEquipment(profile, dataset);
+  const statBudget = analyzeStatBudget(profile, dataset.pointsPerLevel);
+  const warnings =
+    statBudget.status === 'unaccounted'
+      ? [
+          `The optimizer sees ${statBudget.difference} points not represented in invested stats and will treat plan precision as reduced.`,
+        ]
+      : [];
 
   return {
     datasetVersion: dataset.version,
@@ -47,6 +56,7 @@ export function optimizeBuild(
       goal: profile.goal,
     }),
     upgradeTargets: equipment.upgradeTargets,
+    warnings,
     explanation: [
       `${profile.goal} weighting guided the projected improvements.`,
       `Only verified records from dataset ${dataset.version} were considered.`,

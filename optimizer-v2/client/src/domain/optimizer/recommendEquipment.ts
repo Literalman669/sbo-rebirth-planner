@@ -18,6 +18,7 @@ export interface UpgradeTarget {
   itemId: string;
   slot: EquipmentSlot;
   immediate: boolean;
+  eligibilityNote?: string;
   acquisitionDetail: string;
   requirementText: string;
   sourceUrl: string;
@@ -154,6 +155,9 @@ function rankUpgrades(
         itemId: item.id,
         slot,
         immediate: classification.immediate,
+        ...(!classification.immediate && classification.reason
+          ? { eligibilityNote: classification.reason }
+          : {}),
         owned: owned.has(item.id),
         score,
         acquisitionDetail: item.acquisitionDetail,

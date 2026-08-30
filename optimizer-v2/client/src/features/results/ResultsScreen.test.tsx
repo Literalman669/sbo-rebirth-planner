@@ -37,11 +37,14 @@ const profile: CharacterProfile = {
   datasetVersion: 'bootstrap-0',
 };
 
-async function renderResults(snapshot?: DatasetSnapshot) {
+async function renderResults(
+  snapshot?: DatasetSnapshot,
+  draft: CharacterProfile = profile,
+) {
   const store = createGuestBuildStore({
     databaseName: `results-screen-${crypto.randomUUID()}`,
   });
-  await store.saveDraft(profile);
+  await store.saveDraft(draft);
   const router = createMemoryRouter(
     createAppRoutes(<App release={release} source="bundled" />),
     { initialEntries: ['/results'] },
@@ -113,6 +116,26 @@ describe('ResultsScreen', () => {
     expect(screen.getByText('30 points')).toBeVisible();
     expect(screen.getByText('Level +5')).toBeVisible();
     expect(screen.getByText('Level +10')).toBeVisible();
+  });
+
+  it('shows precision warnings above future stats and labels unknown-skill targets for confirmation', async () => {
+    await renderResults(undefined, {
+      ...profile,
+      weaponSkill: undefined,
+      stats: { str: 0, def: 0, agi: 0, vit: 0, luk: 0 },
+    });
+
+    const warning = await screen.findByText(
+      'The optimizer sees 24 points not represented in invested stats and will treat plan precision as reduced.',
+    );
+    const statTable = screen.getByRole('table');
+    expect(
+      warning.compareDocumentPosition(statTable) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(
+      screen.getByText('Requires Weapon Skill 5; confirm in game'),
+    ).toBeVisible();
   });
 
   it('shows no more than three sourced upgrade targets', async () => {

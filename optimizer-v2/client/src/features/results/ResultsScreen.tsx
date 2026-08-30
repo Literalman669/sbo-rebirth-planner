@@ -207,6 +207,11 @@ export function ResultsScreen() {
           <h3 id="next-levels-heading">Next levels</h3>
           <strong>30 points</strong>
         </div>
+        {plan.warnings.length > 0 ? (
+          <aside className="plan-warnings" role="status">
+            {plan.warnings.map((warning) => <p key={warning}>{warning}</p>)}
+          </aside>
+        ) : null}
         <div className="stat-plan-table-wrapper">
           <table className="stat-plan-table">
             <thead>
@@ -252,6 +257,12 @@ export function ResultsScreen() {
                     <span>Requirement</span>
                     <strong>{target.requirementText}</strong>
                   </div>
+                  {target.eligibilityNote ? (
+                    <div>
+                      <span>Eligibility</span>
+                      <strong>{target.eligibilityNote}</strong>
+                    </div>
+                  ) : null}
                   <div>
                     <span>How to obtain</span>
                     <strong>{target.acquisitionDetail}</strong>

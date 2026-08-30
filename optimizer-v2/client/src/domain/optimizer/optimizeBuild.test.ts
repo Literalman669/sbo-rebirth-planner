@@ -22,6 +22,16 @@ const sword: EquipmentRecord = {
   verificationStatus: 'verified',
 };
 
+const steelGreatsword: EquipmentRecord = {
+  ...sword,
+  id: 'steel-greatsword',
+  name: 'Steel Greatsword',
+  attack: 10,
+  skillRequirement: 5,
+  acquisitionType: 'shop',
+  acquisitionDetail: 'Floor 1 Shop',
+};
+
 const profile: CharacterProfile = {
   schemaVersion: 2,
   id: 'profile-1',
@@ -55,5 +65,33 @@ describe('optimizeBuild', () => {
     expect(result.statPlan.totalPoints).toBe(30);
     expect(Object.values(result.statPlan.added).reduce((sum, value) => sum + value, 0)).toBe(30);
     expect(result).toEqual(optimizeBuild(profile, dataset));
+  });
+
+  it('keeps an upgrade with an omitted weapon skill out of the immediate action', () => {
+    const result = optimizeBuild(
+      { ...profile, weaponSkill: undefined },
+      { ...dataset, equipment: [sword, steelGreatsword] },
+    );
+
+    expect(result.immediateAction.kind).toBe('keep-current');
+    expect(result.upgradeTargets).toContainEqual(
+      expect.objectContaining({
+        itemId: steelGreatsword.id,
+        immediate: false,
+        eligibilityNote: 'Requires Weapon Skill 5; confirm in game',
+      }),
+    );
+  });
+
+  it('warns when current stat points are not represented in a level-eight profile', () => {
+    const result = optimizeBuild(
+      { ...profile, stats: { str: 0, def: 0, agi: 0, vit: 0, luk: 0 } },
+      dataset,
+    );
+
+    expect(result.warnings).toContain(
+      'The optimizer sees 24 points not represented in invested stats and will treat plan precision as reduced.',
+    );
+    expect(result.statPlan.totalPoints).toBe(30);
   });
 });

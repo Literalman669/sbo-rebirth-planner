@@ -181,5 +181,6 @@ describe('recommendEquipment', () => {
         delta: expect.objectContaining({ attackPerHit: expect.any(Number) }),
       }),
     );
+    expect(result.upgradeTargets[0]).not.toHaveProperty('eligibilityNote');
   });
 });
