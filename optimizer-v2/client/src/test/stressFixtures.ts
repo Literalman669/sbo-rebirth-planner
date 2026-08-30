@@ -5,21 +5,18 @@ import { classifyCandidate } from '../domain/optimizer/eligibility';
 import type { RecommendationPlan } from '../domain/optimizer/optimizeBuild';
 import type { ImmediateAction, UpgradeTarget } from '../domain/optimizer/recommendEquipment';
 
+const canonicalSource =
+  /^https:\/\/swordbloxonlinerebirth\.fandom\.com\/wiki\/[A-Za-z0-9_%().,'-]+$/;
+
 function invariant(condition: unknown, message: string): asserts condition {
   if (!condition) throw new Error(`Recommendation invariant failed: ${message}`);
 }
 
 function sourceBacked(item: EquipmentRecord) {
-  try {
-    const source = new URL(item.sourceUrl);
-    return (
-      item.verificationStatus === 'verified' &&
-      source.protocol === 'https:' &&
-      item.lastReviewedAt.length > 0
-    );
-  } catch {
-    return false;
-  }
+  return (
+    item.verificationStatus === 'verified' &&
+    canonicalSource.test(item.sourceUrl)
+  );
 }
 
 function targetSlotApplies(
@@ -122,7 +119,10 @@ export function buildStressDataset(
   const dataset: DatasetSnapshot = {
     ...bootstrapRelease,
     formulas: bootstrapRelease.formulas.map((formula) => ({ ...formula })),
-    equipment: bootstrapRelease.equipment.map((item) => ({ ...item })),
+    equipment: bootstrapRelease.equipment.map((item) => ({
+      ...item,
+      weaponPaths: [...item.weaponPaths],
+    })),
     knownGaps: (bootstrapRelease.knownGaps as DatasetSnapshot['knownGaps'])?.map(
       (gap) => ({ ...gap }),
     ),

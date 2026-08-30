@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { bootstrapRelease } from '../data/bootstrapRelease';
 import { optimizeBuild } from '../domain/optimizer/optimizeBuild';
 import {
   assertRecommendationInvariants,
@@ -35,6 +36,45 @@ describe('stress fixtures', () => {
         dataset,
       ),
     ).toThrow(/source/i);
+  });
+
+  it('rejects a recommendation backed by an untrusted dataset source', () => {
+    const dataset = buildStressDataset();
+    const profile = buildStressProfile({ datasetVersion: dataset.version });
+    const plan = optimizeBuild(profile, dataset);
+    const target = plan.upgradeTargets[0];
+    if (!target) throw new Error('stress fixture must produce an upgrade target');
+    const item = dataset.equipment.find((candidate) => candidate.id === target.itemId);
+    if (!item) throw new Error('stress fixture target must exist in its dataset');
+
+    item.sourceUrl = 'https://example.com/untrusted';
+    const tamperedPlan = {
+      ...plan,
+      upgradeTargets: plan.upgradeTargets.map((candidate) =>
+        candidate.itemId === item.id
+          ? { ...candidate, sourceUrl: item.sourceUrl }
+          : candidate,
+      ),
+    };
+
+    expect(() => assertRecommendationInvariants(tamperedPlan, profile, dataset)).toThrow(
+      /source-backed/i,
+    );
+  });
+
+  it('does not share weapon-path arrays with bootstrap data or later fixtures', () => {
+    const firstFixture = buildStressDataset();
+    const laterFixture = buildStressDataset();
+    const itemId = firstFixture.equipment[0]!.id;
+    const bootstrapItem = bootstrapRelease.equipment.find((item) => item.id === itemId);
+    const laterItem = laterFixture.equipment.find((item) => item.id === itemId);
+    if (!bootstrapItem || !laterItem) throw new Error('stress fixture must contain bootstrap equipment');
+    const originalPaths = [...bootstrapItem.weaponPaths];
+
+    firstFixture.equipment[0]!.weaponPaths.push('rapier');
+
+    expect(bootstrapItem.weaponPaths).toEqual(originalPaths);
+    expect(laterItem.weaponPaths).toEqual(originalPaths);
   });
 
   it('rejects a plan attached to a different dataset version', () => {
