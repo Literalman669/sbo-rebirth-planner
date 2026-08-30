@@ -5,6 +5,7 @@ import {
   playwrightArgumentsFor,
   runIntegrationPhases,
 } from './integration-phase-plan.mjs';
+import { terminateOwnedProcessGroup } from './owned-process-group.mjs';
 
 test('splits the complete e2e suite into non-overlapping deterministic phases', () => {
   assert.deepEqual(INTEGRATION_PHASES, [
@@ -68,4 +69,15 @@ test('runs phases in order and stops before a later phase after failure', async 
     'reliability-module-composite',
     'reliability-module-publication',
   ]);
+});
+
+test('escalates only the owned Linux process group after a bounded TERM wait', async () => {
+  const signals = [];
+  const waits = [false, true];
+  await terminateOwnedProcessGroup({
+    pid: 42,
+    signal: (target, name) => signals.push([target, name]),
+    waitForExit: async () => waits.shift(),
+  });
+  assert.deepEqual(signals, [[-42, 'SIGTERM'], [-42, 'SIGKILL']]);
 });

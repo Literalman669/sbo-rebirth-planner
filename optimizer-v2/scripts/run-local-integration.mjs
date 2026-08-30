@@ -6,6 +6,7 @@ import path from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 import { playwrightArgumentsFor, runIntegrationPhases } from './integration-phase-plan.mjs';
+import { terminateOwnedProcessGroup } from './owned-process-group.mjs';
 
 const uri = 'http://127.0.0.1:3000';
 const database = 'sbo-rebirth-optimizer-v2-test';
@@ -70,8 +71,8 @@ async function waitForServer(server) {
   throw new Error('Timed out waiting for local SpacetimeDB');
 }
 
-async function waitForOwnedServerExit(server) {
-  const deadline = Date.now() + 15_000;
+async function waitForOwnedServerExit(server, timeoutMs = 15_000) {
+  const deadline = Date.now() + timeoutMs;
   while (server.exitCode === null && Date.now() < deadline) await wait(100);
   if (server.exitCode === null) throw new Error('Owned local SpacetimeDB did not exit');
 }
@@ -122,7 +123,7 @@ async function startPhaseServer() {
   const serverDataDir = mkdtempSync(temporaryPrefix);
   const server = spawn(spacetimeExecutable, [
     'start', '--listen-addr', '127.0.0.1:3000', '--in-memory', '--data-dir', serverDataDir, '--non-interactive',
-  ], { cwd: root, stdio: ['ignore', 'pipe', 'pipe'] });
+  ], { cwd: root, stdio: ['ignore', 'pipe', 'pipe'], detached: process.platform !== 'win32' });
   server.stdout.on('data', (chunk) => process.stdout.write(chunk));
   server.stderr.on('data', (chunk) => process.stderr.write(chunk));
   return { server, serverDataDir, cliConfigPath: path.join(serverDataDir, 'integration-cli.toml') };
@@ -134,7 +135,11 @@ async function stopPhaseServer({ server, serverDataDir }) {
       if (process.platform === 'win32' && server.pid) {
         spawnSync('taskkill', ['/PID', String(server.pid), '/T', '/F'], { stdio: 'ignore' });
       } else {
-        server.kill('SIGTERM');
+        await terminateOwnedProcessGroup({
+          pid: server.pid,
+          signal: process.kill,
+          waitForExit: () => waitForOwnedServerExit(server, 3_000).then(() => true).catch(() => false),
+        });
       }
     }
     await waitForOwnedServerExit(server);

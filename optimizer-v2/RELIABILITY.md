@@ -245,3 +245,13 @@ selectors and fail-fast ordering. The two watchdogs are restored to bounded
 120-second/60-second fallback for every environment; global and sharing limits
 are unchanged. Two final CI/GitHub-shaped runs passed the exact 24/8 aggregate;
 fifth GitHub reruns are pending this phase-isolation commit.
+
+The fifth [Optimizer V2 CI](https://github.com/Literalman669/sbo-rebirth-planner/actions/runs/33302887655)
+and [Deploy Optimizer V2](https://github.com/Literalman669/sbo-rebirth-planner/actions/runs/33302887685)
+runs passed core and failed only during owned-server teardown: Linux `SIGTERM`
+to the `spacetime start` launcher left its descendant tree alive. Production
+steps were skipped. Non-Windows phase servers now start detached in their own
+owned process group; teardown targets only negative owned PID with `SIGTERM`,
+then bounded `SIGKILL` fallback on that same group, treating `ESRCH` as exited,
+before waiting for launcher exit and port release. Windows owned-tree taskkill
+is unchanged. Sixth reruns are pending this process-group commit.
