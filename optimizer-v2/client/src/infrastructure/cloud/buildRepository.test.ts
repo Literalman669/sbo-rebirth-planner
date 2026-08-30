@@ -128,6 +128,67 @@ describe('BuildRepository', () => {
     ]);
   });
 
+  it('replays one account\'s offline revisions in order without touching another account queue', async () => {
+    const storage = adapters('repository-offline-replay');
+    const queuedRevisionIds = [
+      'offline-revision-1',
+      'offline-revision-2',
+      'offline-revision-3',
+    ];
+    let nextRevision = 0;
+    const offlineRepository = createBuildRepository({
+      ...storage,
+      reducers: reducers(async () => {
+        throw new Error('offline');
+      }),
+      accountSubject: subject,
+      randomUUID: () => queuedRevisionIds[nextRevision++]!,
+      now: () =>
+        `2026-08-29T10:00:0${nextRevision}.000Z`,
+    });
+
+    for (let level = 21; level <= 23; level += 1) {
+      await expect(
+        offlineRepository.save({ ...profile(), level }),
+      ).resolves.toMatchObject({ location: 'cloud-pending' });
+    }
+    await storage.pendingQueue.enqueue({
+      subject: 'account-b',
+      revisionId: 'account-b-pending',
+      buildId: 'build-b',
+      profile: profile('build-b'),
+      enqueuedAt: '2026-08-29T10:00:04.000Z',
+      attempts: 0,
+    });
+
+    const replayed: Parameters<CloudReducers['saveBuildRevision']>[0][] = [];
+    const reconnectedRepository = createBuildRepository({
+      ...storage,
+      reducers: reducers(async (args) => {
+        replayed.push(args);
+      }),
+      accountSubject: subject,
+    });
+
+    await reconnectedRepository.retryPending();
+
+    expect(replayed.map((args) => args.revisionId)).toEqual(queuedRevisionIds);
+    expect(replayed.map((args) => args.parentRevisionId)).toEqual([
+      undefined,
+      'offline-revision-1',
+      'offline-revision-2',
+    ]);
+    expect(await storage.pendingQueue.list(subject)).toHaveLength(0);
+    expect(await storage.pendingQueue.list('account-b')).toMatchObject([
+      {
+        subject: 'account-b',
+        revisionId: 'account-b-pending',
+        buildId: 'build-b',
+        attempts: 0,
+      },
+    ]);
+  });
+
   it('imports only selected guest IDs and leaves every guest build intact', async () => {
     const storage = adapters('repository-import');
     await storage.guestStore.saveBuild(profile('selected'));
