@@ -2,7 +2,10 @@ import 'fake-indexeddb/auto';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import type { CharacterProfile } from '../../domain/build/model';
-import { createGuestBuildStore } from '../../infrastructure/storage/guestBuildStore';
+import {
+  createGuestBuildStore,
+  type GuestBuildStore,
+} from '../../infrastructure/storage/guestBuildStore';
 import { DatasetProvider } from './DatasetProvider';
 import {
   useBuildDraft,
@@ -55,7 +58,7 @@ function Consumer() {
   );
 }
 
-function renderProvider(store: ReturnType<typeof createGuestBuildStore>) {
+function renderProvider(store: GuestBuildStore) {
   return render(
     <DatasetProvider>
       <BuildDraftProvider store={store}>
@@ -120,5 +123,27 @@ describe('BuildDraftProvider', () => {
     view.unmount();
 
     await expect(store.loadDraft()).resolves.toBeNull();
+  });
+
+  it('surfaces a quota rejection while retaining the in-memory draft', async () => {
+    const quotaError = new DOMException('Storage quota exhausted', 'QuotaExceededError');
+    const store: GuestBuildStore = {
+      loadDraft: async () => null,
+      saveDraft: async () => Promise.reject(quotaError),
+      clearDraft: async () => undefined,
+      listBuilds: async () => [],
+      saveBuild: async () => undefined,
+      deleteBuild: async () => undefined,
+    };
+    renderProvider(store);
+    await screen.findByText('Level 1');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Raise level' }));
+
+    expect(screen.getByText('Level 13')).toBeVisible();
+    expect(screen.getByText('Active draft')).toBeVisible();
+    await waitFor(() => {
+      expect(screen.getByText('Draft storage failed')).toBeVisible();
+    });
   });
 });

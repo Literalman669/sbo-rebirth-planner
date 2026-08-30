@@ -108,7 +108,7 @@ export function BuildDraftProvider({
   useEffect(
     () => () => {
       if (hydratedRef.current && activeDraftRef.current) {
-        void store.saveDraft(draftRef.current);
+        void store.saveDraft(draftRef.current).catch(() => undefined);
       }
     },
     [store],
