@@ -79,7 +79,7 @@ async function renderRoute(
         }
       : undefined;
 
-  render(
+  const view = render(
     testOnlyDataset ? (
       <DatasetContext.Provider value={testOnlyDataset}>
         {planner}
@@ -94,7 +94,7 @@ async function renderRoute(
     ),
   );
 
-  return { router, store };
+  return { router, store, unmount: view.unmount };
 }
 
 describe('planner routes', () => {
@@ -209,8 +209,9 @@ describe('planner routes', () => {
 
   it('blocks Character Continue and focuses an invalid level', async () => {
     const user = userEvent.setup();
-    const { router } = await renderRoute('/character');
+    const { router } = await renderRoute('/character', { saved: savedDraft() });
     const level = await screen.findByLabelText('Current Level');
+    await waitFor(() => expect(level).toHaveValue(8));
 
     await user.clear(level);
     await user.type(level, '0');
@@ -240,16 +241,20 @@ describe('planner routes', () => {
   });
 
   it.each(['-1', '1.5', 'not-a-number', '10001'])(
-    'blocks Character Continue and focuses invalid Weapon Skill %s',
+    'keeps the prior Weapon Skill after invalid final text %s',
     async (invalidValue) => {
       const user = userEvent.setup();
-      const { router, store } = await renderRoute('/character');
+      const { router, store, unmount } = await renderRoute('/character', {
+        saved: savedDraft(),
+      });
       await screen.findByRole('heading', {
         name: 'Tell us where your adventurer stands.',
       });
       await user.click(screen.getByText('Improve accuracy'));
       const weaponSkill = screen.getByLabelText('Weapon Skill');
 
+      expect(weaponSkill).toHaveValue('5');
+      await user.clear(weaponSkill);
       await user.type(weaponSkill, invalidValue);
       await user.click(screen.getByRole('button', { name: 'Continue' }));
 
@@ -258,32 +263,62 @@ describe('planner routes', () => {
       expect(screen.getByRole('alert')).toHaveTextContent(
         'Weapon Skill must be a whole number from 0 to 10000, or left blank.',
       );
-      expect((await store.loadDraft())?.weaponSkill).toBeUndefined();
-      cleanup();
+      await new Promise((resolve) => window.setTimeout(resolve, 350));
+      unmount();
+      await waitFor(async () => {
+        expect((await store.loadDraft())?.weaponSkill).toBe(5);
+      });
     },
   );
 
-  it.each(['', '0', '10000'])(
-    'accepts optional Weapon Skill value %s',
-    async (value) => {
+  it('keeps valid Weapon Skill text local until Continue', async () => {
+    const user = userEvent.setup();
+    const { store, unmount } = await renderRoute('/character', {
+      saved: savedDraft(),
+    });
+    await screen.findByRole('heading', {
+      name: 'Tell us where your adventurer stands.',
+    });
+    await user.click(screen.getByText('Improve accuracy'));
+    const weaponSkill = screen.getByLabelText('Weapon Skill');
+
+    await user.clear(weaponSkill);
+    await user.type(weaponSkill, '1000');
+    await new Promise((resolve) => window.setTimeout(resolve, 350));
+    unmount();
+
+    await waitFor(async () => {
+      expect((await store.loadDraft())?.weaponSkill).toBe(5);
+    });
+  });
+
+  it.each([
+    ['', undefined],
+    ['   ', undefined],
+    ['0', 0],
+    ['10000', 10000],
+  ] as const)(
+    'commits optional Weapon Skill value %j only on Continue',
+    async (value, expected) => {
       const user = userEvent.setup();
-      const { router, store } = await renderRoute('/character');
+      const { router, store, unmount } = await renderRoute('/character', {
+        saved: savedDraft(),
+      });
       await screen.findByRole('heading', {
         name: 'Tell us where your adventurer stands.',
       });
       await user.click(screen.getByText('Improve accuracy'));
       const weaponSkill = screen.getByLabelText('Weapon Skill');
 
+      await user.clear(weaponSkill);
       if (value) await user.type(weaponSkill, value);
       await user.click(screen.getByRole('button', { name: 'Continue' }));
 
       expect(router.state.location.pathname).toBe('/stats');
+      unmount();
       await waitFor(async () => {
-        expect((await store.loadDraft())?.weaponSkill).toBe(
-          value === '' ? undefined : Number(value),
-        );
+        expect((await store.loadDraft())?.weaponSkill).toBe(expected);
       });
-      cleanup();
     },
   );
 

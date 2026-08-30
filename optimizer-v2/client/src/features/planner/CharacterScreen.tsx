@@ -59,18 +59,6 @@ export function CharacterScreen() {
       if (key === 'weaponSkill') {
         setValues((current) => ({ ...current, weaponSkill: value }));
         setErrors((current) => ({ ...current, weaponSkill: undefined }));
-        if (value === '') {
-          updateDraft({ weaponSkill: undefined });
-        } else {
-          const numberValue = Number(value);
-          if (
-            Number.isInteger(numberValue) &&
-            numberValue >= 0 &&
-            numberValue <= 10000
-          ) {
-            updateDraft({ weaponSkill: numberValue });
-          }
-        }
         return;
       }
 
@@ -100,9 +88,11 @@ export function CharacterScreen() {
       return;
     }
 
-    const weaponSkill = Number(values.weaponSkill);
+    const weaponSkillText = values.weaponSkill.trim();
+    const weaponSkill =
+      weaponSkillText === '' ? undefined : Number(weaponSkillText);
     if (
-      values.weaponSkill.trim() !== '' &&
+      weaponSkill !== undefined &&
       (!Number.isInteger(weaponSkill) || weaponSkill < 0 || weaponSkill > 10000)
     ) {
       setErrors({
@@ -113,6 +103,7 @@ export function CharacterScreen() {
       return;
     }
 
+    updateDraft({ level, maxFloor, weaponSkill });
     navigate('/stats');
   };
 
