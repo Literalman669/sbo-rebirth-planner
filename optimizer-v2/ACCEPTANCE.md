@@ -1,6 +1,8 @@
 # Optimizer V2 Acceptance Evidence
 
-Evidence captured for release `2026.08.29.1` with SpacetimeDB 2.8.3.
+Evidence captured for release `2026.08.29.1` with SpacetimeDB 2.8.3. The most
+recent fresh local gate ran on 2026-08-30; owner-authorized external evidence
+remains pending.
 
 | # | Version 1 criterion | Proof | Status |
 |---|---|---|---|
@@ -23,12 +25,13 @@ Evidence captured for release `2026.08.29.1` with SpacetimeDB 2.8.3.
 
 ## Pre-deployment regression gates
 
-- Clean `npm ci`: 0 reported package vulnerabilities (2026-08-29 local gate).
-- Toolchain: Node 22.22.2 and SpacetimeDB 2.8.3 (2026-08-29 local gate).
-- Reliability runner: all 6 layers passed — 254 client unit tests, 53 SpacetimeDB module tests, 15 script tests, typecheck, coverage, and module build.
-- Fixed-local SpacetimeDB integration: 24 passed, 8 intentionally skipped, against `http://127.0.0.1:3000` / `sbo-rebirth-optimizer-v2-test` only.
-- Production-shaped Pages artifact: direct `/auth/callback` and `/shared/:id` recovery both pass with query and hash preservation (2 passed).
-- Generated TypeScript bindings are regenerated with SpacetimeDB 2.8.3 and must leave no Git diff.
+- Clean `npm ci`: 0 reported package vulnerabilities (2026-08-30 fresh local gate).
+- Toolchain: Node 22.22.2 and SpacetimeDB 2.8.3 (2026-08-30 fresh local gate).
+- Reliability runner: all 6 layers passed — 40 client unit files / 317 tests (14.96 s), 3 module unit files / 62 tests (213 ms), 15 script tests (105.7716 ms), typecheck, coverage, and module build. Timings are diagnostic only.
+- Fixed-local SpacetimeDB integration: 24 passed, 8 intentionally skipped in 45.0 s, against a new `http://127.0.0.1:3000` / `sbo-rebirth-optimizer-v2-test` lifecycle only; an occupied `127.0.0.1:4173` fails closed without reusing, contacting, or terminating its owner.
+- Same-parent concurrency: 8 concurrent pairs produced 16 fulfilled siblings, +16 revisions, and +24 rows in each child table; no sibling winner is assumed.
+- Production-shaped Pages artifact: direct `/auth/callback` and `/shared/:id` recovery both pass with query and hash preservation (2 passed in 1.5 s; build 222 ms).
+- Generated TypeScript bindings are regenerated with SpacetimeDB 2.8.3 and `git diff --exit-code -- client/src/module_bindings` exited 0.
 
 ## Pending owner-authorized external evidence
 

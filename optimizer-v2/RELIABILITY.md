@@ -9,13 +9,15 @@ only from child-process exit codes and emits a JSON summary for automation.
 
 | Measure | Recorded result | Evidence |
 | --- | --- | --- |
-| Optimizer determinism | 1,000 identical serializations; diagnostic elapsed 73.0 ms | Task 2 focused stress |
+| Optimizer determinism | 1,000 identical serializations; diagnostic elapsed 194.6 ms | Task 20 fresh local gate |
 | Local build persistence | 250 deterministic local builds | Task 5 storage stress |
 | Cloud history | 100 immutable revisions | Task 7 module stress |
 | Same-token convergence | 20 additional revisions (101–120) across two subscriptions | Task 7 module stress |
 | Share/revoke | 50 distinct create/revoke cycles | Task 8 module stress |
 | Routed planner | 20 Character → Stats → Equipment → Results cycles | Task 6 browser stress |
 | Browser viewports | 1440×1000 and 390×844; 8 executions, 8 passed | Task 6 |
+| Same-parent cloud concurrency | 8 same-parent pairs; 16 fulfilled siblings; +16 revisions and +24 rows in each child table; no assumed winning sibling | Task 18 fixed-local integration |
+| Fresh browser server | Occupied `127.0.0.1:4173` fails closed before database/browser activity; listeners receive zero HTTP requests; fixed local URI/database only | Task 19 focused lifecycle proof |
 | Cloud desktop stress duration | 925 ms | Task 7 |
 | Sharing integration duration | 40.1 s (23 passed, 7 expected skips) | Task 8 final fixed-local run |
 | Publication focused duration | 6.0 s (test body 3.7 s) | Task 9 carry-forward regression |
@@ -27,7 +29,7 @@ The following existing client build artifact chunk sizes were captured in bytes:
 | --- | ---: |
 | `data-vendor-DbPbAp63.js` | 87,149 |
 | `index-aTb0C0Q0.css` | 18,879 |
-| `index-CdbLZwQd.js` | 125,295 |
+| `index-B2iOkPIv.js` | 128,860 |
 | `react-vendor-CBRsJp3P.js` | 353,721 |
 | `rolldown-runtime-CbXtAM7H.js` | 589 |
 | `spacetime-vendor-Do-ucTAG.js` | 129,149 |
@@ -47,6 +49,13 @@ The following existing client build artifact chunk sizes were captured in bytes:
 | H-03 | medium | Share revision 50 after revision 100, then inject an extra child row | Initial harness did not require exact historical child sets or revoke its setup share | Fixed-local integration: 23 passed, 7 expected skips | Assert exact normalized child arrays and revoke setup share | closed (`00cd5bc`) |
 | H-04 | low | Perturb a carried formula while publishing the second reviewed release | Initial harness did not compare complete carried snapshots | Focused fixed-local publication: 1 passed in 6.0 s | Full-field deterministic snapshots with named reviewed-field exception only | closed (`e73579b`) |
 | H-05 | medium | Substitute untrusted Fandom origin or mutate a fixture path array | Initial fixture invariant accepted arbitrary HTTPS and retained a mutable nested array | Fixture suite 5/5; script suite 13/13; full reliability command | Require canonical verified Fandom provenance and clone `weaponPaths` | closed (Task 1 review round) |
+| F-01 | critical | Invoke optimizer, Results, or Shared flow with invested stats above `level × pointsPerLevel` | Optimization/allocation did not share a blocker-aware readiness boundary for every entry point | Task 15 RED 14 cases; focused readiness/planner/results/share 44/44; fresh client units | `assessOptimizationReadiness` blocks overspent profiles before recommendation/allocation | closed (`b6812f7`) |
+| F-02 | critical | Hydrate a verified-looking cached dataset row with noncanonical source URL/revision; publish the same source in the SpacetimeDB runtime | Runtime schema accepted arbitrary HTTPS/optional provenance; the URL-global client/server parity follow-up failed in the deployed runtime where `URL` is unavailable | Task 16 schema/cache RED 19, then 55 focused client and 35 publication checks; Task 16 runtime follow-up full local integration 24 passed/8 intended skips | Exact canonical provenance, token round-trip, revision/date checks, cache isolation, and URL-global-free runtime validation | closed (`f086657`) |
+| F-03 | important | Reach a future candidate that requires both level and missing weapon skill | Level-only early return discarded the combined future-only skill confirmation note | Task 17 RED 4; focused eligibility/optimizer/Results 26/26 | Aggregate ordered eligibility reasons and retain the combined confirmation note | closed (`d850de5`) |
+| F-04 | important | Type invalid, partial, whitespace, or otherwise uncommitted optional Weapon Skill text, then reload before Continue | Character screen wrote optional skill edits into the persisted draft before final validation | Task 15 follow-up RED 6/30; focused planner/provider 30/30 | Keep raw skill text local; validate and commit only on Continue | closed (`95c1c65`) |
+| F-05 | critical | Use a readiness-valid level with every stat at 500, leaving fewer than 30 allocatable stat slots | Allocator could exhaust stat capacity and throw instead of returning an explicit blocker | Task 15 RED 14 cases; focused readiness/planner/results/share 44/44; fresh client units | Readiness returns `insufficient-stat-capacity`; Stats, Results, Shared, and optimizer stop before allocation | closed (`b6812f7`) |
+| F-06 | critical | Submit two distinct child-set revisions from the same parent without awaiting either reducer call | The former 100-revision harness was sequential and could not establish same-parent concurrency behavior | Task 18 eight `Promise.allSettled` pairs: 16 fulfilled siblings, +16 revisions, +24 each child table; fresh integration | Test-only two-live-connection concurrent harness asserts both siblings, exact deltas, and only a pair-eight head without assuming which sibling wins | closed (`6fdff11`) |
+| F-07 | important | Start fixed-local integration while another process occupies the browser port | Playwright allowed `reuseExistingServer`; the lifecycle could interact with a prior server instead of proving fresh ownership | Task 19 RED; focused config/lifecycle 2/2 and fresh fixed-local integration | `reuseExistingServer: false` plus `127.0.0.1:4173` bind preflight; no unknown process is contacted or terminated | closed (`366ac96`) |
 | E-01 | external | Confirm earned points for a real Level-1 gameplay character | The `level × pointsPerLevel` rule is dataset/schema evidence, not a gameplay observation | Schema protects `pointsPerLevel: 3`; gameplay confirmation not captured | No code change authorized | open — Level-1 baseline not gameplay-confirmed |
 | E-02 | external | Configure and exercise social login | No social OAuth provider credentials/configuration are enabled or discoverable in this repository | Auth copy regression only; no provider integration test is possible | Requires provider-console and SpacetimeAuth dashboard configuration | open — credentials/config not enabled |
 
@@ -97,3 +106,21 @@ database are scoped only to the post-gate production verification/build steps.
 The GitHub CI run URL/status, Maincloud publish, Pages deployment URL, and
 read-only live-browser smoke are pending owner-authorized external steps; no
 links or external statuses are asserted by this local record.
+
+## Task 20 fresh clean gate (2026-08-30)
+
+`npm ci` completed with 0 reported vulnerabilities, and `npm run
+check:toolchain` confirmed Node 22.22.2 and SpacetimeDB 2.8.3. The fresh
+`npm run test:reliability` command passed all six direct child layers: 40
+client unit files / 317 tests in 14.96 s, 3 module unit files / 62 tests in
+213 ms, and the freshly rerun 15-test script suite in 105.7716 ms. Client and
+module typechecks, coverage validation for `2026.08.29.1`, and the
+SpacetimeDB module build also passed. These timings are diagnostics, not
+runner pass/fail thresholds.
+
+The fixed-local integration launched a new local SpacetimeDB/browser lifecycle
+and completed 24 passed tests with 8 intended mobile-only skips in 45.0 s. The
+built Pages deep-link suite completed 2 passed tests in 1.5 s; its Vite build
+completed in 222 ms. The current built chunks are listed above, and `git diff
+--exit-code -- client/src/module_bindings` exited 0. This local gate neither
+dispatched CI nor published, deployed, or smoke-tested an external target.
