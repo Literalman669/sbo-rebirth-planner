@@ -1,7 +1,7 @@
 const endpoint =
   'https://swordbloxonlinerebirth.fandom.com/api.php';
 const retryDelays = [250, 1_000];
-const safeTitle = /^[\p{L}\p{N} _:'(),.!&+-]+$/u;
+const safeTitle = /^[\p{L}\p{N} _:'(),.!&+\/-]+$/u;
 
 function assertSafeTitle(title) {
   if (
@@ -9,10 +9,63 @@ function assertSafeTitle(title) {
     title.length === 0 ||
     !safeTitle.test(title) ||
     title.includes('..') ||
-    /[\\/\u0000-\u001f\u007f]/u.test(title)
+    /[\\\u0000-\u001f\u007f]/u.test(title)
   ) {
     throw new Error(`Unsafe wiki page title: ${title}`);
   }
+}
+
+export async function fetchPageSnapshots(
+  pageTitles,
+  request = requestMediaWiki,
+) {
+  const results = [];
+  for (let offset = 0; offset < pageTitles.length; offset += 25) {
+    const chunk = pageTitles.slice(offset, offset + 25);
+    for (const title of chunk) assertSafeTitle(title);
+    const body = await request(
+      new URLSearchParams({
+        action: 'query',
+        prop: 'revisions',
+        rvprop: 'ids|timestamp|content',
+        rvslots: 'main',
+        redirects: '1',
+        titles: chunk.join('|'),
+      }),
+    );
+    const redirects = new Map(
+      (body?.query?.redirects ?? []).map((row) => [row.from, row.to]),
+    );
+    for (const page of body?.query?.pages ?? []) {
+      const revision = page?.revisions?.[0];
+      const content = revision?.slots?.main?.content ?? revision?.content;
+      if (
+        !Number.isInteger(page?.pageid) ||
+        typeof page?.title !== 'string' ||
+        !Number.isInteger(revision?.revid) ||
+        typeof revision?.timestamp !== 'string' ||
+        typeof content !== 'string'
+      ) {
+        throw new Error(`MediaWiki returned an incomplete snapshot for ${page?.title ?? '<unknown>'}`);
+      }
+      const requestedTitle = [...redirects.entries()].find(
+        ([, target]) => target === page.title,
+      )?.[0];
+      results.push({
+        pageId: page.pageid,
+        pageTitle: page.title,
+        sourceUrl: `https://swordbloxonlinerebirth.fandom.com/wiki/${encodeURIComponent(page.title)}`,
+        revisionId: String(revision.revid),
+        revisionTimestamp: revision.timestamp,
+        ...(requestedTitle ? { redirectAlias: requestedTitle } : {}),
+        content,
+      });
+    }
+  }
+  return results.sort(
+    (left, right) =>
+      left.pageId - right.pageId || left.pageTitle.localeCompare(right.pageTitle),
+  );
 }
 
 const defaultWait = (milliseconds) =>

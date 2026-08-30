@@ -39,7 +39,8 @@ function slugify(value: string): string {
 
 function parseStrictNumber(value: string): number | null {
   const cleaned = cleanWikiText(value);
-  return /^\d+(?:\.\d+)?$/.test(cleaned) ? Number(cleaned) : null;
+  const match = /^(\d+(?:\.\d+)?)(?:\s*\[Max\])?$/i.exec(cleaned);
+  return match ? Number(match[1]) : null;
 }
 
 function parseTable(wikitext: string, expectedHeaders: string[]): WikiRow[] | null {
@@ -88,6 +89,8 @@ function acquisition(raw: string): {
   floor: number;
 } | null {
   const detail = cleanWikiText(raw).replace(/\s*,\s*/g, ', ');
+  const linkedEntity = /\[\[[^\]]+\]\]/.test(raw);
+  const markedBoss = /«|»/.test(raw);
   const floors = [...detail.matchAll(/Floor (\d+)/gi)].map((match) =>
     Number(match[1]),
   );
@@ -118,6 +121,12 @@ function acquisition(raw: string): {
   }
   if (/Gamepass/i.test(detail)) {
     return { acquisitionType: 'gamepass' as const, detail, floor };
+  }
+  if (markedBoss) {
+    return { acquisitionType: 'boss-drop' as const, detail, floor };
+  }
+  if (linkedEntity && detail.length > 0) {
+    return { acquisitionType: 'mob-drop' as const, detail, floor };
   }
   return null;
 }

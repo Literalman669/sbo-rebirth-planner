@@ -23,6 +23,7 @@ import {
 } from './curationWorkflow';
 import { PublishReleasePanel } from './PublishReleasePanel';
 import { ReleaseDraftEditor } from './ReleaseDraftEditor';
+import { CoverageManifestPanel } from './CoverageManifestPanel';
 
 const allowedWikiPages = [
   'Stats',
@@ -71,6 +72,10 @@ export function CurationScreen() {
   const [draftEquipmentRows] = useTable(tables.myDraftEquipment);
   const [draftFormulaRows] = useTable(tables.myDraftFormulas);
   const [draftSourceRows] = useTable(tables.myDraftSourceReferences);
+  const [coverageRows] = useTable(tables.myCoverageManifests);
+  const [draftCatalogRows] = useTable(tables.myDraftCatalogEquipment);
+  const [draftMechanicRows] = useTable(tables.myDraftMechanics);
+  const [draftPolicyRows] = useTable(tables.myDraftStrategyPolicies);
   const [releaseRows] = useTable(tables.datasetRelease);
   const [publicEquipment] = useTable(tables.equipment);
   const [publicFormulas] = useTable(tables.formula);
@@ -85,6 +90,7 @@ export function CurationScreen() {
   );
   const recordReviewDecision = useReducer(reducers.recordReviewDecision);
   const publishRelease = useReducer(reducers.publishRelease);
+  const publishCatalogRelease = useReducer(reducers.publishCatalogRelease);
   const grantCurator = useReducer(reducers.grantCurator);
   const revokeCurator = useReducer(reducers.revokeCurator);
   const fetchWikiCandidate = useProcedure(procedures.fetchWikiCandidate);
@@ -127,16 +133,37 @@ export function CurationScreen() {
   const selectedSources = (draftSourceRows as readonly DraftSourceReference[]).filter(
     (row) => row.releaseVersion === selectedVersion,
   );
+  const selectedManifest = coverageRows.find(
+    (row) => row.releaseVersion === selectedVersion,
+  );
+  const selectedCatalog = draftCatalogRows.filter(
+    (row) => row.releaseVersion === selectedVersion,
+  );
+  const selectedMechanics = draftMechanicRows.filter(
+    (row) => row.releaseVersion === selectedVersion,
+  );
+  const selectedPolicy = draftPolicyRows.find(
+    (row) => row.releaseVersion === selectedVersion,
+  );
   const validationErrors = useMemo(
-    () =>
-      releaseReadinessErrors({
+    () => {
+      if (selectedDraft?.formulaSetVersion === 'sbor-stats-v2') {
+        const errors: string[] = [];
+        if (!selectedManifest) errors.push('Stage the wiki coverage manifest');
+        if (selectedCatalog.length === 0) errors.push('Stage catalog equipment');
+        if (selectedMechanics.length === 0) errors.push('Stage verified mechanics');
+        if (!selectedPolicy) errors.push('Stage strategy policy sbor-policy-v2');
+        return errors;
+      }
+      return releaseReadinessErrors({
         draft: selectedDraft,
         equipment: selectedEquipment,
         formulas: selectedFormulas,
         sources: selectedSources,
         candidates,
-      }),
-    [candidates, selectedDraft, selectedEquipment, selectedFormulas, selectedSources],
+      });
+    },
+    [candidates, selectedCatalog.length, selectedDraft, selectedEquipment, selectedFormulas, selectedManifest, selectedMechanics.length, selectedPolicy, selectedSources],
   );
   const currentVersion = releaseRows.find((release) => release.isCurrent)?.version;
 
@@ -219,8 +246,14 @@ export function CurationScreen() {
               drafts={drafts}
               selectedVersion={selectedVersion}
               counts={{
-                equipment: selectedEquipment.length,
-                formulas: selectedFormulas.length,
+                equipment:
+                  selectedDraft?.formulaSetVersion === 'sbor-stats-v2'
+                    ? selectedCatalog.length
+                    : selectedEquipment.length,
+                formulas:
+                  selectedDraft?.formulaSetVersion === 'sbor-stats-v2'
+                    ? selectedMechanics.length
+                    : selectedFormulas.length,
                 sources: selectedSources.length,
               }}
               onSelect={setSelectedVersion}
@@ -236,8 +269,15 @@ export function CurationScreen() {
             <PublishReleasePanel
               version={selectedVersion}
               validationErrors={validationErrors}
-              onPublish={async (version) => publishRelease({ version })}
+              onPublish={async (version) =>
+                selectedDraft?.formulaSetVersion === 'sbor-stats-v2'
+                  ? publishCatalogRelease({ version })
+                  : publishRelease({ version })
+              }
             />
+            {selectedDraft?.formulaSetVersion === 'sbor-stats-v2' && (
+              <CoverageManifestPanel manifest={selectedManifest} />
+            )}
             {curatorAccess === 'owner' && (
               <details className="curation-card owner-tools">
                 <summary>Owner role management</summary>

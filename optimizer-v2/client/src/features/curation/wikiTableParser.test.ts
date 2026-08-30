@@ -215,6 +215,31 @@ describe('parseWeaponListPage', () => {
       acquisitionDetail: 'Starter Inventory, Floor 1 Shop',
     });
   });
+
+  it('accepts sourced Max annotations and linked enemy acquisitions', () => {
+    const wikitext = [
+      '{| class="wikitable"',
+      '!Weapon Name',
+      '!Skill Level',
+      '!Attack Stat',
+      '!How to Obtain',
+      '|-',
+      '|[[Purple Death]]',
+      "|270 '''[Max]'''",
+      "|1375 '''[Max]'''",
+      '|[[Kobold Sentinel]]',
+      '|}',
+    ].join('\n');
+
+    const result = parseWeaponListPage('Dagger', wikitext);
+
+    expect(result[0]?.value).toMatchObject({
+      skillRequirement: 270,
+      attack: 1375,
+      acquisitionType: 'mob-drop',
+      acquisitionDetail: 'Kobold Sentinel',
+    });
+  });
 });
 
 describe('parseArmorListPage', () => {

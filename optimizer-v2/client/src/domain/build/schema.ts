@@ -59,10 +59,5 @@ export const characterProfileSchema = z.object({
       badge: z.boolean(),
       limited: z.boolean(),
     })
-    .default({
-      activeEvent: false,
-      gamepass: false,
-      badge: false,
-      limited: false,
-    }),
+    .optional(),
 });
