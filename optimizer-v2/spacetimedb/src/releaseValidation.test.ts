@@ -401,6 +401,24 @@ describe('validateReleaseDraft', () => {
     );
   });
 
+  it.each([
+    ['a raw dot segment', `${wiki}/..`],
+    ['an encoded dot segment', `${wiki}/%2e%2e`],
+    ['a noncanonical percent-encoded page token', `${wiki}/%53tats`],
+    ['a query', `${wiki}/Two-Handed?so=search`],
+    ['a fragment', `${wiki}/Two-Handed#revision`],
+    ['credentials', 'https://user@swordbloxonlinerebirth.fandom.com/wiki/Two-Handed'],
+    ['a port', 'https://swordbloxonlinerebirth.fandom.com:443/wiki/Two-Handed'],
+    ['a lookalike host', 'https://swordbloxonlinerebirth.fandom.co/wiki/Two-Handed'],
+  ])('rejects source provenance with %s before candidate matching', (_label, sourceUrl) => {
+    const input = validDraft();
+    input.sources[0] = { ...input.sources[0]!, sourceUrl };
+
+    expect(validateReleaseDraft(input)).toContain(
+      'Source source-equipment-two-handed-item does not have approved provenance',
+    );
+  });
+
   it('rejects a known gap sourced from the wrong candidate page', () => {
     const input = validDraft();
     input.sources.push({

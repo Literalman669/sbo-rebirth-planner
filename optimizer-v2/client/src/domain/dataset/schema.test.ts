@@ -151,6 +151,7 @@ describe('equipmentRecordSchema', () => {
     ['a credentialed URL', 'https://user@swordbloxonlinerebirth.fandom.com/wiki/Stats'],
     ['a default port URL', 'https://swordbloxonlinerebirth.fandom.com:443/wiki/Stats'],
     ['a fragment URL', `${sourceUrl}#revision`],
+    ['a noncanonical percent-encoded page token', 'https://swordbloxonlinerebirth.fandom.com/wiki/%53tats'],
   ])('rejects equipment with %s', (_label, invalidSourceUrl) => {
     expect(() =>
       equipmentRecordSchema.parse({
@@ -166,8 +167,6 @@ describe('formulaRecordSchema', () => {
     ['an arbitrary HTTPS host', 'https://example.com/formulas', '23125'],
     ['a noncanonical wiki path', 'https://swordbloxonlinerebirth.fandom.com/Stats', '23125'],
     ['the game URL for a non-points formula', gameUrl, 'owner-gameplay-attestation:2026-08-29'],
-    ['an invalid owner attestation date', gameUrl, 'owner-gameplay-attestation:2026-02-30'],
-    ['a non-attested game URL', gameUrl, '23125'],
   ])('rejects %s', (_label, invalidSourceUrl, sourceRevision) => {
     expect(
       formulaRecordSchema.safeParse({
@@ -205,6 +204,7 @@ describe('formulaRecordSchema', () => {
 
   it.each([
     ['a missing attestation', undefined],
+    ['a numeric revision instead of an attestation', '23125'],
     ['a provisional attestation', 'pending-review'],
     ['an impossible attestation date', 'owner-gameplay-attestation:2026-02-30'],
   ])('rejects points-per-level official game provenance with %s', (_label, sourceRevision) => {

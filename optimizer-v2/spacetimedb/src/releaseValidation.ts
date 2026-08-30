@@ -43,8 +43,9 @@ const availabilityValues = new Set([
   'active-event',
   'inactive-event',
 ]);
-const canonicalWikiSourcePattern =
-  /^https:\/\/swordbloxonlinerebirth\.fandom\.com\/wiki\/[A-Za-z0-9_%().,'-]+$/;
+const canonicalWikiOrigin = 'https://swordbloxonlinerebirth.fandom.com';
+const canonicalWikiPathPrefix = '/wiki/';
+const canonicalWikiPageToken = /^[A-Za-z0-9_%().,'-]+$/;
 const officialGameUrl =
   'https://www.roblox.com/games/4733278992/Sword-Blox-Online-Rebirth';
 const ownerAttestationPattern = /^owner-gameplay-attestation:(\d{4}-\d{2}-\d{2})$/;
@@ -109,7 +110,7 @@ export interface ReleaseValidationInput {
 
 function hasApprovedSource(source: ReleaseSourceValidationRow): boolean {
   return (
-    canonicalWikiSourcePattern.test(source.sourceUrl) ||
+    canonicalPageTitle(source.sourceUrl) !== undefined ||
     (source.entityKind === 'formula' &&
       source.entityId === 'points-per-level' &&
       source.sourceUrl === officialGameUrl &&
@@ -136,10 +137,41 @@ function isOwnerPointsAttestation(
 }
 
 function canonicalPageTitle(sourceUrl: string): string | undefined {
-  const prefix = 'https://swordbloxonlinerebirth.fandom.com/wiki/';
-  if (!sourceUrl.startsWith(prefix)) return undefined;
+  let url: URL;
   try {
-    return decodeURIComponent(sourceUrl.slice(prefix.length));
+    url = new URL(sourceUrl);
+  } catch {
+    return undefined;
+  }
+  if (
+    url.protocol !== 'https:' ||
+    url.hostname !== 'swordbloxonlinerebirth.fandom.com' ||
+    url.username ||
+    url.password ||
+    url.port ||
+    url.search ||
+    url.hash ||
+    !url.pathname.startsWith(canonicalWikiPathPrefix)
+  ) {
+    return undefined;
+  }
+  const pageToken = url.pathname.slice(canonicalWikiPathPrefix.length);
+  if (!canonicalWikiPageToken.test(pageToken)) return undefined;
+  try {
+    const pageTitle = decodeURIComponent(pageToken);
+    if (
+      pageTitle.length === 0 ||
+      pageTitle === '.' ||
+      pageTitle === '..' ||
+      pageTitle.includes('/') ||
+      pageTitle.includes('\\') ||
+      /[\u0000-\u001F\u007F]/.test(pageTitle) ||
+      pageToken !== encodeURIComponent(pageTitle) ||
+      sourceUrl !== `${canonicalWikiOrigin}${url.pathname}`
+    ) {
+      return undefined;
+    }
+    return pageTitle;
   } catch {
     return undefined;
   }

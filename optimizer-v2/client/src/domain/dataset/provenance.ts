@@ -32,10 +32,13 @@ export function isCanonicalWikiSourceUrl(value: unknown): value is string {
   try {
     const decodedPageToken = decodeURIComponent(pageToken);
     if (
+      decodedPageToken.length === 0 ||
       decodedPageToken === '.' ||
       decodedPageToken === '..' ||
       decodedPageToken.includes('/') ||
-      decodedPageToken.includes('\\')
+      decodedPageToken.includes('\\') ||
+      /[\u0000-\u001F\u007F]/.test(decodedPageToken) ||
+      pageToken !== encodeURIComponent(decodedPageToken)
     ) {
       return false;
     }
