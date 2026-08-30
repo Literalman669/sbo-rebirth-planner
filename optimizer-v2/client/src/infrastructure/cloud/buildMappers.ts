@@ -3,11 +3,20 @@ import type {
   EquipmentSlot,
 } from '../../domain/build/model';
 import { characterProfileSchema } from '../../domain/build/schema';
+import type {
+  PlannerPreferences,
+  PlanProgress,
+} from '../../domain/planner/state';
+import {
+  migratePlannerPreferences,
+  migratePlanProgress,
+} from '../../domain/planner/stateSchema';
 
 export type CloudBuildRowLike = {
   id: string;
   name: string;
   headRevisionId: string;
+  archivedAt?: unknown;
 };
 
 export type CloudRevisionRowLike = {
@@ -35,6 +44,79 @@ export type CloudEquipmentRowLike = {
   itemId: string;
 };
 export type CloudOwnedItemRowLike = { revisionId: string; itemId: string };
+export type CloudPlanProgressRowLike = {
+  buildId: string;
+  progressJson: string;
+};
+export type CloudPreferenceRowLike = { preferencesJson: string };
+
+export function planProgressFromCloudRow(
+  row: CloudPlanProgressRowLike,
+): PlanProgress {
+  const progress = migratePlanProgress(JSON.parse(row.progressJson) as unknown);
+  if (progress.buildId !== row.buildId) {
+    throw new Error('Cloud plan progress does not belong to the build');
+  }
+  return progress;
+}
+
+export function createPreferenceSelector() {
+  let previous: PlannerPreferences | null = null;
+  return {
+    select(rows: readonly CloudPreferenceRowLike[]) {
+      for (const row of rows) {
+        try {
+          previous = migratePlannerPreferences(
+            JSON.parse(row.preferencesJson) as unknown,
+          );
+        } catch {
+          // A malformed subscription row never replaces validated preferences.
+        }
+      }
+      return previous;
+    },
+  };
+}
+
+export function createPlanProgressSelector() {
+  let previous = new Map<string, PlanProgress>();
+  return {
+    select(rows: readonly CloudPlanProgressRowLike[]) {
+      const next = new Map<string, PlanProgress>();
+      for (const row of rows) {
+        try {
+          next.set(row.buildId, planProgressFromCloudRow(row));
+        } catch {
+          const retained = previous.get(row.buildId);
+          if (retained) next.set(row.buildId, retained);
+        }
+      }
+      previous = next;
+      return [...next.values()];
+    },
+  };
+}
+
+export function profileFingerprint(input: CharacterProfile): string {
+  const profile = characterProfileSchema.parse(input);
+  const access = profile.accessPreferences;
+  return JSON.stringify({
+    ...profile,
+    stats: { ...profile.stats },
+    equipped: Object.fromEntries(
+      Object.entries(profile.equipped).sort(([left], [right]) =>
+        left.localeCompare(right),
+      ),
+    ),
+    ownedItemIds: [...profile.ownedItemIds].sort(),
+    accessPreferences: {
+      activeEvent: access?.activeEvent ?? false,
+      gamepass: access?.gamepass ?? false,
+      badge: access?.badge ?? false,
+      limited: access?.limited ?? false,
+    },
+  });
+}
 
 function parseAccessPreferences(value = '') {
   const tokens = new Set(value.split(',').filter(Boolean));

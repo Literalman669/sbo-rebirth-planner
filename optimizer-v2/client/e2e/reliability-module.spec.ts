@@ -300,6 +300,14 @@ function liveReducers(testConnection: TestConnection): CloudReducers {
     restoreBuildRevision: (args) =>
       testConnection.connection.reducers.restoreBuildRevision(args),
     deleteBuild: (args) => testConnection.connection.reducers.deleteBuild(args),
+    upsertPlanProgress: (args) =>
+      testConnection.connection.reducers.upsertPlanProgress(args),
+    upsertUserPreferences: (args) =>
+      testConnection.connection.reducers.upsertUserPreferences(args),
+    renameBuild: (args) =>
+      testConnection.connection.reducers.renameBuild(args),
+    setBuildArchived: (args) =>
+      testConnection.connection.reducers.setBuildArchived(args),
   };
 }
 

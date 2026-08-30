@@ -39,6 +39,7 @@ function Consumer() {
     persistenceStatus,
     canUndo,
     undoLastChange,
+    setCloudPersistenceStatus,
   } = useBuildDraft();
 
   if (!isHydrated) return <p>Loading draft</p>;
@@ -79,6 +80,12 @@ function Consumer() {
       </button>
       <button type="button" onClick={undoLastChange} disabled={!canUndo}>
         Undo last change
+      </button>
+      <button
+        type="button"
+        onClick={() => setCloudPersistenceStatus('sync-queued')}
+      >
+        Mark cloud queued
       </button>
     </div>
   );
@@ -200,6 +207,20 @@ describe('BuildDraftProvider', () => {
 
     expect(screen.getByText('Level 99')).toBeVisible();
     expect(screen.getByText('Nothing to undo')).toBeVisible();
+  });
+
+  it('overlays cloud queue status and clears it for a new local edit', async () => {
+    const store = createGuestBuildStore({
+      databaseName: `provider-cloud-status-${crypto.randomUUID()}`,
+    });
+    renderProvider(store);
+    await screen.findByText('Level 1');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Mark cloud queued' }));
+    expect(screen.getByText('sync-queued')).toBeVisible();
+    fireEvent.click(screen.getByRole('button', { name: 'Raise level' }));
+
+    expect(screen.getByText('Saving')).toBeVisible();
   });
 
   it('does not recreate a cleared draft during unmount', async () => {

@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import type { CharacterProfile } from '../../domain/build/model';
 import { createGuestBuildStore } from '../storage/guestBuildStore';
 import { createPendingRevisionQueue } from './pendingRevisionQueue';
+import { createPendingPlannerStateQueue } from './pendingPlannerStateQueue';
 import {
   createBuildRepository,
   createCloudBuildSelector,
@@ -31,6 +32,7 @@ function adapters(label: string) {
   return {
     guestStore: createGuestBuildStore({ databaseName }),
     pendingQueue: createPendingRevisionQueue({ databaseName }),
+    pendingPlannerStateQueue: createPendingPlannerStateQueue({ databaseName }),
   };
 }
 
@@ -46,6 +48,10 @@ function reducers(
       async () => undefined,
     ),
     deleteBuild: vi.fn<CloudReducers['deleteBuild']>(async () => undefined),
+    upsertPlanProgress: vi.fn(async () => undefined),
+    upsertUserPreferences: vi.fn(async () => undefined),
+    renameBuild: vi.fn(async () => undefined),
+    setBuildArchived: vi.fn(async () => undefined),
   };
 }
 
@@ -107,6 +113,201 @@ describe('BuildRepository', () => {
       location: 'cloud',
     });
     expect(await storage.pendingQueue.list(subject)).toHaveLength(0);
+  });
+
+  it('does not create another revision for identical cloud profile content', async () => {
+    const storage = adapters('repository-deduplicate-cloud');
+    const cloud = reducers();
+    const repository = createBuildRepository({
+      ...storage,
+      reducers: cloud,
+      accountSubject: subject,
+      randomUUID: () => 'duplicate-revision',
+      getCloudSnapshot: () => ({
+        builds: [
+          {
+            id: 'build-a',
+            name: 'Build build-a',
+            headRevisionId: 'revision-1',
+          },
+        ],
+        revisions: [
+          {
+            id: 'revision-1',
+            buildId: 'build-a',
+            schemaVersion: 2,
+            level: 20,
+            maxFloor: 3,
+            weaponPath: 'two-handed',
+            goal: 'balanced',
+            weaponSkill: 18,
+            str: 20,
+            def: 10,
+            agi: 12,
+            vit: 8,
+            luk: 5,
+            datasetVersion: 'bootstrap-0',
+          },
+        ],
+        equipment: [
+          {
+            revisionId: 'revision-1',
+            slot: 'main-hand',
+            itemId: 'iron-greatsword',
+          },
+        ],
+        ownedItems: [
+          { revisionId: 'revision-1', itemId: 'iron-greatsword' },
+        ],
+      }),
+    });
+
+    await expect(repository.save(profile())).resolves.toEqual({
+      revisionId: 'revision-1',
+      location: 'cloud',
+    });
+    expect(cloud.saveBuildRevision).not.toHaveBeenCalled();
+    expect(await storage.pendingQueue.list(subject)).toEqual([]);
+  });
+
+  it('does not create another revision while identical content is already pending', async () => {
+    const storage = adapters('repository-deduplicate-pending');
+    await storage.pendingQueue.enqueue({
+      subject,
+      revisionId: 'pending-revision',
+      buildId: 'build-a',
+      profile: profile(),
+      enqueuedAt: '2026-08-30T10:00:00.000Z',
+      attempts: 1,
+    });
+    const cloud = reducers();
+    const repository = createBuildRepository({
+      ...storage,
+      reducers: cloud,
+      accountSubject: subject,
+      randomUUID: () => 'duplicate-revision',
+    });
+
+    await expect(repository.save(profile())).resolves.toEqual({
+      revisionId: 'pending-revision',
+      location: 'cloud-pending',
+    });
+    expect(cloud.saveBuildRevision).not.toHaveBeenCalled();
+    expect(await storage.pendingQueue.list(subject)).toHaveLength(1);
+  });
+
+  it('queues failed progress and preferences with stable IDs, then replays in order', async () => {
+    const storage = adapters('repository-planner-state');
+    const cloud = reducers();
+    cloud.upsertPlanProgress.mockRejectedValueOnce(new Error('offline'));
+    const repository = createBuildRepository({
+      ...storage,
+      reducers: cloud,
+      accountSubject: subject,
+      now: () => '2026-08-30T10:00:00.000Z',
+    });
+    const planProgress = {
+      schemaVersion: 1 as const,
+      buildId: 'build-a',
+      completedActionIds: ['level-21'],
+      dismissedRecommendationIds: [],
+    };
+    const plannerPreferences = {
+      schemaVersion: 1 as const,
+      mode: 'beginner' as const,
+      density: 'comfortable' as const,
+      showAllLevels: false,
+      compactWeaponPathsAfterFirstUse: false,
+    };
+
+    await expect(repository.savePlanProgress(planProgress)).resolves.toBe(
+      'cloud-pending',
+    );
+    await expect(repository.savePreferences(plannerPreferences)).resolves.toBe(
+      'cloud',
+    );
+    expect(await storage.pendingPlannerStateQueue.list(subject)).toMatchObject([
+      {
+        mutationId: 'progress:build-a',
+        kind: 'progress',
+        attempts: 1,
+      },
+    ]);
+
+    await repository.retryPendingPlannerState();
+    expect(await storage.pendingPlannerStateQueue.list(subject)).toEqual([]);
+    expect(cloud.upsertPlanProgress).toHaveBeenLastCalledWith({
+      buildId: 'build-a',
+      progressJson: JSON.stringify(planProgress),
+    });
+  });
+
+  it('renames and archives through protected reducers', async () => {
+    const storage = adapters('repository-build-metadata');
+    const cloud = reducers();
+    const repository = createBuildRepository({
+      ...storage,
+      reducers: cloud,
+      accountSubject: subject,
+    });
+
+    await repository.rename('build-a', 'Renamed build');
+    await repository.archive('build-a', true);
+
+    expect(cloud.renameBuild).toHaveBeenCalledWith({
+      buildId: 'build-a',
+      name: 'Renamed build',
+    });
+    expect(cloud.setBuildArchived).toHaveBeenCalledWith({
+      buildId: 'build-a',
+      archived: true,
+    });
+  });
+
+  it('stops planner-state replay after the first failed mutation', async () => {
+    const storage = adapters('repository-planner-replay-stop');
+    await storage.pendingPlannerStateQueue.enqueue({
+      kind: 'progress',
+      subject,
+      mutationId: 'progress:build-a',
+      progress: {
+        schemaVersion: 1,
+        buildId: 'build-a',
+        completedActionIds: ['level-21'],
+        dismissedRecommendationIds: [],
+      },
+      enqueuedAt: '2026-08-30T10:00:00.000Z',
+      attempts: 0,
+    });
+    await storage.pendingPlannerStateQueue.enqueue({
+      kind: 'preferences',
+      subject,
+      mutationId: 'preferences:primary',
+      preferences: {
+        schemaVersion: 1,
+        mode: 'beginner',
+        density: 'comfortable',
+        showAllLevels: false,
+        compactWeaponPathsAfterFirstUse: false,
+      },
+      enqueuedAt: '2026-08-30T10:00:01.000Z',
+      attempts: 0,
+    });
+    const cloud = reducers();
+    cloud.upsertPlanProgress.mockRejectedValue(new Error('still offline'));
+    const repository = createBuildRepository({
+      ...storage,
+      reducers: cloud,
+      accountSubject: subject,
+    });
+
+    await repository.retryPendingPlannerState();
+
+    expect(cloud.upsertUserPreferences).not.toHaveBeenCalled();
+    expect(await storage.pendingPlannerStateQueue.list(subject)).toMatchObject([
+      { mutationId: 'progress:build-a', attempts: 1 },
+      { mutationId: 'preferences:primary', attempts: 0 },
+    ]);
   });
 
   it('leaves a failed reducer call pending and increments attempts', async () => {
@@ -300,6 +501,26 @@ describe('CloudBuildSelector', () => {
     expect(result[0]?.history.map((item) => item.revisionId)).toEqual([
       'revision-1',
       'revision-2',
+    ]);
+  });
+
+  it('keeps archived rows out of the active list and available to the archived filter', () => {
+    const selector = createCloudBuildSelector();
+    const snapshot = {
+      builds: [
+        {
+          ...baseBuild,
+          archivedAt: '2026-08-30T10:00:00.000Z',
+        },
+      ],
+      revisions: [baseRevision],
+      equipment: [],
+      ownedItems: [],
+    };
+
+    expect(selector.select(snapshot)).toEqual([]);
+    expect(selector.select(snapshot, { archived: true })).toMatchObject([
+      { archivedAt: '2026-08-30T10:00:00.000Z' },
     ]);
   });
 });

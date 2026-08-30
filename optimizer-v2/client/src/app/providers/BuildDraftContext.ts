@@ -24,6 +24,9 @@ export type BuildDraftContextValue = {
   persistenceStatus: DraftPersistenceStatus;
   canUndo: boolean;
   undoLastChange(): void;
+  setCloudPersistenceStatus(
+    status: 'sync-queued' | 'synced' | 'error' | null,
+  ): void;
 };
 
 export const BuildDraftContext = createContext<BuildDraftContextValue | null>(

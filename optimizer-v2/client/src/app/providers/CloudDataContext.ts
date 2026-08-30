@@ -5,6 +5,10 @@ import MyBuildsRow from '../../module_bindings/my_builds_table';
 import MyProfileRow from '../../module_bindings/my_profile_table';
 import MyRevisionEquipmentRow from '../../module_bindings/my_revision_equipment_table';
 import MyRevisionOwnedItemsRow from '../../module_bindings/my_revision_owned_items_table';
+import type {
+  PlannerPreferences,
+  PlanProgress,
+} from '../../domain/planner/state';
 
 export interface CloudDataState {
   isAuthenticated: boolean;
@@ -14,6 +18,8 @@ export interface CloudDataState {
   revisions: readonly Infer<typeof MyBuildRevisionsRow>[];
   equipment: readonly Infer<typeof MyRevisionEquipmentRow>[];
   ownedItems: readonly Infer<typeof MyRevisionOwnedItemsRow>[];
+  planProgress: readonly PlanProgress[];
+  preferences: PlannerPreferences | null;
 }
 
 export const CloudDataContext = createContext<CloudDataState | null>(null);

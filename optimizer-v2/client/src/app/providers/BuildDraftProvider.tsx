@@ -60,6 +60,9 @@ export function BuildDraftProvider({
   const [savedBuilds, setSavedBuilds] = useState<GuestBuildListResult[]>([]);
   const [persistenceStatus, setPersistenceStatus] =
     useState<DraftPersistenceStatus>('idle');
+  const [cloudPersistenceStatus, setCloudPersistenceStatus] = useState<
+    'sync-queued' | 'synced' | 'error' | null
+  >(null);
   const [canUndo, setCanUndo] = useState(false);
   const draftRef = useRef(draft);
   const hydratedRef = useRef(false);
@@ -151,6 +154,7 @@ export function BuildDraftProvider({
     activeDraftRef.current = true;
     setHasActiveDraft(true);
     setStorageError(null);
+    setCloudPersistenceStatus(null);
     setPersistenceStatus('saving');
   }, []);
 
@@ -161,6 +165,7 @@ export function BuildDraftProvider({
     activeDraftRef.current = true;
     setDraft(profile);
     setHasActiveDraft(true);
+    setCloudPersistenceStatus(null);
     setPersistenceStatus('saving');
   }, []);
 
@@ -174,6 +179,7 @@ export function BuildDraftProvider({
     setHasActiveDraft(true);
     setCanUndo(undoStackRef.current.length > 0);
     setStorageError(null);
+    setCloudPersistenceStatus(null);
     setPersistenceStatus('saving');
   }, []);
 
@@ -201,6 +207,7 @@ export function BuildDraftProvider({
     activeDraftRef.current = true;
     setDraft(profile);
     setHasActiveDraft(true);
+    setCloudPersistenceStatus(null);
     setPersistenceStatus('saving');
   }, []);
 
@@ -220,6 +227,7 @@ export function BuildDraftProvider({
     setHasActiveDraft(false);
     undoStackRef.current = [];
     setCanUndo(false);
+    setCloudPersistenceStatus(null);
     setPersistenceStatus('idle');
     await store.clearDraft();
   }, [snapshot.version, store]);
@@ -237,9 +245,10 @@ export function BuildDraftProvider({
       savedBuilds,
       loadSavedBuild,
       deleteSavedBuild,
-      persistenceStatus,
+      persistenceStatus: cloudPersistenceStatus ?? persistenceStatus,
       canUndo,
       undoLastChange,
+      setCloudPersistenceStatus,
     }),
     [
       draft,
@@ -247,6 +256,7 @@ export function BuildDraftProvider({
       isHydrated,
       deleteSavedBuild,
       canUndo,
+      cloudPersistenceStatus,
       loadSavedBuild,
       persistenceStatus,
       replaceDraft,
@@ -256,6 +266,7 @@ export function BuildDraftProvider({
       storageError,
       updateDraft,
       undoLastChange,
+      setCloudPersistenceStatus,
     ],
   );
 

@@ -20,22 +20,36 @@ import {
   type PendingRevisionQueue,
 } from './pendingRevisionQueue';
 import { generateShareId } from '../../features/share/shareId';
+import type {
+  PlannerPreferences,
+  PlanProgress,
+} from '../../domain/planner/state';
+import {
+  createPendingPlannerStateQueue,
+  type PendingPlannerStateQueue,
+} from './pendingPlannerStateQueue';
 
 const defaultGuestStore = createGuestBuildStore();
 const defaultPendingQueue = createPendingRevisionQueue();
+const defaultPendingPlannerStateQueue = createPendingPlannerStateQueue();
 
 type UseCloudBuildsOptions = {
   guestStore?: GuestBuildStore;
   pendingQueue?: PendingRevisionQueue;
+  pendingPlannerStateQueue?: PendingPlannerStateQueue;
 };
 
 export type CloudBuildsState = {
   repository: BuildRepository;
   cloudBuilds: CloudBuildRecord[];
+  archivedCloudBuilds: CloudBuildRecord[];
+  cloudPlanProgress: readonly PlanProgress[];
+  cloudPreferences: PlannerPreferences | null;
   isAuthenticated: boolean;
   isReady: boolean;
   needsGuestImport: boolean;
   pendingCount: number;
+  pendingPlannerStateCount: number;
   legacyPendingCount: number;
   refreshPending(): Promise<void>;
   claimLegacyPending(): Promise<void>;
@@ -46,6 +60,7 @@ export type CloudBuildsState = {
 export function useCloudBuilds({
   guestStore = defaultGuestStore,
   pendingQueue = defaultPendingQueue,
+  pendingPlannerStateQueue = defaultPendingPlannerStateQueue,
 }: UseCloudBuildsOptions = {}): CloudBuildsState {
   const auth = useAuthSession();
   const cloud = useCloudData();
@@ -65,6 +80,7 @@ export function useCloudBuilds({
   };
   const selectorRef = useRef(createCloudBuildSelector());
   const [pendingCount, setPendingCount] = useState(0);
+  const [pendingPlannerStateCount, setPendingPlannerStateCount] = useState(0);
   const [legacyPendingCount, setLegacyPendingCount] = useState(0);
 
   const reducers = useMemo<CloudReducers | undefined>(() => {
@@ -84,6 +100,13 @@ export function useCloudBuilds({
       restoreBuildRevision: (args) =>
         connection.reducers.restoreBuildRevision(args),
       deleteBuild: (args) => connection.reducers.deleteBuild(args),
+      upsertPlanProgress: (args) =>
+        connection.reducers.upsertPlanProgress(args),
+      upsertUserPreferences: (args) =>
+        connection.reducers.upsertUserPreferences(args),
+      renameBuild: (args) => connection.reducers.renameBuild(args),
+      setBuildArchived: (args) =>
+        connection.reducers.setBuildArchived(args),
     };
   }, [auth.status, auth.subject, connection, connectionState.isActive]);
 
@@ -92,24 +115,40 @@ export function useCloudBuilds({
       createBuildRepository({
         guestStore,
         pendingQueue,
+        pendingPlannerStateQueue,
         accountSubject: reducers ? auth.subject : undefined,
         reducers,
         getCloudSnapshot: () => snapshotRef.current,
       }),
-    [auth.subject, guestStore, pendingQueue, reducers],
+    [
+      auth.subject,
+      guestStore,
+      pendingPlannerStateQueue,
+      pendingQueue,
+      reducers,
+    ],
   );
-  const cloudBuilds = useMemo(
-    () => selectorRef.current.select(snapshotRef.current),
+  const selectedCloudBuilds = useMemo(
+    () => ({
+      active: selectorRef.current.select(snapshotRef.current),
+      archived: selectorRef.current.select(snapshotRef.current, {
+        archived: true,
+      }),
+    }),
     [cloud.builds, cloud.equipment, cloud.ownedItems, cloud.revisions],
   );
   const refreshPending = useCallback(async () => {
-    const [scoped, legacy] = await Promise.all([
+    const [scoped, plannerState, legacy] = await Promise.all([
       auth.subject ? pendingQueue.list(auth.subject) : Promise.resolve([]),
+      auth.subject
+        ? pendingPlannerStateQueue.list(auth.subject)
+        : Promise.resolve([]),
       pendingQueue.listLegacyUnscoped(),
     ]);
     setPendingCount(scoped.length);
+    setPendingPlannerStateCount(plannerState.length);
     setLegacyPendingCount(legacy.length);
-  }, [auth.subject, pendingQueue]);
+  }, [auth.subject, pendingPlannerStateQueue, pendingQueue]);
   const claimLegacyPending = useCallback(async () => {
     if (auth.status !== 'authenticated' || !auth.subject) {
       throw new Error('Sign in is required to assign pending revisions');
@@ -152,7 +191,10 @@ export function useCloudBuilds({
   useEffect(() => {
     if (!reducers || !connectionState.isActive) return;
     const retry = () => {
-      void repository.retryPending().finally(() => void refreshPending());
+      void Promise.all([
+        repository.retryPending(),
+        repository.retryPendingPlannerState(),
+      ]).finally(() => void refreshPending());
     };
     retry();
     window.addEventListener('online', retry);
@@ -166,7 +208,10 @@ export function useCloudBuilds({
 
   return {
     repository,
-    cloudBuilds,
+    cloudBuilds: selectedCloudBuilds.active,
+    archivedCloudBuilds: selectedCloudBuilds.archived,
+    cloudPlanProgress: cloud.planProgress,
+    cloudPreferences: cloud.preferences,
     isAuthenticated: auth.status === 'authenticated',
     isReady: cloud.isReady,
     needsGuestImport:
@@ -174,6 +219,7 @@ export function useCloudBuilds({
       cloud.isReady &&
       cloud.profiles.length === 0,
     pendingCount,
+    pendingPlannerStateCount,
     legacyPendingCount,
     refreshPending,
     claimLegacyPending,

@@ -30,3 +30,7 @@ export function usePlannerState(): PlannerStateContextValue {
   }
   return value;
 }
+
+export function useOptionalPlannerState(): PlannerStateContextValue | null {
+  return useContext(PlannerStateContext);
+}

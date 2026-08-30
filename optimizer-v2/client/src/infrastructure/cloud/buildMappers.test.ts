@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import type { CharacterProfile } from '../../domain/build/model';
 import {
+  createPreferenceSelector,
+  createPlanProgressSelector,
+  planProgressFromCloudRow,
   profileFromCloudRevision,
   toSaveBuildRevisionArgs,
 } from './buildMappers';
@@ -27,6 +30,58 @@ const profile: CharacterProfile = {
 };
 
 describe('cloud build mappers', () => {
+  it('maps identity-filtered progress JSON through the shared schema', () => {
+    const progress = {
+      schemaVersion: 1 as const,
+      buildId: 'build-1',
+      completedActionIds: ['level-2'],
+      dismissedRecommendationIds: [],
+    };
+    expect(
+      planProgressFromCloudRow({
+        buildId: 'build-1',
+        progressJson: JSON.stringify(progress),
+      }),
+    ).toEqual(progress);
+  });
+
+  it('preserves the last validated preference row after a malformed update', () => {
+    const preferences = {
+      schemaVersion: 1 as const,
+      mode: 'beginner' as const,
+      density: 'comfortable' as const,
+      showAllLevels: false,
+      compactWeaponPathsAfterFirstUse: false,
+    };
+    const selector = createPreferenceSelector();
+    expect(
+      selector.select([{ preferencesJson: JSON.stringify(preferences) }]),
+    ).toEqual(preferences);
+    expect(
+      selector.select([{ preferencesJson: '{"schemaVersion":99}' }]),
+    ).toEqual(preferences);
+  });
+
+  it('preserves validated progress when a replacement row is malformed', () => {
+    const progress = {
+      schemaVersion: 1 as const,
+      buildId: 'build-1',
+      completedActionIds: ['level-2'],
+      dismissedRecommendationIds: [],
+    };
+    const selector = createPlanProgressSelector();
+    expect(
+      selector.select([
+        { buildId: 'build-1', progressJson: JSON.stringify(progress) },
+      ]),
+    ).toEqual([progress]);
+    expect(
+      selector.select([
+        { buildId: 'build-1', progressJson: '{"schemaVersion":99}' },
+      ]),
+    ).toEqual([progress]);
+  });
+
   it('creates the exact reducer payload without BigInt values', () => {
     const payload = toSaveBuildRevisionArgs(
       profile,

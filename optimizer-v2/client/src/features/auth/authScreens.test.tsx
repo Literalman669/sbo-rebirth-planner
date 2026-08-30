@@ -65,6 +65,7 @@ function homeDraftContext(): BuildDraftContextValue {
     persistenceStatus: 'idle',
     canUndo: false,
     undoLastChange: () => undefined,
+    setCloudPersistenceStatus: () => undefined,
   };
 }
 

@@ -1,7 +1,12 @@
 import type { CharacterProfile } from '../../domain/build/model';
+import type {
+  PlannerPreferences,
+  PlanProgress,
+} from '../../domain/planner/state';
 import type { GuestBuildStore } from '../storage/guestBuildStore';
 import {
   profileFromCloudRevision,
+  profileFingerprint,
   toSaveBuildRevisionArgs,
   type CloudBuildRowLike,
   type CloudEquipmentRowLike,
@@ -9,6 +14,11 @@ import {
   type CloudRevisionRowLike,
 } from './buildMappers';
 import type { PendingRevisionQueue } from './pendingRevisionQueue';
+import {
+  createPendingPlannerStateQueue,
+  type PendingPlannerStateMutation,
+  type PendingPlannerStateQueue,
+} from './pendingPlannerStateQueue';
 
 type SaveBuildRevisionArgs = ReturnType<typeof toSaveBuildRevisionArgs>;
 
@@ -21,6 +31,16 @@ export interface CloudReducers {
     newRevisionId: string;
   }): Promise<void>;
   deleteBuild(args: { buildId: string }): Promise<void>;
+  upsertPlanProgress(args: {
+    buildId: string;
+    progressJson: string;
+  }): Promise<void>;
+  upsertUserPreferences(args: { preferencesJson: string }): Promise<void>;
+  renameBuild(args: { buildId: string; name: string }): Promise<void>;
+  setBuildArchived(args: {
+    buildId: string;
+    archived: boolean;
+  }): Promise<void>;
 }
 
 export interface CloudSnapshot {
@@ -39,19 +59,23 @@ export interface CloudBuildHistoryItem {
 
 export interface CloudBuildRecord {
   headRevisionId: string;
+  archivedAt?: string;
   profile: CharacterProfile;
   history: CloudBuildHistoryItem[];
 }
 
 export interface CloudBuildSelector {
-  select(snapshot: CloudSnapshot): CloudBuildRecord[];
+  select(
+    snapshot: CloudSnapshot,
+    options?: { archived?: boolean },
+  ): CloudBuildRecord[];
 }
 
 export function createCloudBuildSelector(): CloudBuildSelector {
   let previous = new Map<string, CloudBuildRecord>();
 
   return {
-    select(snapshot) {
+    select(snapshot, { archived = false } = {}) {
       const next = new Map<string, CloudBuildRecord>();
       const records: CloudBuildRecord[] = [];
       for (const build of snapshot.builds) {
@@ -80,13 +104,20 @@ export function createCloudBuildSelector(): CloudBuildSelector {
         const record = head
           ? {
               headRevisionId: build.headRevisionId,
+              ...(normalizeOptionalCloudTimestamp(build.archivedAt)
+                ? {
+                    archivedAt: normalizeOptionalCloudTimestamp(
+                      build.archivedAt,
+                    ),
+                  }
+                : {}),
               profile: head.profile,
               history,
             }
           : previous.get(build.id);
         if (record) {
           next.set(build.id, record);
-          records.push(record);
+          if (Boolean(record.archivedAt) === archived) records.push(record);
         }
       }
       previous = next;
@@ -108,6 +139,12 @@ function normalizeCloudTimestamp(value: unknown): string {
   return 'Unknown time';
 }
 
+function normalizeOptionalCloudTimestamp(value: unknown): string | undefined {
+  if (value === undefined || value === null) return undefined;
+  const normalized = normalizeCloudTimestamp(value);
+  return normalized === 'Unknown time' ? undefined : normalized;
+}
+
 export interface BuildRepository {
   save(profile: CharacterProfile): Promise<{
     revisionId?: string;
@@ -115,6 +152,15 @@ export interface BuildRepository {
   }>;
   importGuestBuilds(ids: readonly string[]): Promise<void>;
   retryPending(): Promise<void>;
+  retryPendingPlannerState(): Promise<void>;
+  savePlanProgress(
+    progress: PlanProgress,
+  ): Promise<'cloud' | 'cloud-pending'>;
+  savePreferences(
+    preferences: PlannerPreferences,
+  ): Promise<'cloud' | 'cloud-pending'>;
+  rename(buildId: string, name: string): Promise<void>;
+  archive(buildId: string, archived: boolean): Promise<void>;
   restore(buildId: string, revisionId: string): Promise<string>;
   delete(buildId: string): Promise<void>;
 }
@@ -122,6 +168,7 @@ export interface BuildRepository {
 type BuildRepositoryOptions = {
   guestStore: GuestBuildStore;
   pendingQueue: PendingRevisionQueue;
+  pendingPlannerStateQueue?: PendingPlannerStateQueue;
   accountSubject?: string;
   reducers?: CloudReducers;
   getCloudSnapshot?: () => CloudSnapshot;
@@ -132,6 +179,7 @@ type BuildRepositoryOptions = {
 export function createBuildRepository({
   guestStore,
   pendingQueue,
+  pendingPlannerStateQueue = createPendingPlannerStateQueue(),
   accountSubject,
   reducers,
   getCloudSnapshot = () => ({
@@ -155,9 +203,39 @@ export function createBuildRepository({
     const pendingForBuild = (await pendingQueue.list(subject)).filter(
       (revision) => revision.buildId === profile.id,
     );
-    const currentCloudHead = getCloudSnapshot().builds.find(
+    const identicalPending = pendingForBuild.find(
+      (revision) =>
+        profileFingerprint(revision.profile) === profileFingerprint(profile),
+    );
+    if (identicalPending) {
+      return {
+        revisionId: identicalPending.revisionId,
+        location: 'cloud-pending' as const,
+      };
+    }
+
+    const snapshot = getCloudSnapshot();
+    const currentCloudBuild = snapshot.builds.find(
       (build) => build.id === profile.id,
-    )?.headRevisionId;
+    );
+    const currentCloudHead = currentCloudBuild?.headRevisionId;
+    const currentCloudRecord = currentCloudBuild
+      ? createCloudBuildSelector()
+          .select(snapshot, {
+            archived: currentCloudBuild.archivedAt !== undefined,
+          })
+          .find((record) => record.profile.id === profile.id)
+      : undefined;
+    if (
+      currentCloudRecord &&
+      profileFingerprint(currentCloudRecord.profile) ===
+        profileFingerprint(profile)
+    ) {
+      return {
+        revisionId: currentCloudRecord.headRevisionId,
+        location: 'cloud' as const,
+      };
+    }
     const parentRevisionId =
       pendingForBuild.at(-1)?.revisionId ?? currentCloudHead;
     const revisionId = randomUUID();
@@ -180,6 +258,34 @@ export function createBuildRepository({
     } catch {
       await pendingQueue.incrementAttempts(subject, revisionId);
       return { revisionId, location: 'cloud-pending' as const };
+    }
+  }
+
+  async function sendPlannerMutation(
+    mutation: PendingPlannerStateMutation,
+  ): Promise<'cloud' | 'cloud-pending'> {
+    if (!reducers) throw new Error('Sign in is required for cloud sync');
+    const subject = accountSubject!;
+    await pendingPlannerStateQueue.enqueue(mutation);
+    try {
+      if (mutation.kind === 'progress') {
+        await reducers.upsertPlanProgress({
+          buildId: mutation.progress.buildId,
+          progressJson: JSON.stringify(mutation.progress),
+        });
+      } else {
+        await reducers.upsertUserPreferences({
+          preferencesJson: JSON.stringify(mutation.preferences),
+        });
+      }
+      await pendingPlannerStateQueue.acknowledge(subject, mutation.mutationId);
+      return 'cloud';
+    } catch {
+      await pendingPlannerStateQueue.incrementAttempts(
+        subject,
+        mutation.mutationId,
+      );
+      return 'cloud-pending';
     }
   }
 
@@ -227,6 +333,71 @@ export function createBuildRepository({
       }
     },
 
+    async retryPendingPlannerState() {
+      if (!reducers) return;
+      const subject = accountSubject!;
+      for (const mutation of await pendingPlannerStateQueue.list(subject)) {
+        try {
+          if (mutation.kind === 'progress') {
+            await reducers.upsertPlanProgress({
+              buildId: mutation.progress.buildId,
+              progressJson: JSON.stringify(mutation.progress),
+            });
+          } else {
+            await reducers.upsertUserPreferences({
+              preferencesJson: JSON.stringify(mutation.preferences),
+            });
+          }
+          await pendingPlannerStateQueue.acknowledge(
+            subject,
+            mutation.mutationId,
+          );
+        } catch {
+          await pendingPlannerStateQueue.incrementAttempts(
+            subject,
+            mutation.mutationId,
+          );
+          break;
+        }
+      }
+    },
+
+    async savePlanProgress(progress) {
+      await guestStore.savePlanProgress(progress);
+      if (!accountSubject) throw new Error('Sign in is required for cloud sync');
+      return sendPlannerMutation({
+        kind: 'progress',
+        subject: accountSubject,
+        mutationId: `progress:${progress.buildId}`,
+        progress,
+        enqueuedAt: now(),
+        attempts: 0,
+      });
+    },
+
+    async savePreferences(preferences) {
+      await guestStore.savePreferences(preferences);
+      if (!accountSubject) throw new Error('Sign in is required for cloud sync');
+      return sendPlannerMutation({
+        kind: 'preferences',
+        subject: accountSubject,
+        mutationId: 'preferences:primary',
+        preferences,
+        enqueuedAt: now(),
+        attempts: 0,
+      });
+    },
+
+    async rename(buildId, name) {
+      if (!reducers) throw new Error('Sign in is required to rename cloud builds');
+      await reducers.renameBuild({ buildId, name });
+    },
+
+    async archive(buildId, archived) {
+      if (!reducers) throw new Error('Sign in is required to archive cloud builds');
+      await reducers.setBuildArchived({ buildId, archived });
+    },
+
     async restore(buildId, revisionId) {
       if (!reducers) throw new Error('Sign in is required to restore history');
       const newRevisionId = randomUUID();
@@ -240,6 +411,12 @@ export function createBuildRepository({
 
     async delete(buildId) {
       if (reducers) await reducers.deleteBuild({ buildId });
+      if (accountSubject) {
+        await pendingPlannerStateQueue.acknowledge(
+          accountSubject,
+          `progress:${buildId}`,
+        );
+      }
       await guestStore.deleteBuild(buildId);
     },
   };

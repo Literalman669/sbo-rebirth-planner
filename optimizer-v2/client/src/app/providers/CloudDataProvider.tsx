@@ -1,7 +1,11 @@
-import { useMemo, type PropsWithChildren } from 'react';
+import { useMemo, useRef, type PropsWithChildren } from 'react';
 import { SpacetimeDBProvider, useTable } from 'spacetimedb/react';
 import { tables } from '../../module_bindings';
 import { createConnectionBuilder } from '../../infrastructure/spacetime/connection';
+import {
+  createPlanProgressSelector,
+  createPreferenceSelector,
+} from '../../infrastructure/cloud/buildMappers';
 import { useAuthSession } from './AuthContext';
 import { CloudDataContext, type CloudDataState } from './CloudDataContext';
 
@@ -13,6 +17,8 @@ const guestCloudData: CloudDataState = {
   revisions: [],
   equipment: [],
   ownedItems: [],
+  planProgress: [],
+  preferences: null,
 };
 
 function PrivateCloudSubscription({ children }: PropsWithChildren) {
@@ -21,6 +27,20 @@ function PrivateCloudSubscription({ children }: PropsWithChildren) {
   const [revisions, revisionsReady] = useTable(tables.myBuildRevisions);
   const [equipment, equipmentReady] = useTable(tables.myRevisionEquipment);
   const [ownedItems, ownedItemsReady] = useTable(tables.myRevisionOwnedItems);
+  const [progressRows, progressReady] = useTable(tables.myPlanProgress);
+  const [preferenceRows, preferencesReady] = useTable(
+    tables.myUserPreferences,
+  );
+  const progressSelectorRef = useRef(createPlanProgressSelector());
+  const preferenceSelectorRef = useRef(createPreferenceSelector());
+  const planProgress = useMemo(
+    () => progressSelectorRef.current.select(progressRows),
+    [progressRows],
+  );
+  const preferences = useMemo(
+    () => preferenceSelectorRef.current.select(preferenceRows),
+    [preferenceRows],
+  );
   const value = useMemo<CloudDataState>(
     () => ({
       isAuthenticated: true,
@@ -29,12 +49,16 @@ function PrivateCloudSubscription({ children }: PropsWithChildren) {
         buildsReady &&
         revisionsReady &&
         equipmentReady &&
-        ownedItemsReady,
+        ownedItemsReady &&
+        progressReady &&
+        preferencesReady,
       profiles,
       builds,
       revisions,
       equipment,
       ownedItems,
+      planProgress,
+      preferences,
     }),
     [
       builds,
@@ -43,10 +67,14 @@ function PrivateCloudSubscription({ children }: PropsWithChildren) {
       equipmentReady,
       ownedItems,
       ownedItemsReady,
+      planProgress,
+      preferences,
+      preferencesReady,
       profiles,
       profilesReady,
       revisions,
       revisionsReady,
+      progressReady,
     ],
   );
 
