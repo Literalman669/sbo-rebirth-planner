@@ -110,6 +110,31 @@ describe('optimizeBuild', () => {
     );
   });
 
+  it('propagates combined future level and unknown skill requirements to upgrade targets', () => {
+    const futureSteelGreatsword: EquipmentRecord = {
+      ...steelGreatsword,
+      id: 'future-steel-greatsword',
+      name: 'Future Steel Greatsword',
+      attack: 20,
+      levelRequirement: 15,
+      skillRequirement: 5,
+    };
+    const result = optimizeBuild(
+      { ...profile, weaponSkill: undefined },
+      { ...dataset, equipment: [sword, futureSteelGreatsword] },
+    );
+
+    expect(result.immediateAction.kind).toBe('keep-current');
+    expect(result.upgradeTargets).toContainEqual(
+      expect.objectContaining({
+        itemId: futureSteelGreatsword.id,
+        immediate: false,
+        eligibilityNote:
+          'Requires Level 15 · Requires Weapon Skill 5; confirm in game',
+      }),
+    );
+  });
+
   it('warns when current stat points are not represented in a level-eight profile', () => {
     const result = optimizeBuild(
       { ...profile, stats: { str: 0, def: 0, agi: 0, vit: 0, luk: 0 } },

@@ -164,6 +164,35 @@ describe('ResultsScreen', () => {
     ).toBeVisible();
   });
 
+  it('renders combined future level and unknown skill requirements literally', async () => {
+    const steelGreatsword = bootstrapRelease.equipment.find(
+      (item) => item.id === 'steel-greatsword',
+    )!;
+    const futureItem = {
+      ...steelGreatsword,
+      id: 'future-steel-greatsword',
+      name: 'Future Steel Greatsword',
+      attack: steelGreatsword.attack + 20,
+      levelRequirement: 15,
+      skillRequirement: 10,
+    };
+
+    await renderResults(
+      { ...bootstrapRelease, equipment: [...bootstrapRelease.equipment, futureItem] },
+      {
+        ...profile,
+        weaponSkill: undefined,
+        stats: { str: 0, def: 0, agi: 0, vit: 0, luk: 0 },
+      },
+    );
+
+    expect(
+      await screen.findByText(
+        'Requires Level 15 · Requires Weapon Skill 10; confirm in game',
+      ),
+    ).toBeVisible();
+  });
+
   it('shows no more than three sourced upgrade targets', async () => {
     await renderResults();
     await screen.findByRole('heading', {

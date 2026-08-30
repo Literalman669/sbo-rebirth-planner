@@ -39,48 +39,44 @@ export function classifyCandidate(
     };
   }
 
+  const unmetRequirements: string[] = [];
   if (item.levelRequirement > profile.level) {
-    return {
-      eligible: true,
-      immediate: false,
-      reason: `Requires Level ${item.levelRequirement}`,
-    };
+    unmetRequirements.push(`Requires Level ${item.levelRequirement}`);
   }
 
+  let dualWieldGateUnmet = false;
   if (profile.weaponPath === 'dual-wield') {
     if (profile.weaponSkill === undefined) {
-      return {
-        eligible: true,
-        immediate: false,
-        reason: 'Requires Weapon Skill 200 for Dual Wield; confirm in game',
-      };
-    }
-
-    if (profile.weaponSkill < 200) {
-      return {
-        eligible: true,
-        immediate: false,
-        reason: 'Requires Weapon Skill 200 for Dual Wield',
-      };
+      dualWieldGateUnmet = true;
+      unmetRequirements.push(
+        'Requires Weapon Skill 200 for Dual Wield; confirm in game',
+      );
+    } else if (profile.weaponSkill < 200) {
+      dualWieldGateUnmet = true;
+      unmetRequirements.push('Requires Weapon Skill 200 for Dual Wield');
     }
   }
 
   if (item.skillRequirement !== undefined) {
-    if (profile.weaponSkill === undefined) {
-      return {
-        eligible: true,
-        immediate: false,
-        reason: `Requires Weapon Skill ${item.skillRequirement}; confirm in game`,
-      };
+    const itemSkillUnmet =
+      profile.weaponSkill === undefined ||
+      profile.weaponSkill < item.skillRequirement;
+    const itemSkillExceedsDualWieldGate = item.skillRequirement > 200;
+    if (itemSkillUnmet && (!dualWieldGateUnmet || itemSkillExceedsDualWieldGate)) {
+      unmetRequirements.push(
+        profile.weaponSkill === undefined
+          ? `Requires Weapon Skill ${item.skillRequirement}; confirm in game`
+          : `Requires Weapon Skill ${item.skillRequirement}`,
+      );
     }
+  }
 
-    if (profile.weaponSkill < item.skillRequirement) {
-      return {
-        eligible: true,
-        immediate: false,
-        reason: `Requires Weapon Skill ${item.skillRequirement}`,
-      };
-    }
+  if (unmetRequirements.length > 0) {
+    return {
+      eligible: true,
+      immediate: false,
+      reason: unmetRequirements.join(' · '),
+    };
   }
 
   return { eligible: true, immediate: true };

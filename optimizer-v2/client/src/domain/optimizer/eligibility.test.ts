@@ -74,6 +74,22 @@ describe('classifyCandidate', () => {
     ).toEqual({ eligible: true, immediate: false, reason: 'Requires Level 15' });
   });
 
+  it('combines an in-horizon level requirement with unknown weapon skill', () => {
+    const { weaponSkill: _weaponSkill, ...profileWithoutSkill } = profile;
+
+    expect(
+      classifyCandidate(
+        profileWithoutSkill,
+        { ...item, levelRequirement: 15, skillRequirement: 10 },
+        new Set(),
+      ),
+    ).toEqual({
+      eligible: true,
+      immediate: false,
+      reason: 'Requires Level 15 · Requires Weapon Skill 10; confirm in game',
+    });
+  });
+
   it('rejects a level requirement beyond the ten-level horizon', () => {
     expect(
       classifyCandidate(
@@ -152,5 +168,24 @@ describe('classifyCandidate', () => {
         new Set(),
       ),
     ).toEqual({ eligible: true, immediate: true });
+  });
+
+  it('combines the Dual Wield gate with a future level without duplicate skill text', () => {
+    const { weaponSkill: _weaponSkill, ...profileWithoutSkill } = {
+      ...profile,
+      weaponPath: 'dual-wield' as const,
+    };
+    const dualSword: EquipmentRecord = {
+      ...item,
+      weaponPaths: ['one-handed', 'dual-wield'],
+      levelRequirement: 15,
+      skillRequirement: 10,
+    };
+
+    expect(classifyCandidate(profileWithoutSkill, dualSword, new Set())).toEqual({
+      eligible: true,
+      immediate: false,
+      reason: 'Requires Level 15 · Requires Weapon Skill 200 for Dual Wield; confirm in game',
+    });
   });
 });
