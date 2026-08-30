@@ -36,6 +36,9 @@ function Consumer() {
     resetDraft,
     storageError,
     hasActiveDraft,
+    persistenceStatus,
+    canUndo,
+    undoLastChange,
   } = useBuildDraft();
 
   if (!isHydrated) return <p>Loading draft</p>;
@@ -45,14 +48,37 @@ function Consumer() {
       <p>Level {draft.level}</p>
       <p>{storageError ?? 'Storage ready'}</p>
       <p>{hasActiveDraft ? 'Active draft' : 'No active draft'}</p>
+      <p>
+        {persistenceStatus === 'saved-local'
+          ? 'Saved locally'
+          : persistenceStatus === 'saving'
+            ? 'Saving'
+            : persistenceStatus}
+      </p>
+      <p>{canUndo ? 'Undo available' : 'Nothing to undo'}</p>
       <button type="button" onClick={() => updateDraft({ level: 13 })}>
         Raise level
+      </button>
+      <button
+        type="button"
+        onClick={() => updateDraft({ level: draft.level + 1 })}
+      >
+        Advance one level
+      </button>
+      <button
+        type="button"
+        onClick={() => updateDraft({ level: 99 }, { recordUndo: false })}
+      >
+        Apply synchronized level
       </button>
       <button type="button" onClick={() => void saveNamedBuild('Saved Build')}>
         Save named
       </button>
       <button type="button" onClick={() => void resetDraft()}>
         Reset draft
+      </button>
+      <button type="button" onClick={undoLastChange} disabled={!canUndo}>
+        Undo last change
       </button>
     </div>
   );
@@ -108,6 +134,72 @@ describe('BuildDraftProvider', () => {
         'Saved Build',
       );
     });
+  });
+
+  it('reports saving then saved-local around the debounced write', async () => {
+    const store = createGuestBuildStore({
+      databaseName: `provider-status-${crypto.randomUUID()}`,
+    });
+    renderProvider(store);
+    await screen.findByText('Level 1');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Raise level' }));
+
+    expect(screen.getByText('Saving')).toBeVisible();
+    expect(await screen.findByText('Saved locally')).toBeVisible();
+  });
+
+  it('undoes the last structurally different draft change', async () => {
+    const store = createGuestBuildStore({
+      databaseName: `provider-undo-${crypto.randomUUID()}`,
+    });
+    renderProvider(store);
+    await screen.findByText('Level 1');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Raise level' }));
+    expect(screen.getByText('Level 13')).toBeVisible();
+    expect(screen.getByText('Undo available')).toBeVisible();
+    fireEvent.click(screen.getByRole('button', { name: 'Undo last change' }));
+
+    expect(screen.getByText('Level 1')).toBeVisible();
+    expect(screen.getByText('Nothing to undo')).toBeVisible();
+    await waitFor(async () => {
+      expect((await store.loadDraft())?.level).toBe(1);
+    });
+  });
+
+  it('keeps only ten prior draft states', async () => {
+    const store = createGuestBuildStore({
+      databaseName: `provider-bounded-undo-${crypto.randomUUID()}`,
+    });
+    renderProvider(store);
+    await screen.findByText('Level 1');
+
+    for (let count = 0; count < 11; count += 1) {
+      fireEvent.click(screen.getByRole('button', { name: 'Advance one level' }));
+    }
+    expect(screen.getByText('Level 12')).toBeVisible();
+    for (let count = 0; count < 10; count += 1) {
+      fireEvent.click(screen.getByRole('button', { name: 'Undo last change' }));
+    }
+
+    expect(screen.getByText('Level 2')).toBeVisible();
+    expect(screen.getByText('Nothing to undo')).toBeVisible();
+  });
+
+  it('does not add an undo entry for synchronized updates', async () => {
+    const store = createGuestBuildStore({
+      databaseName: `provider-no-undo-${crypto.randomUUID()}`,
+    });
+    renderProvider(store);
+    await screen.findByText('Level 1');
+
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Apply synchronized level' }),
+    );
+
+    expect(screen.getByText('Level 99')).toBeVisible();
+    expect(screen.getByText('Nothing to undo')).toBeVisible();
   });
 
   it('does not recreate a cleared draft during unmount', async () => {

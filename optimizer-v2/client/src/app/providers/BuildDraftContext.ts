@@ -1,10 +1,14 @@
 import { createContext, useContext } from 'react';
 import type { CharacterProfile } from '../../domain/build/model';
+import type { DraftPersistenceStatus } from '../../domain/planner/state';
 import type { GuestBuildListResult } from '../../infrastructure/storage/guestBuildStore';
 
 export type BuildDraftContextValue = {
   draft: CharacterProfile;
-  updateDraft(patch: Partial<CharacterProfile>): void;
+  updateDraft(
+    patch: Partial<CharacterProfile>,
+    options?: { recordUndo?: boolean },
+  ): void;
   replaceDraft(profile: CharacterProfile): void;
   saveNamedBuild(
     name: string,
@@ -17,6 +21,9 @@ export type BuildDraftContextValue = {
   savedBuilds: GuestBuildListResult[];
   loadSavedBuild(profile: CharacterProfile): void;
   deleteSavedBuild(id: string): Promise<void>;
+  persistenceStatus: DraftPersistenceStatus;
+  canUndo: boolean;
+  undoLastChange(): void;
 };
 
 export const BuildDraftContext = createContext<BuildDraftContextValue | null>(

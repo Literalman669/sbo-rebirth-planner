@@ -62,6 +62,9 @@ function homeDraftContext(): BuildDraftContextValue {
     savedBuilds: [],
     loadSavedBuild: () => undefined,
     deleteSavedBuild: async () => undefined,
+    persistenceStatus: 'idle',
+    canUndo: false,
+    undoLastChange: () => undefined,
   };
 }
 

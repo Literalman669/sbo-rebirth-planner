@@ -77,6 +77,9 @@ describe('CloudBuildsProvider', () => {
           savedBuilds: [],
           loadSavedBuild: vi.fn(),
           deleteSavedBuild: vi.fn(),
+          persistenceStatus: 'saved-local',
+          canUndo: false,
+          undoLastChange: vi.fn(),
         }}
       >
         <CloudBuildsProvider>
@@ -107,6 +110,9 @@ describe('CloudBuildsProvider', () => {
           savedBuilds: [],
           loadSavedBuild: vi.fn(),
           deleteSavedBuild: vi.fn(),
+          persistenceStatus: 'saved-local',
+          canUndo: false,
+          undoLastChange: vi.fn(),
         }}
       >
         <CloudBuildsProvider>
@@ -137,6 +143,9 @@ describe('CloudBuildsProvider', () => {
           savedBuilds: [],
           loadSavedBuild: vi.fn(),
           deleteSavedBuild: vi.fn(),
+          persistenceStatus: 'saved-local',
+          canUndo: false,
+          undoLastChange: vi.fn(),
         }}
       >
         <CloudBuildsProvider>
@@ -167,6 +176,9 @@ describe('CloudBuildsProvider', () => {
           savedBuilds: [],
           loadSavedBuild: vi.fn(),
           deleteSavedBuild: vi.fn(),
+          persistenceStatus: 'saved-local',
+          canUndo: false,
+          undoLastChange: vi.fn(),
         }}
       >
         <CloudBuildsProvider>

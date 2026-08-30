@@ -7,6 +7,7 @@ import {
   type PropsWithChildren,
 } from 'react';
 import type { CharacterProfile } from '../../domain/build/model';
+import type { DraftPersistenceStatus } from '../../domain/planner/state';
 import {
   createGuestBuildStore,
   type GuestBuildListResult,
@@ -57,9 +58,13 @@ export function BuildDraftProvider({
   const [hasActiveDraft, setHasActiveDraft] = useState(false);
   const [storageError, setStorageError] = useState<string | null>(null);
   const [savedBuilds, setSavedBuilds] = useState<GuestBuildListResult[]>([]);
+  const [persistenceStatus, setPersistenceStatus] =
+    useState<DraftPersistenceStatus>('idle');
+  const [canUndo, setCanUndo] = useState(false);
   const draftRef = useRef(draft);
   const hydratedRef = useRef(false);
   const activeDraftRef = useRef(false);
+  const undoStackRef = useRef<CharacterProfile[]>([]);
 
   useEffect(() => {
     draftRef.current = draft;
@@ -76,10 +81,12 @@ export function BuildDraftProvider({
           activeDraftRef.current = true;
           setDraft(storedDraft);
           setHasActiveDraft(true);
+          setPersistenceStatus('saved-local');
         }
       })
       .catch((error: unknown) => {
         if (active) {
+          setPersistenceStatus('error');
           setStorageError(
             error instanceof Error ? error.message : 'Draft storage failed',
           );
@@ -100,12 +107,20 @@ export function BuildDraftProvider({
   useEffect(() => {
     if (!isHydrated || !hasActiveDraft) return;
 
+    setPersistenceStatus('saving');
     const timeout = window.setTimeout(() => {
-      void store.saveDraft(draft).catch((error: unknown) => {
-        setStorageError(
-          error instanceof Error ? error.message : 'Draft storage failed',
-        );
-      });
+      void store
+        .saveDraft(draft)
+        .then(() => {
+          setStorageError(null);
+          setPersistenceStatus('saved-local');
+        })
+        .catch((error: unknown) => {
+          setPersistenceStatus('error');
+          setStorageError(
+            error instanceof Error ? error.message : 'Draft storage failed',
+          );
+        });
     }, 250);
 
     return () => window.clearTimeout(timeout);
@@ -120,21 +135,46 @@ export function BuildDraftProvider({
     [store],
   );
 
-  const updateDraft = useCallback((patch: Partial<CharacterProfile>) => {
-    setDraft((current) => {
-      const next = { ...current, ...patch };
-      draftRef.current = next;
-      return next;
-    });
+  const updateDraft = useCallback((
+    patch: Partial<CharacterProfile>,
+    options: { recordUndo?: boolean } = {},
+  ) => {
+    const current = draftRef.current;
+    const next = { ...current, ...patch };
+    if (JSON.stringify(next) === JSON.stringify(current)) return;
+    if (options.recordUndo !== false) {
+      undoStackRef.current = [...undoStackRef.current, current].slice(-10);
+      setCanUndo(true);
+    }
+    draftRef.current = next;
+    setDraft(next);
     activeDraftRef.current = true;
     setHasActiveDraft(true);
+    setStorageError(null);
+    setPersistenceStatus('saving');
   }, []);
 
   const replaceDraft = useCallback((profile: CharacterProfile) => {
+    undoStackRef.current = [];
+    setCanUndo(false);
     draftRef.current = profile;
     activeDraftRef.current = true;
     setDraft(profile);
     setHasActiveDraft(true);
+    setPersistenceStatus('saving');
+  }, []);
+
+  const undoLastChange = useCallback(() => {
+    const previous = undoStackRef.current.at(-1);
+    if (!previous) return;
+    undoStackRef.current = undoStackRef.current.slice(0, -1);
+    draftRef.current = previous;
+    activeDraftRef.current = true;
+    setDraft(previous);
+    setHasActiveDraft(true);
+    setCanUndo(undoStackRef.current.length > 0);
+    setStorageError(null);
+    setPersistenceStatus('saving');
   }, []);
 
   const saveNamedBuild = useCallback(
@@ -155,10 +195,13 @@ export function BuildDraftProvider({
   );
 
   const loadSavedBuild = useCallback((profile: CharacterProfile) => {
+    undoStackRef.current = [];
+    setCanUndo(false);
     draftRef.current = profile;
     activeDraftRef.current = true;
     setDraft(profile);
     setHasActiveDraft(true);
+    setPersistenceStatus('saving');
   }, []);
 
   const deleteSavedBuild = useCallback(
@@ -175,6 +218,9 @@ export function BuildDraftProvider({
     activeDraftRef.current = false;
     setDraft(nextDraft);
     setHasActiveDraft(false);
+    undoStackRef.current = [];
+    setCanUndo(false);
+    setPersistenceStatus('idle');
     await store.clearDraft();
   }, [snapshot.version, store]);
 
@@ -191,19 +237,25 @@ export function BuildDraftProvider({
       savedBuilds,
       loadSavedBuild,
       deleteSavedBuild,
+      persistenceStatus,
+      canUndo,
+      undoLastChange,
     }),
     [
       draft,
       hasActiveDraft,
       isHydrated,
       deleteSavedBuild,
+      canUndo,
       loadSavedBuild,
+      persistenceStatus,
       replaceDraft,
       resetDraft,
       saveNamedBuild,
       savedBuilds,
       storageError,
       updateDraft,
+      undoLastChange,
     ],
   );
 
