@@ -108,10 +108,10 @@ describe('planner routes', () => {
     expect(await screen.findByRole('button', { name: 'Resume Build' })).toBeVisible();
   });
 
-  it('loads and deletes named builds from Home through the provider', async () => {
+  it('loads and deletes named builds from the Builds workspace', async () => {
     const user = userEvent.setup();
     const namedBuild = { ...savedDraft(), id: 'named-build', name: 'Floor 2 Route' };
-    await renderRoute('/', { named: [namedBuild] });
+    await renderRoute('/builds', { named: [namedBuild] });
 
     expect(await screen.findByText('Floor 2 Route')).toBeVisible();
     await user.click(screen.getByRole('button', { name: 'Load Floor 2 Route' }));
@@ -122,7 +122,7 @@ describe('planner routes', () => {
     ).toBeVisible();
     expect(screen.getByLabelText('Current Level')).toHaveValue(8);
 
-    await user.click(screen.getByRole('button', { name: 'Back' }));
+    await user.click(screen.getByRole('link', { name: 'Builds' }));
     await user.click(screen.getByRole('button', { name: 'Delete Floor 2 Route' }));
     await waitFor(() =>
       expect(screen.queryByText('Floor 2 Route')).not.toBeInTheDocument(),

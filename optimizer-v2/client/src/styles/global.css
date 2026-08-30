@@ -81,6 +81,53 @@ select {
   justify-content: space-between;
 }
 
+.global-navigation {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(0.35rem, 2vw, 1.4rem);
+  min-height: 3.5rem;
+  padding: 0.45rem 1rem;
+  border-bottom: 1px solid rgb(184 149 93 / 30%);
+  background: rgb(8 13 18 / 91%);
+  box-shadow: 0 12px 24px rgb(0 0 0 / 18%);
+}
+
+.global-navigation a,
+.global-navigation > span {
+  display: inline-flex;
+  min-height: 2.5rem;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.45rem 0.75rem;
+  border-radius: 0.3rem;
+  color: var(--color-muted);
+  font-family: var(--font-display);
+  font-size: 0.83rem;
+  text-decoration: none;
+}
+
+.global-navigation svg {
+  width: 1.1rem;
+  height: 1.1rem;
+}
+
+.global-navigation a:hover,
+.global-navigation a[aria-current='page'] {
+  background: rgb(85 214 194 / 8%);
+  color: var(--color-aether-bright);
+}
+
+.global-navigation > span[aria-disabled='true'] {
+  cursor: not-allowed;
+  opacity: 0.48;
+}
+
+.global-navigation a:focus-visible {
+  outline: 2px solid var(--color-aether-bright);
+  outline-offset: 2px;
+}
+
 .auth-button,
 .auth-control button {
   border: 1px solid var(--color-brass, #b79a55);
@@ -188,5 +235,17 @@ select {
     max-width: 9rem;
     overflow: hidden;
     text-overflow: ellipsis;
+  }
+
+  .global-navigation {
+    justify-content: flex-start;
+    overflow-x: auto;
+    padding-inline: 0.5rem;
+  }
+
+  .global-navigation a,
+  .global-navigation > span {
+    flex: 0 0 auto;
+    padding-inline: 0.65rem;
   }
 }

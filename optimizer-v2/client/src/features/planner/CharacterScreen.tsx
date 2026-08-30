@@ -6,6 +6,7 @@ import type {
   WeaponPath,
 } from '../../domain/build/model';
 import { WeaponPathIcon } from './WeaponPathIcon';
+import { StickyPlannerActions } from '../shell/StickyPlannerActions';
 
 const weaponPaths: Array<{ value: WeaponPath; label: string }> = [
   { value: 'two-handed', label: 'Two-Handed' },
@@ -206,14 +207,10 @@ export function CharacterScreen() {
         </label>
       </details>
 
-      <div className="screen-actions">
-        <button type="button" onClick={() => navigate('/')}>
-          Back
-        </button>
-        <button type="button" onClick={continueToStats}>
-          Continue
-        </button>
-      </div>
+      <StickyPlannerActions
+        back={{ label: 'Back', onClick: () => navigate('/') }}
+        next={{ label: 'Continue', onClick: continueToStats }}
+      />
     </section>
   );
 }

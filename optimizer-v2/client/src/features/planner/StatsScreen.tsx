@@ -5,6 +5,7 @@ import { useDataset } from '../../app/providers/DatasetProvider';
 import type { StatBlock, StatName } from '../../domain/build/model';
 import { assessOptimizationReadiness } from '../../domain/optimizer/planReadiness';
 import { analyzeStatBudget } from './completeness';
+import { StickyPlannerActions } from '../shell/StickyPlannerActions';
 
 const stats: Array<{ key: StatName; label: string }> = [
   { key: 'str', label: 'STR' },
@@ -127,14 +128,10 @@ export function StatsScreen() {
         </p>
       ) : null}
       {budgetError ? <p role="alert">{budgetError}</p> : null}
-      <div className="screen-actions">
-        <button type="button" onClick={() => navigate('/character')}>
-          Back
-        </button>
-        <button type="button" onClick={continueToEquipment}>
-          Continue
-        </button>
-      </div>
+      <StickyPlannerActions
+        back={{ label: 'Back', onClick: () => navigate('/character') }}
+        next={{ label: 'Continue', onClick: continueToEquipment }}
+      />
     </section>
   );
 }

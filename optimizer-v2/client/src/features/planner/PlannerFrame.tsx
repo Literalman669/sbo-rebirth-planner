@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { StepIcon } from './StepIcon';
+import { BuildSummaryBar } from '../shell/BuildSummaryBar';
 
 const steps = [
   { label: 'Character', path: '/character' },
@@ -22,6 +23,7 @@ export function PlannerFrame() {
 
   return (
     <main className="planner-frame">
+      <BuildSummaryBar />
       <nav aria-label="Planner progress">
         <ol className="progress-steps">
           {steps.map((step) => (

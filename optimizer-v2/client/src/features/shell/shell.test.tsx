@@ -1,0 +1,111 @@
+import 'fake-indexeddb/auto';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { describe, expect, it, vi } from 'vitest';
+import type { CharacterProfile } from '../../domain/build/model';
+import { createGuestBuildStore } from '../../infrastructure/storage/guestBuildStore';
+import { BuildDraftProvider } from '../../app/providers/BuildDraftProvider';
+import { DatasetProvider } from '../../app/providers/DatasetProvider';
+import { App } from '../../app/App';
+import { PlannerFrame } from '../planner/PlannerFrame';
+import { StickyPlannerActions } from './StickyPlannerActions';
+
+const profile: CharacterProfile = {
+  schemaVersion: 2,
+  id: 'shell-build',
+  name: 'Frontline Route',
+  level: 10,
+  maxFloor: 2,
+  weaponPath: 'melee',
+  goal: 'balanced',
+  stats: { str: 10, def: 10, agi: 5, vit: 5, luk: 0 },
+  equipped: {
+    'main-hand': 'fists',
+    armor: 'beginner-armor',
+  },
+  ownedItemIds: [],
+  datasetVersion: '2026.08.30.1',
+};
+
+async function renderRoute(path: string) {
+  const store = createGuestBuildStore({
+    databaseName: `shell-${crypto.randomUUID()}`,
+  });
+  await store.saveDraft(profile);
+  render(
+    <MemoryRouter initialEntries={[path]}>
+      <DatasetProvider>
+        <BuildDraftProvider store={store}>
+          <Routes>
+            <Route
+              path="/"
+              element={
+                <App
+                  release={{
+                    version: '2026.08.30.1',
+                    formulaSetVersion: 'sbor-stats-v2',
+                    sourceSummary: 'Verified release',
+                    publishedAtMicros: 0n,
+                    lastReviewedAt: '2026-08-30',
+                  }}
+                  source="live"
+                />
+              }
+            >
+              <Route element={<PlannerFrame />}>
+                <Route path="stats" element={<h2>Stats workspace</h2>} />
+                <Route
+                  path="equipment"
+                  element={<h2>Equipment workspace</h2>}
+                />
+              </Route>
+            </Route>
+          </Routes>
+        </BuildDraftProvider>
+      </DatasetProvider>
+    </MemoryRouter>,
+  );
+}
+
+describe('product shell', () => {
+  it('separates global navigation from planner progress', async () => {
+    await renderRoute('/stats');
+
+    expect(
+      await screen.findByRole('navigation', { name: 'Primary' }),
+    ).toBeVisible();
+    expect(
+      screen.getByRole('navigation', { name: 'Planner progress' }),
+    ).toBeVisible();
+  });
+
+  it('shows profile context and local save status on every planner step', async () => {
+    await renderRoute('/equipment');
+
+    expect(
+      await screen.findByText('Level 10 · Floor 2 · Melee · Balanced'),
+    ).toBeVisible();
+    expect(await screen.findByText('Saved locally')).toBeVisible();
+    expect(screen.getByText('Frontline Route')).toBeVisible();
+  });
+
+  it('renders reusable planner actions with a disabled next action', async () => {
+    const user = userEvent.setup();
+    const back = vi.fn();
+    const next = vi.fn();
+    render(
+      <StickyPlannerActions
+        back={{ label: 'Back', onClick: back }}
+        next={{ label: 'Continue', onClick: next }}
+        nextDisabled
+      />,
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Back' }));
+    await user.click(screen.getByRole('button', { name: 'Continue' }));
+
+    expect(back).toHaveBeenCalledOnce();
+    expect(next).not.toHaveBeenCalled();
+  });
+});

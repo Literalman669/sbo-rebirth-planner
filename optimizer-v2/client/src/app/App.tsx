@@ -4,6 +4,7 @@ import { Link, Outlet } from 'react-router-dom';
 import type { ReactNode } from 'react';
 import { SignInControl } from '../features/auth/SignInControl';
 import type { DatasetSource } from '../infrastructure/spacetime/datasetSelection';
+import { GlobalNavigation } from '../features/shell/GlobalNavigation';
 
 type AppProps = {
   release: DatasetRelease;
@@ -27,6 +28,7 @@ export function App({ release, source, authControl, warning }: AppProps) {
         </p>
         {warning && <p className="dataset-warning" role="status">{warning}</p>}
       </header>
+      <GlobalNavigation />
       <Outlet />
     </div>
   );

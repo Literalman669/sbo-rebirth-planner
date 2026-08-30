@@ -8,6 +8,7 @@ import {
   compatibleItemsForSlot,
   requiredEquipmentSlots,
 } from './completeness';
+import { StickyPlannerActions } from '../shell/StickyPlannerActions';
 
 const optionalSlots: Array<{ slot: EquipmentSlot; label: string }> = [
   { slot: 'upper-head', label: 'Upper headwear' },
@@ -183,14 +184,10 @@ export function EquipmentScreen() {
         </div>
       </details>
 
-      <div className="screen-actions">
-        <button type="button" onClick={() => navigate('/stats')}>
-          Back
-        </button>
-        <button type="button" onClick={continueToResults}>
-          Continue
-        </button>
-      </div>
+      <StickyPlannerActions
+        back={{ label: 'Back', onClick: () => navigate('/stats') }}
+        next={{ label: 'Continue', onClick: continueToResults }}
+      />
     </section>
   );
 }

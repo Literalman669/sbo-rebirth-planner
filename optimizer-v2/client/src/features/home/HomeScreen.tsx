@@ -1,104 +1,131 @@
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useBuildDraft } from '../../app/providers/BuildDraftContext';
 import { useOptionalCloudBuilds } from '../../app/providers/CloudBuildsContext';
-import { CloudBuildList } from '../builds/CloudBuildList';
-import { GuestImportDialog } from '../builds/GuestImportDialog';
-import { LocalBuildList } from '../builds/LocalBuildList';
+import { useDataset } from '../../app/providers/DatasetProvider';
+import { firstIncompleteStep } from '../planner/completeness';
+import { createVerifiedExampleBuild } from './exampleBuild';
 
 export function HomeScreen() {
   const navigate = useNavigate();
   const cloud = useOptionalCloudBuilds();
+  const { snapshot } = useDataset();
   const {
-    deleteSavedBuild,
+    draft,
     hasActiveDraft,
     isHydrated,
     loadSavedBuild,
+    persistenceStatus,
+    replaceDraft,
     resetDraft,
     savedBuilds,
   } = useBuildDraft();
-  const localProfiles = savedBuilds.flatMap((result) =>
-    result.ok ? [result.value.profile] : [],
-  );
 
   if (!isHydrated) {
     return <main className="home-screen"><p>Loading draft</p></main>;
   }
 
+  const nextStep = firstIncompleteStep(draft, snapshot) ?? '/results';
+  const nextStepLabel = {
+    '/character': 'Character',
+    '/stats': 'Stats',
+    '/equipment': 'Equipment',
+    '/results': 'Results',
+  }[nextStep];
+  const recentLocalBuilds = savedBuilds
+    .filter((result) => result.ok)
+    .slice(0, 3);
+  const example = createVerifiedExampleBuild(snapshot);
+
   return (
     <main className="home-screen">
       <div className="home-content">
-        <div className="home-actions">
-        <button
-          type="button"
-          onClick={() => {
-            void resetDraft().then(() => navigate('/character'));
-          }}
-        >
-          Create Build
-        </button>
+        <header className="home-hero">
+          <p className="eyebrow">Aincrad field guide</p>
+          <h2>Plan the next move, not the whole game at once.</h2>
+          <p>Resume your current route or start from a verified foundation.</p>
+        </header>
+
         {hasActiveDraft ? (
-          <button type="button" onClick={() => navigate('/character')}>
-            Resume Build
-          </button>
-        ) : null}
-        </div>
-        <section aria-label="Optional cloud sign-in">
-          <p>
-            Guest planning remains fully available on this device; create and
-            save builds without signing in.
-          </p>
-          <p>Sign in is optional for cloud sync, build history, and sharing.</p>
-          <p>
-            When sign-in is configured, it opens the hosted SpacetimeAuth page.
-            Email magic links are then the configured durable way to sign in
-            or create an account. Social sign-in requires future provider
-            configuration.
-          </p>
-        </section>
-        {savedBuilds.length > 0 ? (
-          <section className="saved-builds" aria-labelledby="saved-builds-heading">
-            <h2 id="saved-builds-heading">Saved Builds</h2>
-            <LocalBuildList
-              builds={savedBuilds}
-              onLoad={(build) => {
-                loadSavedBuild(build);
-                navigate('/character');
-              }}
-              onDelete={(id) => void deleteSavedBuild(id)}
-            />
+          <section className="resume-card" aria-labelledby="resume-heading">
+            <div>
+              <p className="eyebrow">Current draft</p>
+              <h3 id="resume-heading">{draft.name?.trim() || 'Untitled build'}</h3>
+              <p>
+                Level {draft.level} · Floor {draft.maxFloor} · Next: {nextStepLabel}
+              </p>
+              <span>{persistenceStatus === 'saving' ? 'Modified · saving' : 'Ready to continue'}</span>
+            </div>
+            <button type="button" onClick={() => navigate(nextStep)}>
+              Resume Build
+            </button>
           </section>
         ) : null}
-        {cloud?.needsGuestImport && localProfiles.length > 0 ? (
-          <GuestImportDialog
-            builds={localProfiles}
-            onImport={async (ids) => {
-              await cloud.repository.importGuestBuilds(ids);
-              await cloud.refreshPending();
-            }}
-          />
-        ) : null}
-        {cloud?.isAuthenticated && cloud.cloudBuilds.length > 0 ? (
-          <CloudBuildList
-            builds={cloud.cloudBuilds}
-            onLoad={(profile) => {
-              loadSavedBuild(profile);
-              navigate('/results');
-            }}
-            onHistory={(buildId) => navigate(`/builds/${buildId}/history`)}
-            onDelete={(buildId) => {
-              if (!window.confirm('Delete this cloud build and its history?')) {
-                return;
-              }
-              void cloud.repository.delete(buildId);
-            }}
-          />
-        ) : null}
-        {cloud && cloud.pendingCount > 0 ? (
-          <p role="status">
-            {cloud.pendingCount} cloud revision
-            {cloud.pendingCount === 1 ? '' : 's'} waiting to sync.
+
+        <div className="home-actions">
+          <button
+            type="button"
+            onClick={() => void resetDraft().then(() => navigate('/character'))}
+          >
+            Create Build
+          </button>
+          {example.available ? (
+            <button
+              type="button"
+              onClick={() => {
+                replaceDraft(example.profile);
+                navigate('/stats');
+              }}
+            >
+              Try verified example
+            </button>
+          ) : (
+            <p role="status">{example.reason}</p>
+          )}
+        </div>
+
+        {recentLocalBuilds.length > 0 ? (
+          <section className="recent-builds" aria-labelledby="recent-builds-heading">
+            <div className="section-heading-row">
+              <h3 id="recent-builds-heading">Recent builds</h3>
+              <Link to="/builds">View all builds</Link>
+            </div>
+            <ul>
+              {recentLocalBuilds.map((result) => {
+                if (!result.ok) return null;
+                const build = result.value.profile;
+                return (
+                  <li key={build.id}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        loadSavedBuild(build);
+                        navigate('/character');
+                      }}
+                    >
+                      <strong>{build.name || `Level ${build.level} build`}</strong>
+                      <span>Level {build.level} · Floor {build.maxFloor}</span>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          </section>
+        ) : (
+          <Link className="text-link" to="/builds">Open build library</Link>
+        )}
+
+        <details className="cloud-explainer">
+          <summary>Optional cloud sync</summary>
+          <p>Guest planning and local saves work without signing in.</p>
+          <p>Sign in is optional for cloud sync, build history, and sharing.</p>
+          <p>
+            SpacetimeAuth currently uses email magic links. Additional social
+            providers can be added later.
           </p>
-        ) : null}
+          {cloud && cloud.pendingCount + cloud.pendingPlannerStateCount > 0 ? (
+            <p role="status">Cloud changes are waiting to sync.</p>
+          ) : null}
+        </details>
       </div>
     </main>
   );

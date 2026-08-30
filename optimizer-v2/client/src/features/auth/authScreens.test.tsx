@@ -13,6 +13,7 @@ import {
 import { AuthCallbackScreen } from './AuthCallbackScreen';
 import { SignInControl } from './SignInControl';
 import { HomeScreen } from '../home/HomeScreen';
+import { DatasetProvider } from '../../app/providers/DatasetProvider';
 
 const oidc = vi.hoisted(() => ({
   current: {
@@ -109,30 +110,27 @@ describe('optional authentication', () => {
   it('keeps the default unconfigured Home clear without promising an active redirect', () => {
     render(
       <MemoryRouter>
-        <BuildDraftContext.Provider value={homeDraftContext()}>
-          <HomeScreen />
-        </BuildDraftContext.Provider>
+        <DatasetProvider>
+          <BuildDraftContext.Provider value={homeDraftContext()}>
+            <HomeScreen />
+          </BuildDraftContext.Provider>
+        </DatasetProvider>
       </MemoryRouter>,
     );
 
     expect(screen.getByRole('button', { name: 'Create Build' })).toBeVisible();
+    const optionalCloud = screen.getByText('Optional cloud sync');
+    expect(optionalCloud).toBeVisible();
     expect(
       screen.getByText(
         'Sign in is optional for cloud sync, build history, and sharing.',
       ),
-    ).toBeVisible();
+    ).not.toBeVisible();
+    fireEvent.click(optionalCloud);
     expect(
       screen.getByText(
-        /When sign-in is configured, it opens the hosted SpacetimeAuth page\./,
+        'Sign in is optional for cloud sync, build history, and sharing.',
       ),
-    ).toBeVisible();
-    expect(
-      screen.getByText(
-        /Email magic links are then the configured durable way to sign in or create an account\./,
-      ),
-    ).toBeVisible();
-    expect(
-      screen.getByText(/Social sign-in requires future provider configuration\./),
     ).toBeVisible();
     expect(
       screen.queryByRole('button', { name: /anonymous|create account|sign up/i }),

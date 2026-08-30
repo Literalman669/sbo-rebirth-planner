@@ -1,5 +1,6 @@
 .home-screen,
-.planner-frame {
+.planner-frame,
+.builds-screen {
   width: min(calc(100% - 2rem), var(--content-width));
   margin: 2rem auto 4rem;
 }
@@ -25,6 +26,142 @@
   border: 1px solid rgb(184 149 93 / 62%);
   background: rgb(10 15 20 / 92%);
   box-shadow: var(--shadow-panel);
+}
+
+.home-hero h2,
+.workspace-heading h2 {
+  margin: 0;
+  color: var(--color-parchment);
+  font-family: var(--font-display);
+  font-size: clamp(1.55rem, 3vw, 2.35rem);
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+.home-hero p:last-child,
+.workspace-heading p:last-child {
+  color: var(--color-muted);
+}
+
+.eyebrow {
+  margin: 0 0 0.45rem;
+  color: var(--color-aether-bright);
+  font-family: var(--font-display);
+  font-size: 0.75rem;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+
+.resume-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.1rem;
+  border: 1px solid rgb(85 214 194 / 55%);
+  border-radius: 0.4rem;
+  background: linear-gradient(90deg, rgb(85 214 194 / 9%), transparent 65%);
+}
+
+.resume-card h3,
+.recent-builds h3,
+.build-library-panel h3 {
+  margin: 0;
+  color: var(--color-parchment);
+  font-family: var(--font-display);
+  font-weight: 500;
+}
+
+.resume-card p,
+.resume-card span {
+  margin: 0.25rem 0 0;
+}
+
+.resume-card span {
+  color: var(--color-muted);
+  font-size: 0.85rem;
+}
+
+.resume-card button,
+.recent-builds button {
+  min-height: 2.7rem;
+  border: 1px solid var(--color-aether);
+  border-radius: 0.3rem;
+  background: rgb(11 42 49 / 80%);
+  color: var(--color-parchment);
+  cursor: pointer;
+}
+
+.resume-card button {
+  flex: 0 0 auto;
+  padding: 0.6rem 1rem;
+}
+
+.section-heading-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.section-heading-row a,
+.text-link {
+  color: var(--color-aether-bright);
+  text-underline-offset: 0.2em;
+}
+
+.recent-builds ul {
+  display: grid;
+  gap: 0.55rem;
+  padding: 0;
+  margin: 0.85rem 0 0;
+  list-style: none;
+}
+
+.recent-builds button {
+  display: grid;
+  width: 100%;
+  gap: 0.2rem;
+  padding: 0.7rem 0.85rem;
+  text-align: left;
+}
+
+.recent-builds button span {
+  color: var(--color-muted);
+  font-size: 0.82rem;
+}
+
+.cloud-explainer {
+  padding: 0.8rem 0;
+  border-top: 1px solid rgb(184 149 93 / 30%);
+  color: var(--color-muted);
+}
+
+.cloud-explainer summary {
+  min-height: 2.5rem;
+  color: var(--color-parchment);
+  font-family: var(--font-display);
+  cursor: pointer;
+}
+
+.builds-screen {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.workspace-heading,
+.build-library-panel,
+.builds-screen > .cloud-builds,
+.builds-screen > .guest-import {
+  padding: clamp(1rem, 3vw, 1.6rem);
+  border: 1px solid rgb(184 149 93 / 42%);
+  border-radius: 0.4rem;
+  background: rgb(10 15 20 / 92%);
+  box-shadow: var(--shadow-panel);
+}
+
+.build-library-panel {
+  margin-top: 0;
 }
 
 .saved-builds h2 {
@@ -80,6 +217,51 @@
     linear-gradient(145deg, rgb(255 255 255 / 2%), transparent 34%),
     rgb(10 15 20 / 94%);
   box-shadow: var(--shadow-panel), inset 0 0 0 1px rgb(255 255 255 / 3%);
+}
+
+.build-summary-bar {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.8rem clamp(1rem, 3vw, 2rem);
+  border-bottom: 1px solid rgb(184 149 93 / 28%);
+  background: rgb(9 15 20 / 88%);
+}
+
+.build-summary-bar > div {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 0.7rem;
+}
+
+.build-summary-bar strong,
+.build-summary-bar span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.build-summary-bar strong {
+  color: var(--color-parchment);
+  font-family: var(--font-display);
+  font-weight: 500;
+}
+
+.build-summary-bar span {
+  color: var(--color-muted);
+  font-size: 0.8rem;
+}
+
+.build-summary-bar .save-status {
+  color: var(--color-aether-bright);
+}
+
+.build-summary-bar .save-status-error {
+  color: var(--color-danger);
 }
 
 .planner-frame::before,
@@ -751,9 +933,39 @@
 
 @media (max-width: 48rem) {
   .home-screen,
-  .planner-frame {
+  .planner-frame,
+  .builds-screen {
     width: min(calc(100% - 1rem), var(--content-width));
     margin-top: 0.75rem;
+  }
+
+  .home-screen {
+    place-items: start center;
+  }
+
+  .home-content {
+    gap: 1.25rem;
+    padding: 1.1rem;
+  }
+
+  .resume-card {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .build-summary-bar {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+
+  .build-summary-bar > div {
+    justify-content: space-between;
+  }
+
+  .build-summary-bar > div:last-child {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, auto));
   }
 
   .planner-frame > nav {
@@ -871,7 +1083,7 @@
     position: sticky;
     z-index: 3;
     bottom: 0;
-    padding: 0.9rem 0;
+    padding: 0.9rem 0 max(0.9rem, env(safe-area-inset-bottom));
     margin-bottom: -0.8rem;
     background: linear-gradient(180deg, transparent, var(--color-ink-deep) 28%);
   }
