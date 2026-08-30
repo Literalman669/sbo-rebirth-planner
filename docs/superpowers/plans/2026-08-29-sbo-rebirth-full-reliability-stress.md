@@ -765,3 +765,44 @@ Expected: PASS with no unhandled rejection and no loss of the in-memory Level-13
 git add optimizer-v2/client/src/app/providers/BuildDraftProvider.tsx optimizer-v2/client/src/app/providers/BuildDraftProvider.test.tsx
 git commit -m "fix: handle draft cleanup save failures"
 ```
+
+### Task 14: Reject Unsafe Control Characters in MediaWiki Revisions
+
+**Finding:** Task 9's malformed MediaWiki matrix proved that `parseMediaWikiRevisionResponse` accepts a JSON-decoded NUL (`U+0000`) inside revision content and stages it as a valid candidate. Nine other malformed response categories reject correctly.
+
+**Files:**
+- Modify: `optimizer-v2/spacetimedb/src/wikiRevision.ts`
+- Modify: `optimizer-v2/spacetimedb/src/wikiProcedures.test.ts`
+
+**Root cause:** `wikiRevision.ts` validates revision content only with `typeof content === 'string'`. It has no post-JSON guard for unsafe C0/DEL characters before `wikiProcedures.ts` persists the content.
+
+- [ ] **Step 1: Preserve the focused RED**
+
+The Task 9 matrix includes revision content `Stats\u0000fragment` and expects `MediaWiki revision fields are invalid`.
+
+Run: `npm run test:unit --workspace @sbo/optimizer-module -- --run wikiProcedures.test.ts`
+
+Expected: 14 pass, 1 fail because the NUL-containing revision is returned successfully.
+
+- [ ] **Step 2: Add the minimal content guard**
+
+Reject unsafe C0 controls and `U+007F` after JSON parsing but before returning the revision. Preserve legitimate wikitext whitespace: horizontal tab (`U+0009`), line feed (`U+000A`), and carriage return (`U+000D`) remain allowed. Do not normalize or rewrite revision content.
+
+- [ ] **Step 3: Verify focused and module regressions**
+
+Run:
+
+```bash
+npm run test:unit --workspace @sbo/optimizer-module -- --run wikiProcedures.test.ts
+npm run test:unit --workspace @sbo/optimizer-module
+npm run typecheck --workspace @sbo/optimizer-module
+```
+
+Expected: PASS, including explicit acceptance coverage for tab/LF/CR wikitext whitespace.
+
+- [ ] **Step 4: Commit only the parser repair and its matrix**
+
+```bash
+git add optimizer-v2/spacetimedb/src/wikiRevision.ts optimizer-v2/spacetimedb/src/wikiProcedures.test.ts
+git commit -m "fix: reject unsafe wiki revision controls"
+```
