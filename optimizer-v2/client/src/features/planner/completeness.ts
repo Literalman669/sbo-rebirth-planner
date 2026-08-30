@@ -4,6 +4,13 @@ import type {
 } from '../../domain/build/model';
 import type { DatasetSnapshot, EquipmentRecord } from '../../domain/dataset/model';
 
+export type StatBudget = {
+  expected: number;
+  invested: number;
+  difference: number;
+  status: 'balanced' | 'unaccounted' | 'overspent';
+};
+
 function itemFitsSlot(
   profile: CharacterProfile,
   item: EquipmentRecord | undefined,
@@ -84,6 +91,30 @@ export function firstIncompleteEquipmentStep(
 
 export function expectedInvestedPoints(level: number) {
   return level * 3;
+}
+
+export function analyzeStatBudget(
+  profile: CharacterProfile,
+  pointsPerLevel: number,
+): StatBudget {
+  const expected = profile.level * pointsPerLevel;
+  const invested = Object.values(profile.stats).reduce(
+    (total, value) => total + value,
+    0,
+  );
+  const difference = expected - invested;
+
+  return {
+    expected,
+    invested,
+    difference,
+    status:
+      difference === 0
+        ? 'balanced'
+        : difference > 0
+          ? 'unaccounted'
+          : 'overspent',
+  };
 }
 
 export function compatibleItemsForSlot(

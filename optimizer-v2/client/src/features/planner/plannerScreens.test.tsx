@@ -1,5 +1,5 @@
 import 'fake-indexeddb/auto';
-import { render, screen, waitFor } from '@testing-library/react';
+import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createMemoryRouter, RouterProvider } from 'react-router-dom';
 import { describe, expect, it } from 'vitest';
@@ -175,6 +175,88 @@ describe('planner routes', () => {
 
     const statsHeading = await screen.findByRole('heading', { name: 'Stats' });
     await waitFor(() => expect(statsHeading).toHaveFocus());
+  });
+
+  it('blocks Character Continue and focuses an invalid level', async () => {
+    const user = userEvent.setup();
+    const { router } = await renderRoute('/character');
+    const level = await screen.findByLabelText('Current Level');
+
+    await user.clear(level);
+    await user.type(level, '0');
+    await user.click(screen.getByRole('button', { name: 'Continue' }));
+
+    expect(router.state.location.pathname).toBe('/character');
+    expect(level).toHaveFocus();
+    expect(screen.getByRole('alert')).toHaveTextContent(
+      'Enter a whole-number level from 1 to 10000.',
+    );
+  });
+
+  it('blocks Character Continue and focuses an invalid floor', async () => {
+    const user = userEvent.setup();
+    const { router } = await renderRoute('/character');
+    const floor = await screen.findByLabelText('Highest Unlocked Floor');
+
+    await user.clear(floor);
+    await user.type(floor, '20');
+    await user.click(screen.getByRole('button', { name: 'Continue' }));
+
+    expect(router.state.location.pathname).toBe('/character');
+    expect(floor).toHaveFocus();
+    expect(screen.getByRole('alert')).toHaveTextContent(
+      'Enter a whole-number floor from 1 to 19.',
+    );
+  });
+
+  it('blocks Stats Continue for each out-of-range or fractional stat', async () => {
+    for (const invalidValue of ['-1', '1.5', '501']) {
+      const user = userEvent.setup();
+      const { router } = await renderRoute('/stats');
+      const strength = await screen.findByLabelText('STR');
+
+      await user.clear(strength);
+      await user.type(strength, invalidValue);
+      await user.click(screen.getByRole('button', { name: 'Continue' }));
+
+      expect(router.state.location.pathname).toBe('/stats');
+      expect(strength).toHaveFocus();
+      expect(screen.getByRole('alert')).toHaveTextContent(
+        'STR must be a whole number from 0 to 500.',
+      );
+      cleanup();
+    }
+  });
+
+  it('blocks Stats Continue when invested points exceed the budget', async () => {
+    const user = userEvent.setup();
+    const { router } = await renderRoute('/stats');
+    const strength = await screen.findByLabelText('STR');
+
+    await user.clear(strength);
+    await user.type(strength, '4');
+    await user.click(screen.getByRole('button', { name: 'Continue' }));
+
+    expect(router.state.location.pathname).toBe('/stats');
+    expect(strength).toHaveFocus();
+    expect(screen.getByRole('alert')).toHaveTextContent(
+      'Invested stats exceed the available point budget by 1.',
+    );
+  });
+
+  it('allows an under-budget profile and announces reduced plan precision', async () => {
+    const user = userEvent.setup();
+    const { router } = await renderRoute('/stats');
+
+    expect(
+      await screen.findByText(
+        'The optimizer sees 3 points not represented in invested stats and will treat plan precision as reduced.',
+      ),
+    ).toBeVisible();
+
+    await user.click(screen.getByRole('button', { name: 'Continue' }));
+
+    expect(router.state.location.pathname).toBe('/equipment');
   });
 
   it('focuses the first missing required equipment control', async () => {
