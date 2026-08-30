@@ -215,17 +215,17 @@ pre-phase-isolation gate passed all six layers again: 40 client files / 322 test
 and binding diff also passed. At that historical point, fourth GitHub reruns
 were pending the CI-watchdog commit; no external action was performed locally.
 
-## Task 22 final owned-process-group gate (2026-08-30, `038d924`)
+## Task 22 current owned-group-absence gate (2026-08-30, `9663431`)
 
 The exact strict `npm run test:reliability` command completed at the committed
-owned-process-group head: 40 client files / 322 tests in 14.44 s, 3 module files /
-62 tests in 225 ms, and 18 script tests. Typechecks, coverage validation, and
+owned-group-absence head: 40 client files / 322 tests in 14.26 s, 3 module files /
+62 tests in 223 ms, and 19 script tests. Typechecks, coverage validation, and
 the module build passed. The owned-server phase output was core 21 passed / 5
-skipped in 30.0 s, composite 1 / 1 in 12.2 s, publication 1 / 1 in 6.8 s, and
+skipped in 29.2 s, composite 1 / 1 in 9.3 s, publication 1 / 1 in 4.0 s, and
 sharing 1 / 1 in 2.6 s, for the exact 24 passed / 8 intended skips aggregate.
 Pages passed 2 / 2 in 1.4 s, and `git diff --exit-code --
 client/src/module_bindings` exited 0; ports 3000 and 4173 had no listeners after teardown. The older 15-script Task 22 entries above
-are historical pre-phase-plan gates; fifth GitHub reruns remain pending.
+are historical pre-phase-plan/process-group gates; seventh GitHub reruns remain pending.
 
 The fourth [Optimizer V2 CI](https://github.com/Literalman669/sbo-rebirth-planner/actions/runs/33301520394)
 and [Deploy Optimizer V2](https://github.com/Literalman669/sbo-rebirth-planner/actions/runs/33301520388)
