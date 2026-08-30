@@ -33,4 +33,5 @@ export interface WikiCoverageManifest {
   unknown: number;
   legacy: number;
   unresolved: Array<{ pageTitle: string; reason: string }>;
+  unaccountedPages: string[];
 }
