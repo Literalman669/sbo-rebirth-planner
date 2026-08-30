@@ -24,11 +24,6 @@ jobs:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    env:
-      SPACETIMEAUTH_CLIENT_ID: ${{ vars.SPACETIMEAUTH_CLIENT_ID }}
-      VITE_SPACETIMEAUTH_CLIENT_ID: ${{ vars.SPACETIMEAUTH_CLIENT_ID }}
-      VITE_SPACETIME_URI: https://maincloud.spacetimedb.com
-      VITE_SPACETIME_DATABASE: sbo-rebirth-optimizer-v2
     steps:
       - uses: actions/checkout@v4
 
@@ -82,6 +77,8 @@ jobs:
 
       - name: Lock production authentication
         working-directory: optimizer-v2
+        env:
+          SPACETIMEAUTH_CLIENT_ID: ${{ vars.SPACETIMEAUTH_CLIENT_ID }}
         run: >-
           spacetime call --no-config sbo-rebirth-optimizer-v2 configure_auth
           '"production"'
@@ -92,14 +89,26 @@ jobs:
 
       - name: Verify Maincloud production configuration
         working-directory: optimizer-v2
+        env:
+          SPACETIMEAUTH_CLIENT_ID: ${{ vars.SPACETIMEAUTH_CLIENT_ID }}
+          VITE_SPACETIME_URI: https://maincloud.spacetimedb.com
+          VITE_SPACETIME_DATABASE: sbo-rebirth-optimizer-v2
         run: node scripts/verify-production-config.mjs
 
       - name: Build production client
         working-directory: optimizer-v2
+        env:
+          VITE_SPACETIMEAUTH_CLIENT_ID: ${{ vars.SPACETIMEAUTH_CLIENT_ID }}
+          VITE_SPACETIME_URI: https://maincloud.spacetimedb.com
+          VITE_SPACETIME_DATABASE: sbo-rebirth-optimizer-v2
         run: npm run build
 
       - name: Verify GitHub Pages deep links
         working-directory: optimizer-v2
+        env:
+          VITE_SPACETIMEAUTH_CLIENT_ID: ${{ vars.SPACETIMEAUTH_CLIENT_ID }}
+          VITE_SPACETIME_URI: https://maincloud.spacetimedb.com
+          VITE_SPACETIME_DATABASE: sbo-rebirth-optimizer-v2
         run: npm run test:pages --workspace @sbo/optimizer-client
 
       - uses: actions/configure-pages@v4

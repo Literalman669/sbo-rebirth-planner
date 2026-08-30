@@ -89,6 +89,11 @@ binding generation, and binding-diff verification. In the deploy workflow it
 precedes SpacetimeDB authentication, Maincloud publish, production auth lock,
 Pages artifact upload, and deployment.
 
+The deploy workflow has no job-level production environment block. Its
+fixed-local source/binding and reliability steps receive no production
+SpacetimeAuth or Vite settings; the production client ID, Maincloud URI, and
+database are scoped only to the post-gate production verification/build steps.
+
 The GitHub CI run URL/status, Maincloud publish, Pages deployment URL, and
 read-only live-browser smoke are pending owner-authorized external steps; no
 links or external statuses are asserted by this local record.

@@ -25,8 +25,8 @@ optimizer-v2/client/dist/
 optimizer-v2/client/coverage/
 optimizer-v2/client/test-results/
 optimizer-v2/client/playwright-report/
-optimizer-v2/test-results/
-playwright-report/
+/optimizer-v2/test-results/
+/playwright-report/
 *.tsbuildinfo
 
 # Editor / IDE (optional - remove if you want to track .cursor rules)
