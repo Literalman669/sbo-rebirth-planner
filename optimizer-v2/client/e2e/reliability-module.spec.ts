@@ -1,5 +1,13 @@
 import { expect, test, type TestInfo } from '@playwright/test';
+import 'fake-indexeddb/auto';
 import { writeFile } from 'node:fs/promises';
+import type { CharacterProfile } from '../src/domain/build/model';
+import {
+  createBuildRepository,
+  type CloudReducers,
+} from '../src/infrastructure/cloud/buildRepository';
+import { createPendingRevisionQueue } from '../src/infrastructure/cloud/pendingRevisionQueue';
+import { createGuestBuildStore } from '../src/infrastructure/storage/guestBuildStore';
 import {
   DbConnection,
   tables,
@@ -9,6 +17,8 @@ import {
 const uri = 'http://127.0.0.1:3000';
 const databaseName = 'sbo-rebirth-optimizer-v2-test';
 const buildId = 'cloud-revision-stress-build';
+const offlineBuildId = 'cloud-offline-replay-build';
+const offlineSubject = 'cloud-offline-owner';
 
 type TestConnection = {
   connection: DbConnection;
@@ -64,6 +74,23 @@ function revision(index: number, parentRevisionId?: string): RevisionInput {
   };
 }
 
+function offlineProfile(level: number): CharacterProfile {
+  return {
+    schemaVersion: 2,
+    id: offlineBuildId,
+    name: 'Cloud Offline Replay',
+    level,
+    maxFloor: 3,
+    weaponPath: 'two-handed',
+    goal: 'balanced',
+    weaponSkill: 18,
+    stats: { str: level, def: 10, agi: 12, vit: 8, luk: 5 },
+    equipped: { 'main-hand': 'iron-greatsword' },
+    ownedItemIds: ['iron-greatsword'],
+    datasetVersion: 'bootstrap-0',
+  };
+}
+
 async function connect(token?: string): Promise<TestConnection> {
   return new Promise((resolve, reject) => {
     let builder = DbConnection.builder()
@@ -116,12 +143,45 @@ function viewSummary(testConnection: TestConnection) {
   };
 }
 
+function buildSummary(testConnection: TestConnection, targetBuildId: string) {
+  const build = [...testConnection.connection.db.myBuilds.iter()].find(
+    (candidate) => candidate.id === targetBuildId,
+  );
+  const revisions = [
+    ...testConnection.connection.db.myBuildRevisions.iter(),
+  ].filter((candidate) => candidate.buildId === targetBuildId);
+  const revisionIds = new Set(revisions.map((candidate) => candidate.id));
+  return {
+    build,
+    revisions,
+    revisionEquipment: [
+      ...testConnection.connection.db.myRevisionEquipment.iter(),
+    ].filter((candidate) => revisionIds.has(candidate.revisionId)),
+    revisionOwnedItems: [
+      ...testConnection.connection.db.myRevisionOwnedItems.iter(),
+    ].filter((candidate) => revisionIds.has(candidate.revisionId)),
+  };
+}
+
+function liveReducers(testConnection: TestConnection): CloudReducers {
+  return {
+    saveBuildRevision: (args) =>
+      testConnection.connection.reducers.saveBuildRevision(args),
+    completeGuestImport: () =>
+      testConnection.connection.reducers.completeGuestImport({}),
+    restoreBuildRevision: (args) =>
+      testConnection.connection.reducers.restoreBuildRevision(args),
+    deleteBuild: (args) => testConnection.connection.reducers.deleteBuild(args),
+  };
+}
+
 async function attachFailureEvidence(
   testInfo: TestInfo,
   reducerInputs: readonly RevisionInput[],
   primary: TestConnection | undefined,
   secondary: TestConnection | undefined,
   foreign: TestConnection | undefined,
+  clientQueueState: unknown,
 ) {
   const evidencePath = testInfo.outputPath('cloud-revision-stress-evidence.json');
   await writeFile(
@@ -132,6 +192,7 @@ async function attachFailureEvidence(
         primarySubscription: primary ? viewSummary(primary) : undefined,
         secondarySubscription: secondary ? viewSummary(secondary) : undefined,
         foreignSubscription: foreign ? viewSummary(foreign) : undefined,
+        clientQueueState,
       },
       (_key, value) => (typeof value === 'bigint' ? value.toString() : value),
       2,
@@ -150,6 +211,8 @@ test('keeps 100 immutable revisions converged across same-account subscriptions'
   let primary: TestConnection | undefined;
   let secondary: TestConnection | undefined;
   let foreign: TestConnection | undefined;
+  let reconnected: TestConnection | undefined;
+  let clientQueueState: unknown;
 
   try {
     primary = await connect();
@@ -260,10 +323,127 @@ test('keeps 100 immutable revisions converged across same-account subscriptions'
       }),
     ).rejects.toThrow(/owned by another identity/);
     expect(viewSummary(foreign).revisions).toHaveLength(0);
+
+    await expect.poll(() => {
+      const owner = buildSummary(primary!, buildId);
+      return {
+        headRevisionId: owner.build?.headRevisionId,
+        revisions: owner.revisions.length,
+        revisionEquipment: owner.revisionEquipment.length,
+        revisionOwnedItems: owner.revisionOwnedItems.length,
+      };
+    }).toEqual({
+      headRevisionId: 'stress-revision-120',
+      revisions: 120,
+      revisionEquipment: 120,
+      revisionOwnedItems: 120,
+    });
+
+    const localDatabaseName = `cloud-offline-replay-${crypto.randomUUID()}`;
+    const guestStore = createGuestBuildStore({ databaseName: localDatabaseName });
+    const pendingQueue = createPendingRevisionQueue({
+      databaseName: localDatabaseName,
+    });
+    const replayRevisionIds = [
+      'offline-replay-1',
+      'offline-replay-2',
+      'offline-replay-3',
+    ];
+    let nextReplayRevision = 0;
+    const offlineRepository = createBuildRepository({
+      guestStore,
+      pendingQueue,
+      accountSubject: offlineSubject,
+      reducers: {
+        ...liveReducers(primary),
+        saveBuildRevision: async () => {
+          throw new Error('offline');
+        },
+      },
+      randomUUID: () => replayRevisionIds[nextReplayRevision++]!,
+      now: () => `2026-08-29T10:00:0${nextReplayRevision}.000Z`,
+    });
+
+    for (let level = 121; level <= 123; level += 1) {
+      await expect(offlineRepository.save(offlineProfile(level))).resolves.toMatchObject({
+        location: 'cloud-pending',
+      });
+    }
+    await pendingQueue.enqueue({
+      subject: 'another-account',
+      revisionId: 'another-account-pending',
+      buildId: 'another-account-build',
+      profile: offlineProfile(124),
+      enqueuedAt: '2026-08-29T10:00:04.000Z',
+      attempts: 0,
+    });
+    clientQueueState = {
+      beforeFlush: {
+        owner: await pendingQueue.list(offlineSubject),
+        anotherAccount: await pendingQueue.list('another-account'),
+      },
+    };
+
+    reconnected = await connect(primary.token);
+    const reconnectedRepository = createBuildRepository({
+      guestStore,
+      pendingQueue,
+      accountSubject: offlineSubject,
+      reducers: liveReducers(reconnected),
+    });
+    await reconnectedRepository.retryPending();
+    clientQueueState = {
+      ...(clientQueueState as object),
+      afterFlush: {
+        owner: await pendingQueue.list(offlineSubject),
+        anotherAccount: await pendingQueue.list('another-account'),
+      },
+    };
+
+    await expect.poll(() => {
+      const replayed = buildSummary(primary!, offlineBuildId);
+      return {
+        headRevisionId: replayed.build?.headRevisionId,
+        revisions: replayed.revisions
+          .map((storedRevision) => ({
+            id: storedRevision.id,
+            parentRevisionId: storedRevision.parentRevisionId,
+          }))
+          .sort((left, right) => left.id.localeCompare(right.id)),
+        revisionEquipment: replayed.revisionEquipment.length,
+        revisionOwnedItems: replayed.revisionOwnedItems.length,
+      };
+    }).toEqual({
+      headRevisionId: 'offline-replay-3',
+      revisions: [
+        { id: 'offline-replay-1', parentRevisionId: undefined },
+        { id: 'offline-replay-2', parentRevisionId: 'offline-replay-1' },
+        { id: 'offline-replay-3', parentRevisionId: 'offline-replay-2' },
+      ],
+      revisionEquipment: 3,
+      revisionOwnedItems: 3,
+    });
+    expect(await pendingQueue.list(offlineSubject)).toEqual([]);
+    expect(await pendingQueue.list('another-account')).toMatchObject([
+      {
+        subject: 'another-account',
+        revisionId: 'another-account-pending',
+        buildId: 'another-account-build',
+        attempts: 0,
+      },
+    ]);
   } catch (error) {
-    await attachFailureEvidence(testInfo, reducerInputs, primary, secondary, foreign);
+    await attachFailureEvidence(
+      testInfo,
+      reducerInputs,
+      primary,
+      secondary,
+      foreign,
+      clientQueueState,
+    );
     throw error;
   } finally {
+    disconnect(reconnected);
     disconnect(foreign);
     disconnect(secondary);
     disconnect(primary);
