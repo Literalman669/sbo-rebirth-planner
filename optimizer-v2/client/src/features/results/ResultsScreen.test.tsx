@@ -64,6 +64,32 @@ async function renderResults(
 }
 
 describe('ResultsScreen', () => {
+  it.each([
+    [
+      'overspent stats',
+      { ...profile, stats: { str: 15, def: 0, agi: 3, vit: 7, luk: 0 } },
+      'Invested stats exceed the available point budget by 1.',
+    ],
+    [
+      'insufficient stat capacity',
+      {
+        ...profile,
+        level: 834,
+        stats: { str: 500, def: 500, agi: 500, vit: 500, luk: 500 },
+      },
+      'The next ten levels require 30 open stat slots, but only 0 remain.',
+    ],
+  ])('shows unavailable without advice for %s', async (_case, draft, explanation) => {
+    await renderResults(undefined, draft);
+
+    expect(
+      await screen.findByRole('heading', { name: 'Optimization unavailable' }),
+    ).toBeVisible();
+    expect(screen.getByText(explanation)).toBeVisible();
+    expect(screen.queryByTestId('immediate-action')).not.toBeInTheDocument();
+    expect(screen.queryByText('30 points')).not.toBeInTheDocument();
+  });
+
   it('recovers when a saved historical release arrives after the first lookup', async () => {
     const store = createGuestBuildStore({
       databaseName: `results-late-history-${crypto.randomUUID()}`,

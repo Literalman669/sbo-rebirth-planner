@@ -239,6 +239,54 @@ describe('planner routes', () => {
     );
   });
 
+  it.each(['-1', '1.5', 'not-a-number', '10001'])(
+    'blocks Character Continue and focuses invalid Weapon Skill %s',
+    async (invalidValue) => {
+      const user = userEvent.setup();
+      const { router, store } = await renderRoute('/character');
+      await screen.findByRole('heading', {
+        name: 'Tell us where your adventurer stands.',
+      });
+      await user.click(screen.getByText('Improve accuracy'));
+      const weaponSkill = screen.getByLabelText('Weapon Skill');
+
+      await user.type(weaponSkill, invalidValue);
+      await user.click(screen.getByRole('button', { name: 'Continue' }));
+
+      expect(router.state.location.pathname).toBe('/character');
+      expect(weaponSkill).toHaveFocus();
+      expect(screen.getByRole('alert')).toHaveTextContent(
+        'Weapon Skill must be a whole number from 0 to 10000, or left blank.',
+      );
+      expect((await store.loadDraft())?.weaponSkill).toBeUndefined();
+      cleanup();
+    },
+  );
+
+  it.each(['', '0', '10000'])(
+    'accepts optional Weapon Skill value %s',
+    async (value) => {
+      const user = userEvent.setup();
+      const { router, store } = await renderRoute('/character');
+      await screen.findByRole('heading', {
+        name: 'Tell us where your adventurer stands.',
+      });
+      await user.click(screen.getByText('Improve accuracy'));
+      const weaponSkill = screen.getByLabelText('Weapon Skill');
+
+      if (value) await user.type(weaponSkill, value);
+      await user.click(screen.getByRole('button', { name: 'Continue' }));
+
+      expect(router.state.location.pathname).toBe('/stats');
+      await waitFor(async () => {
+        expect((await store.loadDraft())?.weaponSkill).toBe(
+          value === '' ? undefined : Number(value),
+        );
+      });
+      cleanup();
+    },
+  );
+
   it('blocks Stats Continue for each out-of-range or fractional stat', async () => {
     for (const invalidValue of ['-1', '1.5', '501']) {
       const user = userEvent.setup();
@@ -286,6 +334,26 @@ describe('planner routes', () => {
     expect(strength).toHaveFocus();
     expect(screen.getByRole('alert')).toHaveTextContent(
       'Invested stats exceed the available point budget by 1.',
+    );
+  });
+
+  it('blocks Stats Continue when fewer than thirty stat slots remain', async () => {
+    const user = userEvent.setup();
+    const { router } = await renderRoute('/stats', {
+      saved: {
+        ...savedDraft(),
+        level: 834,
+        stats: { str: 500, def: 500, agi: 500, vit: 500, luk: 500 },
+      },
+    });
+
+    await screen.findByRole('heading', { name: 'Stats' });
+    await user.click(screen.getByRole('button', { name: 'Continue' }));
+
+    expect(router.state.location.pathname).toBe('/stats');
+    expect(screen.getByLabelText('STR')).toHaveFocus();
+    expect(screen.getByRole('alert')).toHaveTextContent(
+      'The next ten levels require 30 open stat slots, but only 0 remain.',
     );
   });
 

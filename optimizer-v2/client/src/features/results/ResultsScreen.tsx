@@ -8,6 +8,7 @@ import {
 import type { EquipmentSlot, StatName } from '../../domain/build/model';
 import type { ProjectedMetrics } from '../../domain/optimizer/projections';
 import { optimizeBuild } from '../../domain/optimizer/optimizeBuild';
+import { assessOptimizationReadiness } from '../../domain/optimizer/planReadiness';
 import { WeaponPathIcon } from '../planner/WeaponPathIcon';
 import { useOptionalCloudBuilds } from '../../app/providers/CloudBuildsContext';
 import { isPlanStale } from './planStaleness';
@@ -94,12 +95,19 @@ export function ResultsScreen() {
   const incompleteEquipment = planSnapshot
     ? firstIncompleteEquipmentStep(draft, planSnapshot)
     : null;
+  const readiness = useMemo(
+    () =>
+      planSnapshot
+        ? assessOptimizationReadiness(draft, planSnapshot.pointsPerLevel)
+        : null,
+    [draft, planSnapshot],
+  );
   const plan = useMemo(
     () =>
-      planSnapshot && !incompleteEquipment
+      planSnapshot && readiness?.status === 'ready' && !incompleteEquipment
         ? optimizeBuild(draft, planSnapshot)
         : null,
-    [draft, incompleteEquipment, planSnapshot],
+    [draft, incompleteEquipment, planSnapshot, readiness],
   );
   const equipmentById = useMemo(
     () =>
@@ -158,6 +166,15 @@ export function ResultsScreen() {
         <button type="button" onClick={recalculateWithCurrentDataset}>
           Recalculate with dataset {snapshot.version}
         </button>
+      </section>
+    );
+  }
+
+  if (readiness?.status !== 'ready') {
+    return (
+      <section className="planner-screen results-screen">
+        <h2 data-screen-heading tabIndex={-1}>Optimization unavailable</h2>
+        <p>{readiness?.explanation}</p>
       </section>
     );
   }

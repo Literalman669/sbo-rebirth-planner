@@ -58,6 +58,32 @@ const dataset: DatasetSnapshot = {
 };
 
 describe('optimizeBuild', () => {
+  it('rejects an overspent profile before producing recommendations', () => {
+    expect(() =>
+      optimizeBuild(
+        { ...profile, stats: { str: 15, def: 0, agi: 3, vit: 7, luk: 0 } },
+        dataset,
+      ),
+    ).toThrowError(
+      'Invested stats exceed the available point budget by 1.',
+    );
+  });
+
+  it('rejects a profile with fewer than thirty open stat slots', () => {
+    expect(() =>
+      optimizeBuild(
+        {
+          ...profile,
+          level: 834,
+          stats: { str: 500, def: 500, agi: 500, vit: 500, luk: 500 },
+        },
+        dataset,
+      ),
+    ).toThrowError(
+      'The next ten levels require 30 open stat slots, but only 0 remain.',
+    );
+  });
+
   it('returns a deterministic thirty-point plan tied to the dataset version', () => {
     const result = optimizeBuild(profile, dataset);
 

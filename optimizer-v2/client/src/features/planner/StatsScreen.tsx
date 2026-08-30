@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useBuildDraft } from '../../app/providers/BuildDraftContext';
 import { useDataset } from '../../app/providers/DatasetProvider';
 import type { StatBlock, StatName } from '../../domain/build/model';
+import { assessOptimizationReadiness } from '../../domain/optimizer/planReadiness';
 import { analyzeStatBudget } from './completeness';
 
 const stats: Array<{ key: StatName; label: string }> = [
@@ -82,14 +83,12 @@ export function StatsScreen() {
     const enteredStats = Object.fromEntries(
       stats.map(({ key }) => [key, Number(values[key])]),
     ) as StatBlock;
-    const enteredBudget = analyzeStatBudget(
+    const readiness = assessOptimizationReadiness(
       { ...draft, stats: enteredStats },
       snapshot.pointsPerLevel,
     );
-    if (enteredBudget.status === 'overspent') {
-      setBudgetError(
-        `Invested stats exceed the available point budget by ${Math.abs(enteredBudget.difference)}.`,
-      );
+    if (readiness.status !== 'ready') {
+      setBudgetError(readiness.explanation);
       controls.current.str?.focus();
       return;
     }

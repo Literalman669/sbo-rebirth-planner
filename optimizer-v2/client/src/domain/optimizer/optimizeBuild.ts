@@ -10,6 +10,7 @@ import {
   type ImmediateAction,
   type UpgradeTarget,
 } from './recommendEquipment';
+import { assessOptimizationReadiness } from './planReadiness';
 
 export interface RecommendationPlan {
   datasetVersion: string;
@@ -24,6 +25,11 @@ export function optimizeBuild(
   profile: CharacterProfile,
   dataset: DatasetSnapshot,
 ): RecommendationPlan {
+  const readiness = assessOptimizationReadiness(profile, dataset.pointsPerLevel);
+  if (readiness.status !== 'ready') {
+    throw new Error(readiness.explanation);
+  }
+
   if (dataset.formulaSetVersion !== 'sbor-stats-v1') {
     throw new Error(`unsupported formula set: ${dataset.formulaSetVersion}`);
   }

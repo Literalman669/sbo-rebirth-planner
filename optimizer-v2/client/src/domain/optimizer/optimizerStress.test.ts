@@ -53,6 +53,7 @@ function boundaryProfile(
     weaponPath: 'one-handed',
     goal: 'damage',
     weaponSkill: 5,
+    stats: { str: 0, def: 0, agi: 0, vit: 0, luk: 0 },
     equipped: { 'main-hand': 'beginner-sword' },
     ownedItemIds: [],
     datasetVersion: dataset.version,

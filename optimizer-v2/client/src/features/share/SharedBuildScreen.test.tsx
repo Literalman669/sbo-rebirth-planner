@@ -29,6 +29,36 @@ const profile: CharacterProfile = {
 };
 
 describe('SharedBuildView', () => {
+  it.each([
+    [
+      'overspent stats',
+      { ...profile, stats: { str: 15, def: 0, agi: 3, vit: 7, luk: 0 } },
+      'Invested stats exceed the available point budget by 1.',
+    ],
+    [
+      'insufficient stat capacity',
+      {
+        ...profile,
+        level: 834,
+        stats: { str: 500, def: 500, agi: 500, vit: 500, luk: 500 },
+      },
+      'The next ten levels require 30 open stat slots, but only 0 remain.',
+    ],
+  ])('shows unavailable without shared advice for %s', (_case, blockedProfile, explanation) => {
+    render(
+      <MemoryRouter>
+        <SharedBuildView profile={blockedProfile} snapshot={bootstrapRelease} />
+      </MemoryRouter>,
+    );
+
+    expect(
+      screen.getByRole('heading', { name: 'Optimization unavailable' }),
+    ).toBeVisible();
+    expect(screen.getByText(explanation)).toBeVisible();
+    expect(screen.queryByRole('heading', { name: 'Do now' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Next levels' })).not.toBeInTheDocument();
+  });
+
   it('ignores recommendation text injected into the URL and recomputes locally', () => {
     const expected = optimizeBuild(profile, bootstrapRelease);
     render(

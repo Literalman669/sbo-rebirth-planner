@@ -9,6 +9,7 @@ import type { CharacterProfile } from '../../domain/build/model';
 import { characterProfileSchema } from '../../domain/build/schema';
 import type { DatasetSnapshot } from '../../domain/dataset/model';
 import { optimizeBuild } from '../../domain/optimizer/optimizeBuild';
+import { assessOptimizationReadiness } from '../../domain/optimizer/planReadiness';
 import { tables } from '../../module_bindings';
 
 type SharedBuildViewProps = {
@@ -17,14 +18,31 @@ type SharedBuildViewProps = {
 };
 
 export function SharedBuildView({ profile, snapshot }: SharedBuildViewProps) {
+  const readiness = useMemo(
+    () => assessOptimizationReadiness(profile, snapshot.pointsPerLevel),
+    [profile, snapshot.pointsPerLevel],
+  );
   const plan = useMemo(
-    () => optimizeBuild(profile, snapshot),
-    [profile, snapshot],
+    () =>
+      readiness.status === 'ready' ? optimizeBuild(profile, snapshot) : null,
+    [profile, readiness.status, snapshot],
   );
   const items = useMemo(
     () => new Map(snapshot.equipment.map((item) => [item.id, item])),
     [snapshot.equipment],
   );
+
+  if (readiness.status !== 'ready') {
+    return (
+      <main className="planner-screen shared-build-screen">
+        <p className="eyebrow">Read-only shared snapshot</p>
+        <h2>Optimization unavailable</h2>
+        <p>{readiness.explanation}</p>
+      </main>
+    );
+  }
+
+  if (!plan) return null;
 
   return (
     <main className="planner-screen shared-build-screen">

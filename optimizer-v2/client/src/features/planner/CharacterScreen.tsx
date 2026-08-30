@@ -30,17 +30,23 @@ export function CharacterScreen() {
   const [values, setValues] = useState(() => ({
     level: String(draft.level),
     maxFloor: String(draft.maxFloor),
+    weaponSkill: draft.weaponSkill === undefined ? '' : String(draft.weaponSkill),
   }));
   const [errors, setErrors] = useState<
-    Partial<Record<'level' | 'maxFloor', string>>
+    Partial<Record<'level' | 'maxFloor' | 'weaponSkill', string>>
   >({});
   const controls = useRef<
-    Partial<Record<'level' | 'maxFloor', HTMLInputElement | null>>
+    Partial<Record<'level' | 'maxFloor' | 'weaponSkill', HTMLInputElement | null>>
   >({});
 
   useEffect(() => {
     if (isHydrated) {
-      setValues({ level: String(draft.level), maxFloor: String(draft.maxFloor) });
+      setValues({
+        level: String(draft.level),
+        maxFloor: String(draft.maxFloor),
+        weaponSkill:
+          draft.weaponSkill === undefined ? '' : String(draft.weaponSkill),
+      });
     }
   }, [isHydrated]);
 
@@ -51,7 +57,20 @@ export function CharacterScreen() {
     (event: ChangeEvent<HTMLInputElement>) => {
       const value = event.currentTarget.value;
       if (key === 'weaponSkill') {
-        updateDraft({ weaponSkill: value === '' ? undefined : Number(value) });
+        setValues((current) => ({ ...current, weaponSkill: value }));
+        setErrors((current) => ({ ...current, weaponSkill: undefined }));
+        if (value === '') {
+          updateDraft({ weaponSkill: undefined });
+        } else {
+          const numberValue = Number(value);
+          if (
+            Number.isInteger(numberValue) &&
+            numberValue >= 0 &&
+            numberValue <= 10000
+          ) {
+            updateDraft({ weaponSkill: numberValue });
+          }
+        }
         return;
       }
 
@@ -78,6 +97,19 @@ export function CharacterScreen() {
     if (!Number.isInteger(maxFloor) || maxFloor < 1 || maxFloor > 19) {
       setErrors({ maxFloor: 'Enter a whole-number floor from 1 to 19.' });
       controls.current.maxFloor?.focus();
+      return;
+    }
+
+    const weaponSkill = Number(values.weaponSkill);
+    if (
+      values.weaponSkill.trim() !== '' &&
+      (!Number.isInteger(weaponSkill) || weaponSkill < 0 || weaponSkill > 10000)
+    ) {
+      setErrors({
+        weaponSkill:
+          'Weapon Skill must be a whole number from 0 to 10000, or left blank.',
+      });
+      controls.current.weaponSkill?.focus();
       return;
     }
 
@@ -168,12 +200,18 @@ export function CharacterScreen() {
         <label>
           Weapon Skill
           <input
-            type="number"
-            min="0"
-            max="10000"
-            value={draft.weaponSkill ?? ''}
+            ref={(element) => {
+              controls.current.weaponSkill = element;
+            }}
+            type="text"
+            inputMode="numeric"
+            value={values.weaponSkill}
+            aria-invalid={Boolean(errors.weaponSkill)}
             onChange={updateNumber('weaponSkill')}
           />
+          {errors.weaponSkill ? (
+            <span role="alert">{errors.weaponSkill}</span>
+          ) : null}
         </label>
       </details>
 
