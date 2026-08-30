@@ -19,6 +19,7 @@ const databaseName = 'sbo-rebirth-optimizer-v2-test';
 const buildId = 'cloud-revision-stress-build';
 const offlineBuildId = 'cloud-offline-replay-build';
 const offlineSubject = 'cloud-offline-owner';
+const historicalShareId = `historical-snapshot-${'h'.repeat(24)}`;
 
 type TestConnection = {
   connection: DbConnection;
@@ -122,6 +123,21 @@ async function subscribeToPrivateViews(testConnection: TestConnection) {
   testConnection.subscription = subscription;
 }
 
+async function subscribeToPublicShares(testConnection: TestConnection) {
+  const subscription = await new Promise<SubscriptionHandle>((resolve, reject) => {
+    const handle = testConnection.connection
+      .subscriptionBuilder()
+      .onApplied(() => resolve(handle))
+      .onError(() => reject(new Error('Public share subscription failed')))
+      .subscribe([
+        tables.sharedBuild,
+        tables.sharedBuildEquipment,
+        tables.sharedBuildOwnedItem,
+      ]);
+  });
+  testConnection.subscription = subscription;
+}
+
 function disconnect(testConnection: TestConnection | undefined) {
   testConnection?.subscription?.unsubscribe();
   testConnection?.connection.disconnect();
@@ -163,6 +179,24 @@ function buildSummary(testConnection: TestConnection, targetBuildId: string) {
   };
 }
 
+function publicShareSummary(testConnection: TestConnection, shareId: string) {
+  return {
+    builds: [...testConnection.connection.db.sharedBuild.iter()].filter(
+      (candidate) => candidate.shareId === shareId,
+    ),
+    equipment: [
+      ...testConnection.connection.db.sharedBuildEquipment.iter(),
+    ].filter((candidate) => candidate.shareId === shareId),
+    ownedItems: [
+      ...testConnection.connection.db.sharedBuildOwnedItem.iter(),
+    ].filter((candidate) => candidate.shareId === shareId),
+  };
+}
+
+function shareIdForCycle(index: number) {
+  return `share-revoke-${String(index).padStart(2, '0')}-${'s'.repeat(28)}`;
+}
+
 function liveReducers(testConnection: TestConnection): CloudReducers {
   return {
     saveBuildRevision: (args) =>
@@ -181,7 +215,9 @@ async function attachFailureEvidence(
   primary: TestConnection | undefined,
   secondary: TestConnection | undefined,
   foreign: TestConnection | undefined,
+  publicViewer: TestConnection | undefined,
   clientQueueState: unknown,
+  sharingState: unknown,
 ) {
   const evidencePath = testInfo.outputPath('cloud-revision-stress-evidence.json');
   await writeFile(
@@ -192,7 +228,17 @@ async function attachFailureEvidence(
         primarySubscription: primary ? viewSummary(primary) : undefined,
         secondarySubscription: secondary ? viewSummary(secondary) : undefined,
         foreignSubscription: foreign ? viewSummary(foreign) : undefined,
+        publicShareSubscription: publicViewer
+          ? {
+              historical: publicShareSummary(publicViewer, historicalShareId),
+              cycles: Array.from({ length: 50 }, (_unused, index) => {
+                const shareId = shareIdForCycle(index + 1);
+                return { shareId, ...publicShareSummary(publicViewer, shareId) };
+              }),
+            }
+          : undefined,
         clientQueueState,
+        sharingState,
       },
       (_key, value) => (typeof value === 'bigint' ? value.toString() : value),
       2,
@@ -211,21 +257,55 @@ test('keeps 100 immutable revisions converged across same-account subscriptions'
   let primary: TestConnection | undefined;
   let secondary: TestConnection | undefined;
   let foreign: TestConnection | undefined;
+  let publicViewer: TestConnection | undefined;
   let reconnected: TestConnection | undefined;
   let clientQueueState: unknown;
+  let sharingState: unknown;
 
   try {
     primary = await connect();
     secondary = await connect(primary.token);
     foreign = await connect();
+    publicViewer = await connect();
     await Promise.all([
       subscribeToPrivateViews(primary),
       subscribeToPrivateViews(secondary),
       subscribeToPrivateViews(foreign),
+      subscribeToPublicShares(publicViewer),
     ]);
 
     let parentRevisionId: string | undefined;
-    for (let index = 1; index <= 100; index += 1) {
+    for (let index = 1; index <= 50; index += 1) {
+      const input = revision(index, parentRevisionId);
+      reducerInputs.push(input);
+      await primary.connection.reducers.saveBuildRevision(input);
+      parentRevisionId = input.revisionId;
+    }
+
+    await primary.connection.reducers.createBuildShare({
+      buildId,
+      shareId: historicalShareId,
+    });
+    await expect.poll(() => publicShareSummary(publicViewer!, historicalShareId)).toMatchObject({
+      builds: [
+        {
+          shareId: historicalShareId,
+          name: 'Cloud Revision Stress',
+          level: 50,
+          str: 50,
+          datasetVersion: 'bootstrap-0',
+        },
+      ],
+      equipment: [{ slot: 'main-hand', itemId: 'iron-greatsword' }],
+      ownedItems: [{ itemId: 'iron-greatsword' }],
+    });
+    const historicalSnapshot = publicShareSummary(publicViewer, historicalShareId).builds[0]!;
+    expect(historicalSnapshot).not.toHaveProperty('owner');
+    expect(historicalSnapshot).not.toHaveProperty('identity');
+    expect(historicalSnapshot).not.toHaveProperty('profile');
+    expect(historicalSnapshot).not.toHaveProperty('buildId');
+
+    for (let index = 51; index <= 100; index += 1) {
       const input = revision(index, parentRevisionId);
       reducerInputs.push(input);
       await primary.connection.reducers.saveBuildRevision(input);
@@ -248,6 +328,63 @@ test('keeps 100 immutable revisions converged across same-account subscriptions'
       revisionOwnedItems: 100,
       headRevisionId: 'stress-revision-100',
     });
+
+    await expect.poll(() => publicShareSummary(publicViewer!, historicalShareId)).toMatchObject({
+      builds: [
+        {
+          shareId: historicalShareId,
+          level: 50,
+          str: 50,
+          datasetVersion: 'bootstrap-0',
+        },
+      ],
+      equipment: [{ slot: 'main-hand', itemId: 'iron-greatsword' }],
+      ownedItems: [{ itemId: 'iron-greatsword' }],
+    });
+
+    const revokedShares: string[] = [];
+    for (let index = 1; index <= 50; index += 1) {
+      const shareId = shareIdForCycle(index);
+      await primary.connection.reducers.createBuildShare({ buildId, shareId });
+      await expect.poll(() => publicShareSummary(publicViewer!, shareId)).toMatchObject({
+        builds: [{ shareId, level: 100, str: 100 }],
+        equipment: [{ slot: 'main-hand', itemId: 'iron-greatsword' }],
+        ownedItems: [{ itemId: 'iron-greatsword' }],
+      });
+
+      await primary.connection.reducers.revokeBuildShare({ shareId });
+      await expect.poll(() => {
+        const publicRows = publicShareSummary(publicViewer!, shareId);
+        const privateRows = buildSummary(primary!, buildId);
+        return {
+          publicRows: {
+            builds: publicRows.builds.length,
+            equipment: publicRows.equipment.length,
+            ownedItems: publicRows.ownedItems.length,
+          },
+          privateRows: {
+            headRevisionId: privateRows.build?.headRevisionId,
+            revisions: privateRows.revisions.length,
+            equipment: privateRows.revisionEquipment.length,
+            ownedItems: privateRows.revisionOwnedItems.length,
+          },
+        };
+      }).toEqual({
+        publicRows: { builds: 0, equipment: 0, ownedItems: 0 },
+        privateRows: {
+          headRevisionId: 'stress-revision-100',
+          revisions: 100,
+          equipment: 100,
+          ownedItems: 100,
+        },
+      });
+      revokedShares.push(shareId);
+    }
+    sharingState = {
+      historicalShare: publicShareSummary(publicViewer, historicalShareId),
+      revokedShares,
+      privateBuild: buildSummary(primary, buildId),
+    };
 
     const identicalRevisionFifty = revision(50, 'stress-revision-49');
     reducerInputs.push(identicalRevisionFifty);
@@ -439,11 +576,14 @@ test('keeps 100 immutable revisions converged across same-account subscriptions'
       primary,
       secondary,
       foreign,
+      publicViewer,
       clientQueueState,
+      sharingState,
     );
     throw error;
   } finally {
     disconnect(reconnected);
+    disconnect(publicViewer);
     disconnect(foreign);
     disconnect(secondary);
     disconnect(primary);
