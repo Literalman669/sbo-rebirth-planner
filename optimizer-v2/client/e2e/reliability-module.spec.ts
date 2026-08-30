@@ -14,6 +14,11 @@ import {
   tables,
   type SubscriptionHandle,
 } from '../src/module_bindings';
+import type {
+  Equipment,
+  Formula,
+  SourceReference,
+} from '../src/module_bindings/types';
 
 const uri = 'http://127.0.0.1:3000';
 const databaseName = 'sbo-rebirth-optimizer-v2-test';
@@ -693,6 +698,89 @@ function publishedVersionCounts(
   };
 }
 
+function normalizePublishedId(value: string, version: string) {
+  const prefix = `${version}:`;
+  if (!value.startsWith(prefix)) {
+    throw new Error(`Published ID ${value} does not start with ${prefix}`);
+  }
+  return `<version>:${value.slice(prefix.length)}`;
+}
+
+function normalizePublishedEquipment(row: Equipment, version: string) {
+  return {
+    id: normalizePublishedId(row.id, version),
+    releaseVersion: '<version>',
+    itemId: row.itemId,
+    name: row.name,
+    slot: row.slot,
+    weaponPaths: row.weaponPaths,
+    attack: row.attack,
+    defense: row.defense,
+    dexterity: row.dexterity,
+    levelRequirement: row.levelRequirement,
+    skillRequirement: row.skillRequirement,
+    floor: row.floor,
+    acquisitionType: row.acquisitionType,
+    acquisitionDetail: row.acquisitionDetail,
+    availability: row.availability,
+    sourceRefId: normalizePublishedId(row.sourceRefId, version),
+    lastReviewedAt: row.lastReviewedAt,
+  };
+}
+
+function normalizePublishedFormula(row: Formula, version: string) {
+  return {
+    id: normalizePublishedId(row.id, version),
+    releaseVersion: '<version>',
+    formulaId: row.formulaId,
+    expression: row.expression,
+    units: row.units,
+    applicability: row.applicability,
+    boundaryBehavior: row.boundaryBehavior,
+    sourceRefId: normalizePublishedId(row.sourceRefId, version),
+    lastReviewedAt: row.lastReviewedAt,
+  };
+}
+
+function normalizePublishedSource(row: SourceReference, version: string) {
+  return {
+    id: normalizePublishedId(row.id, version),
+    releaseVersion: '<version>',
+    entityKind: row.entityKind,
+    entityId: row.entityId,
+    sourceUrl: row.sourceUrl,
+    sourceRevision: row.sourceRevision,
+    capturedAt: row.capturedAt,
+    lastReviewedAt: row.lastReviewedAt,
+    candidateId: row.candidateId,
+  };
+}
+
+function publishedReleaseSnapshot(
+  testConnection: TestConnection,
+  version: string,
+) {
+  return {
+    equipment: [...testConnection.connection.db.equipment.iter()]
+      .filter((row) => row.releaseVersion === version)
+      .map((row) => normalizePublishedEquipment(row, version))
+      .sort((left, right) => left.itemId.localeCompare(right.itemId)),
+    formulas: [...testConnection.connection.db.formula.iter()]
+      .filter((row) => row.releaseVersion === version)
+      .map((row) => normalizePublishedFormula(row, version))
+      .sort((left, right) => left.formulaId.localeCompare(right.formulaId)),
+    sources: [...testConnection.connection.db.sourceReference.iter()]
+      .filter((row) => row.releaseVersion === version)
+      .map((row) => normalizePublishedSource(row, version))
+      .sort(
+        (left, right) =>
+          left.entityKind.localeCompare(right.entityKind) ||
+          left.entityId.localeCompare(right.entityId) ||
+          left.id.localeCompare(right.id),
+      ),
+  };
+}
+
 async function attachFailureEvidence(
   testInfo: TestInfo,
   reducerInputs: readonly RevisionInput[],
@@ -1322,6 +1410,67 @@ test('rejects invalid publications atomically and carries one reviewed row into 
         first: { releases: 1, equipment: 8, formulas: 9, sources: 17 },
         second: { releases: 1, equipment: 8, formulas: 9, sources: 17 },
       });
+    const firstSnapshot = publishedReleaseSnapshot(curator, firstVersion);
+    const secondSnapshot = publishedReleaseSnapshot(curator, secondVersion);
+    expect({
+      first: {
+        equipment: firstSnapshot.equipment.length,
+        formulas: firstSnapshot.formulas.length,
+        sources: firstSnapshot.sources.length,
+      },
+      second: {
+        equipment: secondSnapshot.equipment.length,
+        formulas: secondSnapshot.formulas.length,
+        sources: secondSnapshot.sources.length,
+      },
+    }).toEqual({
+      first: { equipment: 8, formulas: 9, sources: 17 },
+      second: { equipment: 8, formulas: 9, sources: 17 },
+    });
+
+    const firstIronGreatsword = firstSnapshot.equipment.find(
+      (row) => row.itemId === 'iron-greatsword',
+    );
+    const secondIronGreatsword = secondSnapshot.equipment.find(
+      (row) => row.itemId === 'iron-greatsword',
+    );
+    expect(firstIronGreatsword).toBeDefined();
+    expect(secondIronGreatsword).toBeDefined();
+    const firstNonIronEquipment = firstSnapshot.equipment.filter(
+      (row) => row.itemId !== 'iron-greatsword',
+    );
+    const secondNonIronEquipment = secondSnapshot.equipment.filter(
+      (row) => row.itemId !== 'iron-greatsword',
+    );
+    expect(firstNonIronEquipment).toHaveLength(7);
+    expect(secondNonIronEquipment).toEqual(firstNonIronEquipment);
+    expect(secondSnapshot.formulas).toEqual(firstSnapshot.formulas);
+    expect(secondSnapshot.sources).toEqual(firstSnapshot.sources);
+
+    const {
+      attack: firstIronAttack,
+      lastReviewedAt: firstIronReviewDate,
+      ...firstIronStableFields
+    } = firstIronGreatsword!;
+    const {
+      attack: secondIronAttack,
+      lastReviewedAt: secondIronReviewDate,
+      ...secondIronStableFields
+    } = secondIronGreatsword!;
+    expect(secondIronStableFields).toEqual(firstIronStableFields);
+    expect({
+      first: {
+        attack: firstIronAttack,
+        lastReviewedAt: firstIronReviewDate,
+      },
+      second: {
+        attack: secondIronAttack,
+        lastReviewedAt: secondIronReviewDate,
+      },
+    }).toEqual({
+      first: { attack: 3, lastReviewedAt: '2026-08-29' },
+      second: { attack: 4, lastReviewedAt: '2026-08-30' },
+    });
     expect(
       [...curator.connection.db.datasetRelease.iter()].filter(
         (release) => release.isCurrent,
