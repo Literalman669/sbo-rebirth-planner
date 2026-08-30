@@ -84,10 +84,10 @@ test('only bounded reliability-module stress tests receive explicit watchdogs', 
 
   expect(integrationConfig.timeout).toBeUndefined();
   expect(source).toMatch(
-    /keeps 100 immutable revisions converged across same-account subscriptions'[\s\S]*?test\.setTimeout\(120_000\);/,
+    /keeps 100 immutable revisions converged across same-account subscriptions'[\s\S]*?test\.setTimeout\(process\.env\.CI \? 300_000 : 120_000\);/,
   );
   expect(source).toMatch(
-    /rejects invalid publications atomically and carries one reviewed row into a second release'[\s\S]*?test\.setTimeout\(60_000\);/,
+    /rejects invalid publications atomically and carries one reviewed row into a second release'[\s\S]*?test\.setTimeout\(process\.env\.CI \? 180_000 : 60_000\);/,
   );
   expect(source.match(/test\.setTimeout\(/g)).toHaveLength(2);
 });

@@ -194,3 +194,23 @@ module files / 62 tests, 15 scripts, fixed-local integration (24 passed, 8
 skipped, 45.0 s), and Pages (2 passed, 1.5 s). Independent Pages, root
 typecheck, and binding-diff checks also passed. New GitHub reruns are pending
 the watchdog commit; no external action was performed locally.
+
+The third [Optimizer V2 CI](https://github.com/Literalman669/sbo-rebirth-planner/actions/runs/33300931793)
+and [Deploy Optimizer V2](https://github.com/Literalman669/sbo-rebirth-planner/actions/runs/33300931706)
+runs kept the browser base/direct-route repair green, but proved the bounded
+composite reaches its exact 120-second local watchdog and publication reaches
+its exact 60-second local watchdog under CI. The following sharing timeout was
+again cascading aborted cleanup, and production steps were skipped. The two
+per-test limits now remain strict locally (120 seconds / 60 seconds) but use
+CI-only ceilings of 300 seconds / 180 seconds through `process.env.CI`; global
+and sharing limits remain unchanged. Concise stdout phase markers now identify
+the seven composite phases and each publication category plus second release.
+
+The CI-and-GitHub-shaped local integration was repeated twice with both
+`CI=true` and `GITHUB_ACTIONS=true`: 24 passed with 8 intended skips in 44.1 s
+and 42.7 s, with every phase marker emitted. The strict local full reliability
+gate passed all six layers again: 40 client files / 322 tests, 3 module files /
+62 tests, 15 scripts, integration 24 passed / 8 skipped in 43.5 s, and Pages
+2 passed. Independent Pages (2 passed, 1.4 s; build 210 ms), root typecheck,
+and binding diff also passed. Fourth GitHub reruns are pending this CI-watchdog
+commit; no external action was performed locally.

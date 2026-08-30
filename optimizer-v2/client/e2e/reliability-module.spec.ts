@@ -860,9 +860,9 @@ async function attachFailureEvidence(
 }
 
 test('keeps 100 immutable revisions converged across same-account subscriptions', async ({}, testInfo) => {
-  // CI's 30-second outer watchdog is smaller than this bounded workload: 100 revisions,
-  // 50 share/revoke cycles, offline replay, and eight same-parent race pairs.
-  test.setTimeout(120_000);
+  // CI must cover this bounded workload: 100 revisions, 50 share/revoke cycles,
+  // offline replay, and eight same-parent race pairs; local runs stay strict.
+  test.setTimeout(process.env.CI ? 300_000 : 120_000);
   test.skip(testInfo.project.name !== 'desktop', 'Module integration runs once.');
 
   const reducerInputs: RevisionInput[] = [];
@@ -876,6 +876,7 @@ test('keeps 100 immutable revisions converged across same-account subscriptions'
   let sameParentRaceState: unknown;
 
   try {
+    console.log('[reliability-module] composite: connect and subscriptions');
     primary = await connect();
     secondary = await connect(primary.token);
     foreign = await connect();
@@ -888,6 +889,7 @@ test('keeps 100 immutable revisions converged across same-account subscriptions'
     ]);
 
     let parentRevisionId: string | undefined;
+    console.log('[reliability-module] composite: first 50 revisions');
     for (let index = 1; index <= 50; index += 1) {
       const input = revision(index, parentRevisionId);
       reducerInputs.push(input);
@@ -923,6 +925,7 @@ test('keeps 100 immutable revisions converged across same-account subscriptions'
     expect(historicalSnapshot).not.toHaveProperty('profile');
     expect(historicalSnapshot).not.toHaveProperty('buildId');
 
+    console.log('[reliability-module] composite: remaining 50 revisions');
     for (let index = 51; index <= 100; index += 1) {
       const input = revision(index, parentRevisionId);
       reducerInputs.push(input);
@@ -972,6 +975,7 @@ test('keeps 100 immutable revisions converged across same-account subscriptions'
     });
 
     const revokedShares: string[] = [];
+    console.log('[reliability-module] composite: 50 share cycles');
     for (let index = 1; index <= 50; index += 1) {
       const shareId = shareIdForCycle(index);
       await primary.connection.reducers.createBuildShare({ buildId, shareId });
@@ -1047,6 +1051,7 @@ test('keeps 100 immutable revisions converged across same-account subscriptions'
     expect(viewSummary(primary).revisionEquipment).toHaveLength(150);
     expect(viewSummary(primary).revisionOwnedItems).toHaveLength(150);
 
+    console.log('[reliability-module] composite: sequential revisions 101-120');
     for (let index = 101; index <= 120; index += 1) {
       const input = revision(index, parentRevisionId);
       reducerInputs.push(input);
@@ -1089,6 +1094,7 @@ test('keeps 100 immutable revisions converged across same-account subscriptions'
 
     const sameParentRacePairs = 8;
     let finalRaceRevisionIds: readonly string[] = [];
+    console.log('[reliability-module] composite: 8 same-parent race pairs');
     for (let pairIndex = 1; pairIndex <= sameParentRacePairs; pairIndex += 1) {
       await expect.poll(() => {
         const primaryHead = viewSummary(primary!).headRevisionId;
@@ -1252,6 +1258,7 @@ test('keeps 100 immutable revisions converged across same-account subscriptions'
       revisionOwnedItems: 194,
     });
 
+    console.log('[reliability-module] composite: offline replay');
     const localDatabaseName = `cloud-offline-replay-${crypto.randomUUID()}`;
     const guestStore = createGuestBuildStore({ databaseName: localDatabaseName });
     const pendingQueue = createPendingRevisionQueue({
@@ -1368,8 +1375,9 @@ test('keeps 100 immutable revisions converged across same-account subscriptions'
 });
 
 test('rejects invalid publications atomically and carries one reviewed row into a second release', async ({}, testInfo) => {
-  // CI needs headroom for 11 bounded rollback categories plus the carried-forward release.
-  test.setTimeout(60_000);
+  // CI must cover 11 bounded rollback categories plus the carried-forward release;
+  // local runs stay strict.
+  test.setTimeout(process.env.CI ? 180_000 : 60_000);
   test.skip(testInfo.project.name !== 'desktop', 'Module integration runs once.');
   const ownerToken = process.env.SBO_TEST_OWNER_TOKEN;
   if (!ownerToken) throw new Error('SBO_TEST_OWNER_TOKEN is required');
@@ -1387,6 +1395,7 @@ test('rejects invalid publications atomically and carries one reviewed row into 
   let curator: TestConnection | undefined;
 
   try {
+    console.log('[reliability-module] publication: connect and subscriptions');
     owner = await connect(ownerToken);
     curator = await connect();
     await owner.connection.reducers.configureAuth({
@@ -1400,6 +1409,7 @@ test('rejects invalid publications atomically and carries one reviewed row into 
       .poll(() => [...curator!.connection.db.myCuratorAccess.iter()][0]?.access)
       .toBe('curator');
 
+    console.log('[reliability-module] publication: accepted candidates');
     await ensureAcceptedPublicationCandidates(owner, curator);
     await stagePendingPublicationCandidate(owner, curator);
 
@@ -1418,6 +1428,7 @@ test('rejects invalid publications atomically and carries one reviewed row into 
       }
     ).createReleaseDraftFromCurrent;
 
+    console.log('[reliability-module] publication: initial release');
     await seedPublicationDraft(curator, firstVersion, 'valid');
     await publishRelease({ version: firstVersion });
     await expect
@@ -1498,6 +1509,7 @@ test('rejects invalid publications atomically and carries one reviewed row into 
     ];
 
     for (const invalidCase of invalidCases) {
+      console.log(`[reliability-module] publication: ${invalidCase.category}`);
       await seedPublicationDraft(
         curator,
         invalidCase.version,
@@ -1522,6 +1534,7 @@ test('rejects invalid publications atomically and carries one reviewed row into 
         .toEqual(before);
     }
 
+    console.log('[reliability-module] publication: unsupported formula set');
     const beforeUnsupportedFormulaSet = publicPublicationState(curator);
     const unsupportedFormulaSetRejection = await curator.connection.reducers
       .createReleaseDraft({
@@ -1549,6 +1562,7 @@ test('rejects invalid publications atomically and carries one reviewed row into 
       .poll(() => publicPublicationState(curator!))
       .toEqual(beforeUnsupportedFormulaSet);
 
+    console.log('[reliability-module] publication: second release');
     await createReleaseDraftFromCurrent({
       version: secondVersion,
       sourceSummary: 'Task 9 carried-forward release with one reviewed change',
