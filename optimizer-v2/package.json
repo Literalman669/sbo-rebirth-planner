@@ -13,7 +13,7 @@
     "build": "npm run build --workspace @sbo/optimizer-client",
     "build:pages": "node scripts/build-pages.mjs",
     "typecheck": "npm run typecheck --workspaces --if-present",
-    "test:unit": "npm run test:unit --workspaces --if-present && node --test scripts/*.test.mjs",
+    "test:unit": "npm run test:unit --workspaces --if-present && node --test scripts/*.test.mjs && npm run test:wiki-tools",
     "test:e2e": "npm run test:e2e --workspace @sbo/optimizer-client",
     "test:stress": "npm run test:unit --workspace @sbo/optimizer-client -- --run optimizerStress.test.ts",
     "test:reliability": "node scripts/run-reliability.mjs",
@@ -21,7 +21,9 @@
     "test:pages": "npm run build:pages && npm run test:pages --workspace @sbo/optimizer-client",
     "validate:coverage": "node scripts/validate-release-coverage.mjs client/src/data/fallback-release.json",
     "export:fallback": "tsx scripts/export-fallback-release.mjs",
-    "build:fallback:local": "node scripts/build-local-fallback.mjs"
+    "build:fallback:local": "node scripts/build-local-fallback.mjs",
+    "audit:wiki-inventory": "tsx scripts/wiki/inventory.mjs",
+    "test:wiki-tools": "node --import tsx --test scripts/wiki/*.test.mjs"
   },
   "engines": {
     "node": ">=22.0.0 <23"
