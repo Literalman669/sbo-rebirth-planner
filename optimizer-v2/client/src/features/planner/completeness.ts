@@ -4,6 +4,10 @@ import type {
 } from '../../domain/build/model';
 import { DEFAULT_ACCESS_PREFERENCES } from '../../domain/build/model';
 import type { DatasetSnapshot, EquipmentRecord } from '../../domain/dataset/model';
+import {
+  buildEquipmentIndex,
+  queryEquipment,
+} from '../../domain/equipment/equipmentQuery';
 
 export type StatBudget = {
   expected: number;
@@ -146,5 +150,16 @@ export function compatibleItemsForSlot(
   dataset: DatasetSnapshot,
   slot: EquipmentSlot,
 ) {
-  return dataset.equipment.filter((item) => itemFitsSlot(profile, item, slot));
+  return queryEquipment(buildEquipmentIndex(dataset), profile, {
+    slot,
+    search: '',
+    sort: 'name',
+    showFuture: false,
+    ownedOnly: false,
+    pricedOnly: false,
+  }).flatMap((result) =>
+    result.state === 'equip-now' && result.optimizerItem
+      ? [result.optimizerItem]
+      : [],
+  );
 }

@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import type { CharacterProfile } from '../../domain/build/model';
 import { analyzeStatBudget } from './completeness';
+import { compatibleItemsForSlot } from './completeness';
+import { fallbackRelease } from '../../data/fallbackRelease';
 
 function profileWithTotal(total: number): CharacterProfile {
   return {
@@ -39,5 +41,21 @@ describe('analyzeStatBudget', () => {
       difference: -1,
       status: 'overspent',
     });
+  });
+});
+
+describe('compatibleItemsForSlot', () => {
+  it('returns only verified equipment that can be equipped now', () => {
+    const profile = {
+      ...profileWithTotal(3),
+      level: 1,
+      maxFloor: 1,
+    };
+    const ids = compatibleItemsForSlot(profile, fallbackRelease, 'armor').map(
+      (item) => item.id,
+    );
+
+    expect(ids).toContain('beginner-armor');
+    expect(ids).not.toContain('midnight-platemail');
   });
 });
