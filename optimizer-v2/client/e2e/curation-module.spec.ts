@@ -109,6 +109,24 @@ async function seedPublishableDraft(
         note: `Verified ${pageTitle} against the captured revision.`,
       });
     }
+    await expect
+      .poll(
+        () =>
+          [...curator.connection.db.myWikiCandidates.iter()].find(
+            (row) => row.id === candidateId,
+          )?.status,
+      )
+      .toBe('accepted');
+    expect(
+      [...curator.connection.db.myWikiCandidates.iter()].find(
+        (row) => row.id === candidateId,
+      ),
+    ).toMatchObject({
+      pageTitle,
+      sourceUrl: `https://swordbloxonlinerebirth.fandom.com/wiki/${encodeURIComponent(pageTitle)}`,
+      revisionId,
+      status: 'accepted',
+    });
   }
   await curator.connection.reducers.createReleaseDraft({
     version,

@@ -137,25 +137,10 @@ function isOwnerPointsAttestation(
 }
 
 function canonicalPageTitle(sourceUrl: string): string | undefined {
-  let url: URL;
-  try {
-    url = new URL(sourceUrl);
-  } catch {
-    return undefined;
-  }
-  if (
-    url.protocol !== 'https:' ||
-    url.hostname !== 'swordbloxonlinerebirth.fandom.com' ||
-    url.username ||
-    url.password ||
-    url.port ||
-    url.search ||
-    url.hash ||
-    !url.pathname.startsWith(canonicalWikiPathPrefix)
-  ) {
-    return undefined;
-  }
-  const pageToken = url.pathname.slice(canonicalWikiPathPrefix.length);
+  if (!sourceUrl.startsWith(canonicalWikiOrigin)) return undefined;
+  const path = sourceUrl.slice(canonicalWikiOrigin.length);
+  if (!path.startsWith(canonicalWikiPathPrefix)) return undefined;
+  const pageToken = path.slice(canonicalWikiPathPrefix.length);
   if (!canonicalWikiPageToken.test(pageToken)) return undefined;
   try {
     const pageTitle = decodeURIComponent(pageToken);
@@ -167,7 +152,7 @@ function canonicalPageTitle(sourceUrl: string): string | undefined {
       pageTitle.includes('\\') ||
       /[\u0000-\u001F\u007F]/.test(pageTitle) ||
       pageToken !== encodeURIComponent(pageTitle) ||
-      sourceUrl !== `${canonicalWikiOrigin}${url.pathname}`
+      sourceUrl !== `${canonicalWikiOrigin}${path}`
     ) {
       return undefined;
     }

@@ -505,6 +505,16 @@ async function ensureAcceptedPublicationCandidates(
           )?.status,
       )
       .toBe('accepted');
+    expect(
+      [...curator.connection.db.myWikiCandidates.iter()].find(
+        (row) => row.id === candidateId,
+      ),
+    ).toMatchObject({
+      pageTitle,
+      sourceUrl: `https://swordbloxonlinerebirth.fandom.com/wiki/${encodeURIComponent(pageTitle)}`,
+      revisionId,
+      status: 'accepted',
+    });
   }
 }
 
