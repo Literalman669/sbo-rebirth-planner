@@ -58,7 +58,7 @@ The following existing client build artifact chunk sizes were captured in bytes:
 | F-07 | important | Start fixed-local integration while another process occupies the browser port | Playwright allowed `reuseExistingServer`; the lifecycle could interact with a prior server instead of proving fresh ownership | Task 19 RED; focused config/lifecycle 2/2 and fresh fixed-local integration | `reuseExistingServer: false` plus `127.0.0.1:4173` bind preflight; no unknown process is contacted or terminated | closed (`366ac96`) |
 | F-08 | important | Open an under-budget or future/unknown-skill shared snapshot | Shared view recomputed a correct historical plan but omitted its precision warning, upgrade requirement text, and optimizer-provided confirmation note | Task 21 RED: shared warning status/order and future requirement/eligibility visibility; exact-release substitution regressions retained | Render `RecommendationPlan.warnings`, `requirementText`, and optional `eligibilityNote` without recomputing or changing the read-only route | closed (Task 21) |
 | F-09 | low | Load the production root in a fresh browser and inspect console errors | No favicon was configured, so browsers requested `/favicon.ico` outside the Pages base and received 404 | Built Pages favicon regression; final Pages layer 3/3; live `favicon.svg` returned HTTP 200 | Add a base-aware SVG favicon link and tracked vector asset | closed (`0b32d66`) |
-| E-01 | external | Confirm earned points for a real Level-1 gameplay character | The `level × pointsPerLevel` rule is dataset/schema evidence, not a gameplay observation | Schema protects `pointsPerLevel: 3`; gameplay confirmation not captured | No code change authorized | open — Level-1 baseline not gameplay-confirmed |
+| E-01 | external | Confirm earned points for a real Level-1 gameplay character | The original `level × pointsPerLevel` evidence did not distinguish invested and unspent points | Owner gameplay attestation on 2026-08-30 confirms Level 1, zero invested stats, and three unspent points; spend-now and ten-level regressions pass | Allocate current unspent points before the future plan and show actual level rows | closed (`6c8fe1b`, `38f479f`) |
 | E-02 | external | Configure and exercise social login | No social OAuth provider credentials/configuration are enabled or discoverable in this repository | Auth copy regression only; no provider integration test is possible | Requires provider-console and SpacetimeAuth dashboard configuration | open — credentials/config not enabled |
 
 ## Plan amendments and local-only constraints
@@ -274,5 +274,21 @@ steps were skipped; seventh reruns are pending.
 - Read-only smoke passed: verified dataset badge, Create Build, direct Character refresh, missing-share state, and mobile width checks; `favicon.svg` returned HTTP 200 and a fresh tab had zero console errors/warnings.
 
 The deployed production remains locked to the SpacetimeAuth issuer and configured
-public client. Social providers remain an external configuration dependency,
-and the Level-1 gameplay baseline remains explicitly unconfirmed.
+public client. Social providers remain an external configuration dependency.
+
+## Verified catalog development gate (2026-08-30)
+
+The current-wiki audit fetched and accounted for all 791 build-relevant pages
+discovered from the weapon, armor, shield, mechanics, and acquisition roots.
+It normalized 649 source-backed equipment records and nine mechanics, with no
+unaccounted pages. The manifest contains revision IDs, timestamps, hashes,
+status summaries, and explicit unresolved reasons; it contains no raw wiki
+content. Unsupported individual-page layouts and four blank acquisition cells
+remain excluded rather than guessed, so catalog release `2026.08.30.1` is not
+yet marked public or complete.
+
+The clean post-audit `npm run test:reliability` invocation passed all six
+layers: 46 client files / 362 tests, 5 module files / 69 tests, 20 root script
+tests, 4 wiki-tool tests, typechecks, fallback coverage, the SpacetimeDB 2.8.3
+build, all four isolated integration phases, and Pages 3/3. The live current
+dataset remains `2026.08.29.1` until the unresolved catalog review is closed.

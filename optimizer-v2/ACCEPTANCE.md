@@ -43,6 +43,13 @@ completed on 2026-08-30.
 - Final [deployment 33304722564](https://github.com/Literalman669/sbo-rebirth-planner/actions/runs/33304722564): success, including Maincloud publish, production auth lock/verification, production build, Pages artifact tests/upload, and deployment.
 - Live URL: https://literalman669.github.io/sbo-rebirth-planner/
 - Read-only smoke: verified release badge, Create Build, direct Character refresh, missing-share state, and 390×844 layout passed; favicon returned HTTP 200 and the fresh browser tab reported zero console errors and zero warnings.
+- Detailed allocation checkpoint: current unspent points are allocated first,
+  the next ten actual levels each add exactly three points, running totals
+  reconcile, and desktop/mobile results share one accessible table contract.
+- Wiki catalog audit: 791/791 discovered pages are accounted for, 649 records
+  are normalized and source-backed, and unresolved layouts remain explicitly
+  excluded. This is development evidence; production stays on dataset
+  `2026.08.29.1` until the unresolved review is complete.
 
 ## One-time production evidence
 
