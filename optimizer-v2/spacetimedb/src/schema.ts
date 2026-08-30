@@ -500,6 +500,349 @@ export const sourceReference = table(
   },
 );
 
+export const wikiPageSnapshot = table(
+  { name: 'wiki_page_snapshot' },
+  {
+    id: t.string().primaryKey(),
+    pageId: t.u64(),
+    pageTitle: t.string(),
+    sourceUrl: t.string(),
+    revisionId: t.string(),
+    revisionTimestamp: t.string(),
+    contentHash: t.string(),
+    redirectTarget: t.string().optional(),
+    content: t.string(),
+    fetchedAt: t.timestamp(),
+  },
+);
+
+export const coverageManifest = table(
+  { name: 'coverage_manifest' },
+  {
+    releaseVersion: t.string().primaryKey(),
+    discovered: t.u32(),
+    fetched: t.u32(),
+    parsed: t.u32(),
+    normalized: t.u32(),
+    verified: t.u32(),
+    partial: t.u32(),
+    conflicting: t.u32(),
+    unknown: t.u32(),
+    legacy: t.u32(),
+    unresolvedJson: t.string(),
+    manifestHash: t.string(),
+    createdAt: t.timestamp(),
+  },
+);
+
+export const draftCatalogEquipment = table(
+  {
+    name: 'draft_catalog_equipment',
+    indexes: [{
+      accessor: 'draftCatalogEquipmentReleaseVersion',
+      name: 'draft_catalog_equipment_release_version',
+      algorithm: 'btree',
+      columns: ['releaseVersion'],
+    }],
+  },
+  {
+    id: t.string().primaryKey(),
+    releaseVersion: t.string(),
+    itemId: t.string(),
+    name: t.string(),
+    variantGroupId: t.string().optional(),
+    slot: t.string(),
+    weaponPaths: t.string(),
+    attack: t.f64().optional(),
+    defense: t.f64().optional(),
+    dexterity: t.f64().optional(),
+    levelRequirement: t.u32().optional(),
+    skillRequirement: t.u32().optional(),
+    verificationStatus: t.string(),
+    sourceRefId: t.string(),
+    lastReviewedAt: t.string(),
+    candidateId: t.string(),
+  },
+);
+
+export const draftEquipmentAlias = table(
+  {
+    name: 'draft_equipment_alias',
+    indexes: [{
+      accessor: 'draftEquipmentAliasReleaseVersion',
+      name: 'draft_equipment_alias_release_version',
+      algorithm: 'btree',
+      columns: ['releaseVersion'],
+    }],
+  },
+  {
+    id: t.string().primaryKey(),
+    releaseVersion: t.string(),
+    itemId: t.string(),
+    alias: t.string(),
+    sourceRefId: t.string(),
+    candidateId: t.string(),
+  },
+);
+
+export const draftEquipmentAcquisition = table(
+  {
+    name: 'draft_equipment_acquisition',
+    indexes: [{
+      accessor: 'draftEquipmentAcquisitionReleaseVersion',
+      name: 'draft_equipment_acquisition_release_version',
+      algorithm: 'btree',
+      columns: ['releaseVersion'],
+    }],
+  },
+  {
+    id: t.string().primaryKey(),
+    releaseVersion: t.string(),
+    itemId: t.string(),
+    acquisitionType: t.string(),
+    detail: t.string(),
+    floor: t.u32().optional(),
+    cost: t.f64().optional(),
+    currency: t.string().optional(),
+    availability: t.string(),
+    accessType: t.string(),
+    sourceRefId: t.string(),
+    candidateId: t.string(),
+  },
+);
+
+export const draftEquipmentResistance = table(
+  {
+    name: 'draft_equipment_resistance',
+    indexes: [{
+      accessor: 'draftEquipmentResistanceReleaseVersion',
+      name: 'draft_equipment_resistance_release_version',
+      algorithm: 'btree',
+      columns: ['releaseVersion'],
+    }],
+  },
+  {
+    id: t.string().primaryKey(),
+    releaseVersion: t.string(),
+    itemId: t.string(),
+    status: t.string(),
+    percent: t.f64(),
+    sourceRefId: t.string(),
+    candidateId: t.string(),
+  },
+);
+
+export const draftEquipmentSpecialEffect = table(
+  {
+    name: 'draft_equipment_special_effect',
+    indexes: [{
+      accessor: 'draftEquipmentSpecialEffectReleaseVersion',
+      name: 'draft_equipment_special_effect_release_version',
+      algorithm: 'btree',
+      columns: ['releaseVersion'],
+    }],
+  },
+  {
+    id: t.string().primaryKey(),
+    releaseVersion: t.string(),
+    itemId: t.string(),
+    description: t.string(),
+    sourceRefId: t.string(),
+    candidateId: t.string(),
+  },
+);
+
+export const draftMechanic = table(
+  {
+    name: 'draft_mechanic',
+    indexes: [{
+      accessor: 'draftMechanicReleaseVersion',
+      name: 'draft_mechanic_release_version',
+      algorithm: 'btree',
+      columns: ['releaseVersion'],
+    }],
+  },
+  {
+    id: t.string().primaryKey(),
+    releaseVersion: t.string(),
+    mechanicId: t.string(),
+    expression: t.string(),
+    units: t.string(),
+    applicability: t.string(),
+    boundaryBehavior: t.string(),
+    computability: t.string(),
+    parametersJson: t.string(),
+    verificationStatus: t.string(),
+    sourceRefId: t.string(),
+    lastReviewedAt: t.string(),
+    candidateId: t.string(),
+  },
+);
+
+export const draftStrategyPolicy = table(
+  { name: 'draft_strategy_policy' },
+  {
+    releaseVersion: t.string().primaryKey(),
+    policyVersion: t.string(),
+    policyJson: t.string(),
+    lastReviewedAt: t.string(),
+  },
+);
+
+export const catalogEquipment = table(
+  {
+    name: 'catalog_equipment',
+    public: true,
+    indexes: [{
+      accessor: 'catalogEquipmentReleaseVersion',
+      name: 'catalog_equipment_release_version',
+      algorithm: 'btree',
+      columns: ['releaseVersion'],
+    }],
+  },
+  {
+    id: t.string().primaryKey(),
+    releaseVersion: t.string(),
+    itemId: t.string(),
+    name: t.string(),
+    variantGroupId: t.string().optional(),
+    slot: t.string(),
+    weaponPaths: t.string(),
+    attack: t.f64().optional(),
+    defense: t.f64().optional(),
+    dexterity: t.f64().optional(),
+    levelRequirement: t.u32().optional(),
+    skillRequirement: t.u32().optional(),
+    verificationStatus: t.string(),
+    sourceRefId: t.string(),
+    lastReviewedAt: t.string(),
+  },
+);
+
+export const equipmentAlias = table(
+  {
+    name: 'equipment_alias',
+    public: true,
+    indexes: [{
+      accessor: 'equipmentAliasReleaseVersion',
+      name: 'equipment_alias_release_version',
+      algorithm: 'btree',
+      columns: ['releaseVersion'],
+    }],
+  },
+  {
+    id: t.string().primaryKey(),
+    releaseVersion: t.string(),
+    itemId: t.string(),
+    alias: t.string(),
+    sourceRefId: t.string(),
+  },
+);
+
+export const equipmentAcquisition = table(
+  {
+    name: 'equipment_acquisition',
+    public: true,
+    indexes: [{
+      accessor: 'equipmentAcquisitionReleaseVersion',
+      name: 'equipment_acquisition_release_version',
+      algorithm: 'btree',
+      columns: ['releaseVersion'],
+    }],
+  },
+  {
+    id: t.string().primaryKey(),
+    releaseVersion: t.string(),
+    itemId: t.string(),
+    acquisitionType: t.string(),
+    detail: t.string(),
+    floor: t.u32().optional(),
+    cost: t.f64().optional(),
+    currency: t.string().optional(),
+    availability: t.string(),
+    accessType: t.string(),
+    sourceRefId: t.string(),
+  },
+);
+
+export const equipmentResistance = table(
+  {
+    name: 'equipment_resistance',
+    public: true,
+    indexes: [{
+      accessor: 'equipmentResistanceReleaseVersion',
+      name: 'equipment_resistance_release_version',
+      algorithm: 'btree',
+      columns: ['releaseVersion'],
+    }],
+  },
+  {
+    id: t.string().primaryKey(),
+    releaseVersion: t.string(),
+    itemId: t.string(),
+    status: t.string(),
+    percent: t.f64(),
+    sourceRefId: t.string(),
+  },
+);
+
+export const equipmentSpecialEffect = table(
+  {
+    name: 'equipment_special_effect',
+    public: true,
+    indexes: [{
+      accessor: 'equipmentSpecialEffectReleaseVersion',
+      name: 'equipment_special_effect_release_version',
+      algorithm: 'btree',
+      columns: ['releaseVersion'],
+    }],
+  },
+  {
+    id: t.string().primaryKey(),
+    releaseVersion: t.string(),
+    itemId: t.string(),
+    description: t.string(),
+    sourceRefId: t.string(),
+  },
+);
+
+export const mechanic = table(
+  {
+    name: 'mechanic',
+    public: true,
+    indexes: [{
+      accessor: 'mechanicReleaseVersion',
+      name: 'mechanic_release_version',
+      algorithm: 'btree',
+      columns: ['releaseVersion'],
+    }],
+  },
+  {
+    id: t.string().primaryKey(),
+    releaseVersion: t.string(),
+    mechanicId: t.string(),
+    expression: t.string(),
+    units: t.string(),
+    applicability: t.string(),
+    boundaryBehavior: t.string(),
+    computability: t.string(),
+    parametersJson: t.string(),
+    verificationStatus: t.string(),
+    sourceRefId: t.string(),
+    lastReviewedAt: t.string(),
+  },
+);
+
+export const releaseStrategyPolicy = table(
+  { name: 'release_strategy_policy', public: true },
+  {
+    releaseVersion: t.string().primaryKey(),
+    policyVersion: t.string(),
+    policyJson: t.string(),
+    lastReviewedAt: t.string(),
+  },
+);
+
 const spacetimedb = schema({
   appConfig,
   datasetRelease,
@@ -525,6 +868,22 @@ const spacetimedb = schema({
   equipment,
   formula,
   sourceReference,
+  wikiPageSnapshot,
+  coverageManifest,
+  draftCatalogEquipment,
+  draftEquipmentAlias,
+  draftEquipmentAcquisition,
+  draftEquipmentResistance,
+  draftEquipmentSpecialEffect,
+  draftMechanic,
+  draftStrategyPolicy,
+  catalogEquipment,
+  equipmentAlias,
+  equipmentAcquisition,
+  equipmentResistance,
+  equipmentSpecialEffect,
+  mechanic,
+  releaseStrategyPolicy,
 });
 
 export type AppSchema = (typeof spacetimedb)['schemaType'];

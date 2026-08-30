@@ -1,0 +1,18 @@
+export const CATALOG_TABLE_MANIFEST = [
+  { name: 'wiki_page_snapshot', visibility: 'private', releaseIndexed: false },
+  { name: 'coverage_manifest', visibility: 'private', releaseIndexed: false },
+  { name: 'draft_catalog_equipment', visibility: 'private', releaseIndexed: true },
+  { name: 'draft_equipment_alias', visibility: 'private', releaseIndexed: true },
+  { name: 'draft_equipment_acquisition', visibility: 'private', releaseIndexed: true },
+  { name: 'draft_equipment_resistance', visibility: 'private', releaseIndexed: true },
+  { name: 'draft_equipment_special_effect', visibility: 'private', releaseIndexed: true },
+  { name: 'draft_mechanic', visibility: 'private', releaseIndexed: true },
+  { name: 'draft_strategy_policy', visibility: 'private', releaseIndexed: false },
+  { name: 'catalog_equipment', visibility: 'public', releaseIndexed: true },
+  { name: 'equipment_alias', visibility: 'public', releaseIndexed: true },
+  { name: 'equipment_acquisition', visibility: 'public', releaseIndexed: true },
+  { name: 'equipment_resistance', visibility: 'public', releaseIndexed: true },
+  { name: 'equipment_special_effect', visibility: 'public', releaseIndexed: true },
+  { name: 'mechanic', visibility: 'public', releaseIndexed: true },
+  { name: 'release_strategy_policy', visibility: 'public', releaseIndexed: false },
+] as const;
