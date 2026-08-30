@@ -48,9 +48,18 @@ test('splits the complete e2e suite into non-overlapping deterministic phases', 
       '--',
       'e2e/reliability-module.spec.ts',
       '--grep',
-      '^keeps 100 immutable revisions converged across same-account subscriptions$',
+      'keeps 100 immutable revisions converged across same-account subscriptions$',
     ],
   );
+
+  const composite = new RegExp(INTEGRATION_PHASES[1].grep);
+  const publication = new RegExp(INTEGRATION_PHASES[2].grep);
+  const compositeTitle = 'e2e/reliability-module.spec.ts › keeps 100 immutable revisions converged across same-account subscriptions';
+  const publicationTitle = 'e2e/reliability-module.spec.ts › rejects invalid publications atomically and carries one reviewed row into a second release';
+  assert.equal(composite.test(compositeTitle), true);
+  assert.equal(composite.test(publicationTitle), false);
+  assert.equal(publication.test(publicationTitle), true);
+  assert.equal(publication.test(compositeTitle), false);
 });
 
 test('runs phases in order and stops before a later phase after failure', async () => {

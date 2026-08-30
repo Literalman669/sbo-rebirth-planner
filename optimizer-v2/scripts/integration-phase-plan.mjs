@@ -14,12 +14,12 @@ export const INTEGRATION_PHASES = Object.freeze([
   {
     id: 'reliability-module-composite',
     testFiles: ['e2e/reliability-module.spec.ts'],
-    grep: '^keeps 100 immutable revisions converged across same-account subscriptions$',
+    grep: 'keeps 100 immutable revisions converged across same-account subscriptions$',
   },
   {
     id: 'reliability-module-publication',
     testFiles: ['e2e/reliability-module.spec.ts'],
-    grep: '^rejects invalid publications atomically and carries one reviewed row into a second release$',
+    grep: 'rejects invalid publications atomically and carries one reviewed row into a second release$',
   },
   {
     id: 'sharing-module',
