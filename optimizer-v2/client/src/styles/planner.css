@@ -403,6 +403,88 @@
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
+.build-name-field {
+  margin-bottom: 1.25rem;
+}
+
+.build-name-field > span:first-child {
+  color: var(--color-muted);
+  font-family: var(--font-ui);
+  font-size: 0.78rem;
+}
+
+.field-hint {
+  color: var(--color-muted);
+  font-family: var(--font-ui);
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+
+.goal-card-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.7rem;
+  margin-top: 1rem;
+}
+
+.goal-card {
+  position: relative;
+  display: grid !important;
+  align-content: start;
+  gap: 0.45rem !important;
+  min-height: 10.5rem;
+  padding: 0.9rem;
+  border: 1px solid rgb(184 149 93 / 55%);
+  border-radius: 0.4rem;
+  background: rgb(9 15 20 / 82%);
+  cursor: pointer;
+}
+
+.goal-card:hover {
+  border-color: var(--color-gold);
+}
+
+.goal-card:has(input:checked) {
+  border-color: var(--color-aether-bright);
+  background: linear-gradient(145deg, rgb(85 214 194 / 10%), rgb(9 15 20 / 88%));
+  box-shadow: 0 0 18px rgb(85 214 194 / 14%);
+}
+
+.goal-card:focus-within {
+  outline: 2px solid var(--color-aether-bright);
+  outline-offset: 2px;
+}
+
+.goal-card input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  min-height: 0;
+  opacity: 0;
+}
+
+.goal-card-heading {
+  color: var(--color-parchment);
+  font-size: 0.98rem;
+}
+
+.goal-card-description,
+.goal-card-metrics {
+  font-family: var(--font-ui);
+  line-height: 1.35;
+}
+
+.goal-card-description {
+  color: var(--color-muted);
+  font-size: 0.79rem;
+}
+
+.goal-card-metrics {
+  align-self: end;
+  color: var(--color-aether-bright);
+  font-size: 0.72rem;
+}
+
 .stat-fields {
   grid-template-columns: repeat(5, minmax(5rem, 1fr));
 }
@@ -939,6 +1021,10 @@
     margin-top: 0.75rem;
   }
 
+  .goal-card-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .home-screen {
     place-items: start center;
   }
@@ -998,6 +1084,14 @@
 
   .weapon-path-options {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .goal-card-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .goal-card {
+    min-height: 0;
   }
 
   .weapon-path-options label {

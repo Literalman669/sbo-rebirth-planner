@@ -147,9 +147,52 @@ describe('planner routes', () => {
     ]) {
       expect(screen.getByRole('radio', { name: weapon })).toBeVisible();
     }
-    expect(screen.getByLabelText('Optimization Goal')).toHaveValue('balanced');
+    expect(screen.getByRole('radio', { name: 'Balanced' })).toBeChecked();
     expect(screen.getByText('Improve accuracy')).toBeVisible();
     expect(screen.getByLabelText('Weapon Skill')).not.toBeVisible();
+  });
+
+  it('explains the selected goal without changing its stored value', async () => {
+    const user = userEvent.setup();
+    const { store } = await renderRoute('/character');
+    await screen.findByRole('heading', {
+      name: 'Tell us where your adventurer stands.',
+    });
+
+    await user.click(screen.getByRole('radio', { name: 'Mobility' }));
+
+    expect(
+      screen.getByText(/emphasizes movement speed and stamina/i),
+    ).toBeVisible();
+    await waitFor(async () => {
+      expect((await store.loadDraft())?.goal).toBe('mobility');
+    });
+  });
+
+  it('accepts an optional build name at the start', async () => {
+    const user = userEvent.setup();
+    const { store } = await renderRoute('/character');
+    await screen.findByRole('heading', {
+      name: 'Tell us where your adventurer stands.',
+    });
+
+    await user.type(screen.getByLabelText('Build Name'), 'Floor 2 Melee');
+    await user.click(screen.getByRole('button', { name: 'Continue' }));
+
+    await waitFor(async () => {
+      expect((await store.loadDraft())?.name).toBe('Floor 2 Melee');
+    });
+  });
+
+  it('opens weapon-skill guidance for a loaded build that already has weapon skill', async () => {
+    await renderRoute('/character', { saved: savedDraft() });
+    await screen.findByRole('heading', {
+      name: 'Tell us where your adventurer stands.',
+    });
+
+    expect(screen.getByText('Improve accuracy').closest('details')).toHaveAttribute(
+      'open',
+    );
   });
 
   it('shows all five invested stats and advisory point feedback', async () => {

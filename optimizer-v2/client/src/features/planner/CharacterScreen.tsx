@@ -7,6 +7,7 @@ import type {
 } from '../../domain/build/model';
 import { WeaponPathIcon } from './WeaponPathIcon';
 import { StickyPlannerActions } from '../shell/StickyPlannerActions';
+import { GoalCard, GOAL_PRESENTATION } from './GoalCard';
 
 const weaponPaths: Array<{ value: WeaponPath; label: string }> = [
   { value: 'two-handed', label: 'Two-Handed' },
@@ -17,32 +18,33 @@ const weaponPaths: Array<{ value: WeaponPath; label: string }> = [
   { value: 'melee', label: 'Melee' },
 ];
 
-const goals: Array<{ value: OptimizationGoal; label: string }> = [
-  { value: 'balanced', label: 'Balanced' },
-  { value: 'damage', label: 'Damage' },
-  { value: 'survivability', label: 'Survivability' },
-  { value: 'mobility', label: 'Mobility' },
-  { value: 'farming', label: 'Farming' },
-];
+const goals = Object.keys(GOAL_PRESENTATION) as OptimizationGoal[];
 
 export function CharacterScreen() {
   const navigate = useNavigate();
   const { draft, isHydrated, updateDraft } = useBuildDraft();
   const [values, setValues] = useState(() => ({
+    name: draft.name ?? '',
     level: String(draft.level),
     maxFloor: String(draft.maxFloor),
     weaponSkill: draft.weaponSkill === undefined ? '' : String(draft.weaponSkill),
   }));
   const [errors, setErrors] = useState<
-    Partial<Record<'level' | 'maxFloor' | 'weaponSkill', string>>
+    Partial<Record<'name' | 'level' | 'maxFloor' | 'weaponSkill', string>>
   >({});
   const controls = useRef<
-    Partial<Record<'level' | 'maxFloor' | 'weaponSkill', HTMLInputElement | null>>
+    Partial<
+      Record<
+        'name' | 'level' | 'maxFloor' | 'weaponSkill',
+        HTMLInputElement | null
+      >
+    >
   >({});
 
   useEffect(() => {
     if (isHydrated) {
       setValues({
+        name: draft.name ?? '',
         level: String(draft.level),
         maxFloor: String(draft.maxFloor),
         weaponSkill:
@@ -75,6 +77,12 @@ export function CharacterScreen() {
     };
 
   const continueToStats = () => {
+    const name = values.name.trim();
+    if (name.length > 60) {
+      setErrors({ name: 'Build name must be 60 characters or fewer.' });
+      controls.current.name?.focus();
+      return;
+    }
     const level = Number(values.level);
     if (!Number.isInteger(level) || level < 1 || level > 10000) {
       setErrors({ level: 'Enter a whole-number level from 1 to 10000.' });
@@ -104,7 +112,12 @@ export function CharacterScreen() {
       return;
     }
 
-    updateDraft({ level, maxFloor, weaponSkill });
+    updateDraft({
+      name: name || undefined,
+      level,
+      maxFloor,
+      weaponSkill,
+    });
     navigate('/stats');
   };
 
@@ -114,6 +127,29 @@ export function CharacterScreen() {
         Tell us where your adventurer stands.
       </h2>
 
+      <label className="build-name-field">
+        Build Name <span>(optional)</span>
+        <input
+          ref={(element) => {
+            controls.current.name = element;
+          }}
+          type="text"
+          aria-label="Build Name"
+          maxLength={60}
+          value={values.name}
+          aria-invalid={Boolean(errors.name)}
+          onChange={(event) => {
+            const name = event.currentTarget.value;
+            setValues((current) => ({
+              ...current,
+              name,
+            }));
+            setErrors((current) => ({ ...current, name: undefined }));
+          }}
+        />
+        {errors.name ? <span role="alert">{errors.name}</span> : null}
+      </label>
+
       <div className="field-row">
         <label>
           Current Level
@@ -122,6 +158,7 @@ export function CharacterScreen() {
               controls.current.level = element;
             }}
             type="number"
+            aria-label="Current Level"
             min="1"
             max="10000"
             value={values.level}
@@ -129,6 +166,7 @@ export function CharacterScreen() {
             onChange={updateNumber('level')}
           />
           {errors.level ? <span role="alert">{errors.level}</span> : null}
+          <span className="field-hint">Use the level shown on your in-game profile.</span>
         </label>
         <label>
           Highest Unlocked Floor
@@ -137,6 +175,7 @@ export function CharacterScreen() {
               controls.current.maxFloor = element;
             }}
             type="number"
+            aria-label="Highest Unlocked Floor"
             min="1"
             max="19"
             value={values.maxFloor}
@@ -144,6 +183,7 @@ export function CharacterScreen() {
             onChange={updateNumber('maxFloor')}
           />
           {errors.maxFloor ? <span role="alert">{errors.maxFloor}</span> : null}
+          <span className="field-hint">Choose the highest floor you can currently enter.</span>
         </label>
       </div>
 
@@ -170,24 +210,26 @@ export function CharacterScreen() {
         </div>
       </fieldset>
 
-      <label>
-        Optimization Goal
-        <select
-          aria-label="Optimization Goal"
-          value={draft.goal}
-          onChange={(event) =>
-            updateDraft({ goal: event.currentTarget.value as OptimizationGoal })
-          }
-        >
+      <fieldset>
+        <legend>Optimization Goal</legend>
+        <div className="goal-card-grid">
           {goals.map((goal) => (
-            <option key={goal.value} value={goal.value}>
-              {goal.label}
-            </option>
+            <GoalCard
+              key={goal}
+              goal={goal}
+              selected={draft.goal === goal}
+              onSelect={(selectedGoal) => updateDraft({ goal: selectedGoal })}
+            />
           ))}
-        </select>
-      </label>
+        </div>
+      </fieldset>
 
-      <details>
+      <details
+        open={
+          draft.weaponPath === 'dual-wield' ||
+          Boolean(values.weaponSkill.trim())
+        }
+      >
         <summary>Improve accuracy</summary>
         <label>
           Weapon Skill
