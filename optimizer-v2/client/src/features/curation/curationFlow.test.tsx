@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import daggerFixture from './fixtures/dagger.wikitext?raw';
 import statsFixture from './fixtures/stats.wikitext?raw';
 import { CandidateReview, type CandidateRecord } from './CandidateReview';
@@ -188,8 +188,17 @@ describe('PublishReleasePanel', () => {
 });
 
 describe('ReleaseDraftEditor', () => {
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-08-29T12:00:00.000Z'));
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it('can start a complete draft from the current verified release', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
     const clone = vi.fn(async () => undefined);
     render(
       <ReleaseDraftEditor
