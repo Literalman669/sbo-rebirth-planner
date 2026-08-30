@@ -1,6 +1,12 @@
 import { SenderError, t } from 'spacetimedb/server';
 import { assertAppUser, assertOwner, type AppReducerCtx } from './auth';
 import spacetimedb from './schema';
+import {
+  validateAccessPreferences,
+  validatePlanProgressJson,
+  validatePlanProgressOwnership,
+  validatePreferenceJson,
+} from './validation';
 
 const weaponPaths = new Set([
   'two-handed',
@@ -40,6 +46,7 @@ const cloudProfileInput = t.object('CloudProfileInput', {
   vit: t.u32(),
   luk: t.u32(),
   datasetVersion: t.string(),
+  accessPreferences: t.string().optional(),
 });
 
 const equipmentInput = t.object('CloudEquipmentInput', {
@@ -60,6 +67,7 @@ type CloudProfileInput = {
   vit: number;
   luk: number;
   datasetVersion: string;
+  accessPreferences?: string;
 };
 
 type CloudEquipmentInput = { slot: string; itemId: string };
@@ -101,6 +109,8 @@ function assertProfile(profile: CloudProfileInput): void {
     if (stat > 500) throw new SenderError('Stat is out of range');
   }
   assertText(profile.datasetVersion, 'Dataset version', 100);
+  const accessErrors = validateAccessPreferences(profile.accessPreferences);
+  if (accessErrors[0]) throw new SenderError(accessErrors[0]);
 }
 
 function assertEquipment(equipment: readonly CloudEquipmentInput[]): void {
@@ -176,6 +186,7 @@ function insertRevision(
     vit: profile.vit,
     luk: profile.luk,
     datasetVersion: profile.datasetVersion,
+    accessPreferences: profile.accessPreferences,
     createdAt: ctx.timestamp,
   });
 
@@ -242,7 +253,8 @@ function isIdempotentRevisionRetry(
     revision.agi !== profile.agi ||
     revision.vit !== profile.vit ||
     revision.luk !== profile.luk ||
-    revision.datasetVersion !== profile.datasetVersion
+    revision.datasetVersion !== profile.datasetVersion ||
+    revision.accessPreferences !== profile.accessPreferences
   ) {
     return false;
   }
@@ -350,6 +362,7 @@ export const saveBuildRevision = spacetimedb.reducer(
         owner: ctx.sender,
         name: args.name.trim(),
         headRevisionId: args.revisionId,
+        archivedAt: undefined,
         createdAt: ctx.timestamp,
         updatedAt: ctx.timestamp,
       });
@@ -368,6 +381,96 @@ export const completeGuestImport = spacetimedb.reducer({}, (ctx) => {
     updatedAt: ctx.timestamp,
   });
 });
+
+export const upsertPlanProgress = spacetimedb.reducer(
+  { buildId: t.string(), progressJson: t.string() },
+  (ctx, { buildId, progressJson }) => {
+    assertAppUser(ctx);
+    assertText(buildId, 'Build ID', 100);
+    const ownershipErrors = validatePlanProgressOwnership(
+      ctx.db.build.id.find(buildId),
+      ctx.sender,
+    );
+    if (ownershipErrors[0]) throw new SenderError(ownershipErrors[0]);
+    const validationErrors = validatePlanProgressJson(progressJson, buildId);
+    if (validationErrors[0]) throw new SenderError(validationErrors[0]);
+
+    const current = ctx.db.buildPlanProgress.buildId.find(buildId);
+    if (current?.progressJson === progressJson) return;
+    if (current) {
+      ctx.db.buildPlanProgress.buildId.update({
+        ...current,
+        progressJson,
+        updatedAt: ctx.timestamp,
+      });
+    } else {
+      ctx.db.buildPlanProgress.insert({
+        buildId,
+        owner: ctx.sender,
+        progressJson,
+        updatedAt: ctx.timestamp,
+      });
+    }
+  },
+);
+
+export const upsertUserPreferences = spacetimedb.reducer(
+  { preferencesJson: t.string() },
+  (ctx, { preferencesJson }) => {
+    assertAppUser(ctx);
+    const validationErrors = validatePreferenceJson(preferencesJson);
+    if (validationErrors[0]) throw new SenderError(validationErrors[0]);
+    const current = ctx.db.userPreference.identity.find(ctx.sender);
+    if (current?.preferencesJson === preferencesJson) return;
+    ensureProfile(ctx);
+    if (current) {
+      ctx.db.userPreference.identity.update({
+        ...current,
+        preferencesJson,
+        updatedAt: ctx.timestamp,
+      });
+    } else {
+      ctx.db.userPreference.insert({
+        identity: ctx.sender,
+        preferencesJson,
+        updatedAt: ctx.timestamp,
+      });
+    }
+  },
+);
+
+export const renameBuild = spacetimedb.reducer(
+  { buildId: t.string(), name: t.string() },
+  (ctx, { buildId, name }) => {
+    assertAppUser(ctx);
+    assertText(buildId, 'Build ID', 100);
+    const trimmedName = name.trim();
+    assertText(trimmedName, 'Build name', 60);
+    const current = assertOwnedBuild(ctx, buildId);
+    if (current.name === trimmedName) return;
+    ctx.db.build.id.update({
+      ...current,
+      name: trimmedName,
+      updatedAt: ctx.timestamp,
+    });
+  },
+);
+
+export const setBuildArchived = spacetimedb.reducer(
+  { buildId: t.string(), archived: t.bool() },
+  (ctx, { buildId, archived }) => {
+    assertAppUser(ctx);
+    assertText(buildId, 'Build ID', 100);
+    const current = assertOwnedBuild(ctx, buildId);
+    const isArchived = current.archivedAt !== undefined;
+    if (isArchived === archived) return;
+    ctx.db.build.id.update({
+      ...current,
+      archivedAt: archived ? ctx.timestamp : undefined,
+      updatedAt: ctx.timestamp,
+    });
+  },
+);
 
 export const restoreBuildRevision = spacetimedb.reducer(
   {
@@ -424,6 +527,7 @@ export const restoreBuildRevision = spacetimedb.reducer(
         vit: source.vit,
         luk: source.luk,
         datasetVersion: source.datasetVersion,
+        accessPreferences: source.accessPreferences,
       },
       equipment,
       ownedItemIds,
@@ -443,6 +547,8 @@ export const deleteBuild = spacetimedb.reducer(
     assertAppUser(ctx);
     assertText(buildId, 'Build ID', 100);
     assertOwnedBuild(ctx, buildId);
+
+    ctx.db.buildPlanProgress.buildId.delete(buildId);
 
     const revisions = Array.from(
       ctx.db.buildRevision.buildRevisionBuildId.filter(buildId),

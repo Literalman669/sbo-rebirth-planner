@@ -1,16 +1,36 @@
 import { t } from 'spacetimedb/server';
 import spacetimedb, {
   build,
+  buildPlanProgress,
   buildRevision,
   revisionEquipment,
   revisionOwnedItem,
   userProfile,
+  userPreference,
 } from './schema';
 
 export const myBuilds = spacetimedb.view(
   { name: 'my_builds', public: true },
   t.array(build.rowType),
   (ctx) => Array.from(ctx.db.build.buildOwner.filter(ctx.sender)),
+);
+
+export const myPlanProgress = spacetimedb.view(
+  { name: 'my_plan_progress', public: true },
+  t.array(buildPlanProgress.rowType),
+  (ctx) =>
+    Array.from(
+      ctx.db.buildPlanProgress.buildPlanProgressOwner.filter(ctx.sender),
+    ),
+);
+
+export const myUserPreferences = spacetimedb.view(
+  { name: 'my_user_preferences', public: true },
+  t.array(userPreference.rowType),
+  (ctx) => {
+    const row = ctx.db.userPreference.identity.find(ctx.sender);
+    return row ? [row] : [];
+  },
 );
 
 export const myProfile = spacetimedb.view(

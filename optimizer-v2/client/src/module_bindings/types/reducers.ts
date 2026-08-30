@@ -17,10 +17,12 @@ import PublishCatalogReleaseReducer from "../publish_catalog_release_reducer";
 import PublishReleaseReducer from "../publish_release_reducer";
 import RecordReviewDecisionReducer from "../record_review_decision_reducer";
 import RemoveDraftEquipmentReducer from "../remove_draft_equipment_reducer";
+import RenameBuildReducer from "../rename_build_reducer";
 import RestoreBuildRevisionReducer from "../restore_build_revision_reducer";
 import RevokeBuildShareReducer from "../revoke_build_share_reducer";
 import RevokeCuratorReducer from "../revoke_curator_reducer";
 import SaveBuildRevisionReducer from "../save_build_revision_reducer";
+import SetBuildArchivedReducer from "../set_build_archived_reducer";
 import StageWikiFixtureForLocalTestReducer from "../stage_wiki_fixture_for_local_test_reducer";
 import UpsertCoverageManifestReducer from "../upsert_coverage_manifest_reducer";
 import UpsertDraftCatalogEquipmentReducer from "../upsert_draft_catalog_equipment_reducer";
@@ -33,6 +35,8 @@ import UpsertDraftFormulaReducer from "../upsert_draft_formula_reducer";
 import UpsertDraftMechanicReducer from "../upsert_draft_mechanic_reducer";
 import UpsertDraftSourceReferenceReducer from "../upsert_draft_source_reference_reducer";
 import UpsertDraftStrategyPolicyReducer from "../upsert_draft_strategy_policy_reducer";
+import UpsertPlanProgressReducer from "../upsert_plan_progress_reducer";
+import UpsertUserPreferencesReducer from "../upsert_user_preferences_reducer";
 import UpsertWikiPageSnapshotReducer from "../upsert_wiki_page_snapshot_reducer";
 
 export type CompleteGuestImportParams = __Infer<typeof CompleteGuestImportReducer>;
@@ -46,10 +50,12 @@ export type PublishCatalogReleaseParams = __Infer<typeof PublishCatalogReleaseRe
 export type PublishReleaseParams = __Infer<typeof PublishReleaseReducer>;
 export type RecordReviewDecisionParams = __Infer<typeof RecordReviewDecisionReducer>;
 export type RemoveDraftEquipmentParams = __Infer<typeof RemoveDraftEquipmentReducer>;
+export type RenameBuildParams = __Infer<typeof RenameBuildReducer>;
 export type RestoreBuildRevisionParams = __Infer<typeof RestoreBuildRevisionReducer>;
 export type RevokeBuildShareParams = __Infer<typeof RevokeBuildShareReducer>;
 export type RevokeCuratorParams = __Infer<typeof RevokeCuratorReducer>;
 export type SaveBuildRevisionParams = __Infer<typeof SaveBuildRevisionReducer>;
+export type SetBuildArchivedParams = __Infer<typeof SetBuildArchivedReducer>;
 export type StageWikiFixtureForLocalTestParams = __Infer<typeof StageWikiFixtureForLocalTestReducer>;
 export type UpsertCoverageManifestParams = __Infer<typeof UpsertCoverageManifestReducer>;
 export type UpsertDraftCatalogEquipmentParams = __Infer<typeof UpsertDraftCatalogEquipmentReducer>;
@@ -62,5 +68,7 @@ export type UpsertDraftFormulaParams = __Infer<typeof UpsertDraftFormulaReducer>
 export type UpsertDraftMechanicParams = __Infer<typeof UpsertDraftMechanicReducer>;
 export type UpsertDraftSourceReferenceParams = __Infer<typeof UpsertDraftSourceReferenceReducer>;
 export type UpsertDraftStrategyPolicyParams = __Infer<typeof UpsertDraftStrategyPolicyReducer>;
+export type UpsertPlanProgressParams = __Infer<typeof UpsertPlanProgressReducer>;
+export type UpsertUserPreferencesParams = __Infer<typeof UpsertUserPreferencesReducer>;
 export type UpsertWikiPageSnapshotParams = __Infer<typeof UpsertWikiPageSnapshotReducer>;
 

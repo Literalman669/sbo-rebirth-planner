@@ -46,6 +46,19 @@ function parseAccessPreferences(value = '') {
   };
 }
 
+function serializeAccessPreferences(
+  preferences: CharacterProfile['accessPreferences'],
+): string | undefined {
+  if (!preferences) return undefined;
+  const tokens = [
+    preferences.activeEvent ? 'active-event' : undefined,
+    preferences.gamepass ? 'gamepass' : undefined,
+    preferences.badge ? 'badge' : undefined,
+    preferences.limited ? 'limited' : undefined,
+  ].filter((token): token is string => token !== undefined);
+  return tokens.length > 0 ? tokens.join(',') : undefined;
+}
+
 export function toSaveBuildRevisionArgs(
   input: CharacterProfile,
   revisionId: string,
@@ -73,6 +86,7 @@ export function toSaveBuildRevisionArgs(
       vit: profile.stats.vit,
       luk: profile.stats.luk,
       datasetVersion: profile.datasetVersion,
+      accessPreferences: serializeAccessPreferences(profile.accessPreferences),
     },
     equipment,
     ownedItemIds: [...profile.ownedItemIds],

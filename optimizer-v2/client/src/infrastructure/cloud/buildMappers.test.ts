@@ -17,6 +17,12 @@ const profile: CharacterProfile = {
   stats: { str: 20, def: 10, agi: 12, vit: 8, luk: 5 },
   equipped: { 'main-hand': 'iron-greatsword', armor: 'steel-armor' },
   ownedItemIds: ['iron-greatsword', 'steel-armor'],
+  accessPreferences: {
+    activeEvent: true,
+    gamepass: false,
+    badge: true,
+    limited: false,
+  },
   datasetVersion: 'bootstrap-0',
 };
 
@@ -38,6 +44,7 @@ describe('cloud build mappers', () => {
         level: 20,
         str: 20,
         datasetVersion: 'bootstrap-0',
+        accessPreferences: 'active-event,badge',
       },
       equipment: [
         { slot: 'main-hand', itemId: 'iron-greatsword' },
@@ -70,6 +77,7 @@ describe('cloud build mappers', () => {
           agi: 12,
           vit: 8,
           luk: 5,
+          accessPreferences: 'active-event,badge',
           datasetVersion: 'bootstrap-0',
         },
         [
@@ -91,12 +99,6 @@ describe('cloud build mappers', () => {
       ),
     ).toEqual({
       ...profile,
-      accessPreferences: {
-        activeEvent: false,
-        gamepass: false,
-        badge: false,
-        limited: false,
-      },
     });
   });
 
@@ -105,5 +107,14 @@ describe('cloud build mappers', () => {
     const payload = toSaveBuildRevisionArgs(withoutSkill, 'revision-1');
 
     expect(payload.profile).toHaveProperty('weaponSkill', undefined);
+  });
+
+  it('keeps an explicit empty access preference optional for generated reducers', () => {
+    const payload = toSaveBuildRevisionArgs(
+      { ...profile, accessPreferences: undefined },
+      'revision-1',
+    );
+
+    expect(payload.profile).toHaveProperty('accessPreferences', undefined);
   });
 });

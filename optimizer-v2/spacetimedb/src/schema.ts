@@ -57,7 +57,37 @@ export const build = table(
     owner: t.identity(),
     name: t.string(),
     headRevisionId: t.string(),
+    archivedAt: t.timestamp().optional(),
     createdAt: t.timestamp(),
+    updatedAt: t.timestamp(),
+  },
+);
+
+export const buildPlanProgress = table(
+  {
+    name: 'build_plan_progress',
+    indexes: [
+      {
+        accessor: 'buildPlanProgressOwner',
+        name: 'build_plan_progress_owner',
+        algorithm: 'btree',
+        columns: ['owner'],
+      },
+    ],
+  },
+  {
+    buildId: t.string().primaryKey(),
+    owner: t.identity(),
+    progressJson: t.string(),
+    updatedAt: t.timestamp(),
+  },
+);
+
+export const userPreference = table(
+  { name: 'user_preference' },
+  {
+    identity: t.identity().primaryKey(),
+    preferencesJson: t.string(),
     updatedAt: t.timestamp(),
   },
 );
@@ -97,6 +127,7 @@ export const buildRevision = table(
     vit: t.u32(),
     luk: t.u32(),
     datasetVersion: t.string(),
+    accessPreferences: t.string().optional(),
     createdAt: t.timestamp(),
   },
 );
@@ -197,6 +228,7 @@ export const sharedBuild = table(
     vit: t.u32(),
     luk: t.u32(),
     datasetVersion: t.string(),
+    accessPreferences: t.string().optional(),
     createdAt: t.timestamp(),
   },
 );
@@ -849,6 +881,8 @@ const spacetimedb = schema({
   authConfig,
   userProfile,
   build,
+  buildPlanProgress,
+  userPreference,
   buildRevision,
   revisionEquipment,
   revisionOwnedItem,

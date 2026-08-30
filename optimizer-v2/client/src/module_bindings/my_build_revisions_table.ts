@@ -27,5 +27,6 @@ export default __t.row({
   vit: __t.u32(),
   luk: __t.u32(),
   datasetVersion: __t.string().name("dataset_version"),
+  accessPreferences: __t.option(__t.string()).name("access_preferences"),
   createdAt: __t.timestamp().name("created_at"),
 });

@@ -11,11 +11,8 @@ import {
 } from "spacetimedb";
 
 export default __t.row({
-  id: __t.string().primaryKey(),
+  buildId: __t.string().primaryKey().name("build_id"),
   owner: __t.identity(),
-  name: __t.string(),
-  headRevisionId: __t.string().name("head_revision_id"),
-  archivedAt: __t.option(__t.timestamp()).name("archived_at"),
-  createdAt: __t.timestamp().name("created_at"),
+  progressJson: __t.string().name("progress_json"),
   updatedAt: __t.timestamp().name("updated_at"),
 });

@@ -45,10 +45,12 @@ import PublishCatalogReleaseReducer from "./publish_catalog_release_reducer";
 import PublishReleaseReducer from "./publish_release_reducer";
 import RecordReviewDecisionReducer from "./record_review_decision_reducer";
 import RemoveDraftEquipmentReducer from "./remove_draft_equipment_reducer";
+import RenameBuildReducer from "./rename_build_reducer";
 import RestoreBuildRevisionReducer from "./restore_build_revision_reducer";
 import RevokeBuildShareReducer from "./revoke_build_share_reducer";
 import RevokeCuratorReducer from "./revoke_curator_reducer";
 import SaveBuildRevisionReducer from "./save_build_revision_reducer";
+import SetBuildArchivedReducer from "./set_build_archived_reducer";
 import StageWikiFixtureForLocalTestReducer from "./stage_wiki_fixture_for_local_test_reducer";
 import UpsertCoverageManifestReducer from "./upsert_coverage_manifest_reducer";
 import UpsertDraftCatalogEquipmentReducer from "./upsert_draft_catalog_equipment_reducer";
@@ -61,6 +63,8 @@ import UpsertDraftFormulaReducer from "./upsert_draft_formula_reducer";
 import UpsertDraftMechanicReducer from "./upsert_draft_mechanic_reducer";
 import UpsertDraftSourceReferenceReducer from "./upsert_draft_source_reference_reducer";
 import UpsertDraftStrategyPolicyReducer from "./upsert_draft_strategy_policy_reducer";
+import UpsertPlanProgressReducer from "./upsert_plan_progress_reducer";
+import UpsertUserPreferencesReducer from "./upsert_user_preferences_reducer";
 import UpsertWikiPageSnapshotReducer from "./upsert_wiki_page_snapshot_reducer";
 
 // Import all procedure arg schemas
@@ -90,11 +94,13 @@ import MyDraftFormulasRow from "./my_draft_formulas_table";
 import MyDraftMechanicsRow from "./my_draft_mechanics_table";
 import MyDraftSourceReferencesRow from "./my_draft_source_references_table";
 import MyDraftStrategyPoliciesRow from "./my_draft_strategy_policies_table";
+import MyPlanProgressRow from "./my_plan_progress_table";
 import MyProfileRow from "./my_profile_table";
 import MyReleaseDraftsRow from "./my_release_drafts_table";
 import MyReviewDecisionsRow from "./my_review_decisions_table";
 import MyRevisionEquipmentRow from "./my_revision_equipment_table";
 import MyRevisionOwnedItemsRow from "./my_revision_owned_items_table";
+import MyUserPreferencesRow from "./my_user_preferences_table";
 import MyWikiCandidatesRow from "./my_wiki_candidates_table";
 import MyWikiPageSnapshotsRow from "./my_wiki_page_snapshots_table";
 import ReleaseStrategyPolicyRow from "./release_strategy_policy_table";
@@ -396,6 +402,13 @@ const tablesSchema = __schema({
     constraints: [
     ],
   }, MyDraftStrategyPoliciesRow),
+  myPlanProgress: __table({
+    name: 'my_plan_progress',
+    indexes: [
+    ],
+    constraints: [
+    ],
+  }, MyPlanProgressRow),
   myProfile: __table({
     name: 'my_profile',
     indexes: [
@@ -431,6 +444,13 @@ const tablesSchema = __schema({
     constraints: [
     ],
   }, MyRevisionOwnedItemsRow),
+  myUserPreferences: __table({
+    name: 'my_user_preferences',
+    indexes: [
+    ],
+    constraints: [
+    ],
+  }, MyUserPreferencesRow),
   myWikiCandidates: __table({
     name: 'my_wiki_candidates',
     indexes: [
@@ -460,10 +480,12 @@ const reducersSchema = __reducers(
   __reducerSchema("publish_release", PublishReleaseReducer),
   __reducerSchema("record_review_decision", RecordReviewDecisionReducer),
   __reducerSchema("remove_draft_equipment", RemoveDraftEquipmentReducer),
+  __reducerSchema("rename_build", RenameBuildReducer),
   __reducerSchema("restore_build_revision", RestoreBuildRevisionReducer),
   __reducerSchema("revoke_build_share", RevokeBuildShareReducer),
   __reducerSchema("revoke_curator", RevokeCuratorReducer),
   __reducerSchema("save_build_revision", SaveBuildRevisionReducer),
+  __reducerSchema("set_build_archived", SetBuildArchivedReducer),
   __reducerSchema("stage_wiki_fixture_for_local_test", StageWikiFixtureForLocalTestReducer),
   __reducerSchema("upsert_coverage_manifest", UpsertCoverageManifestReducer),
   __reducerSchema("upsert_draft_catalog_equipment", UpsertDraftCatalogEquipmentReducer),
@@ -476,6 +498,8 @@ const reducersSchema = __reducers(
   __reducerSchema("upsert_draft_mechanic", UpsertDraftMechanicReducer),
   __reducerSchema("upsert_draft_source_reference", UpsertDraftSourceReferenceReducer),
   __reducerSchema("upsert_draft_strategy_policy", UpsertDraftStrategyPolicyReducer),
+  __reducerSchema("upsert_plan_progress", UpsertPlanProgressReducer),
+  __reducerSchema("upsert_user_preferences", UpsertUserPreferencesReducer),
   __reducerSchema("upsert_wiki_page_snapshot", UpsertWikiPageSnapshotReducer),
 );
 

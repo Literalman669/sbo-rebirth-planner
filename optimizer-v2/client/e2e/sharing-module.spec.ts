@@ -63,6 +63,7 @@ test('publishes an owner-free snapshot and revokes every public row', async ({},
         vit: 8,
         luk: 5,
         datasetVersion: 'bootstrap-0',
+        accessPreferences: 'active-event,badge',
       },
       equipment: [{ slot: 'main-hand', itemId: 'iron-greatsword' }],
       ownedItemIds: ['iron-greatsword'],
@@ -85,6 +86,7 @@ test('publishes an owner-free snapshot and revokes every public row', async ({},
       level: 20,
       weaponPath: 'two-handed',
       datasetVersion: 'bootstrap-0',
+      accessPreferences: 'active-event,badge',
     });
     expect(snapshot).not.toHaveProperty('owner');
     expect(snapshot).not.toHaveProperty('recommendationText');

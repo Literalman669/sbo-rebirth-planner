@@ -63,6 +63,7 @@ export const createBuildShare = spacetimedb.reducer(
       vit: revision.vit,
       luk: revision.luk,
       datasetVersion: revision.datasetVersion,
+      accessPreferences: revision.accessPreferences,
       createdAt: ctx.timestamp,
     });
     equipment.forEach((row, index) => {

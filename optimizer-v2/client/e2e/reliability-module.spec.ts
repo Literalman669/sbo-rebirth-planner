@@ -52,6 +52,7 @@ type RevisionInput = {
     vit: number;
     luk: number;
     datasetVersion: string;
+    accessPreferences: string | undefined;
   };
   equipment: Array<{ slot: string; itemId: string }>;
   ownedItemIds: string[];
@@ -77,6 +78,7 @@ function revision(index: number, parentRevisionId?: string): RevisionInput {
       vit: 8,
       luk: 5,
       datasetVersion: 'bootstrap-0',
+      accessPreferences: undefined,
     },
     equipment: isHistoricalChildSnapshot
       ? [

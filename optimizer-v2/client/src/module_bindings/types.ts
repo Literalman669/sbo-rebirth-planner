@@ -28,10 +28,19 @@ export const Build = __t.object("Build", {
   owner: __t.identity(),
   name: __t.string(),
   headRevisionId: __t.string(),
+  archivedAt: __t.option(__t.timestamp()),
   createdAt: __t.timestamp(),
   updatedAt: __t.timestamp(),
 });
 export type Build = __Infer<typeof Build>;
+
+export const BuildPlanProgress = __t.object("BuildPlanProgress", {
+  buildId: __t.string(),
+  owner: __t.identity(),
+  progressJson: __t.string(),
+  updatedAt: __t.timestamp(),
+});
+export type BuildPlanProgress = __Infer<typeof BuildPlanProgress>;
 
 export const BuildRevision = __t.object("BuildRevision", {
   id: __t.string(),
@@ -50,6 +59,7 @@ export const BuildRevision = __t.object("BuildRevision", {
   vit: __t.u32(),
   luk: __t.u32(),
   datasetVersion: __t.string(),
+  accessPreferences: __t.option(__t.string()),
   createdAt: __t.timestamp(),
 });
 export type BuildRevision = __Infer<typeof BuildRevision>;
@@ -100,6 +110,7 @@ export const CloudProfileInput = __t.object("CloudProfileInput", {
   vit: __t.u32(),
   luk: __t.u32(),
   datasetVersion: __t.string(),
+  accessPreferences: __t.option(__t.string()),
 });
 export type CloudProfileInput = __Infer<typeof CloudProfileInput>;
 
@@ -420,6 +431,9 @@ export type MyDraftSourceReferences = __Infer<typeof MyDraftSourceReferences>;
 export const MyDraftStrategyPolicies = __t.object("MyDraftStrategyPolicies", {});
 export type MyDraftStrategyPolicies = __Infer<typeof MyDraftStrategyPolicies>;
 
+export const MyPlanProgress = __t.object("MyPlanProgress", {});
+export type MyPlanProgress = __Infer<typeof MyPlanProgress>;
+
 export const MyProfile = __t.object("MyProfile", {});
 export type MyProfile = __Infer<typeof MyProfile>;
 
@@ -434,6 +448,9 @@ export type MyRevisionEquipment = __Infer<typeof MyRevisionEquipment>;
 
 export const MyRevisionOwnedItems = __t.object("MyRevisionOwnedItems", {});
 export type MyRevisionOwnedItems = __Infer<typeof MyRevisionOwnedItems>;
+
+export const MyUserPreferences = __t.object("MyUserPreferences", {});
+export type MyUserPreferences = __Infer<typeof MyUserPreferences>;
 
 export const MyWikiCandidates = __t.object("MyWikiCandidates", {});
 export type MyWikiCandidates = __Infer<typeof MyWikiCandidates>;
@@ -503,6 +520,7 @@ export const SharedBuild = __t.object("SharedBuild", {
   vit: __t.u32(),
   luk: __t.u32(),
   datasetVersion: __t.string(),
+  accessPreferences: __t.option(__t.string()),
   createdAt: __t.timestamp(),
 });
 export type SharedBuild = __Infer<typeof SharedBuild>;
@@ -534,6 +552,13 @@ export const SourceReference = __t.object("SourceReference", {
   candidateId: __t.string(),
 });
 export type SourceReference = __Infer<typeof SourceReference>;
+
+export const UserPreference = __t.object("UserPreference", {
+  identity: __t.identity(),
+  preferencesJson: __t.string(),
+  updatedAt: __t.timestamp(),
+});
+export type UserPreference = __Infer<typeof UserPreference>;
 
 export const UserProfile = __t.object("UserProfile", {
   identity: __t.identity(),

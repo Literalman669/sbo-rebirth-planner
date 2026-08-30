@@ -27,6 +27,7 @@ const firstProfile = {
   vit: 8,
   luk: 5,
   datasetVersion: 'bootstrap-0',
+  accessPreferences: 'active-event,badge',
 };
 
 async function connect(token?: string): Promise<TestConnection> {
@@ -53,9 +54,11 @@ async function subscribeToPrivateViews(testConnection: TestConnection) {
       .subscribe([
         tables.myProfile,
         tables.myBuilds,
+        tables.myPlanProgress,
         tables.myBuildRevisions,
         tables.myRevisionEquipment,
         tables.myRevisionOwnedItems,
+        tables.myUserPreferences,
       ]);
   });
   testConnection.subscription = subscription;
@@ -111,6 +114,75 @@ test('enforces identity isolation and immutable revision recovery', async ({}, t
       equipment: [{ slot: 'main-hand', itemId: 'iron-greatsword' }],
       ownedItemIds: ['iron-greatsword'],
     });
+
+    const preferencesJson = JSON.stringify({
+      schemaVersion: 1,
+      mode: 'detailed',
+      density: 'compact',
+      showAllLevels: true,
+      compactWeaponPathsAfterFirstUse: true,
+    });
+    const progressJson = JSON.stringify({
+      schemaVersion: 1,
+      buildId: 'build-a',
+      completedActionIds: ['level-21'],
+      dismissedRecommendationIds: ['upgrade-1'],
+    });
+    await userA.connection.reducers.upsertUserPreferences({ preferencesJson });
+    await userA.connection.reducers.upsertPlanProgress({
+      buildId: 'build-a',
+      progressJson,
+    });
+    await expect
+      .poll(() => [...userA.connection.db.myUserPreferences.iter()].length)
+      .toBe(1);
+    await expect
+      .poll(() => [...userA.connection.db.myPlanProgress.iter()].length)
+      .toBe(1);
+    expect([...userA.connection.db.myUserPreferences.iter()][0]).toMatchObject({
+      preferencesJson,
+    });
+    expect([...userA.connection.db.myPlanProgress.iter()][0]).toMatchObject({
+      buildId: 'build-a',
+      progressJson,
+    });
+    expect([...userB.connection.db.myUserPreferences.iter()]).toHaveLength(0);
+    expect([...userB.connection.db.myPlanProgress.iter()]).toHaveLength(0);
+    let profileUpdates = 0;
+    const countProfileUpdate = () => {
+      profileUpdates += 1;
+    };
+    userA.connection.db.myProfile.onUpdate(countProfileUpdate);
+    await userA.connection.reducers.upsertUserPreferences({ preferencesJson });
+    await new Promise((resolve) => setTimeout(resolve, 25));
+    userA.connection.db.myProfile.removeOnUpdate(countProfileUpdate);
+    expect(profileUpdates).toBe(0);
+    await expect(
+      userB.connection.reducers.upsertPlanProgress({
+        buildId: 'build-a',
+        progressJson,
+      }),
+    ).rejects.toThrow(/Build not found for this identity/);
+
+    await userA.connection.reducers.renameBuild({
+      buildId: 'build-a',
+      name: 'Renamed Route',
+    });
+    await userA.connection.reducers.setBuildArchived({
+      buildId: 'build-a',
+      archived: true,
+    });
+    await expect
+      .poll(() => [...userA.connection.db.myBuilds.iter()][0]?.name)
+      .toBe('Renamed Route');
+    expect([...userA.connection.db.myBuilds.iter()][0]?.archivedAt).toBeDefined();
+    await userA.connection.reducers.setBuildArchived({
+      buildId: 'build-a',
+      archived: false,
+    });
+    await expect
+      .poll(() => [...userA.connection.db.myBuilds.iter()][0]?.archivedAt)
+      .toBeUndefined();
 
     await expect(
       userA.connection.reducers.saveBuildRevision({
@@ -187,12 +259,17 @@ test('enforces identity isolation and immutable revision recovery', async ({}, t
     const restored = [...userA.connection.db.myBuildRevisions.iter()].find(
       (revision) => revision.id === 'revision-a3',
     );
-    expect(restored).toMatchObject({ level: 20, str: 20 });
+    expect(restored).toMatchObject({
+      level: 20,
+      str: 20,
+      accessPreferences: 'active-event,badge',
+    });
     expect([...userA.connection.db.myBuilds.iter()][0]?.headRevisionId).toBe('revision-a3');
 
     await userA.connection.reducers.deleteBuild({ buildId: 'build-a' });
     await expect.poll(() => [...userA.connection.db.myBuilds.iter()].length).toBe(0);
     expect([...userA.connection.db.myBuildRevisions.iter()]).toHaveLength(0);
+    expect([...userA.connection.db.myPlanProgress.iter()]).toHaveLength(0);
   } finally {
     if (userASecond) disconnect(userASecond);
     disconnect(userB);

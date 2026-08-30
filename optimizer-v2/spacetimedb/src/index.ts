@@ -5,15 +5,21 @@ export {
   completeGuestImport,
   configureAuth,
   deleteBuild,
+  renameBuild,
   restoreBuildRevision,
   saveBuildRevision,
+  setBuildArchived,
+  upsertPlanProgress,
+  upsertUserPreferences,
 } from './playerReducers';
 export {
   myBuildRevisions,
   myBuilds,
+  myPlanProgress,
   myProfile,
   myRevisionEquipment,
   myRevisionOwnedItems,
+  myUserPreferences,
 } from './playerViews';
 export { createBuildShare, revokeBuildShare } from './sharing';
 export {
