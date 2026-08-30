@@ -130,10 +130,15 @@ test('survives exactly twenty routed planner cycles without duplicate results or
     if (edit.step === 'character') {
       await expect(page.getByLabel('Current Level')).toHaveValue('8');
       await expect(page.getByLabel('Highest Unlocked Floor')).toHaveValue('2');
+      await expect(page.getByRole('radio', { name: 'Two-Handed' })).toBeChecked();
+      await expect(page.getByLabel('Optimization Goal')).toHaveValue('balanced');
     }
     if (edit.step === 'stats') {
       await expect(page.getByLabel('STR')).toHaveValue('14');
+      await expect(page.getByLabel('DEF')).toHaveValue('0');
       await expect(page.getByLabel('AGI')).toHaveValue('3');
+      await expect(page.getByLabel('VIT')).toHaveValue('7');
+      await expect(page.getByLabel('LUK')).toHaveValue('0');
     }
     if (edit.step === 'equipment') {
       await expect(page.getByLabel('Main-hand weapon')).toHaveValue('iron-greatsword');
@@ -152,7 +157,11 @@ test('keeps invalid keyboard-only continuation on the route and focuses the firs
   const mainHand = page.getByLabel('Main-hand weapon');
   const continueEquipment = page.getByRole('button', { name: 'Continue' });
   await tabTo(page, continueEquipment);
-  await page.keyboard.press('Enter');
+  await page.keyboard.press('Shift+Tab');
+  await expect(page.getByRole('button', { name: 'Back' })).toBeFocused();
+  await page.keyboard.press('Tab');
+  await expect(continueEquipment).toBeFocused();
+  await page.keyboard.press('Space');
   await expect(page).toHaveURL(/\/equipment$/);
   await expect(mainHand).toBeFocused();
   await expect(mainHand).toHaveAttribute('aria-invalid', 'true');
