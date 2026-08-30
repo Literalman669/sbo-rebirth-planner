@@ -4,18 +4,47 @@ import {
   spawnSync,
 } from 'node:child_process';
 import { mkdtempSync, rmSync } from 'node:fs';
+import { createServer } from 'node:net';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import process from 'node:process';
 
 const uri = 'http://127.0.0.1:3000';
 const database = 'sbo-rebirth-optimizer-v2-test';
+const browserHost = '127.0.0.1';
+const browserPort = 4173;
 
 if (uri !== 'http://127.0.0.1:3000' || database !== 'sbo-rebirth-optimizer-v2-test') {
   throw new Error(
     'Refusing integration publish outside the fixed local test database',
   );
 }
+
+async function assertBrowserPortAvailable() {
+  const reservation = createServer();
+
+  try {
+    await new Promise((resolve, reject) => {
+      reservation.once('error', reject);
+      reservation.listen(browserPort, browserHost, resolve);
+    });
+  } catch (error) {
+    if (error && typeof error === 'object' && error.code === 'EADDRINUSE') {
+      throw new Error(
+        `Refusing to reuse an existing browser server at http://${browserHost}:${browserPort}`,
+      );
+    }
+    throw error;
+  } finally {
+    if (reservation.listening) {
+      await new Promise((resolve, reject) => {
+        reservation.close((error) => (error ? reject(error) : resolve()));
+      });
+    }
+  }
+}
+
+await assertBrowserPortAvailable();
 
 const root = new URL('../', import.meta.url);
 const temporaryPrefix = path.join(tmpdir(), 'sbo-optimizer-v2-stdb-');
