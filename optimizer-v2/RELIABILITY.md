@@ -292,3 +292,11 @@ layers: 46 client files / 362 tests, 5 module files / 69 tests, 20 root script
 tests, 4 wiki-tool tests, typechecks, fallback coverage, the SpacetimeDB 2.8.3
 build, all four isolated integration phases, and Pages 3/3. The live current
 dataset remains `2026.08.29.1` until the unresolved catalog review is closed.
+
+Deployment head `1b8883a` passed [Optimizer V2 CI run 33312589475](https://github.com/Literalman669/sbo-rebirth-planner/actions/runs/33312589475)
+and [Deploy Optimizer V2 run 33312589476](https://github.com/Literalman669/sbo-rebirth-planner/actions/runs/33312589476).
+Maincloud accepted the additive catalog schema without deleting or manually
+migrating existing player/build/share data. Production auth verification,
+Pages artifact tests, upload, and deployment passed. Live read-only smoke
+confirmed the v1 dataset badge, Level-1 three-point spend-now advice, actual
+Levels 2–11, zero console warnings/errors, and a 375/375 mobile width.

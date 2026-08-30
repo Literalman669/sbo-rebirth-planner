@@ -50,6 +50,11 @@ completed on 2026-08-30.
   are normalized and source-backed, and unresolved layouts remain explicitly
   excluded. This is development evidence; production stays on dataset
   `2026.08.29.1` until the unresolved review is complete.
+- Deployment head `1b8883a`: [CI](https://github.com/Literalman669/sbo-rebirth-planner/actions/runs/33312589475)
+  and [deploy](https://github.com/Literalman669/sbo-rebirth-planner/actions/runs/33312589476)
+  succeeded. Live smoke verified spend-now, Levels 2–11, zero console
+  warnings/errors, and a width-safe 390×844 layout while retaining dataset
+  `2026.08.29.1`.
 
 ## One-time production evidence
 
