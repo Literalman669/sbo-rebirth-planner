@@ -22,6 +22,11 @@ test('serializes stable row order with exactly one trailing newline', () => {
     version: '2026.08.29.1',
     formulas: [{ id: 'z' }, { id: 'a' }],
     equipment: [{ id: 'z' }, { id: 'a' }],
+    mechanics: [{ id: 'z' }, { id: 'a' }],
+    catalog: [
+      { id: 'z', acquisitions: [{ id: 'b' }, { id: 'a' }], resistances: [], specialEffects: [] },
+      { id: 'a', acquisitions: [], resistances: [], specialEffects: [] },
+    ],
     knownGaps: [
       { path: 'melee', band: '300+' },
       { path: 'dagger', band: '250-299' },
@@ -35,6 +40,9 @@ test('serializes stable row order with exactly one trailing newline', () => {
   assert.ok(!first.endsWith('\n\n'));
   assert.deepEqual(JSON.parse(first).equipment.map((row) => row.id), ['a', 'z']);
   assert.deepEqual(JSON.parse(first).formulas.map((row) => row.id), ['a', 'z']);
+  assert.deepEqual(JSON.parse(first).mechanics.map((row) => row.id), ['a', 'z']);
+  assert.deepEqual(JSON.parse(first).catalog.map((row) => row.id), ['a', 'z']);
+  assert.deepEqual(JSON.parse(first).catalog[1].acquisitions.map((row) => row.id), ['a', 'b']);
   assert.deepEqual(
     JSON.parse(first).knownGaps.map((row) => `${row.path}:${row.band}`),
     ['dagger:250-299', 'melee:300+'],

@@ -1,6 +1,7 @@
 import { Timestamp } from 'spacetimedb';
 import { describe, expect, it } from 'vitest';
-import { mapPublishedRelease } from './datasetMapper';
+import { fallbackRelease } from '../../data/fallbackRelease';
+import { mapPublishedRelease, mapPublishedReleaseV2 } from './datasetMapper';
 
 const formulaIds = [
   'points-per-level',
@@ -169,5 +170,126 @@ describe('mapPublishedRelease', () => {
         input.sources,
       ),
     ).toThrow(/published dataset is invalid/i);
+  });
+});
+
+describe('mapPublishedReleaseV2', () => {
+  function versionTwoRows() {
+    const equipmentSource = {
+      id: 'source:steel-sword',
+      releaseVersion: '2026.08.30.1',
+      entityKind: 'catalog-equipment',
+      entityId: 'steel-sword',
+      sourceUrl: 'https://swordbloxonlinerebirth.fandom.com/wiki/One-Handed',
+      sourceRevision: '26216',
+      capturedAt: '2026-07-01T06:42:25Z',
+      lastReviewedAt: '2026-08-30',
+    };
+    const mechanicSources = fallbackRelease.mechanics.map((mechanic) => ({
+      id: `source:${mechanic.id}`,
+      releaseVersion: '2026.08.30.1',
+      entityKind: 'mechanic',
+      entityId: mechanic.id,
+      sourceUrl: mechanic.sourceUrl,
+      sourceRevision: mechanic.sourceRevision,
+      capturedAt: '2026-08-30T00:00:00Z',
+      lastReviewedAt: '2026-08-30',
+    }));
+    return {
+      release: {
+        version: '2026.08.30.1',
+        formulaSetVersion: 'sbor-stats-v2',
+        sourceSummary: 'Reviewed catalog',
+        publishedAt: { toISOString: () => '2026-08-30T12:00:00.000Z' },
+        lastReviewedAt: '2026-08-30',
+      },
+      catalogEquipment: [{
+        id: '2026.08.30.1:steel-sword',
+        releaseVersion: '2026.08.30.1',
+        itemId: 'steel-sword',
+        name: 'Steel Sword',
+        slot: 'main-hand',
+        weaponPaths: 'one-handed,dual-wield',
+        attack: 8.4,
+        defense: 0,
+        dexterity: 0,
+        levelRequirement: 1,
+        skillRequirement: 5,
+        verificationStatus: 'verified',
+        sourceRefId: equipmentSource.id,
+        lastReviewedAt: '2026-08-30',
+      }],
+      aliases: [{
+        id: 'alias:steel-blade',
+        releaseVersion: '2026.08.30.1',
+        itemId: 'steel-sword',
+        alias: 'Steel Blade',
+        sourceRefId: equipmentSource.id,
+      }],
+      acquisitions: [{
+        id: 'acquisition:floor-1',
+        releaseVersion: '2026.08.30.1',
+        itemId: 'steel-sword',
+        acquisitionType: 'shop',
+        detail: 'Floor 1 Shop',
+        floor: 1,
+        availability: 'always',
+        accessType: 'free',
+        sourceRefId: equipmentSource.id,
+      }],
+      resistances: [],
+      effects: [],
+      mechanics: fallbackRelease.mechanics.map((mechanic) => ({
+        id: `mechanic:${mechanic.id}`,
+        releaseVersion: '2026.08.30.1',
+        mechanicId: mechanic.id,
+        expression: mechanic.expression,
+        units: mechanic.units,
+        applicability: mechanic.applicability,
+        boundaryBehavior: mechanic.boundaryBehavior,
+        computability: mechanic.computability,
+        parametersJson: JSON.stringify(mechanic.parameters),
+        verificationStatus: mechanic.verificationStatus,
+        sourceRefId: `source:${mechanic.id}`,
+        lastReviewedAt: '2026-08-30',
+      })),
+      policy: {
+        releaseVersion: '2026.08.30.1',
+        policyVersion: 'sbor-policy-v2',
+        policyJson: JSON.stringify({ goals: ['balanced'] }),
+        lastReviewedAt: '2026-08-30',
+      },
+      sources: [equipmentSource, ...mechanicSources],
+    };
+  }
+
+  it('assembles catalog children and optimizer-safe equipment', () => {
+    const snapshot = mapPublishedReleaseV2(versionTwoRows());
+
+    expect(snapshot).toMatchObject({
+      version: '2026.08.30.1',
+      formulaSetVersion: 'sbor-stats-v2',
+      strategyPolicyVersion: 'sbor-policy-v2',
+    });
+    expect(snapshot.catalog[0]).toMatchObject({
+      id: 'steel-sword',
+      aliases: ['Steel Blade'],
+      acquisitions: [expect.objectContaining({ detail: 'Floor 1 Shop' })],
+    });
+    expect(snapshot.equipment[0]).toMatchObject({
+      id: 'steel-sword',
+      attack: 8.4,
+      acquisitionDetail: 'Floor 1 Shop',
+    });
+    expect(snapshot.mechanics).toHaveLength(9);
+  });
+
+  it('rejects an orphan acquisition instead of dropping it', () => {
+    const rows = versionTwoRows();
+    rows.acquisitions[0]!.itemId = 'missing-item';
+
+    expect(() => mapPublishedReleaseV2(rows)).toThrow(
+      'Orphaned acquisition acquisition:floor-1',
+    );
   });
 });

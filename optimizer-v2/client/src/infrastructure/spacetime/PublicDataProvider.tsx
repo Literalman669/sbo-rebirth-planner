@@ -16,7 +16,7 @@ import {
   createDatasetCache,
   type DatasetCache,
 } from '../storage/datasetCache';
-import { mapPublishedRelease } from './datasetMapper';
+import { mapPublishedRelease, mapPublishedReleaseV2 } from './datasetMapper';
 import {
   selectPreferredDataset,
   type DatasetSelection,
@@ -56,8 +56,29 @@ function PublicDatasetSubscription({
   const [equipmentRows, equipmentReady] = useTable(tables.equipment);
   const [formulaRows, formulasReady] = useTable(tables.formula);
   const [sourceRows, sourcesReady] = useTable(tables.sourceReference);
+  const [catalogRows, catalogReady] = useTable(tables.catalogEquipment);
+  const [aliasRows, aliasesReady] = useTable(tables.equipmentAlias);
+  const [acquisitionRows, acquisitionsReady] = useTable(
+    tables.equipmentAcquisition,
+  );
+  const [resistanceRows, resistancesReady] = useTable(
+    tables.equipmentResistance,
+  );
+  const [effectRows, effectsReady] = useTable(tables.equipmentSpecialEffect);
+  const [mechanicRows, mechanicsReady] = useTable(tables.mechanic);
+  const [policyRows, policiesReady] = useTable(tables.releaseStrategyPolicy);
   const allReady =
-    releasesReady && equipmentReady && formulasReady && sourcesReady;
+    releasesReady &&
+    equipmentReady &&
+    formulasReady &&
+    sourcesReady &&
+    catalogReady &&
+    aliasesReady &&
+    acquisitionsReady &&
+    resistancesReady &&
+    effectsReady &&
+    mechanicsReady &&
+    policiesReady;
   const [selection, setSelection] = useState<DatasetSelection>({
     snapshot: bundled,
     source: 'bundled',
@@ -94,12 +115,30 @@ function PublicDatasetSubscription({
     const mapped = new Map<string, DatasetSnapshot>();
     for (const release of releaseRows) {
       try {
-        const snapshot = mapPublishedRelease(
-          release,
-          equipmentRows,
-          formulaRows,
-          sourceRows,
-        );
+        const snapshot =
+          release.formulaSetVersion === 'sbor-stats-v2'
+            ? mapPublishedReleaseV2({
+                release,
+                catalogEquipment: catalogRows,
+                aliases: aliasRows,
+                acquisitions: acquisitionRows,
+                resistances: resistanceRows,
+                effects: effectRows,
+                mechanics: mechanicRows,
+                policy:
+                  policyRows.find(
+                    (policy) => policy.releaseVersion === release.version,
+                  ) ?? (() => {
+                    throw new Error('Catalog release has no strategy policy');
+                  })(),
+                sources: sourceRows,
+              })
+            : mapPublishedRelease(
+                release,
+                equipmentRows,
+                formulaRows,
+                sourceRows,
+              );
         mapped.set(snapshot.version, snapshot);
         void cache.put(snapshot).catch(() => {
           setWarning(
@@ -124,10 +163,17 @@ function PublicDatasetSubscription({
     }
   }, [
     allReady,
+    acquisitionRows,
+    aliasRows,
     cache,
+    catalogRows,
     equipmentRows,
+    effectRows,
     formulaRows,
+    mechanicRows,
+    policyRows,
     releaseRows,
+    resistanceRows,
     sourceRows,
   ]);
 

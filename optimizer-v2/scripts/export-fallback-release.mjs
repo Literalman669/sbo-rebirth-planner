@@ -20,6 +20,24 @@ export function serializeFallback(snapshot) {
     equipment: [...snapshot.equipment].sort((left, right) =>
       left.id.localeCompare(right.id),
     ),
+    mechanics: [...(snapshot.mechanics ?? [])].sort((left, right) =>
+      left.id.localeCompare(right.id),
+    ),
+    catalog: [...(snapshot.catalog ?? [])]
+      .map((item) => ({
+        ...item,
+        aliases: [...(item.aliases ?? [])].sort(),
+        acquisitions: [...(item.acquisitions ?? [])].sort((left, right) =>
+          left.id.localeCompare(right.id),
+        ),
+        resistances: [...(item.resistances ?? [])].sort((left, right) =>
+          `${left.status}:${left.percent}`.localeCompare(
+            `${right.status}:${right.percent}`,
+          ),
+        ),
+        specialEffects: [...(item.specialEffects ?? [])].sort(),
+      }))
+      .sort((left, right) => left.id.localeCompare(right.id)),
     knownGaps: [...(snapshot.knownGaps ?? [])].sort((left, right) =>
       `${left.path}:${left.band}`.localeCompare(`${right.path}:${right.band}`),
     ),
@@ -46,7 +64,10 @@ async function main() {
     process.env.SBO_FALLBACK_OUTPUT ??
       'client/src/data/fallback-release.json',
   );
-  const [{ DbConnection, tables }, { mapPublishedRelease }] = await Promise.all([
+  const [
+    { DbConnection, tables },
+    { mapPublishedRelease, mapPublishedReleaseV2 },
+  ] = await Promise.all([
     import('../client/src/module_bindings/index.ts'),
     import('../client/src/infrastructure/spacetime/datasetMapper.ts'),
   ]);
@@ -62,18 +83,43 @@ async function main() {
           tables.equipment,
           tables.formula,
           tables.sourceReference,
+          tables.catalogEquipment,
+          tables.equipmentAlias,
+          tables.equipmentAcquisition,
+          tables.equipmentResistance,
+          tables.equipmentSpecialEffect,
+          tables.mechanic,
+          tables.releaseStrategyPolicy,
         ]);
     });
     try {
       const release = selectSingleCurrentRelease([
         ...connection.db.datasetRelease.iter(),
       ]);
-      const snapshot = mapPublishedRelease(
-        release,
-        [...connection.db.equipment.iter()],
-        [...connection.db.formula.iter()],
-        [...connection.db.sourceReference.iter()],
-      );
+      const snapshot =
+        release.formulaSetVersion === 'sbor-stats-v2'
+          ? mapPublishedReleaseV2({
+              release,
+              catalogEquipment: [...connection.db.catalogEquipment.iter()],
+              aliases: [...connection.db.equipmentAlias.iter()],
+              acquisitions: [...connection.db.equipmentAcquisition.iter()],
+              resistances: [...connection.db.equipmentResistance.iter()],
+              effects: [...connection.db.equipmentSpecialEffect.iter()],
+              mechanics: [...connection.db.mechanic.iter()],
+              policy:
+                [...connection.db.releaseStrategyPolicy.iter()].find(
+                  (row) => row.releaseVersion === release.version,
+                ) ?? (() => {
+                  throw new Error('Catalog release has no strategy policy');
+                })(),
+              sources: [...connection.db.sourceReference.iter()],
+            })
+          : mapPublishedRelease(
+              release,
+              [...connection.db.equipment.iter()],
+              [...connection.db.formula.iter()],
+              [...connection.db.sourceReference.iter()],
+            );
       await writeFile(outputPath, serializeFallback(snapshot), 'utf8');
       process.stdout.write(`Exported ${snapshot.version} to ${outputPath}\n`);
     } finally {
