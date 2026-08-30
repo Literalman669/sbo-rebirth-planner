@@ -55,6 +55,11 @@ export function SharedBuildView({ profile, snapshot }: SharedBuildViewProps) {
       </section>
       <section className="result-band" aria-labelledby="shared-levels-heading">
         <h3 id="shared-levels-heading">Next levels</h3>
+        {plan.warnings.length > 0 ? (
+          <aside className="plan-warnings" role="status">
+            {plan.warnings.map((warning) => <p key={warning}>{warning}</p>)}
+          </aside>
+        ) : null}
         <ul>
           {plan.statPlan.milestones.map((milestone) => (
             <li key={milestone.afterLevel}>
@@ -73,8 +78,23 @@ export function SharedBuildView({ profile, snapshot }: SharedBuildViewProps) {
           <ul>
             {plan.upgradeTargets.map((target) => (
               <li key={`${target.slot}:${target.itemId}`}>
-                <strong>{items.get(target.itemId)?.name ?? target.itemId}</strong>{' '}
-                — {target.acquisitionDetail}{' '}
+                <div>
+                  <strong>{items.get(target.itemId)?.name ?? target.itemId}</strong>
+                </div>
+                <div>
+                  <span>Requirement</span>{' '}
+                  <strong>{target.requirementText}</strong>
+                </div>
+                {target.eligibilityNote ? (
+                  <div>
+                    <span>Eligibility</span>{' '}
+                    <strong>{target.eligibilityNote}</strong>
+                  </div>
+                ) : null}
+                <div>
+                  <span>How to obtain</span>{' '}
+                  <strong>{target.acquisitionDetail}</strong>
+                </div>
                 <a href={target.sourceUrl} target="_blank" rel="noreferrer">
                   Wiki source
                 </a>

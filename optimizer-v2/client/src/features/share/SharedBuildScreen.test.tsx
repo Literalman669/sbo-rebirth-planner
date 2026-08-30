@@ -76,6 +76,70 @@ describe('SharedBuildView', () => {
     expect(screen.getByText('Dataset bootstrap-0')).toBeVisible();
   });
 
+  it('shows reduced-precision warning as a status before the shared future stat plan', () => {
+    render(
+      <MemoryRouter>
+        <SharedBuildView
+          profile={{
+            ...profile,
+            stats: { str: 0, def: 0, agi: 0, vit: 0, luk: 0 },
+          }}
+          snapshot={bootstrapRelease}
+        />
+      </MemoryRouter>,
+    );
+
+    const warning = screen.getByText(
+      'The optimizer sees 24 points not represented in invested stats and will treat plan precision as reduced.',
+    );
+    const futurePlan = screen.getByText(
+      (_, element) =>
+        element?.tagName === 'LI' &&
+        element.textContent?.startsWith('Level +5: STR +') === true,
+    );
+    expect(warning.closest('[role="status"]')).toBeVisible();
+    expect(
+      warning.compareDocumentPosition(futurePlan) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
+  it('shows optimizer-provided requirements and confirmation guidance for future shared upgrades', () => {
+    const steelGreatsword = bootstrapRelease.equipment.find(
+      (item) => item.id === 'steel-greatsword',
+    )!;
+    const futureItem = {
+      ...steelGreatsword,
+      id: 'future-steel-greatsword',
+      name: 'Future Steel Greatsword',
+      attack: steelGreatsword.attack + 20,
+      levelRequirement: 15,
+      skillRequirement: 10,
+    };
+
+    render(
+      <MemoryRouter>
+        <SharedBuildView
+          profile={{
+            ...profile,
+            weaponSkill: undefined,
+            stats: { str: 0, def: 0, agi: 0, vit: 0, luk: 0 },
+          }}
+          snapshot={{
+            ...bootstrapRelease,
+            equipment: [...bootstrapRelease.equipment, futureItem],
+          }}
+        />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByText('Future Steel Greatsword')).toBeVisible();
+    expect(screen.getByText('Level 15 · Weapon Skill 10')).toBeVisible();
+    expect(
+      screen.getByText('Requires Level 15 · Requires Weapon Skill 10; confirm in game'),
+    ).toBeVisible();
+  });
+
   it('resolves the share dataset version instead of using the current release', async () => {
     const current = {
       ...bootstrapRelease,

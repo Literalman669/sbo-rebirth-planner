@@ -29,7 +29,7 @@ The following existing client build artifact chunk sizes were captured in bytes:
 | --- | ---: |
 | `data-vendor-DbPbAp63.js` | 87,149 |
 | `index-aTb0C0Q0.css` | 18,879 |
-| `index-B2iOkPIv.js` | 128,860 |
+| `index-BpPnh8FJ.js` | 129,405 |
 | `react-vendor-CBRsJp3P.js` | 353,721 |
 | `rolldown-runtime-CbXtAM7H.js` | 589 |
 | `spacetime-vendor-Do-ucTAG.js` | 129,149 |
@@ -56,6 +56,7 @@ The following existing client build artifact chunk sizes were captured in bytes:
 | F-05 | critical | Use a readiness-valid level with every stat at 500, leaving fewer than 30 allocatable stat slots | Allocator could exhaust stat capacity and throw instead of returning an explicit blocker | Task 15 RED 14 cases; focused readiness/planner/results/share 44/44; fresh client units | Readiness returns `insufficient-stat-capacity`; Stats, Results, Shared, and optimizer stop before allocation | closed (`b6812f7`) |
 | F-06 | critical | Submit two distinct child-set revisions from the same parent without awaiting either reducer call | The former 100-revision harness was sequential and could not establish same-parent concurrency behavior | Task 18 eight `Promise.allSettled` pairs: 16 fulfilled siblings, +16 revisions, +24 each child table; fresh integration | Test-only two-live-connection concurrent harness asserts both siblings, exact deltas, and only a pair-eight head without assuming which sibling wins | closed (`6fdff11`) |
 | F-07 | important | Start fixed-local integration while another process occupies the browser port | Playwright allowed `reuseExistingServer`; the lifecycle could interact with a prior server instead of proving fresh ownership | Task 19 RED; focused config/lifecycle 2/2 and fresh fixed-local integration | `reuseExistingServer: false` plus `127.0.0.1:4173` bind preflight; no unknown process is contacted or terminated | closed (`366ac96`) |
+| F-08 | important | Open an under-budget or future/unknown-skill shared snapshot | Shared view recomputed a correct historical plan but omitted its precision warning, upgrade requirement text, and optimizer-provided confirmation note | Task 21 RED: shared warning status/order and future requirement/eligibility visibility; exact-release substitution regressions retained | Render `RecommendationPlan.warnings`, `requirementText`, and optional `eligibilityNote` without recomputing or changing the read-only route | closed (Task 21) |
 | E-01 | external | Confirm earned points for a real Level-1 gameplay character | The `level × pointsPerLevel` rule is dataset/schema evidence, not a gameplay observation | Schema protects `pointsPerLevel: 3`; gameplay confirmation not captured | No code change authorized | open — Level-1 baseline not gameplay-confirmed |
 | E-02 | external | Configure and exercise social login | No social OAuth provider credentials/configuration are enabled or discoverable in this repository | Auth copy regression only; no provider integration test is possible | Requires provider-console and SpacetimeAuth dashboard configuration | open — credentials/config not enabled |
 
@@ -124,3 +125,18 @@ built Pages deep-link suite completed 2 passed tests in 1.5 s; its Vite build
 completed in 222 ms. The current built chunks are listed above, and `git diff
 --exit-code -- client/src/module_bindings` exited 0. This local gate neither
 dispatched CI nor published, deployed, or smoke-tested an external target.
+
+## Task 21 shared-metadata clean gate (2026-08-30)
+
+Task 21 first recorded the focused RED failure in `SharedBuildScreen.test.tsx`:
+the shared view omitted the literal 24-point reduced-precision warning and the
+future target's requirement/eligibility metadata. Its focused shared and
+optimizer suite then passed 20 tests. The fresh `npm run test:unit` layer
+passed 40 client files / 319 tests in 15.88 s, 3 module files / 62 tests in
+280 ms, and 15 scripts in 108.7679 ms; both workspace typechecks passed. The
+fresh clean reliability runner repeated all six local-only layers, including
+coverage validation, module build, 24 fixed-local integration passes with 8
+intended skips in 49.0 s, and two built Pages deep-link passes in 1.4 s.
+The rebuilt entry chunk is `index-BpPnh8FJ.js` (129,405 bytes), and the final
+binding diff command exited 0. No CI, deployment, publication, or live smoke
+was requested; the two external findings above remain open.
