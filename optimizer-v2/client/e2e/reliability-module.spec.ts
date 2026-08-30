@@ -1,6 +1,7 @@
 import { expect, test, type TestInfo } from '@playwright/test';
 import 'fake-indexeddb/auto';
 import { writeFile } from 'node:fs/promises';
+import type { Identity } from 'spacetimedb';
 import type { CharacterProfile } from '../src/domain/build/model';
 import {
   createBuildRepository,
@@ -23,6 +24,7 @@ const historicalShareId = `historical-snapshot-${'h'.repeat(24)}`;
 
 type TestConnection = {
   connection: DbConnection;
+  identity: Identity;
   token: string;
   subscription?: SubscriptionHandle;
 };
@@ -105,8 +107,8 @@ async function connect(token?: string): Promise<TestConnection> {
     let builder = DbConnection.builder()
       .withUri(uri)
       .withDatabaseName(databaseName)
-      .onConnect((connection, _identity, issuedToken) =>
-        resolve({ connection, token: issuedToken }),
+      .onConnect((connection, identity, issuedToken) =>
+        resolve({ connection, identity, token: issuedToken }),
       )
       .onConnectError((_context, error) => reject(error));
 
@@ -141,6 +143,28 @@ async function subscribeToPublicShares(testConnection: TestConnection) {
         tables.sharedBuild,
         tables.sharedBuildEquipment,
         tables.sharedBuildOwnedItem,
+      ]);
+  });
+  testConnection.subscription = subscription;
+}
+
+async function subscribeToPublicationViews(testConnection: TestConnection) {
+  const subscription = await new Promise<SubscriptionHandle>((resolve, reject) => {
+    const handle = testConnection.connection
+      .subscriptionBuilder()
+      .onApplied(() => resolve(handle))
+      .onError(() => reject(new Error('Publication stress subscription failed')))
+      .subscribe([
+        tables.datasetRelease,
+        tables.equipment,
+        tables.formula,
+        tables.sourceReference,
+        tables.myCuratorAccess,
+        tables.myWikiCandidates,
+        tables.myReleaseDrafts,
+        tables.myDraftEquipment,
+        tables.myDraftFormulas,
+        tables.myDraftSourceReferences,
       ]);
   });
   testConnection.subscription = subscription;
@@ -244,6 +268,428 @@ function liveReducers(testConnection: TestConnection): CloudReducers {
     restoreBuildRevision: (args) =>
       testConnection.connection.reducers.restoreBuildRevision(args),
     deleteBuild: (args) => testConnection.connection.reducers.deleteBuild(args),
+  };
+}
+
+const publicationRevisions = {
+  Stats: '900001',
+  'Two-Handed': '900002',
+  'One-Handed': '900003',
+  Rapier: '900004',
+  Dagger: '900005',
+  Fists: '900006',
+  Armor: '900007',
+  Shields: '900008',
+} as const;
+
+const publicationEquipment = [
+  {
+    itemId: 'iron-greatsword',
+    name: 'Iron Greatsword',
+    pageTitle: 'Two-Handed',
+    slot: 'main-hand',
+    weaponPaths: 'two-handed',
+    attack: 3,
+    defense: 0,
+    dexterity: 0,
+    skillRequirement: 1,
+    acquisitionType: 'starter',
+  },
+  {
+    itemId: 'steel-greatsword',
+    name: 'Steel Greatsword',
+    pageTitle: 'Two-Handed',
+    slot: 'main-hand',
+    weaponPaths: 'two-handed',
+    attack: 10,
+    defense: 0,
+    dexterity: 0,
+    skillRequirement: 5,
+    acquisitionType: 'shop',
+  },
+  {
+    itemId: 'beginner-sword',
+    name: 'Beginner Sword',
+    pageTitle: 'One-Handed',
+    slot: 'main-hand',
+    weaponPaths: 'one-handed,dual-wield',
+    attack: 3.4,
+    defense: 0,
+    dexterity: 0,
+    skillRequirement: 1,
+    acquisitionType: 'starter',
+  },
+  {
+    itemId: 'iron-rapier',
+    name: 'Iron Rapier',
+    pageTitle: 'Rapier',
+    slot: 'main-hand',
+    weaponPaths: 'rapier',
+    attack: 2.6,
+    defense: 0,
+    dexterity: 0,
+    skillRequirement: 1,
+    acquisitionType: 'starter',
+  },
+  {
+    itemId: 'iron-dagger',
+    name: 'Iron Dagger',
+    pageTitle: 'Dagger',
+    slot: 'main-hand',
+    weaponPaths: 'dagger',
+    attack: 2.5,
+    defense: 0,
+    dexterity: 0,
+    skillRequirement: 1,
+    acquisitionType: 'starter',
+  },
+  {
+    itemId: 'fists',
+    name: 'Fists',
+    pageTitle: 'Fists',
+    slot: 'main-hand',
+    weaponPaths: 'melee',
+    attack: 2.5,
+    defense: 0,
+    dexterity: 0,
+    skillRequirement: 1,
+    acquisitionType: 'starter',
+  },
+  {
+    itemId: 'beginner-armor',
+    name: 'Beginner Armor',
+    pageTitle: 'Armor',
+    slot: 'armor',
+    weaponPaths: '',
+    attack: 0,
+    defense: 0.5,
+    dexterity: 3,
+    skillRequirement: undefined,
+    acquisitionType: 'starter',
+  },
+  {
+    itemId: 'wooden-shield',
+    name: 'Wooden Shield',
+    pageTitle: 'Shields',
+    slot: 'shield',
+    weaponPaths: 'one-handed,rapier,dagger',
+    attack: 0,
+    defense: 0.6,
+    dexterity: 0,
+    skillRequirement: undefined,
+    acquisitionType: 'starter',
+  },
+] as const;
+
+const publicationFormulaIds = [
+  'points-per-level',
+  'attack-from-str',
+  'damage-reduction-from-def',
+  'bonus-hp-from-vit',
+  'stamina',
+  'walk-speed-from-agi',
+  'sprint-speed-from-agi',
+  'crit-bonus-from-luk',
+  'drop-bonus-from-luk',
+] as const;
+
+type PublicationInvalidKind =
+  | 'valid'
+  | 'missing-formula'
+  | 'missing-path'
+  | 'duplicate-item'
+  | 'duplicate-formula'
+  | 'duplicate-source'
+  | 'invalid-gap'
+  | 'wrong-page'
+  | 'mismatched-revision'
+  | 'unaccepted-candidate'
+  | 'missing-source';
+
+function publicationCandidateId(
+  pageTitle: keyof typeof publicationRevisions,
+  revisionId: string = publicationRevisions[pageTitle],
+) {
+  return `${pageTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-')}:${revisionId}`;
+}
+
+function publicationWikiResponse(pageTitle: string, revisionId: string) {
+  return JSON.stringify({
+    query: {
+      pages: [
+        {
+          title: pageTitle,
+          revisions: [
+            {
+              revid: Number(revisionId),
+              timestamp: '2026-08-29T12:00:00Z',
+              slots: { main: { content: `${pageTitle} Task 9 fixture` } },
+            },
+          ],
+        },
+      ],
+    },
+  });
+}
+
+async function ensureAcceptedPublicationCandidates(
+  owner: TestConnection,
+  curator: TestConnection,
+) {
+  for (const [pageTitle, revisionId] of Object.entries(publicationRevisions)) {
+    const typedPageTitle = pageTitle as keyof typeof publicationRevisions;
+    const candidateId = publicationCandidateId(typedPageTitle);
+    const current = [...curator.connection.db.myWikiCandidates.iter()].find(
+      (row) => row.id === candidateId,
+    );
+    if (!current) {
+      await owner.connection.reducers.stageWikiFixtureForLocalTest({
+        pageTitle,
+        responseBody: publicationWikiResponse(pageTitle, revisionId),
+      });
+    }
+    await expect
+      .poll(
+        () =>
+          [...curator.connection.db.myWikiCandidates.iter()].find(
+            (row) => row.id === candidateId,
+          )?.status,
+      )
+      .toMatch(/pending|accepted/);
+    const staged = [...curator.connection.db.myWikiCandidates.iter()].find(
+      (row) => row.id === candidateId,
+    );
+    if (staged?.status === 'pending') {
+      await curator.connection.reducers.recordReviewDecision({
+        id: `task-9:review:${candidateId}`,
+        candidateId,
+        decision: 'accept',
+        note: `Task 9 reviewed ${pageTitle} at revision ${revisionId}.`,
+      });
+    }
+    await expect
+      .poll(
+        () =>
+          [...curator.connection.db.myWikiCandidates.iter()].find(
+            (row) => row.id === candidateId,
+          )?.status,
+      )
+      .toBe('accepted');
+  }
+}
+
+async function stagePendingPublicationCandidate(
+  owner: TestConnection,
+  curator: TestConnection,
+) {
+  const revisionId = '900099';
+  const candidateId = publicationCandidateId('Two-Handed', revisionId);
+  await owner.connection.reducers.stageWikiFixtureForLocalTest({
+    pageTitle: 'Two-Handed',
+    responseBody: publicationWikiResponse('Two-Handed', revisionId),
+  });
+  await expect
+    .poll(
+      () =>
+        [...curator.connection.db.myWikiCandidates.iter()].find(
+          (row) => row.id === candidateId,
+        )?.status,
+    )
+    .toBe('pending');
+  return { candidateId, revisionId };
+}
+
+async function seedPublicationDraft(
+  curator: TestConnection,
+  version: string,
+  kind: PublicationInvalidKind,
+) {
+  await curator.connection.reducers.createReleaseDraft({
+    version,
+    formulaSetVersion: 'sbor-stats-v1',
+    sourceSummary: `Task 9 ${kind} publication fixture`,
+    lastReviewedAt: '2026-08-29',
+  });
+
+  for (const item of publicationEquipment) {
+    if (kind === 'missing-path' && item.itemId === 'iron-rapier') continue;
+    const wrongPage = kind === 'wrong-page' && item.itemId === 'iron-greatsword';
+    const pendingCandidate =
+      kind === 'unaccepted-candidate' && item.itemId === 'iron-greatsword';
+    const pageTitle = wrongPage ? 'Stats' : item.pageTitle;
+    const revisionId = pendingCandidate
+      ? '900099'
+      : publicationRevisions[pageTitle];
+    const candidateId = publicationCandidateId(pageTitle, revisionId);
+    const sourceRefId = `${version}:source:equipment:${item.itemId}`;
+    if (!(kind === 'missing-source' && item.itemId === 'iron-greatsword')) {
+      await curator.connection.reducers.upsertDraftSourceReference({
+        id: sourceRefId,
+        releaseVersion: version,
+        entityKind: 'equipment',
+        entityId: item.itemId,
+        sourceUrl: `https://swordbloxonlinerebirth.fandom.com/wiki/${encodeURIComponent(pageTitle)}`,
+        sourceRevision:
+          kind === 'mismatched-revision' && item.itemId === 'iron-greatsword'
+            ? '999'
+            : revisionId,
+        capturedAt: '2026-08-29T12:00:00Z',
+        lastReviewedAt: '2026-08-29',
+        candidateId,
+      });
+    }
+    await curator.connection.reducers.upsertDraftEquipment({
+      id: `${version}:equipment:${item.itemId}`,
+      releaseVersion: version,
+      itemId: item.itemId,
+      name: item.name,
+      slot: item.slot,
+      weaponPaths: item.weaponPaths,
+      attack: item.attack,
+      defense: item.defense,
+      dexterity: item.dexterity,
+      levelRequirement: 1,
+      skillRequirement: item.skillRequirement,
+      floor: 1,
+      acquisitionType: item.acquisitionType,
+      acquisitionDetail: 'Task 9 exact integration fixture',
+      availability: 'always',
+      sourceRefId,
+      lastReviewedAt: '2026-08-29',
+      candidateId,
+    });
+  }
+
+  if (kind === 'duplicate-item') {
+    const sourceRefId = `${version}:source:equipment:iron-greatsword`;
+    await curator.connection.reducers.upsertDraftEquipment({
+      id: `${version}:equipment:duplicate-iron-greatsword`,
+      releaseVersion: version,
+      itemId: 'iron-greatsword',
+      name: 'Duplicate Iron Greatsword',
+      slot: 'main-hand',
+      weaponPaths: 'two-handed',
+      attack: 3,
+      defense: 0,
+      dexterity: 0,
+      levelRequirement: 1,
+      skillRequirement: 1,
+      floor: 1,
+      acquisitionType: 'starter',
+      acquisitionDetail: 'Task 9 duplicate item fixture',
+      availability: 'always',
+      sourceRefId,
+      lastReviewedAt: '2026-08-29',
+      candidateId: publicationCandidateId('Two-Handed'),
+    });
+  }
+
+  const statsCandidateId = publicationCandidateId('Stats');
+  for (const formulaId of publicationFormulaIds) {
+    if (kind === 'missing-formula' && formulaId === 'points-per-level') continue;
+    const sourceRefId = `${version}:source:formula:${formulaId}`;
+    await curator.connection.reducers.upsertDraftSourceReference({
+      id: sourceRefId,
+      releaseVersion: version,
+      entityKind: 'formula',
+      entityId: formulaId,
+      sourceUrl: 'https://swordbloxonlinerebirth.fandom.com/wiki/Stats',
+      sourceRevision: publicationRevisions.Stats,
+      capturedAt: '2026-08-29T12:00:00Z',
+      lastReviewedAt: '2026-08-29',
+      candidateId: statsCandidateId,
+    });
+    await curator.connection.reducers.upsertDraftFormula({
+      id: `${version}:formula:${formulaId}`,
+      releaseVersion: version,
+      formulaId,
+      expression: `${formulaId} literal Task 9 expression`,
+      units: 'verified units',
+      applicability: 'all players',
+      boundaryBehavior: 'literal reviewed boundary',
+      sourceRefId,
+      lastReviewedAt: '2026-08-29',
+      candidateId: statsCandidateId,
+    });
+  }
+
+  if (kind === 'duplicate-formula') {
+    await curator.connection.reducers.upsertDraftFormula({
+      id: `${version}:formula:duplicate-points-per-level`,
+      releaseVersion: version,
+      formulaId: 'points-per-level',
+      expression: 'duplicate literal Task 9 expression',
+      units: 'verified units',
+      applicability: 'all players',
+      boundaryBehavior: 'literal reviewed boundary',
+      sourceRefId: `${version}:source:formula:points-per-level`,
+      lastReviewedAt: '2026-08-29',
+      candidateId: statsCandidateId,
+    });
+  }
+
+  if (kind === 'duplicate-source') {
+    await curator.connection.reducers.upsertDraftSourceReference({
+      id: `${version}:source:duplicate:iron-greatsword`,
+      releaseVersion: version,
+      entityKind: 'equipment',
+      entityId: 'iron-greatsword',
+      sourceUrl:
+        'https://swordbloxonlinerebirth.fandom.com/wiki/Two-Handed',
+      sourceRevision: publicationRevisions['Two-Handed'],
+      capturedAt: '2026-08-29T12:00:00Z',
+      lastReviewedAt: '2026-08-29',
+      candidateId: publicationCandidateId('Two-Handed'),
+    });
+  }
+
+  if (kind === 'invalid-gap') {
+    await curator.connection.reducers.upsertDraftSourceReference({
+      id: `${version}:source:gap:invalid`,
+      releaseVersion: version,
+      entityKind: 'gap',
+      entityId: 'gap:two-handed:not-a-band',
+      sourceUrl:
+        'https://swordbloxonlinerebirth.fandom.com/wiki/Two-Handed',
+      sourceRevision: publicationRevisions['Two-Handed'],
+      capturedAt: '2026-08-29T12:00:00Z',
+      lastReviewedAt: '2026-08-29',
+      candidateId: publicationCandidateId('Two-Handed'),
+    });
+  }
+}
+
+function publicPublicationState(testConnection: TestConnection) {
+  const releases = [...testConnection.connection.db.datasetRelease.iter()];
+  return {
+    releaseCount: releases.length,
+    equipmentCount: [...testConnection.connection.db.equipment.iter()].length,
+    formulaCount: [...testConnection.connection.db.formula.iter()].length,
+    sourceCount: [...testConnection.connection.db.sourceReference.iter()].length,
+    currentVersions: releases
+      .filter((release) => release.isCurrent)
+      .map((release) => release.version)
+      .sort(),
+  };
+}
+
+function publishedVersionCounts(
+  testConnection: TestConnection,
+  version: string,
+) {
+  return {
+    releases: [...testConnection.connection.db.datasetRelease.iter()].filter(
+      (row) => row.version === version,
+    ).length,
+    equipment: [...testConnection.connection.db.equipment.iter()].filter(
+      (row) => row.releaseVersion === version,
+    ).length,
+    formulas: [...testConnection.connection.db.formula.iter()].filter(
+      (row) => row.releaseVersion === version,
+    ).length,
+    sources: [...testConnection.connection.db.sourceReference.iter()].filter(
+      (row) => row.releaseVersion === version,
+    ).length,
   };
 }
 
@@ -647,5 +1093,291 @@ test('keeps 100 immutable revisions converged across same-account subscriptions'
     disconnect(foreign);
     disconnect(secondary);
     disconnect(primary);
+  }
+});
+
+test('rejects invalid publications atomically and carries one reviewed row into a second release', async ({}, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop', 'Module integration runs once.');
+  const ownerToken = process.env.SBO_TEST_OWNER_TOKEN;
+  if (!ownerToken) throw new Error('SBO_TEST_OWNER_TOKEN is required');
+
+  const firstVersion = '2026.08.29.90';
+  const secondVersion = '2026.08.29.102';
+  const invalidEvidence: Array<{
+    category: string;
+    version: string;
+    rejection: string;
+    before: ReturnType<typeof publicPublicationState>;
+    observedAfter: ReturnType<typeof publicPublicationState>;
+  }> = [];
+  let owner: TestConnection | undefined;
+  let curator: TestConnection | undefined;
+
+  try {
+    owner = await connect(ownerToken);
+    curator = await connect();
+    await owner.connection.reducers.configureAuth({
+      mode: 'development',
+      issuer: '',
+      audience: '',
+    });
+    await owner.connection.reducers.grantCurator({ identity: curator.identity });
+    await subscribeToPublicationViews(curator);
+    await expect
+      .poll(() => [...curator!.connection.db.myCuratorAccess.iter()][0]?.access)
+      .toBe('curator');
+
+    await ensureAcceptedPublicationCandidates(owner, curator);
+    await stagePendingPublicationCandidate(owner, curator);
+
+    const publishRelease = (
+      curator.connection.reducers as unknown as {
+        publishRelease(args: { version: string }): Promise<void>;
+      }
+    ).publishRelease;
+    const createReleaseDraftFromCurrent = (
+      curator.connection.reducers as unknown as {
+        createReleaseDraftFromCurrent(args: {
+          version: string;
+          sourceSummary: string;
+          lastReviewedAt: string;
+        }): Promise<void>;
+      }
+    ).createReleaseDraftFromCurrent;
+
+    await seedPublicationDraft(curator, firstVersion, 'valid');
+    await publishRelease({ version: firstVersion });
+    await expect
+      .poll(() => publicPublicationState(curator!).currentVersions)
+      .toEqual([firstVersion]);
+    await expect
+      .poll(() => publishedVersionCounts(curator!, firstVersion))
+      .toEqual({ releases: 1, equipment: 8, formulas: 9, sources: 17 });
+
+    const invalidCases: readonly {
+      category: string;
+      version: string;
+      kind: Exclude<PublicationInvalidKind, 'valid'>;
+      error: string;
+    }[] = [
+      {
+        category: 'missing required formula',
+        version: '2026.08.29.91',
+        kind: 'missing-formula',
+        error: 'Missing required formula: points-per-level',
+      },
+      {
+        category: 'missing optimizer path',
+        version: '2026.08.29.92',
+        kind: 'missing-path',
+        error: 'Missing weapon-path coverage: rapier',
+      },
+      {
+        category: 'duplicate item ID',
+        version: '2026.08.29.93',
+        kind: 'duplicate-item',
+        error: 'Duplicate equipment item ID: iron-greatsword',
+      },
+      {
+        category: 'duplicate formula ID',
+        version: '2026.08.29.94',
+        kind: 'duplicate-formula',
+        error: 'Duplicate formula ID: points-per-level',
+      },
+      {
+        category: 'duplicate public source ID',
+        version: '2026.08.29.95',
+        kind: 'duplicate-source',
+        error:
+          'Duplicate public source reference ID: 2026.08.29.95:iron-greatsword',
+      },
+      {
+        category: 'invalid known-gap grammar',
+        version: '2026.08.29.96',
+        kind: 'invalid-gap',
+        error: 'has an invalid known-gap identifier',
+      },
+      {
+        category: 'wrong candidate page',
+        version: '2026.08.29.97',
+        kind: 'wrong-page',
+        error:
+          'Equipment iron-greatsword must use the Two-Handed candidate page',
+      },
+      {
+        category: 'mismatched source revision',
+        version: '2026.08.29.98',
+        kind: 'mismatched-revision',
+        error: 'does not match candidate two-handed:900002',
+      },
+      {
+        category: 'unaccepted candidate',
+        version: '2026.08.29.99',
+        kind: 'unaccepted-candidate',
+        error: 'Candidate two-handed:900099 is not accepted',
+      },
+      {
+        category: 'missing source reference',
+        version: '2026.08.29.100',
+        kind: 'missing-source',
+        error: 'Equipment iron-greatsword has no source reference',
+      },
+    ];
+
+    for (const invalidCase of invalidCases) {
+      await seedPublicationDraft(
+        curator,
+        invalidCase.version,
+        invalidCase.kind,
+      );
+      const before = publicPublicationState(curator);
+      const rejection = await publishRelease({ version: invalidCase.version }).then(
+        () => 'REDUCER RESOLVED WITHOUT REJECTION',
+        (error: unknown) => (error instanceof Error ? error.message : String(error)),
+      );
+      const observedAfter = publicPublicationState(curator);
+      invalidEvidence.push({
+        category: invalidCase.category,
+        version: invalidCase.version,
+        rejection,
+        before,
+        observedAfter,
+      });
+      expect(rejection).toContain(invalidCase.error);
+      await expect
+        .poll(() => publicPublicationState(curator!))
+        .toEqual(before);
+    }
+
+    const beforeUnsupportedFormulaSet = publicPublicationState(curator);
+    const unsupportedFormulaSetRejection = await curator.connection.reducers
+      .createReleaseDraft({
+        version: '2026.08.29.101',
+        formulaSetVersion: 'sbor-stats-v2',
+        sourceSummary: 'Task 9 unsupported formula set fixture',
+        lastReviewedAt: '2026-08-29',
+      })
+      .then(
+        () => 'REDUCER RESOLVED WITHOUT REJECTION',
+        (error: unknown) => (error instanceof Error ? error.message : String(error)),
+      );
+    const afterUnsupportedFormulaSet = publicPublicationState(curator);
+    invalidEvidence.push({
+      category: 'unsupported formula set',
+      version: '2026.08.29.101',
+      rejection: unsupportedFormulaSetRejection,
+      before: beforeUnsupportedFormulaSet,
+      observedAfter: afterUnsupportedFormulaSet,
+    });
+    expect(unsupportedFormulaSetRejection).toContain(
+      'Formula set version is unsupported',
+    );
+    await expect
+      .poll(() => publicPublicationState(curator!))
+      .toEqual(beforeUnsupportedFormulaSet);
+
+    await createReleaseDraftFromCurrent({
+      version: secondVersion,
+      sourceSummary: 'Task 9 carried-forward release with one reviewed change',
+      lastReviewedAt: '2026-08-30',
+    });
+    await expect
+      .poll(() => ({
+        equipment: [...curator!.connection.db.myDraftEquipment.iter()].filter(
+          (row) => row.releaseVersion === secondVersion,
+        ).length,
+        formulas: [...curator!.connection.db.myDraftFormulas.iter()].filter(
+          (row) => row.releaseVersion === secondVersion,
+        ).length,
+        sources: [
+          ...curator!.connection.db.myDraftSourceReferences.iter(),
+        ].filter((row) => row.releaseVersion === secondVersion).length,
+      }))
+      .toEqual({ equipment: 8, formulas: 9, sources: 17 });
+
+    const reviewedRow = [
+      ...curator.connection.db.myDraftEquipment.iter(),
+    ].find(
+      (row) =>
+        row.releaseVersion === secondVersion &&
+        row.itemId === 'iron-greatsword',
+    );
+    expect(reviewedRow).toBeDefined();
+    await curator.connection.reducers.upsertDraftEquipment({
+      ...reviewedRow!,
+      attack: 4,
+      lastReviewedAt: '2026-08-30',
+    });
+    await publishRelease({ version: secondVersion });
+
+    await expect
+      .poll(() => publicPublicationState(curator!).currentVersions)
+      .toEqual([secondVersion]);
+    await expect
+      .poll(() => ({
+        first: publishedVersionCounts(curator!, firstVersion),
+        second: publishedVersionCounts(curator!, secondVersion),
+      }))
+      .toEqual({
+        first: { releases: 1, equipment: 8, formulas: 9, sources: 17 },
+        second: { releases: 1, equipment: 8, formulas: 9, sources: 17 },
+      });
+    expect(
+      [...curator.connection.db.datasetRelease.iter()].filter(
+        (release) => release.isCurrent,
+      ),
+    ).toHaveLength(1);
+    expect(
+      [...curator.connection.db.equipment.iter()].find(
+        (row) =>
+          row.releaseVersion === firstVersion &&
+          row.itemId === 'iron-greatsword',
+      ),
+    ).toMatchObject({ attack: 3, lastReviewedAt: '2026-08-29' });
+    expect(
+      [...curator.connection.db.equipment.iter()].find(
+        (row) =>
+          row.releaseVersion === secondVersion &&
+          row.itemId === 'iron-greatsword',
+      ),
+    ).toMatchObject({ attack: 4, lastReviewedAt: '2026-08-30' });
+    expect(invalidEvidence).toHaveLength(11);
+    expect(
+      invalidEvidence.every(
+        (entry) =>
+          JSON.stringify(entry.before) === JSON.stringify(entry.observedAfter),
+      ),
+    ).toBe(true);
+  } catch (error) {
+    const evidencePath = testInfo.outputPath(
+      'dataset-publication-stress-evidence.json',
+    );
+    await writeFile(
+      evidencePath,
+      JSON.stringify(
+        {
+          firstVersion,
+          secondVersion,
+          invalidEvidence,
+          publicState: curator ? publicPublicationState(curator) : undefined,
+          firstVersionCounts: curator
+            ? publishedVersionCounts(curator, firstVersion)
+            : undefined,
+          secondVersionCounts: curator
+            ? publishedVersionCounts(curator, secondVersion)
+            : undefined,
+        },
+        null,
+        2,
+      ),
+    );
+    await testInfo.attach('dataset-publication-stress-evidence', {
+      path: evidencePath,
+      contentType: 'application/json',
+    });
+    throw error;
+  } finally {
+    disconnect(curator);
+    disconnect(owner);
   }
 });

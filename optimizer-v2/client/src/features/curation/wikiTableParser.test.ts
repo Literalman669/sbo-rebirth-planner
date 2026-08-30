@@ -68,23 +68,152 @@ describe('parseWeaponListPage', () => {
     });
   });
 
-  it('warns and excludes ambiguous numeric rows', () => {
-    const ambiguous = fixture('dagger').replace('|2.5', '|2.5 - 4.0');
-    const result = parseWeaponListPage('Dagger', ambiguous);
+  const malformedTables = [
+    {
+      name: 'a row with a missing acquisition cell using LF',
+      wikitext: [
+        '{| class="wikitable"',
+        '!Weapon Name',
+        '!Skill Level',
+        '!Attack Stat',
+        '!How to Obtain',
+        '|-',
+        '|[[Iron Dagger]]',
+        '|1',
+        '|2.5',
+        '|}',
+      ].join('\n'),
+      warning: 'Malformed weapon row:',
+    },
+    {
+      name: 'a nonnumeric attack stat using CRLF',
+      wikitext: [
+        '{| class="wikitable"',
+        '!Weapon Name',
+        '!Skill Level',
+        '!Attack Stat',
+        '!How to Obtain',
+        '|-',
+        '|[[Iron Dagger]]',
+        '|1',
+        '|many',
+        '|Starter Inventory',
+        '|}',
+      ].join('\r\n'),
+      warning: 'Invalid or ambiguous attack:',
+    },
+    {
+      name: 'a negative attack stat using LF',
+      wikitext: [
+        '{| class="wikitable"',
+        '!Weapon Name',
+        '!Skill Level',
+        '!Attack Stat',
+        '!How to Obtain',
+        '|-',
+        '|[[Iron Dagger]]',
+        '|1',
+        '|-2.5',
+        '|Starter Inventory',
+        '|}',
+      ].join('\n'),
+      warning: 'Invalid or ambiguous attack:',
+    },
+    {
+      name: 'duplicate Attack Stat headings using CRLF',
+      wikitext: [
+        '{| class="wikitable"',
+        '!Weapon Name',
+        '!Skill Level',
+        '!Attack Stat',
+        '!Attack Stat',
+        '!How to Obtain',
+        '|-',
+        '|[[Iron Dagger]]',
+        '|1',
+        '|2.5',
+        '|2.5',
+        '|Starter Inventory',
+        '|}',
+      ].join('\r\n'),
+      warning: 'Expected weapon table headers were not found',
+    },
+    {
+      name: 'changed column order using LF',
+      wikitext: [
+        '{| class="wikitable"',
+        '!Weapon Name',
+        '!Attack Stat',
+        '!Skill Level',
+        '!How to Obtain',
+        '|-',
+        '|[[Iron Dagger]]',
+        '|2.5',
+        '|1',
+        '|Starter Inventory',
+        '|}',
+      ].join('\n'),
+      warning: 'Expected weapon table headers were not found',
+    },
+    {
+      name: 'an unknown acquisition using CRLF',
+      wikitext: [
+        '{| class="wikitable"',
+        '!Weapon Name',
+        '!Skill Level',
+        '!Attack Stat',
+        '!How to Obtain',
+        '|-',
+        '|[[Iron Dagger]]',
+        '|1',
+        '|2.5',
+        '|Ask around town',
+        '|}',
+      ].join('\r\n'),
+      warning: 'Unrecognized acquisition:',
+    },
+  ] as const;
 
-    expect(result).toHaveLength(0);
-    expect(result.warnings[0]).toMatch(/ambiguous attack/i);
-  });
+  it.each(malformedTables)(
+    'warns and produces no proposal for $name',
+    ({ wikitext, warning }) => {
+      const result = parseWeaponListPage('Dagger', wikitext);
 
-  it('warns and excludes unrecognized acquisition text', () => {
-    const ambiguous = fixture('dagger').replace(
-      'Starter Inventory, [[Shops#Floor 1 Shop|Floor 1 Shop]]',
-      'Ask around town',
-    );
-    const result = parseWeaponListPage('Dagger', ambiguous);
+      expect(result).toHaveLength(0);
+      expect(result.warnings).toHaveLength(1);
+      expect(result.warnings[0]).toContain(warning);
+    },
+  );
 
-    expect(result).toHaveLength(0);
-    expect(result.warnings[0]).toMatch(/acquisition/i);
+  it.each([
+    { name: 'LF', newline: '\n' },
+    { name: 'CRLF', newline: '\r\n' },
+  ])('parses the same reviewed row with $name line endings', ({ newline }) => {
+    const wikitext = [
+      '{| class="wikitable"',
+      '!Weapon Name',
+      '!Skill Level',
+      '!Attack Stat',
+      '!How to Obtain',
+      '|-',
+      '|[[Iron Dagger]]',
+      '|1',
+      '|2.5',
+      '|Starter Inventory, [[Shops#Floor 1 Shop|Floor 1 Shop]]',
+      '|}',
+    ].join(newline);
+
+    const result = parseWeaponListPage('Dagger', wikitext);
+
+    expect(result.warnings).toEqual([]);
+    expect(result).toHaveLength(1);
+    expect(result[0]?.value).toMatchObject({
+      id: 'iron-dagger',
+      attack: 2.5,
+      skillRequirement: 1,
+      acquisitionType: 'starter',
+      acquisitionDetail: 'Starter Inventory, Floor 1 Shop',
+    });
   });
 });
 

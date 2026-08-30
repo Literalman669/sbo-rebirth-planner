@@ -1,12 +1,22 @@
 import { describe, expect, it } from 'vitest';
 import {
-  REQUIRED_FORMULA_IDS,
   validateCurrentReleaseInvariant,
   validateReleaseDraft,
   type ReleaseValidationInput,
 } from './releaseValidation';
 
 const wiki = 'https://swordbloxonlinerebirth.fandom.com/wiki';
+const literalRequiredFormulaIds = [
+  'points-per-level',
+  'attack-from-str',
+  'damage-reduction-from-def',
+  'bonus-hp-from-vit',
+  'stamina',
+  'walk-speed-from-agi',
+  'sprint-speed-from-agi',
+  'crit-bonus-from-luk',
+  'drop-bonus-from-luk',
+] as const;
 
 function candidate(pageTitle: string, revisionId: string) {
   const id = `${pageTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-')}:${revisionId}`;
@@ -50,7 +60,7 @@ function validDraft(): ReleaseValidationInput {
       candidateId: sourceCandidate.id,
     };
   });
-  const formulas = REQUIRED_FORMULA_IDS.map((formulaId) => ({
+  const formulas = literalRequiredFormulaIds.map((formulaId) => ({
     formulaId,
     sourceRefId: `source-formula-${formulaId}`,
     candidateId: statsCandidate.id,
@@ -93,23 +103,108 @@ describe('validateReleaseDraft', () => {
     expect(validateReleaseDraft(validDraft())).toEqual([]);
   });
 
-  it('rejects duplicate item IDs', () => {
-    const input = validDraft();
-    input.equipment.push({ ...input.equipment[0]! });
-    expect(validateReleaseDraft(input)).toContain(
-      'Duplicate equipment item ID: two-handed-item',
-    );
-  });
+  const invalidDrafts: readonly {
+    name: string;
+    mutate: (input: ReleaseValidationInput) => void;
+    error: string;
+  }[] = [
+    {
+      name: 'a duplicate equipment item ID',
+      mutate: (input) => {
+        input.equipment.push({ ...input.equipment[0]! });
+      },
+      error: 'Duplicate equipment item ID: two-handed-item',
+    },
+    {
+      name: 'a duplicate formula ID',
+      mutate: (input) => {
+        input.formulas.push({ ...input.formulas[0]! });
+      },
+      error: 'Duplicate formula ID: points-per-level',
+    },
+    {
+      name: 'a duplicate source reference ID',
+      mutate: (input) => {
+        input.sources.push({ ...input.sources[0]! });
+      },
+      error: 'Duplicate source reference ID: source-equipment-two-handed-item',
+    },
+    {
+      name: 'a duplicate candidate ID',
+      mutate: (input) => {
+        input.candidates.push({ ...input.candidates[0]! });
+      },
+      error: 'Duplicate candidate ID: two-handed:100',
+    },
+    {
+      name: 'an invalid known-gap grammar',
+      mutate: (input) => {
+        input.sources.push({
+          id: 'source-gap-invalid',
+          entityKind: 'gap',
+          entityId: 'gap:two-handed:not-a-band',
+          sourceUrl: `${wiki}/Two-Handed`,
+          sourceRevision: '100',
+          candidateId: 'two-handed:100',
+        });
+      },
+      error: 'Source source-gap-invalid has an invalid known-gap identifier',
+    },
+    {
+      name: 'an equipment candidate from the wrong canonical page',
+      mutate: (input) => {
+        input.sources[0] = {
+          ...input.sources[0]!,
+          sourceUrl: `${wiki}/Stats`,
+          sourceRevision: '23125',
+          candidateId: 'stats:23125',
+        };
+        input.equipment[0] = {
+          ...input.equipment[0]!,
+          candidateId: 'stats:23125',
+        };
+      },
+      error: 'Equipment two-handed-item must use the Two-Handed candidate page',
+    },
+    {
+      name: 'a source revision that differs from its candidate',
+      mutate: (input) => {
+        input.sources[0] = { ...input.sources[0]!, sourceRevision: '999' };
+      },
+      error:
+        'Source source-equipment-two-handed-item does not match candidate two-handed:100',
+    },
+    {
+      name: 'an unaccepted candidate',
+      mutate: (input) => {
+        input.candidates[0] = { ...input.candidates[0]!, status: 'pending' };
+      },
+      error: 'Candidate two-handed:100 is not accepted',
+    },
+    {
+      name: 'a missing source reference',
+      mutate: (input) => {
+        input.equipment[0] = {
+          ...input.equipment[0]!,
+          sourceRefId: 'missing-source',
+        };
+      },
+      error: 'Equipment two-handed-item has no source reference',
+    },
+    {
+      name: 'an unsupported formula set',
+      mutate: (input) => {
+        input.formulaSetVersion = 'sbor-stats-v2';
+      },
+      error: 'Formula set version is unsupported',
+    },
+  ];
 
-  it('rejects missing source references', () => {
+  it.each(invalidDrafts)('rejects $name', ({ mutate, error }) => {
     const input = validDraft();
-    input.equipment[0] = {
-      ...input.equipment[0]!,
-      sourceRefId: 'missing-source',
-    };
-    expect(validateReleaseDraft(input)).toContain(
-      'Equipment two-handed-item has no source reference',
-    );
+    mutate(input);
+
+    expect(validateReleaseDraft(input)).toContain(error);
   });
 
   it('rejects a source attached to a different entity', () => {
@@ -117,21 +212,6 @@ describe('validateReleaseDraft', () => {
     input.sources[0] = { ...input.sources[0]!, entityId: 'other-item' };
     expect(validateReleaseDraft(input)).toContain(
       'Equipment two-handed-item source does not identify that equipment row',
-    );
-  });
-
-  it('rejects a candidate from the wrong canonical page', () => {
-    const input = validDraft();
-    const source = input.sources[0]!;
-    source.sourceUrl = `${wiki}/Stats`;
-    source.sourceRevision = '23125';
-    source.candidateId = 'stats:23125';
-    input.equipment[0] = {
-      ...input.equipment[0]!,
-      candidateId: 'stats:23125',
-    };
-    expect(validateReleaseDraft(input)).toContain(
-      'Equipment two-handed-item must use the Two-Handed candidate page',
     );
   });
 
@@ -153,14 +233,6 @@ describe('validateReleaseDraft', () => {
     expect(validateReleaseDraft(input)).toEqual([]);
   });
 
-  it('rejects a source revision that differs from its candidate', () => {
-    const input = validDraft();
-    input.sources[0] = { ...input.sources[0]!, sourceRevision: '999' };
-    expect(validateReleaseDraft(input)).toContain(
-      'Source source-equipment-two-handed-item does not match candidate two-handed:100',
-    );
-  });
-
   it('rejects floors outside the published game range', () => {
     const input = validDraft();
     input.equipment[0] = { ...input.equipment[0]!, floor: 0 };
@@ -177,33 +249,115 @@ describe('validateReleaseDraft', () => {
     );
   });
 
-  it('rejects a missing required formula', () => {
-    const input = validDraft();
-    input.formulas = input.formulas.filter(
-      (formula) => formula.formulaId !== 'points-per-level',
-    );
-    expect(validateReleaseDraft(input)).toContain(
-      'Missing required formula: points-per-level',
-    );
-  });
+  const missingFormulaCases = [
+    { id: 'points-per-level', error: 'Missing required formula: points-per-level' },
+    { id: 'attack-from-str', error: 'Missing required formula: attack-from-str' },
+    {
+      id: 'damage-reduction-from-def',
+      error: 'Missing required formula: damage-reduction-from-def',
+    },
+    { id: 'bonus-hp-from-vit', error: 'Missing required formula: bonus-hp-from-vit' },
+    { id: 'stamina', error: 'Missing required formula: stamina' },
+    {
+      id: 'walk-speed-from-agi',
+      error: 'Missing required formula: walk-speed-from-agi',
+    },
+    {
+      id: 'sprint-speed-from-agi',
+      error: 'Missing required formula: sprint-speed-from-agi',
+    },
+    {
+      id: 'crit-bonus-from-luk',
+      error: 'Missing required formula: crit-bonus-from-luk',
+    },
+    {
+      id: 'drop-bonus-from-luk',
+      error: 'Missing required formula: drop-bonus-from-luk',
+    },
+  ] as const;
 
-  it('rejects missing optimizer path coverage', () => {
-    const input = validDraft();
-    input.equipment = input.equipment.filter(
-      (equipment) => !equipment.weaponPaths.includes('rapier'),
-    );
-    expect(validateReleaseDraft(input)).toContain(
-      'Missing weapon-path coverage: rapier',
-    );
-  });
+  it.each(missingFormulaCases)(
+    'rejects a release missing $id',
+    ({ id, error }) => {
+      const input = validDraft();
+      input.formulas = input.formulas.filter(
+        (formula) => formula.formulaId !== id,
+      );
 
-  it('rejects rows linked to an unaccepted wiki candidate', () => {
-    const input = validDraft();
-    input.candidates[0] = { ...input.candidates[0]!, status: 'pending' };
-    expect(validateReleaseDraft(input)).toContain(
-      'Candidate two-handed:100 is not accepted',
-    );
-  });
+      expect(validateReleaseDraft(input)).toContain(error);
+    },
+  );
+
+  const missingPathCases: readonly {
+    path: string;
+    mutate: (input: ReleaseValidationInput) => void;
+    error: string;
+  }[] = [
+    {
+      path: 'two-handed',
+      mutate: (input) => {
+        input.equipment = input.equipment.filter(
+          (row) => row.itemId !== 'two-handed-item',
+        );
+      },
+      error: 'Missing weapon-path coverage: two-handed',
+    },
+    {
+      path: 'one-handed',
+      mutate: (input) => {
+        input.equipment[1] = {
+          ...input.equipment[1]!,
+          weaponPaths: 'dual-wield',
+        };
+      },
+      error: 'Missing weapon-path coverage: one-handed',
+    },
+    {
+      path: 'rapier',
+      mutate: (input) => {
+        input.equipment = input.equipment.filter(
+          (row) => row.itemId !== 'rapier-item',
+        );
+      },
+      error: 'Missing weapon-path coverage: rapier',
+    },
+    {
+      path: 'dagger',
+      mutate: (input) => {
+        input.equipment = input.equipment.filter(
+          (row) => row.itemId !== 'dagger-item',
+        );
+      },
+      error: 'Missing weapon-path coverage: dagger',
+    },
+    {
+      path: 'dual-wield',
+      mutate: (input) => {
+        input.equipment[1] = {
+          ...input.equipment[1]!,
+          weaponPaths: 'one-handed',
+        };
+      },
+      error: 'Missing weapon-path coverage: dual-wield',
+    },
+    {
+      path: 'melee',
+      mutate: (input) => {
+        input.equipment = input.equipment.filter((row) => row.itemId !== 'fists');
+      },
+      error: 'Missing weapon-path coverage: melee',
+    },
+  ];
+
+  it.each(missingPathCases)(
+    'rejects a release missing $path coverage',
+    ({ mutate, error }) => {
+      const input = validDraft();
+      mutate(input);
+
+      expect(validateReleaseDraft(input)).toContain(error);
+    },
+  );
 
   it('rejects a source reference linked to a missing candidate', () => {
     const input = validDraft();
@@ -228,22 +382,6 @@ describe('validateReleaseDraft', () => {
       sourceRevision: 'owner-gameplay-attestation:2026-08-29',
     };
     expect(validateReleaseDraft(input)).toEqual([]);
-  });
-
-  it('rejects a known-gap identifier the public dataset mapper cannot read', () => {
-    const input = validDraft();
-    input.sources.push({
-      id: 'source-gap-invalid',
-      entityKind: 'gap',
-      entityId: 'gap:two-handed:not-a-band',
-      sourceUrl: `${wiki}/Two-Handed`,
-      sourceRevision: '100',
-      candidateId: 'two-handed:100',
-    });
-
-    expect(validateReleaseDraft(input)).toContain(
-      'Source source-gap-invalid has an invalid known-gap identifier',
-    );
   });
 
   it('rejects a known gap sourced from the wrong candidate page', () => {
