@@ -38,6 +38,51 @@ const item: EquipmentRecord = {
 };
 
 describe('classifyCandidate', () => {
+  it.each([
+    ['gamepass', 'gamepass'],
+    ['badge', 'badge'],
+    ['limited', 'limited'],
+    ['active-event', 'activeEvent'],
+  ] as const)(
+    'requires explicit %s access unless the item is already owned',
+    (availability, preference) => {
+      const candidate = { ...item, availability };
+      expect(classifyCandidate(profile, candidate, new Set())).toEqual({
+        eligible: false,
+        reason: 'Item requires enabled access or ownership',
+      });
+      expect(
+        classifyCandidate(
+          {
+            ...profile,
+            accessPreferences: {
+              activeEvent: false,
+              gamepass: false,
+              badge: false,
+              limited: false,
+              [preference]: true,
+            },
+          },
+          candidate,
+          new Set(),
+        ).eligible,
+      ).toBe(true);
+      expect(
+        classifyCandidate(profile, candidate, new Set([candidate.id])).eligible,
+      ).toBe(true);
+    },
+  );
+
+  it.each(['inactive-event', 'legacy', 'unobtainable', 'unknown'] as const)(
+    'never recommends farming %s equipment',
+    (availability) => {
+      const candidate = { ...item, availability };
+      expect(classifyCandidate(profile, candidate, new Set()).eligible).toBe(false);
+      expect(
+        classifyCandidate(profile, candidate, new Set([candidate.id])).eligible,
+      ).toBe(true);
+    },
+  );
   it('rejects unverified records', () => {
     expect(
       classifyCandidate(
@@ -138,7 +183,7 @@ describe('classifyCandidate', () => {
 
     expect(classifyCandidate(profile, eventItem, new Set())).toEqual({
       eligible: false,
-      reason: 'Event item is not currently obtainable',
+      reason: 'Item is not currently obtainable',
     });
     expect(
       classifyCandidate(profile, eventItem, new Set(['old-event-sword'])),

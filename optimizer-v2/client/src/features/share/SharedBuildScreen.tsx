@@ -122,6 +122,7 @@ type SharedBuildRow = {
   agi: number;
   vit: number;
   luk: number;
+  accessPreferences?: string;
   datasetVersion: string;
 };
 
@@ -171,6 +172,12 @@ export function ResolvedSharedBuild({
       equipment.map((row) => [row.slot, row.itemId]),
     ),
     ownedItemIds: ownedItems.map((row) => row.itemId),
+    accessPreferences: {
+      activeEvent: build.accessPreferences?.split(',').includes('active-event') ?? false,
+      gamepass: build.accessPreferences?.split(',').includes('gamepass') ?? false,
+      badge: build.accessPreferences?.split(',').includes('badge') ?? false,
+      limited: build.accessPreferences?.split(',').includes('limited') ?? false,
+    },
     datasetVersion: build.datasetVersion,
   });
   if (historicalSnapshot === undefined) {

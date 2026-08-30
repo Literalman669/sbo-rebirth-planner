@@ -24,6 +24,7 @@ export type CloudRevisionRowLike = {
   agi: number;
   vit: number;
   luk: number;
+  accessPreferences?: string;
   datasetVersion: string;
   createdAt?: unknown;
 };
@@ -34,6 +35,16 @@ export type CloudEquipmentRowLike = {
   itemId: string;
 };
 export type CloudOwnedItemRowLike = { revisionId: string; itemId: string };
+
+function parseAccessPreferences(value = '') {
+  const tokens = new Set(value.split(',').filter(Boolean));
+  return {
+    activeEvent: tokens.has('active-event'),
+    gamepass: tokens.has('gamepass'),
+    badge: tokens.has('badge'),
+    limited: tokens.has('limited'),
+  };
+}
 
 export function toSaveBuildRevisionArgs(
   input: CharacterProfile,
@@ -103,6 +114,7 @@ export function profileFromCloudRevision(
     ownedItemIds: ownedItemRows
       .filter((row) => row.revisionId === revision.id)
       .map((row) => row.itemId),
+    accessPreferences: parseAccessPreferences(revision.accessPreferences),
     datasetVersion: revision.datasetVersion,
   });
 }

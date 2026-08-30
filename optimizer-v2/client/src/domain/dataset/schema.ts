@@ -85,7 +85,7 @@ export const equipmentRecordSchema = z
     floor: z.number().int().min(1).max(19),
     acquisitionType: acquisitionTypeSchema,
     acquisitionDetail: z.string().min(1),
-    availability: z.enum(['always', 'active-event', 'inactive-event']),
+    availability: catalogAvailabilitySchema,
     sourceUrl: z.url().refine(
       isCanonicalWikiSourceUrl,
       'source must use the canonical wiki',

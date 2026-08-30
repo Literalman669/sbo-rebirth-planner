@@ -51,6 +51,25 @@ function formatDelta(delta: Partial<ProjectedMetrics>) {
   return `${formatted} ${metricLabels[metric]}`;
 }
 
+function formatRawDelta(delta: {
+  attack?: number;
+  defense?: number;
+  dexterity?: number;
+  resistances: Record<string, number>;
+}) {
+  const parts = [
+    ['ATK', delta.attack],
+    ['DEF', delta.defense],
+    ['DEX', delta.dexterity],
+  ]
+    .filter((entry): entry is [string, number] => typeof entry[1] === 'number')
+    .map(([label, value]) => `${label} ${value >= 0 ? '+' : ''}${value}`);
+  for (const [status, value] of Object.entries(delta.resistances)) {
+    parts.push(`${status} ${value >= 0 ? '+' : ''}${value}%`);
+  }
+  return parts.length > 0 ? parts.join(' · ') : 'No verified raw-stat change';
+}
+
 export function ResultsScreen() {
   const navigate = useNavigate();
   const cloud = useOptionalCloudBuilds();
@@ -264,6 +283,16 @@ export function ResultsScreen() {
                     <span>Projected improvement</span>
                     <strong>{formatDelta(target.delta)}</strong>
                   </div>
+                  <div>
+                    <span>Raw gear change</span>
+                    <strong>{formatRawDelta(target.rawDelta)}</strong>
+                  </div>
+                  {target.unmodeledEffects.length > 0 ? (
+                    <div>
+                      <span>Source-described effects</span>
+                      <strong>{target.unmodeledEffects.join(' · ')}</strong>
+                    </div>
+                  ) : null}
                   <a href={target.sourceUrl} target="_blank" rel="noreferrer">
                     View wiki source
                   </a>

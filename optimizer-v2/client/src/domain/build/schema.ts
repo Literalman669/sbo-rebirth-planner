@@ -52,4 +52,17 @@ export const characterProfileSchema = z.object({
       'owned item IDs must be unique',
     ),
   datasetVersion: z.string().min(1),
+  accessPreferences: z
+    .object({
+      activeEvent: z.boolean(),
+      gamepass: z.boolean(),
+      badge: z.boolean(),
+      limited: z.boolean(),
+    })
+    .default({
+      activeEvent: false,
+      gamepass: false,
+      badge: false,
+      limited: false,
+    }),
 });

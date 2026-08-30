@@ -32,6 +32,12 @@ function createEmptyProfile(datasetVersion: string): CharacterProfile {
     equipped: {},
     ownedItemIds: [],
     datasetVersion,
+    accessPreferences: {
+      activeEvent: false,
+      gamepass: false,
+      badge: false,
+      limited: false,
+    },
   };
 }
 

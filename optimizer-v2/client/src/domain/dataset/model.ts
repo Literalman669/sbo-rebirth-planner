@@ -11,7 +11,17 @@ export type AcquisitionType =
   | 'badge'
   | 'gamepass';
 
-export type Availability = 'always' | 'active-event' | 'inactive-event';
+export type Availability =
+  | 'always'
+  | 'active-event'
+  | 'inactive-event'
+  | 'rotating'
+  | 'limited'
+  | 'gamepass'
+  | 'badge'
+  | 'legacy'
+  | 'unobtainable'
+  | 'unknown';
 
 export type CatalogVerificationStatus =
   | 'verified'
@@ -20,15 +30,7 @@ export type CatalogVerificationStatus =
   | 'unknown'
   | 'legacy';
 
-export type CatalogAvailability =
-  | Availability
-  | 'rotating'
-  | 'limited'
-  | 'gamepass'
-  | 'badge'
-  | 'legacy'
-  | 'unobtainable'
-  | 'unknown';
+export type CatalogAvailability = Availability;
 
 export type CatalogAccessType =
   | 'free'

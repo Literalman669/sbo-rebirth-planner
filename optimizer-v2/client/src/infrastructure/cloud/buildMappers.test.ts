@@ -89,7 +89,15 @@ describe('cloud build mappers', () => {
           { revisionId: 'revision-1', itemId: 'steel-armor' },
         ],
       ),
-    ).toEqual(profile);
+    ).toEqual({
+      ...profile,
+      accessPreferences: {
+        activeEvent: false,
+        gamepass: false,
+        badge: false,
+        limited: false,
+      },
+    });
   });
 
   it('keeps the optional weapon-skill field explicit for generated reducers', () => {

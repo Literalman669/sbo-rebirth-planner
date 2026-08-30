@@ -10,10 +10,10 @@ import { classifyCandidate } from './eligibility';
 import { scoreMetricDelta } from './goalConfig';
 import {
   projectMetrics,
-  type GearTotals,
   type ProjectedMetrics,
 } from './projections';
 import { compileMechanics } from './mechanics';
+import { aggregateGearEffects, compareGearEffects } from './gearEffects';
 
 export interface UpgradeTarget {
   itemId: string;
@@ -24,6 +24,8 @@ export interface UpgradeTarget {
   requirementText: string;
   sourceUrl: string;
   delta: Partial<ProjectedMetrics>;
+  rawDelta: ReturnType<typeof compareGearEffects>['rawDelta'];
+  unmodeledEffects: string[];
 }
 
 export type ImmediateAction =
@@ -44,24 +46,6 @@ type RankedUpgrade = UpgradeTarget & {
 
 function indexEquipment(dataset: DatasetSnapshot) {
   return new Map(dataset.equipment.map((item) => [item.id, item]));
-}
-
-function gearTotals(
-  equipped: CharacterProfile['equipped'],
-  equipmentById: ReadonlyMap<string, EquipmentRecord>,
-): GearTotals {
-  const totals: GearTotals = { attack: 0, defense: 0, dexterity: 0 };
-
-  for (const itemId of Object.values(equipped)) {
-    if (!itemId) continue;
-    const item = equipmentById.get(itemId);
-    if (!item) throw new Error(`equipped item is missing from dataset: ${itemId}`);
-    totals.attack += item.attack;
-    totals.defense += item.defense;
-    totals.dexterity += item.dexterity;
-  }
-
-  return totals;
 }
 
 function targetSlots(
@@ -146,12 +130,49 @@ function rankUpgrades(
 ): RankedUpgrade[] {
   const equipmentById = indexEquipment(dataset);
   const mechanics = compileMechanics(dataset);
+  const catalogById = new Map(dataset.catalog.map((item) => [item.id, item]));
+  for (const item of dataset.equipment) {
+    if (catalogById.has(item.id)) continue;
+    catalogById.set(item.id, {
+      id: item.id,
+      name: item.name,
+      aliases: [],
+      slot: item.slot,
+      weaponPaths: [...item.weaponPaths],
+      attack: item.attack,
+      defense: item.defense,
+      dexterity: item.dexterity,
+      levelRequirement: item.levelRequirement,
+      skillRequirement: item.skillRequirement,
+      acquisitions: [{
+        id: `${item.id}:legacy`,
+        type: item.acquisitionType,
+        detail: item.acquisitionDetail,
+        floor: item.floor,
+        availability: item.availability,
+        accessType: 'free',
+        sourceUrl: item.sourceUrl,
+        sourceRevision: item.sourceRevision,
+      }],
+      resistances: [],
+      specialEffects: [],
+      verificationStatus: 'verified',
+      sourceUrl: item.sourceUrl,
+      sourceRevision: item.sourceRevision,
+      lastReviewedAt: item.lastReviewedAt,
+    });
+  }
   const owned = new Set(profile.ownedItemIds);
   const equippedItemIds = new Set(Object.values(profile.equipped));
+  const currentEffects = aggregateGearEffects(profile.equipped, catalogById);
   const currentMetrics = projectMetrics({
     level: profile.level,
     stats: profile.stats,
-    gear: gearTotals(profile.equipped, equipmentById),
+    gear: {
+      attack: currentEffects.attack,
+      defense: currentEffects.defense,
+      dexterity: currentEffects.dexterity,
+    },
   }, mechanics);
   const ranked: RankedUpgrade[] = [];
 
@@ -162,10 +183,18 @@ function rankUpgrades(
 
     for (const slot of targetSlots(profile, item)) {
       const candidateEquipped = { ...profile.equipped, [slot]: item.id };
+      const candidateEffects = aggregateGearEffects(
+        candidateEquipped,
+        catalogById,
+      );
       const candidateMetrics = projectMetrics({
         level: profile.level,
         stats: profile.stats,
-        gear: gearTotals(candidateEquipped, equipmentById),
+        gear: {
+          attack: candidateEffects.attack,
+          defense: candidateEffects.defense,
+          dexterity: candidateEffects.dexterity,
+        },
       }, mechanics);
       const score = scoreMetricDelta(
         currentMetrics,
@@ -175,6 +204,13 @@ function rankUpgrades(
 
       if (score <= 1e-12) continue;
 
+      const catalogItem = catalogById.get(item.id)!;
+      const comparison = compareGearEffects(
+        profile.equipped[slot]
+          ? catalogById.get(profile.equipped[slot]!)
+          : undefined,
+        catalogItem,
+      );
       ranked.push({
         item,
         itemId: item.id,
@@ -189,6 +225,8 @@ function rankUpgrades(
         requirementText: requirementText(item),
         sourceUrl: item.sourceUrl,
         delta: projectedDelta(currentMetrics, candidateMetrics),
+        rawDelta: comparison.rawDelta,
+        unmodeledEffects: comparison.unmodeledEffects,
       });
     }
   }

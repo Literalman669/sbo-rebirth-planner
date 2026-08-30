@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useBuildDraft } from '../../app/providers/BuildDraftContext';
 import { useDataset } from '../../app/providers/DatasetProvider';
 import type { EquipmentSlot } from '../../domain/build/model';
+import { DEFAULT_ACCESS_PREFERENCES } from '../../domain/build/model';
 import {
   compatibleItemsForSlot,
   requiredEquipmentSlots,
@@ -95,6 +96,16 @@ export function EquipmentScreen() {
     updateDraft({ ownedItemIds: [...owned] });
   };
 
+  const accessPreferences = draft.accessPreferences ?? DEFAULT_ACCESS_PREFERENCES;
+  const setAccessPreference = (
+    key: keyof typeof accessPreferences,
+    checked: boolean,
+  ) => {
+    updateDraft({
+      accessPreferences: { ...accessPreferences, [key]: checked },
+    });
+  };
+
   return (
     <section className="planner-screen">
       <h2 data-screen-heading tabIndex={-1}>Equipment</h2>
@@ -115,6 +126,30 @@ export function EquipmentScreen() {
         {shieldAllowed ? renderSelect('shield', 'Shield') : null}
         {optionalSlots.map(({ slot, label }) => renderSelect(slot, label))}
       </div>
+
+      <details>
+        <summary>Optional item access</summary>
+        <p>Enable only sources you are willing and able to use.</p>
+        <div className="owned-items">
+          {([
+            ['activeEvent', 'Active event items'],
+            ['gamepass', 'Gamepass items'],
+            ['badge', 'Badge items'],
+            ['limited', 'Limited or rotating items'],
+          ] as const).map(([key, label]) => (
+            <label key={key}>
+              <input
+                type="checkbox"
+                checked={accessPreferences[key]}
+                onChange={(event) =>
+                  setAccessPreference(key, event.currentTarget.checked)
+                }
+              />
+              {label}
+            </label>
+          ))}
+        </div>
+      </details>
 
       <details>
         <summary>Owned items</summary>

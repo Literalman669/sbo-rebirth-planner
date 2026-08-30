@@ -1,5 +1,6 @@
 import type { CharacterProfile } from '../build/model';
 import type { EquipmentRecord } from '../dataset/model';
+import { DEFAULT_ACCESS_PREFERENCES } from '../build/model';
 
 export type CandidateClassification =
   | { eligible: false; reason: string }
@@ -25,10 +26,29 @@ export function classifyCandidate(
     return { eligible: false, reason: `Requires Floor ${item.floor}` };
   }
 
-  if (item.availability === 'inactive-event' && !owned.has(item.id)) {
+  const preferences = profile.accessPreferences ?? DEFAULT_ACCESS_PREFERENCES;
+  const isOwned = owned.has(item.id);
+  if (
+    ['inactive-event', 'legacy', 'unobtainable', 'unknown'].includes(
+      item.availability,
+    ) &&
+    !isOwned
+  ) {
     return {
       eligible: false,
-      reason: 'Event item is not currently obtainable',
+      reason: 'Item is not currently obtainable',
+    };
+  }
+  const preferenceRequired =
+    (item.availability === 'gamepass' && !preferences.gamepass) ||
+    (item.availability === 'badge' && !preferences.badge) ||
+    (item.availability === 'active-event' && !preferences.activeEvent) ||
+    (['limited', 'rotating'].includes(item.availability) &&
+      !preferences.limited);
+  if (preferenceRequired && !isOwned) {
+    return {
+      eligible: false,
+      reason: 'Item requires enabled access or ownership',
     };
   }
 

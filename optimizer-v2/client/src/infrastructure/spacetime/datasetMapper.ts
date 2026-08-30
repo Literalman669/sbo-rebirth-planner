@@ -420,11 +420,7 @@ export function mapPublishedReleaseV2(input: {
   const equipment = catalog.flatMap((item) => {
     if (!isOptimizerSafeEquipment(item)) return [];
     const primary = item.acquisitions.find(
-      (acquisition) =>
-        acquisition.floor !== undefined &&
-        ['always', 'active-event', 'inactive-event'].includes(
-          acquisition.availability,
-        ),
+      (acquisition) => acquisition.floor !== undefined,
     );
     if (!primary?.floor) return [];
     return [{

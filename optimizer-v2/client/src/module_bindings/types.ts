@@ -49,6 +49,7 @@ export const BuildRevision = __t.object("BuildRevision", {
   agi: __t.u32(),
   vit: __t.u32(),
   luk: __t.u32(),
+  accessPreferences: __t.string(),
   datasetVersion: __t.string(),
   createdAt: __t.timestamp(),
 });
@@ -502,6 +503,7 @@ export const SharedBuild = __t.object("SharedBuild", {
   agi: __t.u32(),
   vit: __t.u32(),
   luk: __t.u32(),
+  accessPreferences: __t.string(),
   datasetVersion: __t.string(),
   createdAt: __t.timestamp(),
 });

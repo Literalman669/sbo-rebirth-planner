@@ -175,6 +175,7 @@ function insertRevision(
     agi: profile.agi,
     vit: profile.vit,
     luk: profile.luk,
+    accessPreferences: '',
     datasetVersion: profile.datasetVersion,
     createdAt: ctx.timestamp,
   });
