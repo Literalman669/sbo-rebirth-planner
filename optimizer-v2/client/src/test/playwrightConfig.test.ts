@@ -1,4 +1,5 @@
 import { spawn } from 'node:child_process';
+import { readFileSync } from 'node:fs';
 import { createServer } from 'node:http';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -10,6 +11,10 @@ import { resolveViteBasePath } from '../../vite.config';
 const clientRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const optimizerRoot = path.resolve(clientRoot, '..');
 const appPort = 4173;
+const reliabilityModuleSpecPath = path.resolve(
+  clientRoot,
+  'e2e/reliability-module.spec.ts',
+);
 
 function integrationWebServer() {
   const webServer = integrationConfig.webServer;
@@ -72,6 +77,19 @@ test('Vite base defaults to Pages only for GitHub Actions production builds', ()
     '/sbo-rebirth-planner/',
   );
   expect(resolveViteBasePath({})).toBe('/');
+});
+
+test('only bounded reliability-module stress tests receive explicit watchdogs', () => {
+  const source = readFileSync(reliabilityModuleSpecPath, 'utf8');
+
+  expect(integrationConfig.timeout).toBeUndefined();
+  expect(source).toMatch(
+    /keeps 100 immutable revisions converged across same-account subscriptions'[\s\S]*?test\.setTimeout\(120_000\);/,
+  );
+  expect(source).toMatch(
+    /rejects invalid publications atomically and carries one reviewed row into a second release'[\s\S]*?test\.setTimeout\(60_000\);/,
+  );
+  expect(source.match(/test\.setTimeout\(/g)).toHaveLength(2);
 });
 
 test('fixed-local integration rejects an occupied app port without using its owner', async () => {

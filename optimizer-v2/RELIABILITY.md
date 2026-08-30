@@ -169,6 +169,28 @@ full reliability command passed all six layers: 40 client files / 321 tests,
 module build, fixed-local integration (24 passed, 8 skipped, 43.7 s), and
 Pages (2 passed, 1.4 s). An independent `npm run test:pages` production build
 (203 ms) and deep-link suite (2 passed, 1.4 s) also passed, and
-`git diff --exit-code -- client/src/module_bindings` exited 0. New GitHub CI
-and deploy reruns remain pending the Task 22 push; no external action was
-performed locally.
+`git diff --exit-code -- client/src/module_bindings` exited 0.
+
+The subsequent [Optimizer V2 CI](https://github.com/Literalman669/sbo-rebirth-planner/actions/runs/33300415526)
+and [Deploy Optimizer V2](https://github.com/Literalman669/sbo-rebirth-planner/actions/runs/33300415518)
+reruns prove that the base repair removed the direct-route and keyboard
+failures. They then hit the outer 30-second Playwright watchdog on two bounded
+desktop module stress cases: the 100-revision composite (including 50
+share/revoke cycles, offline replay, and eight same-parent races) and the
+11-category publication rollback/second-release case. The later sharing-module
+timeout was cascading aborted cleanup, not an independent sharing timeout; all
+production steps were skipped.
+
+Only those two cases now declare watchdogs: 120 seconds for the bounded
+100-revision composite and 60 seconds for bounded publication rollback. The
+global Playwright timeout remains unset, no polls/assertions/counts changed,
+and the sharing-module timeout remains unchanged. The watchdog RED failed
+because neither declaration existed; GREEN passed 5/5 focused configuration
+tests. Two further `GITHUB_ACTIONS=true` fixed-local integrations passed 24
+tests with 8 intended skips (46.9 s and 47.6 s); the two stress cases completed
+in 10.3/3.6 s and 9.5/3.4 s respectively, with suite cleanup intact. A fresh
+full reliability gate passed all six layers: 40 client files / 322 tests, 3
+module files / 62 tests, 15 scripts, fixed-local integration (24 passed, 8
+skipped, 45.0 s), and Pages (2 passed, 1.5 s). Independent Pages, root
+typecheck, and binding-diff checks also passed. New GitHub reruns are pending
+the watchdog commit; no external action was performed locally.
