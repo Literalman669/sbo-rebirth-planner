@@ -806,3 +806,199 @@ Expected: PASS, including explicit acceptance coverage for tab/LF/CR wikitext wh
 git add optimizer-v2/spacetimedb/src/wikiRevision.ts optimizer-v2/spacetimedb/src/wikiProcedures.test.ts
 git commit -m "fix: reject unsafe wiki revision controls"
 ```
+
+### Task 15: Enforce Optimization Readiness at Every Entry Point
+
+**Findings:** The final branch review proved that screen-only validation can be bypassed by shared/cloud profiles, optional weapon-skill input bypasses numeric validation, and a valid under-budget profile with fewer than thirty remaining stat slots can throw during allocation.
+
+**Files:**
+- Create or modify: `optimizer-v2/client/src/domain/optimizer/planReadiness.ts`
+- Modify: `optimizer-v2/client/src/domain/optimizer/optimizeBuild.ts`
+- Modify: `optimizer-v2/client/src/domain/optimizer/optimizeBuild.test.ts`
+- Modify: `optimizer-v2/client/src/features/planner/CharacterScreen.tsx`
+- Modify: `optimizer-v2/client/src/features/planner/StatsScreen.tsx`
+- Modify: `optimizer-v2/client/src/features/planner/plannerScreens.test.tsx`
+- Modify: `optimizer-v2/client/src/features/results/ResultsScreen.tsx`
+- Modify: `optimizer-v2/client/src/features/results/ResultsScreen.test.tsx`
+- Modify: `optimizer-v2/client/src/features/share/SharedBuildScreen.tsx`
+- Modify: `optimizer-v2/client/src/features/share/SharedBuildScreen.test.tsx`
+
+**Interfaces:**
+- Produces a pure typed readiness result for `overspent` and `insufficient-stat-capacity` states.
+- `optimizeBuild` must reject any non-ready profile before equipment recommendation or stat allocation.
+- Results and shared-build views render a stable unavailable/explanation state rather than throwing.
+
+- [ ] **Step 1: Add focused RED domain/UI tests**
+
+Cover a Level-8 profile with 25 invested points, a Level-834 profile with all five stats at 500, and shared equivalents. Assert no authoritative recommendation is rendered and no React error escapes.
+
+Run: `npm run test:unit --workspace @sbo/optimizer-client -- --run optimizeBuild.test.ts ResultsScreen.test.tsx SharedBuildScreen.test.tsx`
+
+Expected: FAIL because overspent optimization continues and exhausted capacity throws.
+
+- [ ] **Step 2: Add RED weapon-skill input rows**
+
+Assert negative, fractional, nonnumeric/blank transitions, and values above 10000 do not enter the draft or navigate. Blank remains the valid optional omitted state. Invalid nonblank input retains `/character`, focuses Weapon Skill, and exposes an alert.
+
+- [ ] **Step 3: Implement the minimal readiness and raw-input guards**
+
+Preserve the current `level * pointsPerLevel` rule. A thirty-point plan requires at least thirty remaining stat slots across the five `0..500` stats. Do not clamp, silently discard, or redistribute points. Keep the optional skill bound aligned with `characterProfileSchema` (`0..10000`, integer).
+
+- [ ] **Step 4: Verify focused/full client tests**
+
+Run the focused suites, full client unit tests, and client typecheck.
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add optimizer-v2/client/src/domain/optimizer optimizer-v2/client/src/features/planner optimizer-v2/client/src/features/results optimizer-v2/client/src/features/share
+git commit -m "fix: enforce optimization readiness boundaries"
+```
+
+### Task 16: Enforce Canonical Provenance in the Runtime Dataset Schema
+
+**Finding:** The runtime client schema accepts any HTTPS source and optional revisions, so a corrupt cached row can claim `verified` and still drive advice even though publication and release-coverage validators are stricter.
+
+**Files:**
+- Modify: `optimizer-v2/client/src/domain/dataset/model.ts`
+- Modify: `optimizer-v2/client/src/domain/dataset/schema.ts`
+- Modify: `optimizer-v2/client/src/domain/dataset/schema.test.ts`
+- Modify: `optimizer-v2/client/src/infrastructure/storage/datasetCache.test.ts`
+- Modify as needed: shared client-side provenance helper used by stress fixtures/schema.
+
+- [ ] **Step 1: Add RED schema/cache cases**
+
+Reject verified equipment/formulas/gaps with `https://example.com`, missing/blank revisions, a noncanonical wiki host/path, and an owner-attestation URL/revision on any formula except `points-per-level`. Accept the canonical Fandom wiki pattern plus the exact Roblox game URL only with `owner-gameplay-attestation:YYYY-MM-DD` for `points-per-level`.
+
+- [ ] **Step 2: Implement one runtime provenance contract**
+
+Make equipment/formula `sourceRevision` required in the model/schema. Apply the same canonical wiki, exact game URL, and owner-attestation rules already enforced by release validation. Do not weaken the verified dataset bundled release.
+
+- [ ] **Step 3: Prove corrupt cache isolation**
+
+Insert a structurally complete arbitrary-HTTPS `verified` cached release and assert it is rejected/isolated while a valid canonical neighbor remains readable.
+
+- [ ] **Step 4: Verify and commit**
+
+Run schema/cache/stress fixtures, full client unit tests, release coverage, and typecheck.
+
+```bash
+git add optimizer-v2/client/src/domain/dataset optimizer-v2/client/src/infrastructure/storage/datasetCache.test.ts optimizer-v2/client/src/test
+git commit -m "fix: enforce runtime dataset provenance"
+```
+
+### Task 17: Preserve Unknown-Skill Confirmation Across Combined Requirements
+
+**Finding:** `classifyCandidate` returns a level-only reason before checking omitted weapon skill, so a future-level skill-gated target loses the required `confirm in game` precision warning.
+
+**Files:**
+- Modify: `optimizer-v2/client/src/domain/optimizer/eligibility.ts`
+- Modify: `optimizer-v2/client/src/domain/optimizer/eligibility.test.ts`
+- Modify: `optimizer-v2/client/src/domain/optimizer/optimizeBuild.test.ts`
+- Modify: `optimizer-v2/client/src/features/results/ResultsScreen.test.tsx`
+
+- [ ] **Step 1: Add RED combined-requirement rows**
+
+For an item within the ten-level window whose level and weapon-skill requirements are both unmet and `weaponSkill` is omitted, assert it remains future-only and its note includes both the level requirement and `Requires Weapon Skill N; confirm in game`. Cover the Dual Wield gate when combined with future level.
+
+- [ ] **Step 2: Implement ordered requirement aggregation**
+
+Keep hard ineligibility rules unchanged. For eligible future candidates, collect the level and applicable skill reasons before returning. Do not mark any unknown-skill item immediate or drop `confirm in game`.
+
+- [ ] **Step 3: Verify and commit**
+
+Run eligibility/optimizer/Results suites, full client unit tests, and typecheck.
+
+```bash
+git add optimizer-v2/client/src/domain/optimizer optimizer-v2/client/src/features/results/ResultsScreen.test.tsx
+git commit -m "fix: retain combined skill eligibility notes"
+```
+
+### Task 18: Exercise True Same-Parent Concurrent Cloud Edits
+
+**Finding:** The existing two-connection test alternates awaited reducer calls and never submits simultaneous edits from the same head, leaving latest-edit/full-history race behavior unproven.
+
+**Files:**
+- Modify: `optimizer-v2/client/e2e/reliability-module.spec.ts`
+- Modify only on reproduced failure: cloud reducer/repository files through a separate appended repair task.
+
+- [ ] **Step 1: Add a real concurrent RED/coverage row**
+
+From two live connections sharing one identity, read the same current head and submit two distinct revision IDs/payloads without awaiting either first (`Promise.allSettled`). Assert both calls complete according to the intended latest-edit contract, both immutable revisions and child rows remain in history with the same parent, and the final head is exactly one of the two committed revisions with matching profile data.
+
+- [ ] **Step 2: Repeat deterministic race coverage**
+
+Run enough isolated pairs to exercise scheduling without assuming which valid edit wins. Use condition polling and exact count deltas; no sleeps or timeout inflation.
+
+- [ ] **Step 3: Stop on a product defect**
+
+If a revision is lost, child rows mismatch, or head points outside the committed pair, preserve table/reducer evidence and append a separate repair task before production changes.
+
+- [ ] **Step 4: Verify and commit**
+
+Run fixed-local integration and typecheck.
+
+```bash
+git add optimizer-v2/client/e2e/reliability-module.spec.ts
+git commit -m "test: race same-parent cloud revisions"
+```
+
+### Task 19: Force a Fresh Fixed-Local Browser Server
+
+**Finding:** Playwright reuses any process on port 4173 outside CI, so the reliability command can unknowingly exercise a stale production-configured dev server instead of the fixed-local environment.
+
+**Files:**
+- Modify: `optimizer-v2/client/playwright.config.ts`
+- Create or modify: focused Playwright configuration test.
+- Modify only if required: `optimizer-v2/scripts/run-local-integration.mjs`
+
+- [ ] **Step 1: Add RED configuration proof**
+
+Assert the integration Playwright config never reuses an existing server and always starts the app with the fixed loopback URI/test database. Prove an occupied app port fails closed rather than being reused.
+
+- [ ] **Step 2: Force fresh-server behavior**
+
+Set `reuseExistingServer: false` for the integration config. If an explicit port preflight is needed, reject occupied `127.0.0.1:4173` without connecting to or terminating the unknown process.
+
+- [ ] **Step 3: Verify and commit**
+
+Run the focused config test, fixed-local integration, Pages tests, and typecheck.
+
+```bash
+git add optimizer-v2/client/playwright.config.ts optimizer-v2/client/src/test optimizer-v2/scripts/run-local-integration.mjs
+git commit -m "test: force fresh local browser server"
+```
+
+### Task 20: Reconcile Final Review Repairs and Rerun the Clean Gate
+
+**Files:**
+- Modify: `optimizer-v2/RELIABILITY.md`
+- Modify: `optimizer-v2/ACCEPTANCE.md`
+- Modify: `optimizer-v2/scripts/run-reliability.mjs` only when measured counts/chunks changed.
+
+- [ ] **Step 1: Record all final-review findings**
+
+Add the seven Critical/Important findings, their focused regressions/fixes/status, and the true-concurrency/fresh-server measurements. Do not erase prior findings or close unverified external dependencies.
+
+- [ ] **Step 2: Run a fresh clean gate**
+
+```bash
+cd optimizer-v2
+npm ci
+npm run check:toolchain
+npm run test:reliability
+git diff --exit-code -- client/src/module_bindings
+```
+
+- [ ] **Step 3: Update exact evidence and commit**
+
+Record test counts, timings, binding result, and any bundle-size changes without claiming CI/deploy/live success.
+
+```bash
+git add optimizer-v2/RELIABILITY.md optimizer-v2/ACCEPTANCE.md optimizer-v2/scripts/run-reliability.mjs
+git commit -m "docs: reconcile final reliability review"
+```
+
+- [ ] **Step 4: Repeat whole-branch independent review**
+
+All Critical/Important findings must be closed before requesting owner authorization for push/deploy.
