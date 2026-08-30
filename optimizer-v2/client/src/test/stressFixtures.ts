@@ -1,4 +1,5 @@
 import { bootstrapRelease } from '../data/bootstrapRelease';
+import { fallbackRelease } from '../data/fallbackRelease';
 import type { CharacterProfile, EquipmentSlot } from '../domain/build/model';
 import type { DatasetSnapshot, EquipmentRecord } from '../domain/dataset/model';
 import { classifyCandidate } from '../domain/optimizer/eligibility';
@@ -126,6 +127,22 @@ export function buildStressDataset(
     knownGaps: (bootstrapRelease.knownGaps as DatasetSnapshot['knownGaps'])?.map(
       (gap) => ({ ...gap }),
     ),
+  };
+
+  return { ...dataset, ...overrides };
+}
+
+export function buildHistoricalStressDataset(
+  overrides: Partial<DatasetSnapshot> = {},
+): DatasetSnapshot {
+  const dataset: DatasetSnapshot = {
+    ...fallbackRelease,
+    formulas: fallbackRelease.formulas.map((formula) => ({ ...formula })),
+    equipment: fallbackRelease.equipment.map((item) => ({
+      ...item,
+      weaponPaths: [...item.weaponPaths],
+    })),
+    knownGaps: fallbackRelease.knownGaps?.map((gap) => ({ ...gap })),
   };
 
   return { ...dataset, ...overrides };
