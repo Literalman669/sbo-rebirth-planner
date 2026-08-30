@@ -209,11 +209,11 @@ the seven composite phases and each publication category plus second release.
 The CI-and-GitHub-shaped local integration was repeated twice with both
 `CI=true` and `GITHUB_ACTIONS=true`: 24 passed with 8 intended skips in 44.1 s
 and 42.7 s, with every phase marker emitted. The strict local full reliability
-gate passed all six layers again: 40 client files / 322 tests, 3 module files /
-62 tests, 17 scripts, integration 24 passed / 8 skipped in 43.5 s, and Pages
+pre-phase-isolation gate passed all six layers again: 40 client files / 322 tests, 3 module files /
+62 tests, 15 scripts, integration 24 passed / 8 skipped in 43.5 s, and Pages
 2 passed. Independent Pages (2 passed, 1.4 s; build 210 ms), root typecheck,
-and binding diff also passed. Fourth GitHub reruns are pending this CI-watchdog
-commit; no external action was performed locally.
+and binding diff also passed. At that historical point, fourth GitHub reruns
+were pending the CI-watchdog commit; no external action was performed locally.
 
 ## Task 22 final phase-isolation gate (2026-08-30, `bec08b3`)
 
