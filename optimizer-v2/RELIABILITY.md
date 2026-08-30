@@ -57,6 +57,7 @@ The following existing client build artifact chunk sizes were captured in bytes:
 | F-06 | critical | Submit two distinct child-set revisions from the same parent without awaiting either reducer call | The former 100-revision harness was sequential and could not establish same-parent concurrency behavior | Task 18 eight `Promise.allSettled` pairs: 16 fulfilled siblings, +16 revisions, +24 each child table; fresh integration | Test-only two-live-connection concurrent harness asserts both siblings, exact deltas, and only a pair-eight head without assuming which sibling wins | closed (`6fdff11`) |
 | F-07 | important | Start fixed-local integration while another process occupies the browser port | Playwright allowed `reuseExistingServer`; the lifecycle could interact with a prior server instead of proving fresh ownership | Task 19 RED; focused config/lifecycle 2/2 and fresh fixed-local integration | `reuseExistingServer: false` plus `127.0.0.1:4173` bind preflight; no unknown process is contacted or terminated | closed (`366ac96`) |
 | F-08 | important | Open an under-budget or future/unknown-skill shared snapshot | Shared view recomputed a correct historical plan but omitted its precision warning, upgrade requirement text, and optimizer-provided confirmation note | Task 21 RED: shared warning status/order and future requirement/eligibility visibility; exact-release substitution regressions retained | Render `RecommendationPlan.warnings`, `requirementText`, and optional `eligibilityNote` without recomputing or changing the read-only route | closed (Task 21) |
+| F-09 | low | Load the production root in a fresh browser and inspect console errors | No favicon was configured, so browsers requested `/favicon.ico` outside the Pages base and received 404 | Built Pages favicon regression; final Pages layer 3/3; live `favicon.svg` returned HTTP 200 | Add a base-aware SVG favicon link and tracked vector asset | closed (`0b32d66`) |
 | E-01 | external | Confirm earned points for a real Level-1 gameplay character | The `level × pointsPerLevel` rule is dataset/schema evidence, not a gameplay observation | Schema protects `pointsPerLevel: 3`; gameplay confirmation not captured | No code change authorized | open — Level-1 baseline not gameplay-confirmed |
 | E-02 | external | Configure and exercise social login | No social OAuth provider credentials/configuration are enabled or discoverable in this repository | Auth copy regression only; no provider integration test is possible | Requires provider-console and SpacetimeAuth dashboard configuration | open — credentials/config not enabled |
 
@@ -104,9 +105,9 @@ fixed-local source/binding and reliability steps receive no production
 SpacetimeAuth or Vite settings; the production client ID, Maincloud URI, and
 database are scoped only to the post-gate production verification/build steps.
 
-The GitHub CI run URL/status, Maincloud publish, Pages deployment URL, and
-read-only live-browser smoke are pending owner-authorized external steps; no
-links or external statuses are asserted by this local record.
+At this Task 12 checkpoint, the GitHub CI run, Maincloud publish, Pages
+deployment, and live-browser smoke were still pending. Their completed final
+evidence is recorded below.
 
 ## Task 20 fresh clean gate (2026-08-30)
 
@@ -215,17 +216,17 @@ pre-phase-isolation gate passed all six layers again: 40 client files / 322 test
 and binding diff also passed. At that historical point, fourth GitHub reruns
 were pending the CI-watchdog commit; no external action was performed locally.
 
-## Task 22 current Linux-selector gate (2026-08-30, `59ebda2`)
+## Final deployed reliability gate (2026-08-30, `0b32d66`)
 
-The exact strict `npm run test:reliability` command completed at the committed
-Linux-selector head: 40 client files / 322 tests in 15.16 s, 3 module files /
-62 tests in 229 ms, and 20 script tests. Typechecks, coverage validation, and
-the module build passed. The owned-server phase output was core 21 passed / 5
-skipped in 30.9 s, composite 1 / 1, publication 1 / 1 in 6.5 s, and
-sharing 1 / 1 in 2.6 s, for the exact 24 passed / 8 intended skips aggregate.
-Pages passed 2 / 2 in 1.6 s, and `git diff --exit-code --
-client/src/module_bindings` exited 0; ports 3000 and 4173 had no listeners after teardown. The older 15-script Task 22 entries above
-are historical pre-phase-plan/process-group gates; eighth GitHub reruns remain pending.
+The final GitHub `npm run test:reliability` gate completed at deployed head
+`0b32d66`: 40 client files / 322 tests in 26.42 s, 3 module files / 62 tests
+in 293 ms, and 20 script tests. Typechecks, coverage validation, module build,
+and generated bindings passed. Fresh owned-server phases produced core 21
+passed / 5 skipped in 39.6 s, composite 1 / 1 in 10.9 s, publication 1 / 1
+in 3.4 s, and sharing 1 / 1 in 1.9 s, for the exact 24 passed / 8 intended
+skips aggregate. The Pages layer passed 3 / 3 in 1.5 s, including direct-route
+recovery and base-aware favicon delivery. The older Task 22 gates below remain
+historical diagnosis evidence.
 
 The fourth [Optimizer V2 CI](https://github.com/Literalman669/sbo-rebirth-planner/actions/runs/33301520394)
 and [Deploy Optimizer V2](https://github.com/Literalman669/sbo-rebirth-planner/actions/runs/33301520388)
@@ -263,3 +264,15 @@ after its owned process group was already gone. Linux teardown now authoritative
 requires owned negative-PID group absence plus port release, then destroys/unrefs
 the detached handle; Windows retains child-exit/taskkill behavior. Production
 steps were skipped; seventh reruns are pending.
+
+## Completed external evidence
+
+- Historical seventh [CI](https://github.com/Literalman669/sbo-rebirth-planner/actions/runs/33304045365) and [deploy](https://github.com/Literalman669/sbo-rebirth-planner/actions/runs/33304045333) runs passed core and Linux cleanup but used a leading-`^` grep that matched no Linux full title; production steps were skipped.
+- Final [CI run 33304722474](https://github.com/Literalman669/sbo-rebirth-planner/actions/runs/33304722474): success with all six reliability layers.
+- Final [deployment 33304722564](https://github.com/Literalman669/sbo-rebirth-planner/actions/runs/33304722564): success through Maincloud publish, production auth lock/verification, production build, Pages checks/upload, and deployment.
+- Live URL: https://literalman669.github.io/sbo-rebirth-planner/
+- Read-only smoke passed: verified dataset badge, Create Build, direct Character refresh, missing-share state, and mobile width checks; `favicon.svg` returned HTTP 200 and a fresh tab had zero console errors/warnings.
+
+The deployed production remains locked to the SpacetimeAuth issuer and configured
+public client. Social providers remain an external configuration dependency,
+and the Level-1 gameplay baseline remains explicitly unconfirmed.
