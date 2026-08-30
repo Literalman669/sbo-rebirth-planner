@@ -255,3 +255,11 @@ owned process group; teardown targets only negative owned PID with `SIGTERM`,
 then bounded `SIGKILL` fallback on that same group, treating `ESRCH` as exited,
 before waiting for launcher exit and port release. Windows owned-tree taskkill
 is unchanged. Sixth reruns are pending this process-group commit.
+
+The sixth [Optimizer V2 CI](https://github.com/Literalman669/sbo-rebirth-planner/actions/runs/33303354853)
+and [Deploy Optimizer V2](https://github.com/Literalman669/sbo-rebirth-planner/actions/runs/33303354862)
+runs passed core, then falsely required a detached Node launcher `exitCode`
+after its owned process group was already gone. Linux teardown now authoritatively
+requires owned negative-PID group absence plus port release, then destroys/unrefs
+the detached handle; Windows retains child-exit/taskkill behavior. Production
+steps were skipped; seventh reruns are pending.

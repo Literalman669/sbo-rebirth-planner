@@ -39,6 +39,7 @@ remains pending.
 ## Pending owner-authorized external evidence
 
 - Historical failed runs document the base, watchdog, connection-exhaustion, and teardown findings. The fifth [CI run](https://github.com/Literalman669/sbo-rebirth-planner/actions/runs/33302887655) and [deploy run](https://github.com/Literalman669/sbo-rebirth-planner/actions/runs/33302887685) passed core but failed only because Linux SIGTERM left the owned launcher descendant tree alive; production steps were skipped. Teardown now targets only the detached owned process group with a bounded SIGTERM/SIGKILL policy. Sixth reruns are pending.
+- Sixth [CI](https://github.com/Literalman669/sbo-rebirth-planner/actions/runs/33303354853) and [deploy](https://github.com/Literalman669/sbo-rebirth-planner/actions/runs/33303354862) runs passed core but falsely required detached launcher exit bookkeeping after the owned group was gone. Linux now uses owned-group absence plus port release as success; production steps were skipped. Seventh reruns are pending.
 - Maincloud module publish and production-auth configuration verification: pending.
 - GitHub Pages artifact upload and deployment URL: pending.
 - Read-only live-browser smoke, including console and responsive checks: pending.

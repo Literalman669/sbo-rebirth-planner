@@ -81,3 +81,16 @@ test('escalates only the owned Linux process group after a bounded TERM wait', a
   });
   assert.deepEqual(signals, [[-42, 'SIGTERM'], [-42, 'SIGKILL']]);
 });
+
+test('accepts owned-group ESRCH without detached child exit bookkeeping', async () => {
+  const signals = [];
+  await terminateOwnedProcessGroup({
+    pid: 42,
+    signal: (target, name) => {
+      signals.push([target, name]);
+      if (name === 'SIGKILL') throw Object.assign(new Error('gone'), { code: 'ESRCH' });
+    },
+    waitForExit: async () => false,
+  });
+  assert.deepEqual(signals, [[-42, 'SIGTERM'], [-42, 'SIGKILL']]);
+});

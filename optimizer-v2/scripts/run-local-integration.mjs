@@ -77,6 +77,20 @@ async function waitForOwnedServerExit(server, timeoutMs = 15_000) {
   if (server.exitCode === null) throw new Error('Owned local SpacetimeDB did not exit');
 }
 
+async function waitForOwnedGroupExit(pid, timeoutMs = 3_000) {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    try {
+      process.kill(-pid, 0);
+    } catch (error) {
+      if (error && typeof error === 'object' && error.code === 'ESRCH') return;
+      throw error;
+    }
+    await wait(100);
+  }
+  throw new Error('Owned local SpacetimeDB process group did not exit');
+}
+
 async function waitForServerPortRelease() {
   const deadline = Date.now() + 15_000;
   while (Date.now() < deadline) {
@@ -138,11 +152,15 @@ async function stopPhaseServer({ server, serverDataDir }) {
         await terminateOwnedProcessGroup({
           pid: server.pid,
           signal: process.kill,
-          waitForExit: () => waitForOwnedServerExit(server, 3_000).then(() => true).catch(() => false),
+          waitForExit: () => waitForOwnedGroupExit(server.pid, 3_000).then(() => true).catch(() => false),
         });
+        await waitForOwnedGroupExit(server.pid);
+        server.stdout?.destroy();
+        server.stderr?.destroy();
+        server.unref();
       }
     }
-    await waitForOwnedServerExit(server);
+    if (process.platform === 'win32') await waitForOwnedServerExit(server);
     await waitForServerPortRelease();
   } finally {
     if (serverDataDir.startsWith(temporaryPrefix)) rmSync(serverDataDir, { recursive: true, force: true });
