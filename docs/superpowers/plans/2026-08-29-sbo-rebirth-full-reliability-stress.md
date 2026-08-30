@@ -1034,3 +1034,34 @@ git commit -m "fix: show shared plan precision metadata"
 ```
 
 The repeat whole-branch reviewer must verify both omissions are closed before external authorization is requested.
+
+### Task 22: Isolate the Fixed-Local Browser Base in GitHub Actions
+
+**Finding:** Both GitHub workflows failed before authentication because the runner's ambient `GITHUB_ACTIONS=true` made the Vite dev server use the production Pages basename. Direct local routes such as `/equipment` and `/character` therefore rendered outside the router basename, producing deterministic Linux CI timeouts and cascading late-suite failures.
+
+**Files:**
+- Modify: `optimizer-v2/client/vite.config.ts`
+- Modify: `optimizer-v2/client/playwright.config.ts`
+- Modify: `optimizer-v2/client/src/test/playwrightConfig.test.ts`
+- Modify documentation/evidence only if measured counts or CI status changes.
+
+- [ ] **Step 1: Add RED base-isolation coverage**
+
+Prove that an ambient GitHub Actions environment still resolves the fixed-local Playwright server to base `/`, while a normal production Pages build retains `/sbo-rebirth-planner/`.
+
+- [ ] **Step 2: Add an explicit local-base override**
+
+Give the integration web server a dedicated non-secret base override and make Vite resolve that before the ambient GitHub Actions default. Do not change the production Pages build path or weaken direct-route assertions/timeouts.
+
+- [ ] **Step 3: Verify GitHub-shaped local behavior**
+
+Run focused config tests, `GITHUB_ACTIONS=true npm run test:integration`, the full reliability gate, Pages tests, and binding diff. All integration routes must pass without timeout increases.
+
+- [ ] **Step 4: Commit, push, and re-monitor**
+
+```bash
+git add optimizer-v2/client/vite.config.ts optimizer-v2/client/playwright.config.ts optimizer-v2/client/src/test/playwrightConfig.test.ts optimizer-v2/RELIABILITY.md optimizer-v2/ACCEPTANCE.md
+git commit -m "fix: isolate CI integration browser base"
+```
+
+Push only after focused review, then require green CI/deploy before production smoke.
