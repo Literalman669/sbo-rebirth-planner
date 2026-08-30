@@ -6,6 +6,7 @@ import {
   runIntegrationPhases,
 } from './integration-phase-plan.mjs';
 import { terminateOwnedProcessGroup } from './owned-process-group.mjs';
+import { stopOwnedLinuxServer } from './owned-process-group.mjs';
 
 test('splits the complete e2e suite into non-overlapping deterministic phases', () => {
   assert.deepEqual(INTEGRATION_PHASES, [
@@ -73,7 +74,7 @@ test('runs phases in order and stops before a later phase after failure', async 
 
 test('escalates only the owned Linux process group after a bounded TERM wait', async () => {
   const signals = [];
-  const waits = [false, true];
+  const waits = [false, true, true];
   await terminateOwnedProcessGroup({
     pid: 42,
     signal: (target, name) => signals.push([target, name]),
@@ -91,6 +92,18 @@ test('accepts owned-group ESRCH without detached child exit bookkeeping', async 
       if (name === 'SIGKILL') throw Object.assign(new Error('gone'), { code: 'ESRCH' });
     },
     waitForExit: async () => false,
+  });
+  assert.deepEqual(signals, [[-42, 'SIGTERM'], [-42, 'SIGKILL']]);
+});
+
+test('terminates a live owned group even after its launcher exit bookkeeping is set', async () => {
+  const signals = [];
+  const server = { pid: 42, exitCode: 0, stdout: { destroy() {} }, stderr: { destroy() {} }, unref() {} };
+  const waits = [false, true, true];
+  await stopOwnedLinuxServer({
+    server,
+    signal: (target, name) => signals.push([target, name]),
+    waitForGroupAbsence: async () => waits.shift(),
   });
   assert.deepEqual(signals, [[-42, 'SIGTERM'], [-42, 'SIGKILL']]);
 });

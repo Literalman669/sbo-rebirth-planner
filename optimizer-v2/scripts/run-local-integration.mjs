@@ -6,7 +6,7 @@ import path from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 import { playwrightArgumentsFor, runIntegrationPhases } from './integration-phase-plan.mjs';
-import { terminateOwnedProcessGroup } from './owned-process-group.mjs';
+import { stopOwnedLinuxServer } from './owned-process-group.mjs';
 
 const uri = 'http://127.0.0.1:3000';
 const database = 'sbo-rebirth-optimizer-v2-test';
@@ -145,22 +145,18 @@ async function startPhaseServer() {
 
 async function stopPhaseServer({ server, serverDataDir }) {
   try {
-    if (server.exitCode === null) {
-      if (process.platform === 'win32' && server.pid) {
+    if (process.platform === 'win32') {
+      if (server.exitCode === null && server.pid) {
         spawnSync('taskkill', ['/PID', String(server.pid), '/T', '/F'], { stdio: 'ignore' });
-      } else {
-        await terminateOwnedProcessGroup({
-          pid: server.pid,
-          signal: process.kill,
-          waitForExit: () => waitForOwnedGroupExit(server.pid, 3_000).then(() => true).catch(() => false),
-        });
-        await waitForOwnedGroupExit(server.pid);
-        server.stdout?.destroy();
-        server.stderr?.destroy();
-        server.unref();
       }
+      await waitForOwnedServerExit(server);
+    } else {
+      await stopOwnedLinuxServer({
+          server,
+          signal: process.kill,
+          waitForGroupAbsence: () => waitForOwnedGroupExit(server.pid, 3_000).then(() => true).catch(() => false),
+      });
     }
-    if (process.platform === 'win32') await waitForOwnedServerExit(server);
     await waitForServerPortRelease();
   } finally {
     if (serverDataDir.startsWith(temporaryPrefix)) rmSync(serverDataDir, { recursive: true, force: true });

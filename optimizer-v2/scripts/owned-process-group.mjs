@@ -15,3 +15,15 @@ export async function terminateOwnedProcessGroup({ pid, signal, waitForExit }) {
   if (!signalOwnedGroup(pid, 'SIGKILL', signal)) return;
   if (!(await waitForExit())) throw new Error('Owned local SpacetimeDB process group did not exit');
 }
+
+export async function stopOwnedLinuxServer({ server, signal, waitForGroupAbsence }) {
+  await terminateOwnedProcessGroup({
+    pid: server.pid,
+    signal,
+    waitForExit: waitForGroupAbsence,
+  });
+  if (!(await waitForGroupAbsence())) throw new Error('Owned local SpacetimeDB process group did not exit');
+  server.stdout?.destroy();
+  server.stderr?.destroy();
+  server.unref();
+}
