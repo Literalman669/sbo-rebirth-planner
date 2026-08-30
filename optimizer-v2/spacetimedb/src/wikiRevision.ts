@@ -1,6 +1,7 @@
 const canonicalApiBase =
   'https://swordbloxonlinerebirth.fandom.com/api.php';
 export const MAXIMUM_WIKI_RESPONSE_BYTES = 2_000_000;
+const unsafeWikiControlCharacters = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/;
 
 export const ALLOWED_WIKI_PAGES = new Set([
   'Stats',
@@ -95,6 +96,9 @@ export function parseMediaWikiRevisionResponse(
     !('content' in revision.slots.main) ||
     typeof revision.slots.main.content !== 'string'
   ) {
+    throw new Error('MediaWiki revision fields are invalid');
+  }
+  if (unsafeWikiControlCharacters.test(revision.slots.main.content)) {
     throw new Error('MediaWiki revision fields are invalid');
   }
   return {
