@@ -201,6 +201,20 @@ function publicShareSummary(testConnection: TestConnection, shareId: string) {
   };
 }
 
+function publicShareChildren(testConnection: TestConnection, shareId: string) {
+  const summary = publicShareSummary(testConnection, shareId);
+  return {
+    equipment: summary.equipment
+      .map(({ slot, itemId }) => ({ slot, itemId }))
+      .sort(
+        (left, right) =>
+          left.slot.localeCompare(right.slot) ||
+          left.itemId.localeCompare(right.itemId),
+      ),
+    ownedItems: summary.ownedItems.map(({ itemId }) => itemId).sort(),
+  };
+}
+
 function privateRevisionChildren(
   testConnection: TestConnection,
   revisionId: string,
@@ -320,14 +334,13 @@ test('keeps 100 immutable revisions converged across same-account subscriptions'
           datasetVersion: 'bootstrap-0',
         },
       ],
+    });
+    await expect.poll(() => publicShareChildren(publicViewer!, historicalShareId)).toEqual({
       equipment: [
-        { slot: 'main-hand', itemId: 'steel-greatsword' },
         { slot: 'armor', itemId: 'beginner-armor' },
+        { slot: 'main-hand', itemId: 'steel-greatsword' },
       ],
-      ownedItems: [
-        { itemId: 'steel-greatsword' },
-        { itemId: 'beginner-armor' },
-      ],
+      ownedItems: ['beginner-armor', 'steel-greatsword'],
     });
     const historicalSnapshot = publicShareSummary(publicViewer, historicalShareId).builds[0]!;
     expect(historicalSnapshot).not.toHaveProperty('owner');
@@ -368,14 +381,13 @@ test('keeps 100 immutable revisions converged across same-account subscriptions'
           datasetVersion: 'bootstrap-0',
         },
       ],
+    });
+    await expect.poll(() => publicShareChildren(publicViewer!, historicalShareId)).toEqual({
       equipment: [
-        { slot: 'main-hand', itemId: 'steel-greatsword' },
         { slot: 'armor', itemId: 'beginner-armor' },
+        { slot: 'main-hand', itemId: 'steel-greatsword' },
       ],
-      ownedItems: [
-        { itemId: 'steel-greatsword' },
-        { itemId: 'beginner-armor' },
-      ],
+      ownedItems: ['beginner-armor', 'steel-greatsword'],
     });
     expect(
       privateRevisionChildren(primary, 'stress-revision-100'),
