@@ -11,6 +11,10 @@ import type { DatasetSnapshot } from '../../domain/dataset/model';
 import { optimizeBuild } from '../../domain/optimizer/optimizeBuild';
 import { assessOptimizationReadiness } from '../../domain/optimizer/planReadiness';
 import { tables } from '../../module_bindings';
+import {
+  LevelAllocationTable,
+  SpendNowPanel,
+} from '../results/LevelAllocationTable';
 
 type SharedBuildViewProps = {
   profile: CharacterProfile;
@@ -53,22 +57,19 @@ export function SharedBuildView({ profile, snapshot }: SharedBuildViewProps) {
         <h3 id="shared-now-heading">Do now</h3>
         <strong>{plan.immediateAction.summary}</strong>
       </section>
+      <SpendNowPanel
+        current={profile.stats}
+        allocation={plan.statPlan.spendNow}
+        headingId="shared-spend-now-heading"
+      />
       <section className="result-band" aria-labelledby="shared-levels-heading">
-        <h3 id="shared-levels-heading">Next levels</h3>
+        <h3 id="shared-levels-heading">Next ten levels</h3>
         {plan.warnings.length > 0 ? (
           <aside className="plan-warnings" role="status">
             {plan.warnings.map((warning) => <p key={warning}>{warning}</p>)}
           </aside>
         ) : null}
-        <ul>
-          {plan.statPlan.milestones.map((milestone) => (
-            <li key={milestone.afterLevel}>
-              Level +{milestone.afterLevel}: STR +{milestone.added.str}, DEF +
-              {milestone.added.def}, AGI +{milestone.added.agi}, VIT +
-              {milestone.added.vit}, LUK +{milestone.added.luk}
-            </li>
-          ))}
-        </ul>
+        <LevelAllocationTable rows={plan.statPlan.levelRows} />
       </section>
       <section className="result-band" aria-labelledby="shared-upgrades-heading">
         <h3 id="shared-upgrades-heading">Next upgrades</h3>

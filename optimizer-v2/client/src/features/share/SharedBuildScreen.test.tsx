@@ -1,4 +1,4 @@
-import { act, render, screen } from '@testing-library/react';
+import { act, render, screen, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it } from 'vitest';
 import { bootstrapRelease } from '../../data/bootstrapRelease';
@@ -42,7 +42,7 @@ describe('SharedBuildView', () => {
         level: 834,
         stats: { str: 500, def: 500, agi: 500, vit: 500, luk: 500 },
       },
-      'The next ten levels require 30 open stat slots, but only 0 remain.',
+      'Current unspent points and the next ten levels require 32 open stat slots, but only 0 remain.',
     ],
   ])('shows unavailable without shared advice for %s', (_case, blockedProfile, explanation) => {
     render(
@@ -76,7 +76,7 @@ describe('SharedBuildView', () => {
     expect(screen.getByText('Dataset bootstrap-0')).toBeVisible();
   });
 
-  it('shows reduced-precision warning as a status before the shared future stat plan', () => {
+  it('shows spend-now advice before the shared future stat plan', () => {
     render(
       <MemoryRouter>
         <SharedBuildView
@@ -89,19 +89,15 @@ describe('SharedBuildView', () => {
       </MemoryRouter>,
     );
 
-    const warning = screen.getByText(
-      'The optimizer sees 24 points not represented in invested stats and will treat plan precision as reduced.',
-    );
-    const futurePlan = screen.getByText(
-      (_, element) =>
-        element?.tagName === 'LI' &&
-        element.textContent?.startsWith('Level +5: STR +') === true,
-    );
-    expect(warning.closest('[role="status"]')).toBeVisible();
+    const spendNow = screen.getByRole('region', { name: 'Spend now' });
+    expect(within(spendNow).getByText('24 points available now')).toBeVisible();
+    const futurePlan = screen.getByRole('table', { name: 'Next ten levels' });
     expect(
-      warning.compareDocumentPosition(futurePlan) &
+      spendNow.compareDocumentPosition(futurePlan) &
         Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
+    expect(within(futurePlan).getByRole('rowheader', { name: 'Level 9' })).toBeVisible();
+    expect(within(futurePlan).getByRole('rowheader', { name: 'Level 18' })).toBeVisible();
   });
 
   it('shows optimizer-provided requirements and confirmation guidance for future shared upgrades', () => {

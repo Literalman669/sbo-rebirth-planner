@@ -119,11 +119,11 @@ export function StatsScreen() {
         ))}
       </div>
       <p aria-live="polite">
-        Expected {budget.expected} · Entered {budget.invested} · Difference {budget.difference}
+        Available {budget.expected} · Invested {budget.invested} · Unspent {budget.difference}
       </p>
       {budget.status === 'unaccounted' ? (
         <p role="status" aria-live="polite">
-          The optimizer sees {budget.difference} points not represented in invested stats and will treat plan precision as reduced.
+          {budget.difference} points remain unspent. Results will tell you exactly where to put them.
         </p>
       ) : null}
       {budgetError ? <p role="alert">{budgetError}</p> : null}

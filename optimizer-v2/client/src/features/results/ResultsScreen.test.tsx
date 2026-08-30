@@ -77,7 +77,7 @@ describe('ResultsScreen', () => {
         level: 834,
         stats: { str: 500, def: 500, agi: 500, vit: 500, luk: 500 },
       },
-      'The next ten levels require 30 open stat slots, but only 0 remain.',
+      'Current unspent points and the next ten levels require 32 open stat slots, but only 0 remain.',
     ],
   ])('shows unavailable without advice for %s', async (_case, draft, explanation) => {
     await renderResults(undefined, draft);
@@ -139,26 +139,51 @@ describe('ResultsScreen', () => {
     ).toBeVisible();
     expect(screen.getAllByTestId('immediate-action')).toHaveLength(1);
     expect(screen.getByText('Equip Steel Greatsword now')).toBeVisible();
-    expect(screen.getByText('30 points')).toBeVisible();
-    expect(screen.getByText('Level +5')).toBeVisible();
-    expect(screen.getByText('Level +10')).toBeVisible();
+    expect(screen.getByText('30 future points')).toBeVisible();
+    const table = screen.getByRole('table', { name: 'Next ten levels' });
+    expect(within(table).getAllByRole('rowheader')).toHaveLength(10);
+    expect(within(table).getByRole('rowheader', { name: 'Level 9' })).toBeVisible();
+    expect(within(table).getByRole('rowheader', { name: 'Level 18' })).toBeVisible();
+    expect(
+      screen.getByText(
+        'Add this level is new spending for that level; totals are your stats after spending.',
+      ),
+    ).toBeVisible();
+    expect(screen.queryByText('Level +5')).not.toBeInTheDocument();
   });
 
-  it('shows precision warnings above future stats and labels unknown-skill targets for confirmation', async () => {
+  it('allocates a new character’s three current points before Levels 2 through 11', async () => {
+    await renderResults(undefined, {
+      ...profile,
+      level: 1,
+      maxFloor: 1,
+      weaponPath: 'melee',
+      weaponSkill: 1,
+      stats: { str: 0, def: 0, agi: 0, vit: 0, luk: 0 },
+      equipped: {
+        'main-hand': 'fists',
+        armor: 'beginner-armor',
+      },
+      ownedItemIds: [],
+    });
+
+    const spendNow = await screen.findByRole('region', { name: 'Spend now' });
+    expect(within(spendNow).getByText('3 points available now')).toBeVisible();
+    const table = screen.getByRole('table', { name: 'Next ten levels' });
+    expect(within(table).getByRole('rowheader', { name: 'Level 2' })).toBeVisible();
+    expect(within(table).getByRole('rowheader', { name: 'Level 11' })).toBeVisible();
+  });
+
+  it('turns unspent points into an action and labels unknown-skill targets for confirmation', async () => {
     await renderResults(undefined, {
       ...profile,
       weaponSkill: undefined,
       stats: { str: 0, def: 0, agi: 0, vit: 0, luk: 0 },
     });
 
-    const warning = await screen.findByText(
-      'The optimizer sees 24 points not represented in invested stats and will treat plan precision as reduced.',
-    );
-    const statTable = screen.getByRole('table');
-    expect(
-      warning.compareDocumentPosition(statTable) &
-        Node.DOCUMENT_POSITION_FOLLOWING,
-    ).toBeTruthy();
+    const spendNow = await screen.findByRole('region', { name: 'Spend now' });
+    expect(within(spendNow).getByText('24 points available now')).toBeVisible();
+    expect(screen.queryByText(/plan precision as reduced/i)).not.toBeInTheDocument();
     expect(
       screen.getByText('Requires Weapon Skill 5; confirm in game'),
     ).toBeVisible();

@@ -5,7 +5,7 @@ import {
   resolveDatasetSnapshot,
   useDataset,
 } from '../../app/providers/DatasetProvider';
-import type { EquipmentSlot, StatName } from '../../domain/build/model';
+import type { EquipmentSlot } from '../../domain/build/model';
 import type { ProjectedMetrics } from '../../domain/optimizer/projections';
 import { optimizeBuild } from '../../domain/optimizer/optimizeBuild';
 import { assessOptimizationReadiness } from '../../domain/optimizer/planReadiness';
@@ -14,14 +14,7 @@ import { useOptionalCloudBuilds } from '../../app/providers/CloudBuildsContext';
 import { isPlanStale } from './planStaleness';
 import type { DatasetSnapshot } from '../../domain/dataset/model';
 import { firstIncompleteEquipmentStep } from '../planner/completeness';
-
-const statLabels: Array<{ key: StatName; label: string }> = [
-  { key: 'str', label: 'STR' },
-  { key: 'def', label: 'DEF' },
-  { key: 'agi', label: 'AGI' },
-  { key: 'vit', label: 'VIT' },
-  { key: 'luk', label: 'LUK' },
-];
+import { LevelAllocationTable, SpendNowPanel } from './LevelAllocationTable';
 
 const slotLabels: Record<EquipmentSlot, string> = {
   'main-hand': 'Main hand',
@@ -219,38 +212,19 @@ export function ResultsScreen() {
         </div>
       </section>
 
+      <SpendNowPanel current={draft.stats} allocation={plan.statPlan.spendNow} />
+
       <section aria-labelledby="next-levels-heading" className="result-band">
         <div className="result-band-heading">
-          <h3 id="next-levels-heading">Next levels</h3>
-          <strong>30 points</strong>
+          <h3 id="next-levels-heading">Next ten levels</h3>
+          <strong>30 future points</strong>
         </div>
         {plan.warnings.length > 0 ? (
           <aside className="plan-warnings" role="status">
             {plan.warnings.map((warning) => <p key={warning}>{warning}</p>)}
           </aside>
         ) : null}
-        <div className="stat-plan-table-wrapper">
-          <table className="stat-plan-table">
-            <thead>
-              <tr>
-                <th scope="col">Milestone</th>
-                {statLabels.map((stat) => (
-                  <th scope="col" key={stat.key}>{stat.label}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {plan.statPlan.milestones.map((milestone) => (
-                <tr key={milestone.afterLevel}>
-                  <th scope="row">Level +{milestone.afterLevel}</th>
-                  {statLabels.map((stat) => (
-                    <td key={stat.key}>+{milestone.added[stat.key]}</td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <LevelAllocationTable rows={plan.statPlan.levelRows} />
       </section>
 
       <section

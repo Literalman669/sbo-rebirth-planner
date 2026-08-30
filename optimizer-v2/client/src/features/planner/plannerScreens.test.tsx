@@ -158,7 +158,7 @@ describe('planner routes', () => {
     for (const stat of ['STR', 'DEF', 'AGI', 'VIT', 'LUK']) {
       expect(screen.getByLabelText(stat)).toBeVisible();
     }
-    expect(screen.getByText('Expected 3 · Entered 0 · Difference 3')).toBeVisible();
+    expect(screen.getByText('Available 3 · Invested 0 · Unspent 3')).toBeVisible();
   });
 
   it('filters equipment to the selected weapon path and exposes required slots', async () => {
@@ -388,17 +388,17 @@ describe('planner routes', () => {
     expect(router.state.location.pathname).toBe('/stats');
     expect(screen.getByLabelText('STR')).toHaveFocus();
     expect(screen.getByRole('alert')).toHaveTextContent(
-      'The next ten levels require 30 open stat slots, but only 0 remain.',
+      'Current unspent points and the next ten levels require 32 open stat slots, but only 0 remain.',
     );
   });
 
-  it('allows an under-budget profile and announces reduced plan precision', async () => {
+  it('allows an under-budget profile and promises an actionable allocation', async () => {
     const user = userEvent.setup();
     const { router } = await renderRoute('/stats');
 
     expect(
       await screen.findByText(
-        'The optimizer sees 3 points not represented in invested stats and will treat plan precision as reduced.',
+        '3 points remain unspent. Results will tell you exactly where to put them.',
       ),
     ).toBeVisible();
 
@@ -417,11 +417,11 @@ describe('planner routes', () => {
     await renderRoute('/stats', { testOnlySnapshot: fourPointSnapshot });
 
     expect(
-      await screen.findByText('Expected 4 · Entered 0 · Difference 4'),
+      await screen.findByText('Available 4 · Invested 0 · Unspent 4'),
     ).toBeVisible();
     expect(
       screen.getByText(
-        'The optimizer sees 4 points not represented in invested stats and will treat plan precision as reduced.',
+        '4 points remain unspent. Results will tell you exactly where to put them.',
       ),
     ).toBeVisible();
   });
