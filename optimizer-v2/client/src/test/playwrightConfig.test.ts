@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { once } from 'node:events';
 import { expect, test } from 'vitest';
 import integrationConfig from '../../playwright.config';
+import { resolveViteBasePath } from '../../vite.config';
 
 const clientRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const optimizerRoot = path.resolve(clientRoot, '..');
@@ -50,10 +51,27 @@ test('integration Playwright config owns a fixed local test server', () => {
   expect(webServer.url).toBe('http://127.0.0.1:4173');
   expect(webServer.reuseExistingServer).toBe(false);
   expect(webServer.env).toMatchObject({
+    SBO_VITE_BASE_PATH: '/',
     VITE_SPACETIME_URI: 'http://127.0.0.1:3000',
     VITE_SPACETIME_DATABASE: 'sbo-rebirth-optimizer-v2-test',
     VITE_TEST_AUTH_TOKEN: process.env.SBO_TEST_USER_TOKEN ?? '',
   });
+});
+
+test('explicit local base takes precedence over the GitHub Actions Pages base', () => {
+  expect(
+    resolveViteBasePath({
+      GITHUB_ACTIONS: 'true',
+      SBO_VITE_BASE_PATH: '/',
+    }),
+  ).toBe('/');
+});
+
+test('Vite base defaults to Pages only for GitHub Actions production builds', () => {
+  expect(resolveViteBasePath({ GITHUB_ACTIONS: 'true' })).toBe(
+    '/sbo-rebirth-planner/',
+  );
+  expect(resolveViteBasePath({})).toBe('/');
 });
 
 test('fixed-local integration rejects an occupied app port without using its owner', async () => {

@@ -21,6 +21,7 @@ export default defineConfig({
     url: 'http://127.0.0.1:4173',
     reuseExistingServer: false,
     env: {
+      SBO_VITE_BASE_PATH: '/',
       VITE_SPACETIME_URI: 'http://127.0.0.1:3000',
       VITE_SPACETIME_DATABASE: 'sbo-rebirth-optimizer-v2-test',
       VITE_TEST_AUTH_TOKEN: process.env.SBO_TEST_USER_TOKEN ?? '',

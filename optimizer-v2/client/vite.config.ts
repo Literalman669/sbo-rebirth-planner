@@ -1,9 +1,13 @@
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 
+export function resolveViteBasePath(environment: NodeJS.ProcessEnv = process.env) {
+  return environment.SBO_VITE_BASE_PATH ?? (environment.GITHUB_ACTIONS ? '/sbo-rebirth-planner/' : '/');
+}
+
 export default defineConfig({
   plugins: [react()],
-  base: process.env.GITHUB_ACTIONS ? '/sbo-rebirth-planner/' : '/',
+  base: resolveViteBasePath(),
   build: {
     rolldownOptions: {
       output: {

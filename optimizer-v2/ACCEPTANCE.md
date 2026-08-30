@@ -27,16 +27,17 @@ remains pending.
 
 - Clean `npm ci`: 0 reported package vulnerabilities (2026-08-30 fresh local gate).
 - Toolchain: Node 22.22.2 and SpacetimeDB 2.8.3 (2026-08-30 fresh local gate).
-- Reliability runner: all 6 layers passed — 40 client unit files / 319 tests (15.88 s), 3 module unit files / 62 tests (280 ms), 15 script tests (108.7679 ms), typecheck, coverage, and module build. Timings are diagnostic only.
-- Fixed-local SpacetimeDB integration: 24 passed, 8 intentionally skipped in 49.0 s, against a new `http://127.0.0.1:3000` / `sbo-rebirth-optimizer-v2-test` lifecycle only; an occupied `127.0.0.1:4173` fails closed without reusing, contacting, or terminating its owner.
+- Reliability runner: all 6 layers passed — 40 client unit files / 321 tests (14.60 s), 3 module unit files / 62 tests (211 ms), 15 script tests, typecheck, coverage, and module build. Timings are diagnostic only.
+- Fixed-local SpacetimeDB integration: 24 passed, 8 intentionally skipped in 43.7 s, against a new `http://127.0.0.1:3000` / `sbo-rebirth-optimizer-v2-test` lifecycle only; an occupied `127.0.0.1:4173` fails closed without reusing, contacting, or terminating its owner.
+- CI base isolation: the focused RED lacked the Vite resolver and fixed-local override; GREEN passed 4/4. With `GITHUB_ACTIONS=true` scoped only to the PowerShell command, integration passed 24 tests with 8 intended skips in 44.4 s, including direct-route and keyboard checks; the ambient shell environment was restored afterward.
 - Same-parent concurrency: 8 concurrent pairs produced 16 fulfilled siblings, +16 revisions, and +24 rows in each child table; no sibling winner is assumed.
-- Production-shaped Pages artifact: direct `/auth/callback` and `/shared/:id` recovery both pass with query and hash preservation (2 passed in 1.4 s; build 348 ms).
+- Production-shaped Pages artifact: direct `/auth/callback` and `/shared/:id` recovery both pass with query and hash preservation (2 passed in 1.4 s; build 203 ms). The production GitHub Actions base remains `/sbo-rebirth-planner/` when no local override is supplied.
 - Generated TypeScript bindings are regenerated with SpacetimeDB 2.8.3 and `git diff --exit-code -- client/src/module_bindings` exited 0.
 - Shared-plan parity: the local Task 21 RED/GREEN regression proves the shared read-only route places the literal reduced-precision warning in an accessible status before the future stat plan and retains optimizer-produced requirement plus `confirm in game` eligibility text; the exact historical-release substitution checks remain green.
 
 ## Pending owner-authorized external evidence
 
-- GitHub Actions CI run URL and status: pending; no CI run was dispatched during the local gate.
+- Failed fixed-local integration runs: [Optimizer V2 CI](https://github.com/Literalman669/sbo-rebirth-planner/actions/runs/33299676885) and [Deploy Optimizer V2](https://github.com/Literalman669/sbo-rebirth-planner/actions/runs/33299676888) both failed before authentication/publish because the ambient GitHub Actions base was applied to the local browser server. Reruns are pending the Task 22 push.
 - Maincloud module publish and production-auth configuration verification: pending.
 - GitHub Pages artifact upload and deployment URL: pending.
 - Read-only live-browser smoke, including console and responsive checks: pending.

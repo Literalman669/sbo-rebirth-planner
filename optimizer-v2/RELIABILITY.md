@@ -140,3 +140,35 @@ intended skips in 49.0 s, and two built Pages deep-link passes in 1.4 s.
 The rebuilt entry chunk is `index-BpPnh8FJ.js` (129,405 bytes), and the final
 binding diff command exited 0. No CI, deployment, publication, or live smoke
 was requested; the two external findings above remain open.
+
+## Task 22 GitHub Actions browser-base isolation (2026-08-30)
+
+Both [Optimizer V2 CI](https://github.com/Literalman669/sbo-rebirth-planner/actions/runs/33299676885)
+and [Deploy Optimizer V2](https://github.com/Literalman669/sbo-rebirth-planner/actions/runs/33299676888)
+failed in their fixed-local integration gate before authentication, publication,
+or any production step. The runner's ambient `GITHUB_ACTIONS=true` selected the
+production Pages base (`/sbo-rebirth-planner/`) for Vite's local dev server.
+Consequently direct `/equipment` and `/character` browser routes rendered
+outside the router basename, producing four direct-route/keyboard failures and
+a cascading late sharing timeout.
+
+`SBO_VITE_BASE_PATH` is now an explicit non-secret Vite server override that
+resolves before the ambient GitHub Actions fallback. The fixed-local Playwright
+web server supplies `SBO_VITE_BASE_PATH=/` alongside its fixed test database
+configuration; production builds still have no override and therefore retain
+the `/sbo-rebirth-planner/` base under GitHub Actions. The RED config test
+failed because both the resolver and server override were absent. Its GREEN
+run passed 4/4, including local override, GitHub Pages default, normal-local
+default, and fixed database/server assertions.
+
+With `GITHUB_ACTIONS=true` scoped to the PowerShell integration command and
+restored afterward, fixed-local integration passed 24 tests with 8 intended
+skips in 44.4 s, including the direct-route and keyboard checks. The fresh
+full reliability command passed all six layers: 40 client files / 321 tests,
+3 module files / 62 tests, 15 script tests, typechecks, coverage validation,
+module build, fixed-local integration (24 passed, 8 skipped, 43.7 s), and
+Pages (2 passed, 1.4 s). An independent `npm run test:pages` production build
+(203 ms) and deep-link suite (2 passed, 1.4 s) also passed, and
+`git diff --exit-code -- client/src/module_bindings` exited 0. New GitHub CI
+and deploy reruns remain pending the Task 22 push; no external action was
+performed locally.
