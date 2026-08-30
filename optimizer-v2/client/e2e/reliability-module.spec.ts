@@ -90,6 +90,31 @@ function revision(index: number, parentRevisionId?: string): RevisionInput {
   };
 }
 
+function sameParentRaceRevision(
+  pairIndex: number,
+  lane: 'first' | 'second',
+  parentRevisionId: string,
+): RevisionInput {
+  const input = revision(
+    200 + pairIndex * 2 + (lane === 'first' ? 0 : 1),
+    parentRevisionId,
+  );
+  return {
+    ...input,
+    revisionId: `same-parent-race-${String(pairIndex).padStart(2, '0')}-${lane}`,
+    name: 'Same Parent Concurrent Revision',
+    ...(lane === 'second'
+      ? {
+          equipment: [
+            { slot: 'main-hand', itemId: 'steel-greatsword' },
+            { slot: 'armor', itemId: 'beginner-armor' },
+          ],
+          ownedItemIds: ['steel-greatsword', 'beginner-armor'],
+        }
+      : {}),
+  };
+}
+
 function offlineProfile(level: number): CharacterProfile {
   return {
     schemaVersion: 2,
@@ -790,6 +815,7 @@ async function attachFailureEvidence(
   publicViewer: TestConnection | undefined,
   clientQueueState: unknown,
   sharingState: unknown,
+  sameParentRaceState: unknown,
 ) {
   const evidencePath = testInfo.outputPath('cloud-revision-stress-evidence.json');
   await writeFile(
@@ -811,6 +837,7 @@ async function attachFailureEvidence(
           : undefined,
         clientQueueState,
         sharingState,
+        sameParentRaceState,
       },
       (_key, value) => (typeof value === 'bigint' ? value.toString() : value),
       2,
@@ -833,6 +860,7 @@ test('keeps 100 immutable revisions converged across same-account subscriptions'
   let reconnected: TestConnection | undefined;
   let clientQueueState: unknown;
   let sharingState: unknown;
+  let sameParentRaceState: unknown;
 
   try {
     primary = await connect();
@@ -1046,6 +1074,141 @@ test('keeps 100 immutable revisions converged across same-account subscriptions'
       );
     }
 
+    const sameParentRacePairs = 8;
+    let finalRaceRevisionIds: readonly string[] = [];
+    for (let pairIndex = 1; pairIndex <= sameParentRacePairs; pairIndex += 1) {
+      await expect.poll(() => {
+        const primaryHead = viewSummary(primary!).headRevisionId;
+        const secondaryHead = viewSummary(secondary!).headRevisionId;
+        return primaryHead !== undefined && primaryHead === secondaryHead;
+      }).toBe(true);
+
+      const sharedParentRevisionId = viewSummary(primary).headRevisionId!;
+      expect(viewSummary(secondary).headRevisionId).toBe(sharedParentRevisionId);
+
+      const first = sameParentRaceRevision(
+        pairIndex,
+        'first',
+        sharedParentRevisionId,
+      );
+      const second = sameParentRaceRevision(
+        pairIndex,
+        'second',
+        sharedParentRevisionId,
+      );
+      const pair = [first, second] as const;
+      reducerInputs.push(...pair);
+
+      const outcomes = await Promise.allSettled([
+        primary.connection.reducers.saveBuildRevision(first),
+        secondary.connection.reducers.saveBuildRevision(second),
+      ]);
+      sameParentRaceState = {
+        pairIndex,
+        sharedParentRevisionId,
+        revisionIds: pair.map((input) => input.revisionId),
+        reducerOutcomes: outcomes.map((outcome) =>
+          outcome.status === 'fulfilled'
+            ? { status: outcome.status }
+            : {
+                status: outcome.status,
+                reason:
+                  outcome.reason instanceof Error
+                    ? outcome.reason.message
+                    : String(outcome.reason),
+              },
+        ),
+      };
+      expect(outcomes).toEqual([
+        { status: 'fulfilled', value: undefined },
+        { status: 'fulfilled', value: undefined },
+      ]);
+
+      const expectedRevisionCount = 120 + pairIndex * 2;
+      const expectedChildCount = 170 + pairIndex * 3;
+      const expectedRaceRevisionIds = pair.map((input) => input.revisionId);
+      await expect.poll(() => {
+        const primarySummary = viewSummary(primary!);
+        const secondarySummary = viewSummary(secondary!);
+        return (
+          primarySummary.revisions.length === expectedRevisionCount &&
+          primarySummary.revisionEquipment.length === expectedChildCount &&
+          primarySummary.revisionOwnedItems.length === expectedChildCount &&
+          secondarySummary.revisions.length === expectedRevisionCount &&
+          secondarySummary.revisionEquipment.length === expectedChildCount &&
+          secondarySummary.revisionOwnedItems.length === expectedChildCount &&
+          primarySummary.headRevisionId === secondarySummary.headRevisionId &&
+          expectedRaceRevisionIds.includes(primarySummary.headRevisionId ?? '')
+        );
+      }).toBe(true);
+
+      for (const connection of [primary, secondary]) {
+        const summary = viewSummary(connection);
+        expect(expectedRaceRevisionIds).toContain(summary.headRevisionId);
+        expect(summary.revisions).toEqual(
+          expect.arrayContaining(
+            pair.map((input) =>
+              expect.objectContaining({
+                id: input.revisionId,
+                buildId,
+                parentRevisionId: sharedParentRevisionId,
+                level: input.profile.level,
+                str: input.profile.str,
+              }),
+            ),
+          ),
+        );
+        for (const input of pair) {
+          expect(privateRevisionChildren(connection, input.revisionId)).toEqual({
+            equipment: [...input.equipment].sort(
+              (left, right) =>
+                left.slot.localeCompare(right.slot) ||
+                left.itemId.localeCompare(right.itemId),
+            ),
+            ownedItems: [...input.ownedItemIds].sort(),
+          });
+        }
+      }
+
+      const finalHead = viewSummary(primary).headRevisionId!;
+      const finalRevision = pair.find((input) => input.revisionId === finalHead);
+      expect(finalRevision).toBeDefined();
+      expect(
+        viewSummary(primary).revisions.find((stored) => stored.id === finalHead),
+      ).toMatchObject({
+        buildId,
+        parentRevisionId: sharedParentRevisionId,
+        schemaVersion: finalRevision!.profile.schemaVersion,
+        level: finalRevision!.profile.level,
+        maxFloor: finalRevision!.profile.maxFloor,
+        weaponPath: finalRevision!.profile.weaponPath,
+        goal: finalRevision!.profile.goal,
+        weaponSkill: finalRevision!.profile.weaponSkill,
+        str: finalRevision!.profile.str,
+        def: finalRevision!.profile.def,
+        agi: finalRevision!.profile.agi,
+        vit: finalRevision!.profile.vit,
+        luk: finalRevision!.profile.luk,
+        datasetVersion: finalRevision!.profile.datasetVersion,
+      });
+      expect(
+        viewSummary(primary).builds.find((stored) => stored.id === buildId),
+      ).toMatchObject({
+        id: buildId,
+        name: finalRevision!.name,
+        headRevisionId: finalHead,
+      });
+      expect(privateRevisionChildren(primary, finalHead)).toEqual({
+        equipment: [...finalRevision!.equipment].sort(
+          (left, right) =>
+            left.slot.localeCompare(right.slot) ||
+            left.itemId.localeCompare(right.itemId),
+        ),
+        ownedItems: [...finalRevision!.ownedItemIds].sort(),
+      });
+      finalRaceRevisionIds = expectedRaceRevisionIds;
+    }
+
     await expect.poll(() => viewSummary(foreign!).builds.length).toBe(0);
     await expect(
       foreign.connection.reducers.saveBuildRevision({
@@ -1057,17 +1220,23 @@ test('keeps 100 immutable revisions converged across same-account subscriptions'
 
     await expect.poll(() => {
       const owner = buildSummary(primary!, buildId);
-      return {
-        headRevisionId: owner.build?.headRevisionId,
-        revisions: owner.revisions.length,
-        revisionEquipment: owner.revisionEquipment.length,
-        revisionOwnedItems: owner.revisionOwnedItems.length,
-      };
+      return (
+        finalRaceRevisionIds.includes(owner.build?.headRevisionId ?? '') &&
+        owner.revisions.length === 136 &&
+        owner.revisionEquipment.length === 194 &&
+        owner.revisionOwnedItems.length === 194
+      );
+    }).toBe(true);
+    const finalOwner = buildSummary(primary, buildId);
+    expect(finalRaceRevisionIds).toContain(finalOwner.build?.headRevisionId);
+    expect({
+      revisions: finalOwner.revisions.length,
+      revisionEquipment: finalOwner.revisionEquipment.length,
+      revisionOwnedItems: finalOwner.revisionOwnedItems.length,
     }).toEqual({
-      headRevisionId: 'stress-revision-120',
-      revisions: 120,
-      revisionEquipment: 170,
-      revisionOwnedItems: 170,
+      revisions: 136,
+      revisionEquipment: 194,
+      revisionOwnedItems: 194,
     });
 
     const localDatabaseName = `cloud-offline-replay-${crypto.randomUUID()}`;
@@ -1173,6 +1342,7 @@ test('keeps 100 immutable revisions converged across same-account subscriptions'
       publicViewer,
       clientQueueState,
       sharingState,
+      sameParentRaceState,
     );
     throw error;
   } finally {
