@@ -8,7 +8,18 @@ import type {
 const reviewedAt = '2026-08-29';
 const statsSource =
   'https://swordbloxonlinerebirth.fandom.com/wiki/Stats';
-const pointsSource = 'https://sborwiki.com/guides/index.html?guide=new-player';
+const pointsSource =
+  'https://www.roblox.com/games/4733278992/Sword-Blox-Online-Rebirth';
+const sourceRevisions: Record<string, string> = {
+  'https://swordbloxonlinerebirth.fandom.com/wiki/Stats': '23125',
+  'https://swordbloxonlinerebirth.fandom.com/wiki/One-Handed': '26216',
+  'https://swordbloxonlinerebirth.fandom.com/wiki/Two-Handed': '26187',
+  'https://swordbloxonlinerebirth.fandom.com/wiki/Rapier': '26275',
+  'https://swordbloxonlinerebirth.fandom.com/wiki/Dagger': '26212',
+  'https://swordbloxonlinerebirth.fandom.com/wiki/Fists': '21749',
+  'https://swordbloxonlinerebirth.fandom.com/wiki/Armor': '26210',
+  'https://swordbloxonlinerebirth.fandom.com/wiki/Shields': '25332',
+};
 
 function formula(
   id: FormulaId,
@@ -16,6 +27,7 @@ function formula(
   units: string,
   boundaryBehavior: string,
   sourceUrl = statsSource,
+  sourceRevision = sourceRevisions[sourceUrl] ?? 'bootstrap-review:2026-08-29',
 ): FormulaRecord {
   return {
     id,
@@ -24,6 +36,7 @@ function formula(
     applicability: 'All player builds',
     boundaryBehavior,
     sourceUrl,
+    sourceRevision,
     lastReviewedAt: reviewedAt,
     verificationStatus: 'verified',
   };
@@ -32,11 +45,13 @@ function formula(
 function equipment(
   item: Omit<
     EquipmentRecord,
-    'lastReviewedAt' | 'verificationStatus'
+    'lastReviewedAt' | 'verificationStatus' | 'sourceRevision'
   >,
 ): EquipmentRecord {
   return {
     ...item,
+    sourceRevision:
+      sourceRevisions[item.sourceUrl] ?? 'bootstrap-review:2026-08-29',
     lastReviewedAt: reviewedAt,
     verificationStatus: 'verified',
   };
@@ -47,7 +62,7 @@ export const bootstrapRelease = {
   publishedAt: '2026-08-29T00:00:00.000Z',
   lastReviewedAt: reviewedAt,
   sourceSummary:
-    'Reviewed Fandom progression tables and Stats formulas; the SBO:R new-player guide supplies points per level.',
+    'Reviewed Fandom progression tables and Stats formulas; the owner-attested official game entry supplies points per level.',
   formulaSetVersion: 'sbor-stats-v1',
   pointsPerLevel: 3,
   dualWieldSkillGate: 200,
@@ -59,6 +74,7 @@ export const bootstrapRelease = {
       'stat points',
       'Three points are awarded per level.',
       pointsSource,
+      'owner-gameplay-attestation:2026-08-29',
     ),
     formula(
       'attack-from-str',

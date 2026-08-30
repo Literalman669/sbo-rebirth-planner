@@ -18,6 +18,7 @@ const sword: EquipmentRecord = {
   acquisitionDetail: 'Starter Inventory',
   availability: 'always',
   sourceUrl: 'https://swordbloxonlinerebirth.fandom.com/wiki/Two-Handed',
+  sourceRevision: '26187',
   lastReviewedAt: '2026-08-29',
   verificationStatus: 'verified',
 };

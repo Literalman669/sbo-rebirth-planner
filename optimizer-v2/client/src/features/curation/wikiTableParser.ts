@@ -135,12 +135,13 @@ function weaponPathsForPage(pageTitle: string): WeaponPath[] | null {
 
 function candidateEquipment(
   partial: Omit<
-    EquipmentRecord,
-    'lastReviewedAt' | 'verificationStatus'
+  EquipmentRecord,
+    'lastReviewedAt' | 'verificationStatus' | 'sourceRevision'
   >,
 ): EquipmentRecord {
   return {
     ...partial,
+    sourceRevision: 'pending-review',
     lastReviewedAt: '1970-01-01',
     verificationStatus: 'candidate',
   };
@@ -387,6 +388,7 @@ function formula(
       applicability: 'All player builds',
       boundaryBehavior,
       sourceUrl: 'https://swordbloxonlinerebirth.fandom.com/wiki/Stats',
+      sourceRevision: 'pending-review',
       lastReviewedAt: '1970-01-01',
       verificationStatus: 'candidate',
     },

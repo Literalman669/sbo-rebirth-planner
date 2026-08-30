@@ -19,6 +19,7 @@ function equipment(
     acquisitionDetail: 'Floor 1 Shop',
     availability: 'always',
     sourceUrl,
+    sourceRevision: '26210',
     lastReviewedAt: '2026-08-29',
     verificationStatus: 'verified',
     ...overrides,

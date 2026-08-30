@@ -3,6 +3,13 @@ import {
   equipmentSlotSchema,
   weaponPathSchema,
 } from '../build/schema';
+import {
+  hasApprovedEquipmentProvenance,
+  hasApprovedFormulaProvenance,
+  hasApprovedKnownGapProvenance,
+  hasNonblankSourceRevision,
+  isCanonicalWikiSourceUrl,
+} from './provenance';
 
 const formulaIdSchema = z.enum([
   'points-per-level',
@@ -41,14 +48,19 @@ export const equipmentRecordSchema = z
     ]),
     acquisitionDetail: z.string().min(1),
     availability: z.enum(['always', 'active-event', 'inactive-event']),
-    sourceUrl: z
-      .url()
-      .refine((url) => url.startsWith('https://'), 'source must use HTTPS'),
-    sourceRevision: z.string().optional(),
+    sourceUrl: z.url().refine(isCanonicalWikiSourceUrl, 'source must use the canonical wiki'),
+    sourceRevision: z.string().refine(hasNonblankSourceRevision, 'source revision is required'),
     lastReviewedAt: z.iso.date(),
     verificationStatus: z.enum(['verified', 'candidate']),
   })
   .superRefine((item, context) => {
+    if (!hasApprovedEquipmentProvenance(item)) {
+      context.addIssue({
+        code: 'custom',
+        message: 'equipment must have canonical verified provenance',
+        path: ['sourceUrl'],
+      });
+    }
     if (
       (item.slot === 'main-hand' || item.slot === 'off-hand') &&
       item.weaponPaths.length === 0
@@ -61,19 +73,27 @@ export const equipmentRecordSchema = z
     }
   });
 
-export const formulaRecordSchema = z.object({
-  id: formulaIdSchema,
-  expression: z.string().min(1),
-  units: z.string().min(1),
-  applicability: z.string().min(1),
-  boundaryBehavior: z.string().min(1),
-  sourceUrl: z
-    .url()
-    .refine((url) => url.startsWith('https://'), 'source must use HTTPS'),
-  sourceRevision: z.string().optional(),
-  lastReviewedAt: z.iso.date(),
-  verificationStatus: z.literal('verified'),
-});
+export const formulaRecordSchema = z
+  .object({
+    id: formulaIdSchema,
+    expression: z.string().min(1),
+    units: z.string().min(1),
+    applicability: z.string().min(1),
+    boundaryBehavior: z.string().min(1),
+    sourceUrl: z.url(),
+    sourceRevision: z.string().refine(hasNonblankSourceRevision, 'source revision is required'),
+    lastReviewedAt: z.iso.date(),
+    verificationStatus: z.literal('verified'),
+  })
+  .superRefine((formula, context) => {
+    if (!hasApprovedFormulaProvenance(formula)) {
+      context.addIssue({
+        code: 'custom',
+        message: 'formula must have canonical verified provenance',
+        path: ['sourceUrl'],
+      });
+    }
+  });
 
 export const datasetSnapshotSchema = z.object({
   version: z.string().min(1),
@@ -97,10 +117,18 @@ export const datasetSnapshotSchema = z.object({
           '300+',
         ]),
         reason: z.string().min(1),
-        sourceUrl: z.url().refine((url) => url.startsWith('https://')),
-        sourceRevision: z.string().min(1),
+        sourceUrl: z.url().refine(isCanonicalWikiSourceUrl, 'source must use the canonical wiki'),
+        sourceRevision: z.string().refine(hasNonblankSourceRevision, 'source revision is required'),
         lastReviewedAt: z.iso.date(),
         verificationStatus: z.literal('verified'),
+      }).superRefine((gap, context) => {
+        if (!hasApprovedKnownGapProvenance(gap)) {
+          context.addIssue({
+            code: 'custom',
+            message: 'known gap must have canonical verified provenance',
+            path: ['sourceUrl'],
+          });
+        }
       }),
     )
     .default([]),

@@ -32,6 +32,7 @@ const item: EquipmentRecord = {
   acquisitionDetail: 'Floor 1 Shop',
   availability: 'always',
   sourceUrl: 'https://swordbloxonlinerebirth.fandom.com/wiki/Two-Handed',
+  sourceRevision: '26187',
   lastReviewedAt: '2026-08-29',
   verificationStatus: 'verified',
 };

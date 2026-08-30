@@ -2,12 +2,10 @@ import { bootstrapRelease } from '../data/bootstrapRelease';
 import { fallbackRelease } from '../data/fallbackRelease';
 import type { CharacterProfile, EquipmentSlot } from '../domain/build/model';
 import type { DatasetSnapshot, EquipmentRecord } from '../domain/dataset/model';
+import { hasApprovedEquipmentProvenance } from '../domain/dataset/provenance';
 import { classifyCandidate } from '../domain/optimizer/eligibility';
 import type { RecommendationPlan } from '../domain/optimizer/optimizeBuild';
 import type { ImmediateAction, UpgradeTarget } from '../domain/optimizer/recommendEquipment';
-
-const canonicalSource =
-  /^https:\/\/swordbloxonlinerebirth\.fandom\.com\/wiki\/[A-Za-z0-9_%().,'-]+$/;
 
 function invariant(condition: unknown, message: string): asserts condition {
   if (!condition) throw new Error(`Recommendation invariant failed: ${message}`);
@@ -16,7 +14,7 @@ function invariant(condition: unknown, message: string): asserts condition {
 function sourceBacked(item: EquipmentRecord) {
   return (
     item.verificationStatus === 'verified' &&
-    canonicalSource.test(item.sourceUrl)
+    hasApprovedEquipmentProvenance(item)
   );
 }
 

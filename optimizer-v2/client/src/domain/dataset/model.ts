@@ -28,7 +28,7 @@ export interface EquipmentRecord {
   acquisitionDetail: string;
   availability: Availability;
   sourceUrl: string;
-  sourceRevision?: string;
+  sourceRevision: string;
   lastReviewedAt: string;
   verificationStatus: 'verified' | 'candidate';
 }
@@ -51,7 +51,7 @@ export interface FormulaRecord {
   applicability: string;
   boundaryBehavior: string;
   sourceUrl: string;
-  sourceRevision?: string;
+  sourceRevision: string;
   lastReviewedAt: string;
   verificationStatus: 'verified' | 'candidate';
 }

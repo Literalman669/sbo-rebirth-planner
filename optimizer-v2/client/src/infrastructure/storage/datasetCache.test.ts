@@ -69,6 +69,33 @@ describe('DatasetCache', () => {
     await expect(cache.getLatest()).resolves.toEqual(later);
   });
 
+  it('isolates an arbitrary-HTTPS verified release while retaining canonical neighbors', async () => {
+    const name = databaseName('corrupt-provenance');
+    const cache = createDatasetCache({ databaseName: name });
+    const canonical = buildStressDataset({
+      version: '2026.08.29.20',
+      publishedAt: '2026-08-29T20:00:00.000Z',
+    });
+    const corrupt = buildStressDataset({
+      version: '2026.08.29.21',
+      publishedAt: '2026-08-29T21:00:00.000Z',
+      equipment: buildStressDataset().equipment.map((item, index) =>
+        index === 0
+          ? { ...item, sourceUrl: 'https://example.com/verified-equipment' }
+          : item,
+      ),
+    });
+    await cache.put(canonical);
+
+    const database = await openDB(name, GUEST_DATABASE_VERSION);
+    await database.put('dataset-releases', corrupt, corrupt.version);
+    database.close();
+
+    await expect(cache.get(corrupt.version)).resolves.toBeNull();
+    await expect(cache.get(canonical.version)).resolves.toEqual(canonical);
+    await expect(cache.getLatest()).resolves.toEqual(canonical);
+  });
+
   it('keeps every referenced historical release while pruning others', async () => {
     const cache: DatasetCache = createDatasetCache({
       databaseName: databaseName('prune'),
