@@ -51,6 +51,7 @@ type RevisionInput = {
 };
 
 function revision(index: number, parentRevisionId?: string): RevisionInput {
+  const isHistoricalChildSnapshot = index <= 50;
   return {
     buildId,
     revisionId: `stress-revision-${index}`,
@@ -70,8 +71,15 @@ function revision(index: number, parentRevisionId?: string): RevisionInput {
       luk: 5,
       datasetVersion: 'bootstrap-0',
     },
-    equipment: [{ slot: 'main-hand', itemId: 'iron-greatsword' }],
-    ownedItemIds: ['iron-greatsword'],
+    equipment: isHistoricalChildSnapshot
+      ? [
+          { slot: 'main-hand', itemId: 'steel-greatsword' },
+          { slot: 'armor', itemId: 'beginner-armor' },
+        ]
+      : [{ slot: 'main-hand', itemId: 'iron-greatsword' }],
+    ownedItemIds: isHistoricalChildSnapshot
+      ? ['steel-greatsword', 'beginner-armor']
+      : ['iron-greatsword'],
   };
 }
 
@@ -193,6 +201,22 @@ function publicShareSummary(testConnection: TestConnection, shareId: string) {
   };
 }
 
+function privateRevisionChildren(
+  testConnection: TestConnection,
+  revisionId: string,
+) {
+  return {
+    equipment: [...testConnection.connection.db.myRevisionEquipment.iter()]
+      .filter((candidate) => candidate.revisionId === revisionId)
+      .map(({ slot, itemId }) => ({ slot, itemId }))
+      .sort((left, right) => left.slot.localeCompare(right.slot)),
+    ownedItems: [...testConnection.connection.db.myRevisionOwnedItems.iter()]
+      .filter((candidate) => candidate.revisionId === revisionId)
+      .map(({ itemId }) => itemId)
+      .sort(),
+  };
+}
+
 function shareIdForCycle(index: number) {
   return `share-revoke-${String(index).padStart(2, '0')}-${'s'.repeat(28)}`;
 }
@@ -296,8 +320,14 @@ test('keeps 100 immutable revisions converged across same-account subscriptions'
           datasetVersion: 'bootstrap-0',
         },
       ],
-      equipment: [{ slot: 'main-hand', itemId: 'iron-greatsword' }],
-      ownedItems: [{ itemId: 'iron-greatsword' }],
+      equipment: [
+        { slot: 'main-hand', itemId: 'steel-greatsword' },
+        { slot: 'armor', itemId: 'beginner-armor' },
+      ],
+      ownedItems: [
+        { itemId: 'steel-greatsword' },
+        { itemId: 'beginner-armor' },
+      ],
     });
     const historicalSnapshot = publicShareSummary(publicViewer, historicalShareId).builds[0]!;
     expect(historicalSnapshot).not.toHaveProperty('owner');
@@ -324,8 +354,8 @@ test('keeps 100 immutable revisions converged across same-account subscriptions'
     }).toEqual({
       builds: 1,
       revisions: 100,
-      revisionEquipment: 100,
-      revisionOwnedItems: 100,
+      revisionEquipment: 150,
+      revisionOwnedItems: 150,
       headRevisionId: 'stress-revision-100',
     });
 
@@ -338,8 +368,20 @@ test('keeps 100 immutable revisions converged across same-account subscriptions'
           datasetVersion: 'bootstrap-0',
         },
       ],
+      equipment: [
+        { slot: 'main-hand', itemId: 'steel-greatsword' },
+        { slot: 'armor', itemId: 'beginner-armor' },
+      ],
+      ownedItems: [
+        { itemId: 'steel-greatsword' },
+        { itemId: 'beginner-armor' },
+      ],
+    });
+    expect(
+      privateRevisionChildren(primary, 'stress-revision-100'),
+    ).toEqual({
       equipment: [{ slot: 'main-hand', itemId: 'iron-greatsword' }],
-      ownedItems: [{ itemId: 'iron-greatsword' }],
+      ownedItems: ['iron-greatsword'],
     });
 
     const revokedShares: string[] = [];
@@ -374,8 +416,8 @@ test('keeps 100 immutable revisions converged across same-account subscriptions'
         privateRows: {
           headRevisionId: 'stress-revision-100',
           revisions: 100,
-          equipment: 100,
-          ownedItems: 100,
+          equipment: 150,
+          ownedItems: 150,
         },
       });
       revokedShares.push(shareId);
@@ -385,6 +427,12 @@ test('keeps 100 immutable revisions converged across same-account subscriptions'
       revokedShares,
       privateBuild: buildSummary(primary, buildId),
     };
+    await primary.connection.reducers.revokeBuildShare({ shareId: historicalShareId });
+    await expect.poll(() => publicShareSummary(publicViewer!, historicalShareId)).toEqual({
+      builds: [],
+      equipment: [],
+      ownedItems: [],
+    });
 
     const identicalRevisionFifty = revision(50, 'stress-revision-49');
     reducerInputs.push(identicalRevisionFifty);
@@ -396,8 +444,8 @@ test('keeps 100 immutable revisions converged across same-account subscriptions'
       builds: [{ id: buildId, headRevisionId: 'stress-revision-100' }],
     });
     expect(viewSummary(primary).revisions).toHaveLength(100);
-    expect(viewSummary(primary).revisionEquipment).toHaveLength(100);
-    expect(viewSummary(primary).revisionOwnedItems).toHaveLength(100);
+    expect(viewSummary(primary).revisionEquipment).toHaveLength(150);
+    expect(viewSummary(primary).revisionOwnedItems).toHaveLength(150);
 
     const conflictingRevisionFifty = {
       ...revision(50, 'stress-revision-49'),
@@ -409,8 +457,8 @@ test('keeps 100 immutable revisions converged across same-account subscriptions'
     ).rejects.toThrow(/Revision ID already exists with different content/);
     expect(viewSummary(primary).headRevisionId).toBe('stress-revision-100');
     expect(viewSummary(primary).revisions).toHaveLength(100);
-    expect(viewSummary(primary).revisionEquipment).toHaveLength(100);
-    expect(viewSummary(primary).revisionOwnedItems).toHaveLength(100);
+    expect(viewSummary(primary).revisionEquipment).toHaveLength(150);
+    expect(viewSummary(primary).revisionOwnedItems).toHaveLength(150);
 
     for (let index = 101; index <= 120; index += 1) {
       const input = revision(index, parentRevisionId);
@@ -433,8 +481,8 @@ test('keeps 100 immutable revisions converged across same-account subscriptions'
       }).toEqual({
         builds: 1,
         revisions: 120,
-        revisionEquipment: 120,
-        revisionOwnedItems: 120,
+        revisionEquipment: 170,
+        revisionOwnedItems: 170,
         headRevisionId: 'stress-revision-120',
       });
       expect(
@@ -472,8 +520,8 @@ test('keeps 100 immutable revisions converged across same-account subscriptions'
     }).toEqual({
       headRevisionId: 'stress-revision-120',
       revisions: 120,
-      revisionEquipment: 120,
-      revisionOwnedItems: 120,
+      revisionEquipment: 170,
+      revisionOwnedItems: 170,
     });
 
     const localDatabaseName = `cloud-offline-replay-${crypto.randomUUID()}`;

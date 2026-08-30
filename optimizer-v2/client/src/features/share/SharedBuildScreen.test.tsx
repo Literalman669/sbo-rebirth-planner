@@ -94,6 +94,7 @@ describe('SharedBuildView', () => {
 
   it('waits for the exact historical release and recomputes only when it arrives', async () => {
     let resolveExactRelease: (snapshot: typeof bootstrapRelease | null) => void;
+    const requestedVersions: string[] = [];
     const exactRelease = new Promise<typeof bootstrapRelease | null>((resolve) => {
       resolveExactRelease = resolve;
     });
@@ -104,6 +105,12 @@ describe('SharedBuildView', () => {
         (item) => item.id !== 'steel-greatsword',
       ),
     };
+    const getSnapshot = (version: string) => {
+      requestedVersions.push(version);
+      return version === profile.datasetVersion
+        ? exactRelease
+        : Promise.resolve(current);
+    };
 
     render(
       <MemoryRouter>
@@ -111,7 +118,7 @@ describe('SharedBuildView', () => {
           value={{
             snapshot: current,
             source: 'bundled',
-            getSnapshot: () => exactRelease,
+            getSnapshot,
           }}
         >
           <ResolvedSharedBuild
@@ -144,6 +151,7 @@ describe('SharedBuildView', () => {
 
     expect(screen.getByText('Loading verified dataset…')).toBeVisible();
     expect(screen.queryByRole('heading', { name: 'Do now' })).not.toBeInTheDocument();
+    expect(requestedVersions).toEqual([profile.datasetVersion]);
 
     await act(async () => {
       resolveExactRelease!(bootstrapRelease);
@@ -152,6 +160,7 @@ describe('SharedBuildView', () => {
 
     expect(await screen.findByText('Equip Steel Greatsword now')).toBeVisible();
     expect(screen.getByText('Dataset bootstrap-0')).toBeVisible();
+    expect(requestedVersions).toEqual([profile.datasetVersion]);
   });
 
   it.each([
@@ -159,13 +168,20 @@ describe('SharedBuildView', () => {
     ['the historical cache rejects the requested release', async () => {
       throw new Error('IndexedDB rejected the release');
     }],
-  ])('shows unavailable instead of current advice when %s', async (_case, getSnapshot) => {
+  ])('shows unavailable instead of current advice when %s', async (_case, resolveExactVersion) => {
+    const requestedVersions: string[] = [];
     const current = {
       ...bootstrapRelease,
       version: '2026.08.29.current',
       equipment: bootstrapRelease.equipment.filter(
         (item) => item.id !== 'steel-greatsword',
       ),
+    };
+    const getSnapshot = (version: string) => {
+      requestedVersions.push(version);
+      return version === profile.datasetVersion
+        ? resolveExactVersion()
+        : Promise.resolve(current);
     };
     render(
       <MemoryRouter>
@@ -207,5 +223,6 @@ describe('SharedBuildView', () => {
     ).toBeVisible();
     expect(screen.queryByRole('heading', { name: 'Do now' })).not.toBeInTheDocument();
     expect(screen.queryByText('Dataset 2026.08.29.current')).not.toBeInTheDocument();
+    expect(requestedVersions).toEqual([profile.datasetVersion]);
   });
 });
