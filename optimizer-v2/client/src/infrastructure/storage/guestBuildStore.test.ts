@@ -179,6 +179,54 @@ describe('GuestBuildStore', () => {
     ]);
   });
 
+  it('renames, duplicates deeply, and archives without changing the original identity', async () => {
+    const timestamps = [
+      '2026-08-30T10:00:00.000Z',
+      '2026-08-30T11:00:00.000Z',
+      '2026-08-30T12:00:00.000Z',
+      '2026-08-30T13:00:00.000Z',
+    ];
+    const store = createGuestBuildStore({
+      databaseName: databaseName('lifecycle'),
+      now: () => timestamps.shift()!,
+    });
+    await store.saveBuild({
+      ...profile('original'),
+      name: 'Original',
+      ownedItemIds: ['iron-greatsword'],
+    });
+
+    await store.renameBuild('original', 'Renamed');
+    const duplicate = await store.duplicateBuild(
+      'original',
+      'duplicate',
+      'Renamed copy',
+    );
+    await store.setBuildArchived('original', true);
+
+    expect(duplicate).toMatchObject({ id: 'duplicate', name: 'Renamed copy' });
+    duplicate.ownedItemIds.push('mutated-only-copy');
+    const results = await store.listBuilds();
+    const original = results.find(
+      (result) => result.ok && result.value.profile.id === 'original',
+    );
+    const copied = results.find(
+      (result) => result.ok && result.value.profile.id === 'duplicate',
+    );
+    expect(original).toMatchObject({
+      ok: true,
+      value: {
+        profile: { id: 'original', name: 'Renamed', ownedItemIds: ['iron-greatsword'] },
+        createdAt: '2026-08-30T10:00:00.000Z',
+        archivedAt: '2026-08-30T13:00:00.000Z',
+      },
+    });
+    expect(copied).toMatchObject({
+      ok: true,
+      value: { profile: { id: 'duplicate', name: 'Renamed copy' } },
+    });
+  });
+
   it('deletes one named build without affecting another', async () => {
     const store = createGuestBuildStore({ databaseName: databaseName('delete') });
     await store.saveBuild(profile('keep'));

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { useBuildDraft } from '../../app/providers/BuildDraftContext';
 import {
@@ -15,7 +15,7 @@ import { isPlanStale } from './planStaleness';
 import type { DatasetSnapshot } from '../../domain/dataset/model';
 import { firstIncompleteEquipmentStep } from '../planner/completeness';
 import { LevelAllocationTable, SpendNowPanel } from './LevelAllocationTable';
-import { LocalBuildList } from '../builds/LocalBuildList';
+import { SaveBuildDialog, type SaveBuildRequest } from '../builds/SaveBuildDialog';
 import { useOptionalPlannerState } from '../../app/providers/PlannerStateContext';
 import { fingerprintRecommendationInput } from '../../domain/optimizer/planFingerprint';
 import {
@@ -88,17 +88,12 @@ export function ResultsScreen() {
   const plannerState = useOptionalPlannerState();
   const { snapshot, getSnapshot } = useDataset();
   const {
-    deleteSavedBuild,
     draft,
-    loadSavedBuild,
     resetDraft,
-    saveNamedBuild,
-    savedBuilds,
+    saveBuild,
     updateDraft,
   } = useBuildDraft();
-  const [showSaveForm, setShowSaveForm] = useState(false);
-  const [showLoadBuilds, setShowLoadBuilds] = useState(false);
-  const [buildName, setBuildName] = useState(draft.name ?? '');
+  const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
   const [shareId, setShareId] = useState<string | null>(null);
   const [shareMessage, setShareMessage] = useState<string | null>(null);
@@ -206,13 +201,14 @@ export function ResultsScreen() {
     [draft, plan, planSnapshot, snapshot],
   );
 
-  const submitSave = (event: FormEvent) => {
-    event.preventDefault();
-    void saveNamedBuild(buildName, {
+  const submitSave = (request: SaveBuildRequest) => {
+    void saveBuild(request, {
       datasetVersion: planSnapshot?.version ?? draft.datasetVersion,
     })
       .then(async (savedBuild) => {
-        if (!cloud?.isAuthenticated) return 'local' as const;
+        if (request.destination !== 'cloud' || !cloud?.isAuthenticated) {
+          return 'local' as const;
+        }
         const result = await cloud.repository.save(savedBuild);
         await cloud.refreshPending();
         return result.location;
@@ -225,7 +221,7 @@ export function ResultsScreen() {
               ? 'Build saved locally and queued for cloud sync'
               : 'Build saved locally',
         );
-        setShowSaveForm(false);
+        setShowSaveDialog(false);
       })
       .catch((error: unknown) => {
         setSaveMessage(error instanceof Error ? error.message : 'Build save failed');
@@ -490,47 +486,21 @@ export function ResultsScreen() {
         }}
       />
 
-      {showSaveForm ? (
-        <form className="save-build-form" onSubmit={submitSave}>
-          <label>
-            Build Name
-            <input
-              value={buildName}
-              maxLength={60}
-              onChange={(event) => setBuildName(event.currentTarget.value)}
-            />
-          </label>
-          <button type="submit">Save Build</button>
-        </form>
-      ) : null}
+      <SaveBuildDialog
+        open={showSaveDialog}
+        defaultName={draft.name ?? `Level ${draft.level} ${draft.weaponPath} build`}
+        cloudAvailable={Boolean(cloud?.isAuthenticated)}
+        onSave={submitSave}
+        onClose={() => setShowSaveDialog(false)}
+      />
       {saveMessage ? <p role="status">{saveMessage}</p> : null}
 
-      {showLoadBuilds ? (
-        <section className="saved-builds results-saved-builds" aria-labelledby="results-saved-builds-heading">
-          <div className="result-band-heading">
-            <h3 id="results-saved-builds-heading">Saved builds</h3>
-            <button type="button" onClick={() => setShowLoadBuilds(false)}>
-              Close
-            </button>
-          </div>
-          <LocalBuildList
-            builds={savedBuilds}
-            onLoad={(build) => {
-              loadSavedBuild(build);
-              setShowLoadBuilds(false);
-              navigate('/character');
-            }}
-            onDelete={(id) => void deleteSavedBuild(id)}
-          />
-        </section>
-      ) : null}
-
       <div className="screen-actions results-actions">
-        <button type="button" onClick={() => setShowSaveForm(true)}>
+        <button type="button" onClick={() => setShowSaveDialog(true)}>
           Save Build
         </button>
-        <button type="button" onClick={() => setShowLoadBuilds(true)}>
-          Load Build
+        <button type="button" onClick={() => navigate('/builds')}>
+          Open Builds
         </button>
         <button
           type="button"

@@ -1,6 +1,6 @@
 import 'fake-indexeddb/auto';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import type { CharacterProfile } from '../../domain/build/model';
 import {
   createGuestBuildStore,
@@ -40,6 +40,10 @@ function Consumer() {
     canUndo,
     undoLastChange,
     setCloudPersistenceStatus,
+    saveBuild,
+    quarantinedRecords,
+    exportQuarantinedRecord,
+    deleteQuarantinedRecord,
   } = useBuildDraft();
 
   if (!isHydrated) return <p>Loading draft</p>;
@@ -57,6 +61,7 @@ function Consumer() {
             : persistenceStatus}
       </p>
       <p>{canUndo ? 'Undo available' : 'Nothing to undo'}</p>
+      <p>{quarantinedRecords.length} recovered records</p>
       <button type="button" onClick={() => updateDraft({ level: 13 })}>
         Raise level
       </button>
@@ -87,6 +92,18 @@ function Consumer() {
       >
         Mark cloud queued
       </button>
+      <button type="button" onClick={() => void saveBuild({ name: 'Overwrite Name', mode: 'overwrite', destination: 'local' })}>
+        Overwrite active build
+      </button>
+      <button type="button" onClick={() => void saveBuild({ name: 'Duplicate Name', mode: 'duplicate', destination: 'local' })}>
+        Duplicate active build
+      </button>
+      {quarantinedRecords.map((record) => (
+        <div key={record.id}>
+          <button type="button" onClick={() => void exportQuarantinedRecord(record.id)}>Export {record.id}</button>
+          <button type="button" onClick={() => void deleteQuarantinedRecord(record.id)}>Delete {record.id}</button>
+        </div>
+      ))}
     </div>
   );
 }
@@ -223,6 +240,31 @@ describe('BuildDraftProvider', () => {
     expect(screen.getByText('Saving')).toBeVisible();
   });
 
+  it('overwrites with the active ID and duplicates with a fresh ID', async () => {
+    const store = createGuestBuildStore({
+      databaseName: `provider-save-modes-${crypto.randomUUID()}`,
+    });
+    await store.saveDraft(profile());
+    renderProvider(store);
+    await screen.findByText('Level 12');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Overwrite active build' }));
+    await waitFor(async () => {
+      expect(
+        (await store.listBuilds()).find(
+          (result) => result.ok && result.value.profile.id === profile().id,
+        ),
+      ).toMatchObject({ ok: true, value: { profile: { name: 'Overwrite Name' } } });
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Duplicate active build' }));
+    await waitFor(async () => {
+      const builds = (await store.listBuilds()).filter((result) => result.ok);
+      expect(builds).toHaveLength(2);
+      expect(builds.some((result) => result.value.profile.name === 'Duplicate Name')).toBe(true);
+      expect(new Set(builds.map((result) => result.value.profile.id)).size).toBe(2);
+    });
+  });
+
   it('does not recreate a cleared draft during unmount', async () => {
     const store = createGuestBuildStore({
       databaseName: `provider-reset-${crypto.randomUUID()}`,
@@ -238,6 +280,34 @@ describe('BuildDraftProvider', () => {
     await expect(store.loadDraft()).resolves.toBeNull();
   });
 
+  it('surfaces quarantined records for recovery and removal', async () => {
+    const base = createGuestBuildStore({
+      databaseName: `provider-recovery-${crypto.randomUUID()}`,
+    });
+    const exportRecord = vi.fn(async () => '{"broken":true}');
+    const deleteRecord = vi.fn(async () => undefined);
+    const store: GuestBuildStore = {
+      ...base,
+      listQuarantinedRecords: async () => [{
+        id: 'broken-record',
+        kind: 'plan-progress',
+        rawJson: '{"broken":true}',
+        quarantinedAt: '2026-08-30T12:00:00.000Z',
+      }],
+      exportQuarantinedRecord: exportRecord,
+      deleteQuarantinedRecord: deleteRecord,
+    };
+    renderProvider(store);
+
+    expect(await screen.findByText('1 recovered records')).toBeVisible();
+    fireEvent.click(screen.getByRole('button', { name: 'Export broken-record' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Delete broken-record' }));
+    await waitFor(() => {
+      expect(exportRecord).toHaveBeenCalledWith('broken-record');
+      expect(deleteRecord).toHaveBeenCalledWith('broken-record');
+    });
+  });
+
   it('surfaces a quota rejection while retaining the in-memory draft', async () => {
     const quotaError = new DOMException('Storage quota exhausted', 'QuotaExceededError');
     const store: GuestBuildStore = {
@@ -247,6 +317,9 @@ describe('BuildDraftProvider', () => {
       listBuilds: async () => [],
       saveBuild: async () => undefined,
       deleteBuild: async () => undefined,
+      renameBuild: async () => undefined,
+      duplicateBuild: async () => profile(),
+      setBuildArchived: async () => undefined,
       loadPreferences: async () => ({
         schemaVersion: 1,
         mode: 'beginner',

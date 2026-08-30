@@ -1,6 +1,9 @@
 import { createContext, useContext } from 'react';
 import type { CharacterProfile } from '../../domain/build/model';
-import type { DraftPersistenceStatus } from '../../domain/planner/state';
+import type {
+  DraftPersistenceStatus,
+  QuarantinedRecord,
+} from '../../domain/planner/state';
 import type { GuestBuildListResult } from '../../infrastructure/storage/guestBuildStore';
 
 export type BuildDraftContextValue = {
@@ -14,6 +17,16 @@ export type BuildDraftContextValue = {
     name: string,
     overrides?: Partial<CharacterProfile>,
   ): Promise<CharacterProfile>;
+  saveBuild(
+    request: SaveBuildRequest,
+    overrides?: Partial<CharacterProfile>,
+  ): Promise<CharacterProfile>;
+  renameSavedBuild(id: string, name: string): Promise<void>;
+  duplicateSavedBuild(id: string): Promise<CharacterProfile>;
+  setBuildArchived(id: string, archived: boolean): Promise<void>;
+  quarantinedRecords: readonly QuarantinedRecord[];
+  exportQuarantinedRecord(id: string): Promise<string | null>;
+  deleteQuarantinedRecord(id: string): Promise<void>;
   resetDraft(): Promise<void>;
   isHydrated: boolean;
   hasActiveDraft: boolean;
@@ -27,6 +40,12 @@ export type BuildDraftContextValue = {
   setCloudPersistenceStatus(
     status: 'sync-queued' | 'synced' | 'error' | null,
   ): void;
+};
+
+export type SaveBuildRequest = {
+  name: string;
+  mode: 'overwrite' | 'duplicate';
+  destination: 'local' | 'cloud';
 };
 
 export const BuildDraftContext = createContext<BuildDraftContextValue | null>(

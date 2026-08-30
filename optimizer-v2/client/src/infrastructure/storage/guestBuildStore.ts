@@ -26,6 +26,7 @@ const storedGuestBuildSchema = z.object({
   profile: characterProfileSchema,
   createdAt: z.iso.datetime(),
   updatedAt: z.iso.datetime(),
+  archivedAt: z.iso.datetime().optional(),
 });
 
 const quarantinedRecordSchema = z
@@ -41,6 +42,7 @@ export interface StoredGuestBuild {
   profile: CharacterProfile;
   createdAt: string;
   updatedAt: string;
+  archivedAt?: string;
 }
 
 export type GuestBuildListResult =
@@ -54,6 +56,13 @@ export interface GuestBuildStore {
   listBuilds(): Promise<GuestBuildListResult[]>;
   saveBuild(profile: CharacterProfile): Promise<void>;
   deleteBuild(id: string): Promise<void>;
+  renameBuild(id: string, name: string): Promise<void>;
+  duplicateBuild(
+    id: string,
+    duplicateId: string,
+    name: string,
+  ): Promise<CharacterProfile>;
+  setBuildArchived(id: string, archived: boolean): Promise<void>;
   loadPreferences(): Promise<PlannerPreferences>;
   savePreferences(preferences: PlannerPreferences): Promise<void>;
   loadPlanProgress(buildId: string): Promise<PlanProgress | null>;
@@ -157,6 +166,69 @@ export function createGuestBuildStore({
     async deleteBuild(id) {
       const database = await databasePromise;
       await database.delete('builds', id);
+    },
+
+    async renameBuild(id, name) {
+      const validName = z.string().trim().min(1).max(60).parse(name);
+      const database = await databasePromise;
+      const current = storedGuestBuildSchema.safeParse(
+        await database.get('builds', id),
+      );
+      if (!current.success) throw new Error('Stored build is unavailable');
+      await database.put(
+        'builds',
+        {
+          ...current.data,
+          profile: { ...current.data.profile, name: validName },
+          updatedAt: now(),
+        },
+        id,
+      );
+    },
+
+    async duplicateBuild(id, duplicateId, name) {
+      const validId = z.string().min(1).max(100).parse(duplicateId);
+      const validName = z.string().trim().min(1).max(60).parse(name);
+      const database = await databasePromise;
+      const current = storedGuestBuildSchema.safeParse(
+        await database.get('builds', id),
+      );
+      if (!current.success) throw new Error('Stored build is unavailable');
+      const copied = characterProfileSchema.parse({
+        ...structuredClone(current.data.profile),
+        id: validId,
+        name: validName,
+      });
+      const timestamp = now();
+      await database.put(
+        'builds',
+        {
+          profile: copied,
+          createdAt: timestamp,
+          updatedAt: timestamp,
+        },
+        validId,
+      );
+      return structuredClone(copied);
+    },
+
+    async setBuildArchived(id, archived) {
+      const database = await databasePromise;
+      const current = storedGuestBuildSchema.safeParse(
+        await database.get('builds', id),
+      );
+      if (!current.success) throw new Error('Stored build is unavailable');
+      if (Boolean(current.data.archivedAt) === archived) return;
+      const timestamp = now();
+      await database.put(
+        'builds',
+        {
+          ...current.data,
+          ...(archived ? { archivedAt: timestamp } : { archivedAt: undefined }),
+          updatedAt: timestamp,
+        },
+        id,
+      );
     },
 
     async loadPreferences() {

@@ -318,7 +318,7 @@ describe('ResultsScreen', () => {
     );
   });
 
-  it('loads a named local build directly from the results screen', async () => {
+  it('opens the build library and loads a named local build', async () => {
     const user = userEvent.setup();
     const store = createGuestBuildStore({
       databaseName: `results-load-${crypto.randomUUID()}`,
@@ -348,7 +348,8 @@ describe('ResultsScreen', () => {
     );
 
     await screen.findByRole('heading', { name: 'Your next ten levels, made clear.' });
-    await user.click(screen.getByRole('button', { name: 'Load Build' }));
+    await user.click(screen.getByRole('button', { name: 'Open Builds' }));
+    expect(router.state.location.pathname).toBe('/builds');
     await user.click(screen.getByRole('button', { name: 'Load Saved Melee Route' }));
 
     expect(router.state.location.pathname).toBe('/character');
@@ -410,9 +411,10 @@ describe('ResultsScreen', () => {
     });
 
     await user.click(screen.getByRole('button', { name: 'Save Build' }));
+    await user.clear(screen.getByLabelText('Build Name'));
     await user.type(screen.getByLabelText('Build Name'), 'Recalculated Route');
     const saveForm = screen.getByLabelText('Build Name').closest('form')!;
-    await user.click(within(saveForm).getByRole('button', { name: 'Save Build' }));
+    await user.click(within(saveForm).getByRole('button', { name: 'Save' }));
     await waitFor(async () => {
       const saved = (await store.listBuilds()).find((result) => result.ok);
       expect(saved?.value.profile.datasetVersion).toBe('2026.08.29.2');

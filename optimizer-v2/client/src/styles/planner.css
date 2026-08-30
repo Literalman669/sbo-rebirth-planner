@@ -440,6 +440,227 @@
   cursor: pointer;
 }
 
+.build-library-toolbar {
+  display: grid;
+  grid-template-columns: minmax(14rem, 2fr) repeat(3, minmax(9rem, 1fr));
+  gap: 0.85rem;
+  padding: 1rem;
+  border: 1px solid rgb(184 149 93 / 34%);
+  border-radius: 0.4rem;
+  background: rgb(7 12 17 / 92%);
+}
+
+.build-library-toolbar label,
+.build-rename-form label {
+  display: grid;
+  gap: 0.35rem;
+  color: var(--color-gold);
+  font-family: var(--font-display);
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.build-library-toolbar input,
+.build-library-toolbar select,
+.build-rename-form input {
+  width: 100%;
+  min-height: 2.75rem;
+  border: 1px solid rgb(184 149 93 / 62%);
+  border-radius: 0.25rem;
+  background: var(--color-ink-deep);
+  color: var(--color-parchment);
+  padding: 0.55rem 0.7rem;
+}
+
+.build-library-panel__heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-bottom: 0.85rem;
+  border-bottom: 1px solid rgb(184 149 93 / 24%);
+}
+
+.build-library-panel__heading > span,
+.build-library-message {
+  color: var(--color-aether-bright);
+}
+
+.build-card-list,
+.recovered-data-list {
+  display: grid;
+  gap: 0.75rem;
+  padding: 0;
+  margin: 0.85rem 0 0;
+  list-style: none;
+}
+
+.saved-builds .build-card,
+.cloud-builds .build-card,
+.recovered-data-list li {
+  display: grid;
+  grid-template-columns: minmax(12rem, 1fr) minmax(18rem, auto);
+  align-items: center;
+  gap: 1rem;
+  padding: 0.9rem;
+  border: 1px solid rgb(184 149 93 / 26%);
+  border-radius: 0.35rem;
+  background: rgb(9 15 20 / 72%);
+}
+
+.build-card__summary {
+  display: grid;
+  min-width: 0;
+  gap: 0.2rem;
+}
+
+.build-card__summary strong {
+  color: var(--color-parchment);
+}
+
+.build-card__summary span,
+.build-card__summary small,
+.recovered-data-list span,
+.empty-state,
+.recovered-data > p {
+  color: var(--color-muted);
+}
+
+.build-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.4rem;
+}
+
+.build-card__actions button,
+.build-rename-form button,
+.recovered-data-list button,
+.dialog-actions button {
+  min-height: 2.65rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid rgb(184 149 93 / 55%);
+  border-radius: 0.25rem;
+  background: var(--color-ink-deep);
+  color: var(--color-parchment);
+  cursor: pointer;
+}
+
+.build-rename-form {
+  display: grid;
+  grid-template-columns: minmax(12rem, 1fr) auto auto;
+  align-items: end;
+  gap: 0.55rem;
+}
+
+.recovered-data-list li {
+  grid-template-columns: 1fr auto auto;
+}
+
+.recovered-data-list li > div {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.save-build-dialog {
+  width: min(calc(100% - 2rem), 34rem);
+  padding: 0;
+  border: 1px solid rgb(184 149 93 / 72%);
+  border-radius: 0.45rem;
+  background: var(--color-ink-deep);
+  color: var(--color-parchment);
+  box-shadow: 0 1.5rem 5rem rgb(0 0 0 / 65%);
+}
+
+.save-build-dialog::backdrop {
+  background: rgb(2 5 8 / 78%);
+  backdrop-filter: blur(3px);
+}
+
+.save-build-dialog form {
+  display: grid;
+  gap: 1rem;
+  padding: 1.25rem;
+}
+
+.save-build-dialog h2 {
+  margin: 0;
+  color: var(--color-parchment);
+  font-family: var(--font-display);
+}
+
+.save-build-dialog > form > label {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.save-build-dialog input[type='text'],
+.save-build-dialog > form > label input {
+  min-height: 2.75rem;
+  border: 1px solid rgb(184 149 93 / 62%);
+  background: rgb(5 10 14 / 90%);
+  color: var(--color-parchment);
+  padding: 0.55rem 0.7rem;
+}
+
+.save-build-dialog fieldset {
+  display: grid;
+  gap: 0.5rem;
+  border: 1px solid rgb(184 149 93 / 25%);
+  border-radius: 0.3rem;
+  padding: 0.85rem;
+}
+
+.save-build-dialog fieldset label {
+  display: flex;
+  align-items: center;
+  min-height: 2.5rem;
+  gap: 0.65rem;
+}
+
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.65rem;
+}
+
+.dialog-actions button:last-child:not(.danger-button) {
+  border-color: var(--color-aether);
+  background: rgb(11 55 60 / 90%);
+}
+
+.confirmation-dialog-backdrop {
+  position: fixed;
+  z-index: 20;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgb(2 5 8 / 78%);
+  backdrop-filter: blur(3px);
+}
+
+.confirmation-dialog {
+  width: min(100%, 31rem);
+  padding: 1.25rem;
+  border: 1px solid rgb(184 149 93 / 65%);
+  border-radius: 0.45rem;
+  background: var(--color-ink-deep);
+  box-shadow: 0 1.5rem 5rem rgb(0 0 0 / 65%);
+}
+
+.confirmation-dialog h3 {
+  margin-top: 0;
+  color: var(--color-parchment);
+  font-family: var(--font-display);
+}
+
+.danger-button {
+  border-color: rgb(225 100 93 / 72%) !important;
+  color: #ffd7d2 !important;
+}
+
 .goal-card:hover {
   border-color: var(--color-gold);
 }
@@ -1570,6 +1791,36 @@
     grid-template-columns: 1fr;
   }
 
+  .build-library-toolbar {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .build-library-search {
+    grid-column: 1 / -1;
+  }
+
+  .saved-builds .build-card,
+  .cloud-builds .build-card,
+  .recovered-data-list li {
+    grid-template-columns: 1fr;
+  }
+
+  .build-card__actions {
+    justify-content: flex-start;
+  }
+
+  .build-rename-form {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .build-rename-form label {
+    grid-column: 1 / -1;
+  }
+
+  .build-library-panel__heading {
+    align-items: flex-start;
+  }
+
   .weapon-path-options {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -1730,6 +1981,24 @@
 
   .saved-builds li > div {
     grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 28rem) {
+  .build-library-toolbar {
+    grid-template-columns: 1fr;
+  }
+
+  .build-library-search {
+    grid-column: auto;
+  }
+
+  .build-card__actions button {
+    flex: 1 1 calc(50% - 0.4rem);
+  }
+
+  .save-build-dialog {
+    width: calc(100% - 1rem);
   }
 }
 

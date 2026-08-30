@@ -124,6 +124,7 @@ describe('planner routes', () => {
 
     await user.click(screen.getByRole('link', { name: 'Builds' }));
     await user.click(screen.getByRole('button', { name: 'Delete Floor 2 Route' }));
+    await user.click(screen.getByRole('button', { name: 'Delete permanently' }));
     await waitFor(() =>
       expect(screen.queryByText('Floor 2 Route')).not.toBeInTheDocument(),
     );

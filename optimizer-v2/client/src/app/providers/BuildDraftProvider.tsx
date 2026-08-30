@@ -7,7 +7,10 @@ import {
   type PropsWithChildren,
 } from 'react';
 import type { CharacterProfile } from '../../domain/build/model';
-import type { DraftPersistenceStatus } from '../../domain/planner/state';
+import type {
+  DraftPersistenceStatus,
+  QuarantinedRecord,
+} from '../../domain/planner/state';
 import {
   createGuestBuildStore,
   type GuestBuildListResult,
@@ -16,6 +19,7 @@ import {
 import { useDataset } from './DatasetProvider';
 import {
   BuildDraftContext,
+  type SaveBuildRequest,
   type BuildDraftContextValue,
 } from './BuildDraftContext';
 
@@ -58,6 +62,7 @@ export function BuildDraftProvider({
   const [hasActiveDraft, setHasActiveDraft] = useState(false);
   const [storageError, setStorageError] = useState<string | null>(null);
   const [savedBuilds, setSavedBuilds] = useState<GuestBuildListResult[]>([]);
+  const [quarantinedRecords, setQuarantinedRecords] = useState<QuarantinedRecord[]>([]);
   const [persistenceStatus, setPersistenceStatus] =
     useState<DraftPersistenceStatus>('idle');
   const [cloudPersistenceStatus, setCloudPersistenceStatus] = useState<
@@ -76,9 +81,14 @@ export function BuildDraftProvider({
   useEffect(() => {
     let active = true;
 
-    void Promise.all([store.loadDraft(), store.listBuilds()])
-      .then(([storedDraft, storedBuilds]) => {
+    void Promise.all([
+      store.loadDraft(),
+      store.listBuilds(),
+      store.listQuarantinedRecords(),
+    ])
+      .then(([storedDraft, storedBuilds, storedQuarantine]) => {
         if (active) setSavedBuilds(storedBuilds);
+        if (active) setQuarantinedRecords(storedQuarantine);
         if (active && storedDraft) {
           draftRef.current = storedDraft;
           activeDraftRef.current = true;
@@ -200,6 +210,84 @@ export function BuildDraftProvider({
     [store],
   );
 
+  const saveBuild = useCallback(
+    async (
+      request: SaveBuildRequest,
+      overrides?: Partial<CharacterProfile>,
+    ) => {
+      const name = request.name.trim();
+      if (!name) throw new Error('Build name is required');
+      const current = { ...draftRef.current, ...overrides };
+      const saved =
+        request.mode === 'duplicate'
+          ? {
+              ...structuredClone(current),
+              id: crypto.randomUUID(),
+              name,
+            }
+          : { ...current, name };
+      await store.saveBuild(saved);
+      if (request.mode === 'overwrite') {
+        draftRef.current = saved;
+        setDraft(saved);
+      }
+      setSavedBuilds(await store.listBuilds());
+      return saved;
+    },
+    [store],
+  );
+
+  const renameSavedBuild = useCallback(
+    async (id: string, name: string) => {
+      await store.renameBuild(id, name);
+      setSavedBuilds(await store.listBuilds());
+      if (draftRef.current.id === id) {
+        const renamed = { ...draftRef.current, name: name.trim() };
+        draftRef.current = renamed;
+        setDraft(renamed);
+      }
+    },
+    [store],
+  );
+
+  const duplicateSavedBuild = useCallback(
+    async (id: string) => {
+      const existing = (await store.listBuilds()).find(
+        (result) => result.ok && result.value.profile.id === id,
+      );
+      if (!existing?.ok) throw new Error('Stored build is unavailable');
+      const duplicate = await store.duplicateBuild(
+        id,
+        crypto.randomUUID(),
+        `${existing.value.profile.name ?? `Level ${existing.value.profile.level} build`} copy`,
+      );
+      setSavedBuilds(await store.listBuilds());
+      return duplicate;
+    },
+    [store],
+  );
+
+  const setBuildArchived = useCallback(
+    async (id: string, archived: boolean) => {
+      await store.setBuildArchived(id, archived);
+      setSavedBuilds(await store.listBuilds());
+    },
+    [store],
+  );
+
+  const exportQuarantinedRecord = useCallback(
+    (id: string) => store.exportQuarantinedRecord(id),
+    [store],
+  );
+
+  const deleteQuarantinedRecord = useCallback(
+    async (id: string) => {
+      await store.deleteQuarantinedRecord(id);
+      setQuarantinedRecords((records) => records.filter((record) => record.id !== id));
+    },
+    [store],
+  );
+
   const loadSavedBuild = useCallback((profile: CharacterProfile) => {
     undoStackRef.current = [];
     setCanUndo(false);
@@ -238,6 +326,13 @@ export function BuildDraftProvider({
       updateDraft,
       replaceDraft,
       saveNamedBuild,
+      saveBuild,
+      renameSavedBuild,
+      duplicateSavedBuild,
+      setBuildArchived,
+      quarantinedRecords,
+      exportQuarantinedRecord,
+      deleteQuarantinedRecord,
       resetDraft,
       isHydrated,
       hasActiveDraft,
@@ -262,6 +357,13 @@ export function BuildDraftProvider({
       replaceDraft,
       resetDraft,
       saveNamedBuild,
+      saveBuild,
+      renameSavedBuild,
+      duplicateSavedBuild,
+      setBuildArchived,
+      quarantinedRecords,
+      exportQuarantinedRecord,
+      deleteQuarantinedRecord,
       savedBuilds,
       storageError,
       updateDraft,

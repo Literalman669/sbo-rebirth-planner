@@ -20,6 +20,16 @@ const profile: CharacterProfile = {
   datasetVersion: 'bootstrap-0',
 };
 
+const draftLifecycleActions = {
+  saveBuild: vi.fn(),
+  renameSavedBuild: vi.fn(),
+  duplicateSavedBuild: vi.fn(),
+  setBuildArchived: vi.fn(),
+  quarantinedRecords: [],
+  exportQuarantinedRecord: vi.fn(),
+  deleteQuarantinedRecord: vi.fn(),
+};
+
 const cloud = vi.hoisted(() => ({
   save: vi.fn(async () => ({
     revisionId: 'revision-1',
@@ -93,6 +103,7 @@ describe('CloudBuildsProvider', () => {
     render(
       <BuildDraftContext.Provider
         value={{
+          ...draftLifecycleActions,
           draft: profile,
           updateDraft: vi.fn(),
           replaceDraft: vi.fn(),
@@ -127,6 +138,7 @@ describe('CloudBuildsProvider', () => {
     render(
       <BuildDraftContext.Provider
         value={{
+          ...draftLifecycleActions,
           draft: profile,
           updateDraft: vi.fn(),
           replaceDraft: vi.fn(),
@@ -161,6 +173,7 @@ describe('CloudBuildsProvider', () => {
     render(
       <BuildDraftContext.Provider
         value={{
+          ...draftLifecycleActions,
           draft: profile,
           updateDraft: vi.fn(),
           replaceDraft: vi.fn(),
@@ -195,6 +208,7 @@ describe('CloudBuildsProvider', () => {
     render(
       <BuildDraftContext.Provider
         value={{
+          ...draftLifecycleActions,
           draft: profile,
           updateDraft: vi.fn(),
           replaceDraft: vi.fn(),
@@ -230,6 +244,7 @@ describe('CloudBuildsProvider', () => {
     render(
       <BuildDraftContext.Provider
         value={{
+          ...draftLifecycleActions,
           draft: profile,
           updateDraft: vi.fn(),
           replaceDraft: vi.fn(),
@@ -306,6 +321,7 @@ describe('CloudBuildsProvider', () => {
     render(
       <BuildDraftContext.Provider
         value={{
+          ...draftLifecycleActions,
           draft: profile,
           updateDraft: vi.fn(),
           replaceDraft: vi.fn(),
