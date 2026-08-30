@@ -724,3 +724,44 @@ Record exact counts, thresholds, CI/deploy links, live URL, and remaining extern
 - [ ] **Step 9: Clean up the merged branch/worktree**
 
 Verify it is registered under the repository `.worktrees` directory and clean before removal. Never force-delete uncommitted files.
+
+### Task 13: Handle Draft-Save Rejection During Provider Unmount
+
+**Finding:** Task 5 reproduced an unhandled promise rejection when `BuildDraftProvider` unmounts after a quota-limited store rejects `saveDraft`. The mounted autosave path surfaces `Draft storage failed` and preserves the in-memory draft, but the cleanup path calls `void store.saveDraft(draftRef.current)` without handling rejection.
+
+**Files:**
+- Modify: `optimizer-v2/client/src/app/providers/BuildDraftProvider.tsx`
+- Modify: `optimizer-v2/client/src/app/providers/BuildDraftProvider.test.tsx`
+
+**Root cause:** The effect cleanup starts an asynchronous save whose rejected promise is neither awaited nor caught, so Vitest observes an unhandled `QuotaExceededError` after all UI assertions pass.
+
+- [ ] **Step 1: Preserve the focused RED**
+
+The Task 5 quota regression mounts a store whose `saveDraft` rejects with `new DOMException('Storage quota exhausted', 'QuotaExceededError')`, updates the draft, verifies `Draft storage failed`, and lets Testing Library unmount during cleanup.
+
+Run: `npm run test:unit --workspace @sbo/optimizer-client -- --run BuildDraftProvider.test.tsx`
+
+Expected: four assertions pass, but Vitest exits nonzero with one unhandled `QuotaExceededError: Storage quota exhausted` originating from the unmount cleanup save.
+
+- [ ] **Step 2: Add the minimal cleanup rejection handler**
+
+Keep the best-effort unmount save, but terminate its promise chain with a rejection handler so cleanup cannot create an unhandled promise. Do not clear or replace the in-memory draft, do not add a retry loop, and do not suppress mounted autosave status reporting.
+
+- [ ] **Step 3: Verify GREEN and the storage layer**
+
+Run:
+
+```bash
+npm run test:unit --workspace @sbo/optimizer-client -- --run BuildDraftProvider.test.tsx
+npm run test:unit --workspace @sbo/optimizer-client -- --run guestBuildStore.test.ts datasetCache.test.ts pendingRevisionQueue.test.ts BuildDraftProvider.test.tsx
+npm run typecheck --workspace @sbo/optimizer-client
+```
+
+Expected: PASS with no unhandled rejection and no loss of the in-memory Level-13 draft.
+
+- [ ] **Step 4: Commit only the provider repair**
+
+```bash
+git add optimizer-v2/client/src/app/providers/BuildDraftProvider.tsx optimizer-v2/client/src/app/providers/BuildDraftProvider.test.tsx
+git commit -m "fix: handle draft cleanup save failures"
+```
