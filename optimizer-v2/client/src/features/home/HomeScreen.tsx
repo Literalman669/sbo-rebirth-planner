@@ -48,9 +48,10 @@ export function HomeScreen() {
           </p>
           <p>Sign in is optional for cloud sync, build history, and sharing.</p>
           <p>
-            Sign-in opens SpacetimeAuth. Email magic links are the configured
-            durable way to sign in or create an account. Social sign-in
-            requires future provider configuration.
+            When sign-in is configured, it opens the hosted SpacetimeAuth page.
+            Email magic links are then the configured durable way to sign in
+            or create an account. Social sign-in requires future provider
+            configuration.
           </p>
         </section>
         {savedBuilds.length > 0 ? (

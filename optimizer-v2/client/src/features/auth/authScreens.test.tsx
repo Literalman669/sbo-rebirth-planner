@@ -102,7 +102,7 @@ describe('optional authentication', () => {
     expect(screen.getByRole('button', { name: 'Sign in' })).toBeDisabled();
   });
 
-  it('explains that guest planning needs no sign-in and cloud sign-in is optional', () => {
+  it('keeps the default unconfigured Home clear without promising an active redirect', () => {
     render(
       <MemoryRouter>
         <BuildDraftContext.Provider value={homeDraftContext()}>
@@ -119,7 +119,12 @@ describe('optional authentication', () => {
     ).toBeVisible();
     expect(
       screen.getByText(
-        /Email magic links are the configured durable way to sign in or create an account\./,
+        /When sign-in is configured, it opens the hosted SpacetimeAuth page\./,
+      ),
+    ).toBeVisible();
+    expect(
+      screen.getByText(
+        /Email magic links are then the configured durable way to sign in or create an account\./,
       ),
     ).toBeVisible();
     expect(
