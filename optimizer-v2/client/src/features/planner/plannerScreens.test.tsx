@@ -232,11 +232,9 @@ describe('planner routes', () => {
     await renderRoute('/equipment');
 
     expect(await screen.findByRole('heading', { name: 'Equipment' })).toBeVisible();
-    expect(screen.getByLabelText('Main-hand weapon')).toBeVisible();
-    expect(screen.getByLabelText('Armor')).toBeVisible();
-    expect(screen.getByRole('option', { name: 'Iron Greatsword' })).toBeInTheDocument();
-    expect(screen.queryByRole('option', { name: 'Iron Rapier' })).not.toBeInTheDocument();
-    expect(screen.queryByLabelText('Off-hand weapon')).not.toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'Change Main-hand weapon' })).toBeVisible();
+    expect(await screen.findByRole('button', { name: 'Change Armor' })).toBeVisible();
+    expect(screen.queryByRole('button', { name: 'Choose Off-hand weapon' })).not.toBeInTheDocument();
   });
 
   it('redirects an incomplete direct Results visit to Equipment', async () => {
@@ -274,7 +272,8 @@ describe('planner routes', () => {
     await waitFor(() => expect(statsHeading).toHaveFocus());
   });
 
-  it('filters current equipment by both level and unlocked floor and explains empty optional slots', async () => {
+  it('shows equip-now and future equipment with explicit reasons', async () => {
+    const user = userEvent.setup();
     await renderRoute('/equipment', {
       saved: {
         ...savedDraft(),
@@ -286,18 +285,15 @@ describe('planner routes', () => {
       snapshot: fallbackRelease,
     });
 
-    expect(await screen.findByRole('option', { name: 'Midnight Platemail' })).toBeInTheDocument();
-    expect(screen.queryByRole('option', { name: 'Combat Armor' })).not.toBeInTheDocument();
-    expect(
-      screen.getByRole('option', {
-        name: 'No verified upper headwear matches Level 5 and Floor 2',
-      }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole('option', {
-        name: 'No verified lower headwear matches Level 5 and Floor 2',
-      }),
-    ).toBeInTheDocument();
+    await user.click(await screen.findByRole('button', { name: 'Change Armor' }));
+    const search = screen.getByRole('searchbox', { name: 'Search Armor' });
+    await user.type(search, 'Midnight Platemail');
+    expect(screen.getByRole('button', { name: 'Equip Midnight Platemail' })).toBeEnabled();
+    await user.clear(search);
+    await user.type(search, 'Combat Armor');
+    await user.click(screen.getByRole('button', { name: 'Inspect Combat Armor' }));
+    expect(screen.getAllByText('Requires Level 7')).not.toHaveLength(0);
+    expect(screen.getByRole('button', { name: 'Equip Combat Armor' })).toBeDisabled();
   });
 
   it('blocks Character Continue and focuses an invalid level', async () => {
@@ -521,12 +517,20 @@ describe('planner routes', () => {
 
   it('focuses the first missing required equipment control', async () => {
     const user = userEvent.setup();
-    await renderRoute('/equipment');
+    const withoutStarters = {
+      ...fallbackRelease,
+      equipment: fallbackRelease.equipment.map((item) =>
+        item.acquisitionType === 'starter'
+          ? { ...item, acquisitionType: 'shop' as const }
+          : item,
+      ),
+    };
+    await renderRoute('/equipment', { testOnlySnapshot: withoutStarters });
     await screen.findByRole('heading', { name: 'Equipment' });
 
     await user.click(screen.getByRole('button', { name: 'Continue' }));
 
-    expect(screen.getByLabelText('Main-hand weapon')).toHaveFocus();
+    expect(screen.getByRole('button', { name: 'Choose Main-hand weapon' })).toHaveFocus();
     expect(screen.getByText('Choose your main-hand weapon.')).toBeVisible();
   });
 });

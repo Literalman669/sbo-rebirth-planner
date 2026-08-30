@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useBuildDraft } from '../../app/providers/BuildDraftContext';
 import { useDataset } from '../../app/providers/DatasetProvider';
@@ -67,7 +67,7 @@ export function StatsScreen() {
   const baselineBuildId = useRef(draft.id);
   const controls = useRef<Partial<Record<StatName, HTMLInputElement | null>>>({});
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!isHydrated) return;
     setValues(stringsFromStats(draft.stats));
     if (baselineBuildId.current !== draft.id) {
