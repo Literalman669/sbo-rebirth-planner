@@ -244,7 +244,9 @@ describe('ResultsScreen', () => {
 
     expect(screen.getByText('Why this plan')).toBeVisible();
     expect(
-      screen.getByText(/balanced weighting guided/i),
+      screen.getByText(
+        /strategy policy sbor-policy-v1 applied balanced priorities/i,
+      ),
     ).not.toBeVisible();
     expect(screen.getByRole('link', { name: 'Edit Character' })).toHaveAttribute(
       'href',

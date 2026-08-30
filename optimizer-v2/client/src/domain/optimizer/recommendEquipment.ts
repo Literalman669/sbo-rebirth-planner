@@ -13,6 +13,7 @@ import {
   type GearTotals,
   type ProjectedMetrics,
 } from './projections';
+import { compileMechanics } from './mechanics';
 
 export interface UpgradeTarget {
   itemId: string;
@@ -78,16 +79,39 @@ function projectedDelta(
   current: ProjectedMetrics,
   next: ProjectedMetrics,
 ): ProjectedMetrics {
+  const difference = (nextValue: number | null, currentValue: number | null) =>
+    nextValue === null || currentValue === null
+      ? null
+      : nextValue - currentValue;
   return {
-    attackPerHit: next.attackPerHit - current.attackPerHit,
-    damageReductionPerHit:
-      next.damageReductionPerHit - current.damageReductionPerHit,
-    bonusHp: next.bonusHp - current.bonusHp,
-    stamina: next.stamina - current.stamina,
-    walkSpeedBonus: next.walkSpeedBonus - current.walkSpeedBonus,
-    sprintSpeedBonus: next.sprintSpeedBonus - current.sprintSpeedBonus,
-    critChanceBonus: next.critChanceBonus - current.critChanceBonus,
-    dropChanceBonus: next.dropChanceBonus - current.dropChanceBonus,
+    attackPerHit: difference(next.attackPerHit, current.attackPerHit),
+    damageReductionPerHit: difference(
+      next.damageReductionPerHit,
+      current.damageReductionPerHit,
+    ),
+    bonusHp: difference(next.bonusHp, current.bonusHp),
+    stamina: difference(next.stamina, current.stamina),
+    walkSpeedBonus: difference(next.walkSpeedBonus, current.walkSpeedBonus),
+    sprintSpeedBonus: difference(
+      next.sprintSpeedBonus,
+      current.sprintSpeedBonus,
+    ),
+    critChanceBonus: difference(
+      next.critChanceBonus,
+      current.critChanceBonus,
+    ),
+    dropChanceBonus: difference(
+      next.dropChanceBonus,
+      current.dropChanceBonus,
+    ),
+    multiHitChanceBonus: difference(
+      next.multiHitChanceBonus,
+      current.multiHitChanceBonus,
+    ),
+    debuffResistanceBonus: difference(
+      next.debuffResistanceBonus,
+      current.debuffResistanceBonus,
+    ),
   };
 }
 
@@ -121,13 +145,14 @@ function rankUpgrades(
   dataset: DatasetSnapshot,
 ): RankedUpgrade[] {
   const equipmentById = indexEquipment(dataset);
+  const mechanics = compileMechanics(dataset);
   const owned = new Set(profile.ownedItemIds);
   const equippedItemIds = new Set(Object.values(profile.equipped));
   const currentMetrics = projectMetrics({
     level: profile.level,
     stats: profile.stats,
     gear: gearTotals(profile.equipped, equipmentById),
-  });
+  }, mechanics);
   const ranked: RankedUpgrade[] = [];
 
   for (const item of dataset.equipment) {
@@ -141,7 +166,7 @@ function rankUpgrades(
         level: profile.level,
         stats: profile.stats,
         gear: gearTotals(candidateEquipped, equipmentById),
-      });
+      }, mechanics);
       const score = scoreMetricDelta(
         currentMetrics,
         candidateMetrics,

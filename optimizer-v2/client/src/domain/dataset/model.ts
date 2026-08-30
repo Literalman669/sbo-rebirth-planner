@@ -155,7 +155,7 @@ export interface DatasetSnapshot {
   publishedAt: string;
   lastReviewedAt: string;
   sourceSummary: string;
-  formulaSetVersion: 'sbor-stats-v1';
+  formulaSetVersion: 'sbor-stats-v1' | 'sbor-stats-v2';
   strategyPolicyVersion: 'sbor-policy-v1' | 'sbor-policy-v2';
   pointsPerLevel: 3;
   dualWieldSkillGate?: 200;

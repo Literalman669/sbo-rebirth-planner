@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { CharacterProfile } from '../build/model';
 import type { DatasetSnapshot, EquipmentRecord } from '../dataset/model';
+import { bootstrapRelease } from '../../data/bootstrapRelease';
 import { optimizeBuild } from './optimizeBuild';
 
 const sword: EquipmentRecord = {
@@ -56,7 +57,7 @@ const dataset: DatasetSnapshot = {
   strategyPolicyVersion: 'sbor-policy-v1',
   pointsPerLevel: 3,
   formulas: [],
-  mechanics: [],
+  mechanics: bootstrapRelease.mechanics,
   catalog: [],
   equipment: [sword],
 };

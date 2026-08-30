@@ -1,6 +1,6 @@
 export type DatasetRelease = {
   version: string;
-  formulaSetVersion: 'sbor-stats-v1';
+  formulaSetVersion: 'sbor-stats-v1' | 'sbor-stats-v2';
   sourceSummary: string;
   publishedAtMicros: bigint;
   lastReviewedAt: string;
@@ -11,7 +11,7 @@ type LiveDatasetRelease = DatasetRelease & { isCurrent: boolean };
 export function parseFormulaSetVersion(
   value: string,
 ): DatasetRelease['formulaSetVersion'] {
-  if (value !== 'sbor-stats-v1') {
+  if (value !== 'sbor-stats-v1' && value !== 'sbor-stats-v2') {
     throw new Error(`unsupported formula set: ${value}`);
   }
 

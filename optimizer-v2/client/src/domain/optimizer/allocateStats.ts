@@ -13,6 +13,7 @@ import {
   projectMetrics,
   type GearTotals,
 } from './projections';
+import type { CompiledMechanics } from './mechanics';
 
 export interface SpendNowAllocation {
   points: number;
@@ -53,6 +54,7 @@ export interface StatAllocationInput {
   stats: StatBlock;
   gear: GearTotals;
   goal: OptimizationGoal;
+  mechanics: CompiledMechanics;
 }
 
 function emptyStats(): StatBlock {
@@ -102,16 +104,20 @@ function chooseNextStat(
   stats: StatBlock,
   gear: GearTotals,
   goal: OptimizationGoal,
+  mechanics: CompiledMechanics,
 ): StatName {
-  const current = projectMetrics({ level, stats, gear });
+  const current = projectMetrics({ level, stats, gear }, mechanics);
   let bestStat: StatName | undefined;
   let bestScore = Number.NEGATIVE_INFINITY;
 
   for (const stat of STAT_TIE_BREAK_ORDER) {
-    if (stats[stat] >= 500) continue;
+    if (stats[stat] >= mechanics.statCap) continue;
 
     const candidateStats = { ...stats, [stat]: stats[stat] + 1 };
-    const candidate = projectMetrics({ level, stats: candidateStats, gear });
+    const candidate = projectMetrics(
+      { level, stats: candidateStats, gear },
+      mechanics,
+    );
     const score =
       scoreMetricDelta(current, candidate, goal) *
         targetShareCorrection(stats, stat, goal) +
@@ -143,6 +149,7 @@ function allocatePoints(
       final,
       input.gear,
       input.goal,
+      input.mechanics,
     );
     final[selectedStat] += 1;
     added[selectedStat] += 1;

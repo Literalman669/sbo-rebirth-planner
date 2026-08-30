@@ -330,11 +330,52 @@ function catalogFromLegacy(item: EquipmentRecord): CatalogEquipmentRecord {
   };
 }
 
+function legacyFormulaParameters(
+  formula: FormulaRecord,
+): Record<string, number> {
+  const numbers = [...formula.expression.matchAll(/\d+(?:\.\d+)?/g)].map(
+    (match) => Number(match[0]),
+  );
+  switch (formula.id) {
+    case 'points-per-level':
+      return { pointsPerLevel: numbers.at(-1) ?? 3 };
+    case 'attack-from-str':
+      return { statCap: numbers[1] ?? 500, damagePerStr: numbers[2] ?? 0.004 };
+    case 'damage-reduction-from-def':
+      return {
+        baseDefenseMultiplier: numbers[0] ?? 5,
+        statCap: numbers[1] ?? 500,
+        defenseMultiplierPerDef: numbers[2] ?? 0.01,
+      };
+    case 'bonus-hp-from-vit':
+      return {
+        dexHpBaseMultiplier: numbers[0] ?? 10,
+        statCap: numbers[1] ?? 500,
+        dexHpMultiplierPerVit: numbers[2] ?? 0.01,
+      };
+    case 'stamina':
+      return {
+        staminaBase: numbers[0] ?? 100,
+        staminaPerLevel: numbers[1] ?? 5,
+        staminaPerStrAgiVitPoint: numbers[2] ?? 0.1,
+        statCap: 500,
+      };
+    case 'walk-speed-from-agi':
+      return { statCap: numbers[0] ?? 500, walkSpeedPerAgi: numbers[1] ?? 0.004 };
+    case 'sprint-speed-from-agi':
+      return { statCap: numbers[0] ?? 500, sprintSpeedPerAgi: numbers[1] ?? 0.02 };
+    case 'crit-bonus-from-luk':
+      return { critPerLuk: numbers[0] ?? 0.0001, critCap: numbers[1] ?? 0.05, statCap: 500 };
+    case 'drop-bonus-from-luk':
+      return { dropPerLuk: numbers[0] ?? 0.0001, dropCap: numbers[1] ?? 0.05, statCap: 500 };
+  }
+}
+
 function mechanicFromFormula(formula: FormulaRecord) {
   return {
     ...formula,
     computability: 'exact' as const,
-    parameters: {},
+    parameters: legacyFormulaParameters(formula),
     verificationStatus: 'verified' as const,
   };
 }
@@ -345,7 +386,7 @@ export const datasetSnapshotSchema = z
     publishedAt: z.iso.datetime(),
     lastReviewedAt: z.iso.date(),
     sourceSummary: z.string().min(1),
-    formulaSetVersion: z.literal('sbor-stats-v1'),
+    formulaSetVersion: z.enum(['sbor-stats-v1', 'sbor-stats-v2']),
     strategyPolicyVersion: z
       .enum(['sbor-policy-v1', 'sbor-policy-v2'])
       .default('sbor-policy-v1'),

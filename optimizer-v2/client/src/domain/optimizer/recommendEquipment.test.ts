@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { CharacterProfile } from '../build/model';
 import type { DatasetSnapshot, EquipmentRecord } from '../dataset/model';
+import { bootstrapRelease } from '../../data/bootstrapRelease';
 import { recommendEquipment } from './recommendEquipment';
 
 const sourceUrl = 'https://swordbloxonlinerebirth.fandom.com/wiki/Armor';
@@ -94,7 +95,7 @@ function dataset(equipmentRows: EquipmentRecord[]): DatasetSnapshot {
     strategyPolicyVersion: 'sbor-policy-v1',
     pointsPerLevel: 3,
     formulas: [],
-    mechanics: [],
+    mechanics: bootstrapRelease.mechanics,
     catalog: [],
     equipment: equipmentRows,
   };

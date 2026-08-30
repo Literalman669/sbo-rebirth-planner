@@ -1,11 +1,16 @@
 import { describe, expect, it } from 'vitest';
 import type { StatBlock, StatName } from '../build/model';
+import { bootstrapRelease } from '../../data/bootstrapRelease';
+import { compileMechanics } from './mechanics';
 import { allocateNextTenLevels, allocateStatPlan } from './allocateStats';
+
+const mechanics = compileMechanics(bootstrapRelease);
 
 const standardInput = {
   level: 20,
   stats: { str: 20, def: 20, agi: 20, vit: 20, luk: 20 },
   gear: { attack: 30, defense: 20, dexterity: 50 },
+  mechanics,
 } as const;
 
 const statNames: StatName[] = ['str', 'def', 'agi', 'vit', 'luk'];
@@ -43,6 +48,7 @@ describe('allocateNextTenLevels', () => {
       stats: { str: 500, def: 500, agi: 490, vit: 490, luk: 490 },
       gear: { attack: 500, defense: 500, dexterity: 500 },
       goal: 'balanced',
+      mechanics,
     });
 
     expect(Math.max(...Object.values(result.final))).toBeLessThanOrEqual(500);
@@ -64,6 +70,7 @@ describe('allocateNextTenLevels', () => {
       stats: { str: 14, def: 0, agi: 3, vit: 7, luk: 0 },
       gear: { attack: 3, defense: 0.5, dexterity: 3 },
       goal: 'balanced',
+      mechanics,
     });
 
     expect(result.added.def).toBeGreaterThan(0);
@@ -99,6 +106,7 @@ describe('allocateStatPlan', () => {
       stats: { str: 0, def: 0, agi: 0, vit: 0, luk: 0 },
       gear: { attack: 2.5, defense: 0.5, dexterity: 3 },
       goal: 'balanced',
+      mechanics,
       unspentPoints: 3,
     });
 

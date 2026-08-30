@@ -8,6 +8,8 @@ import type { ProjectedMetrics } from './projections';
 export type GoalDimension = 'damage' | 'survival' | 'mobility' | 'farming';
 export type GoalWeights = Record<GoalDimension, number>;
 
+export const STRATEGY_POLICY_VERSION = 'sbor-policy-v2' as const;
+
 export const GOAL_WEIGHTS: Record<OptimizationGoal, GoalWeights> = {
   balanced: { damage: 1, survival: 1, mobility: 0.5, farming: 0.25 },
   damage: { damage: 1.75, survival: 0.5, mobility: 0.35, farming: 0.05 },
@@ -45,8 +47,8 @@ export const STAT_TIE_BREAK_ORDER: readonly StatName[] = [
   'luk',
 ];
 
-function metricDelta(next: number, current: number) {
-  return next - current;
+function metricDelta(next: number | null, current: number | null) {
+  return next === null || current === null ? 0 : next - current;
 }
 
 export function metricDimensionDeltas(
@@ -57,6 +59,9 @@ export function metricDimensionDeltas(
     damage:
       metricDelta(next.attackPerHit, current.attackPerHit) / 100 +
       (metricDelta(next.critChanceBonus, current.critChanceBonus) / 0.05) *
+        0.25 +
+      (metricDelta(next.multiHitChanceBonus, current.multiHitChanceBonus) /
+        0.15) *
         0.25,
     survival:
       metricDelta(
@@ -64,7 +69,13 @@ export function metricDimensionDeltas(
         current.damageReductionPerHit,
       ) /
         100 +
-      metricDelta(next.bonusHp, current.bonusHp) / 1_000,
+      metricDelta(next.bonusHp, current.bonusHp) / 1_000 +
+      (metricDelta(
+        next.debuffResistanceBonus,
+        current.debuffResistanceBonus,
+      ) /
+        0.05) *
+        0.1,
     mobility:
       metricDelta(next.stamina, current.stamina) / 100 +
       metricDelta(next.walkSpeedBonus, current.walkSpeedBonus) / 2 +

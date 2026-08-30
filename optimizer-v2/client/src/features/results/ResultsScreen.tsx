@@ -34,6 +34,8 @@ const metricLabels: Record<keyof ProjectedMetrics, string> = {
   sprintSpeedBonus: 'sprint speed',
   critChanceBonus: 'critical chance',
   dropChanceBonus: 'drop chance',
+  multiHitChanceBonus: 'multi-hit chance',
+  debuffResistanceBonus: 'debuff resistance',
 };
 
 function formatDelta(delta: Partial<ProjectedMetrics>) {

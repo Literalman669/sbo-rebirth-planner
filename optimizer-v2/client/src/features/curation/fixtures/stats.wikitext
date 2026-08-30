@@ -1,11 +1,18 @@
 <!-- Canonical page: Stats; revision: 23125; timestamp: 2025-11-03T13:14:55Z -->
 Every point of STR invested is a 0.4% increase of damage, totaling out at a complete +200% damage at 500 points atop of your base damage. Along with the damage multiplier, every point in STR increases your base Stamina by 0.1.
+With every point invested in STR, the chance for Multi-hitting enemies increases by 0.02%, capping out at a 10% increase. Total increase cannot exceed 15% if LUK is included as well.
 
 Every point of DEF invested adds 0.01 to your base defense multiplier. With 500 DEF, the formula for damage reduction would be: 10 * Total Defense, meaning every point of Defense is worth 10 points of reduced damage.
 
 The changes per point are; +0.1 stamina, +0.004 stud/s walk speed, +0.02 stud/s sprint speed.
+Every point in AGI gives approximately -0.001s jump delay. Damage attack intervals for each weapon type change at different approximate rates as AGI increases.
 
 Every point of VIT invested increases the multiplier of the Dexterity by 0.01. This means when maxed, the Dexterity equation for Max HP is: 15 * Total Dexterity. In addition to the Dexterity multiplier, every point invested gives +0.1 base stamina.
+Every point of VIT gives +0.01% resistance to all debuffs, capped at 5% at 500 points.
 
 * Every point invested equates +0.01% chance towards critical hits, capping out at +5% when at 500 invested points.
 * Every point invested gives +0.01% chance for items to drop, capping out at +5% at 500 invested points.
+At 500 LUK, a failed item drop receives an additional drop chance described as (Base Chance x 2) +5%.
+With every point invested in LUK, the chance for Multi-hitting enemies increases by 0.02%, capping out at a 10% increase. Total increase cannot exceed 15% if STR is included as well.
+
+The formula for calculating Stamina without AGI, STR or VIT is 100 + (Player Level * 5).

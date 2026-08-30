@@ -49,4 +49,9 @@ describe('selectCurrentRelease', () => {
       'unsupported formula set: future-formulas-v2',
     );
   });
+
+  it('accepts both published mechanics implementations supported by the client', () => {
+    expect(parseFormulaSetVersion('sbor-stats-v1')).toBe('sbor-stats-v1');
+    expect(parseFormulaSetVersion('sbor-stats-v2')).toBe('sbor-stats-v2');
+  });
 });
