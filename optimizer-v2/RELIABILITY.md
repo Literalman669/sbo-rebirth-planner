@@ -350,7 +350,7 @@ price availability, projected changes, mixed-slot warnings, and source links.
 Backup export/import supports validated merge, explicit-confirmation replace,
 and reset flows.
 
-The branch verification recorded 72 client files / 490 tests and 6 module files
+The branch verification recorded 72 client files / 491 tests and 6 module files
 / 79 tests before the final six-layer gate. Fixed-local browser integration
 passed the inventory create/favorite/compare/note/own/equip/reload flow while
 proving display-only actions preserve the plan fingerprint. Core integration
@@ -361,8 +361,8 @@ Accessibility and containment checks cover Inventory, Comparison, and the
 backup dialog at 1440×1000, 768×1024, 390×844, and 320×700 with zero serious or
 critical axe violations and no document overflow. A browser-created v4 database
 upgrades to v5 while preserving draft, build, and inventory state. One hundred
-inventory queries over 1,000 synthetic records completed in 208.8 ms against a
-1,000 ms budget. The Pages artifact contains `index-ukUpbdP_.js` (933,251
+inventory queries over 1,000 synthetic records completed in 193.3 ms against a
+1,000 ms budget. The Pages artifact contains `index-nPTvcUfX.js` (933,383
 bytes) and `index-B4sdvBPO.css` (48,402 bytes); the existing vendor chunk hashes
 remain unchanged.
 
@@ -398,5 +398,6 @@ The database helper now rejects the `blocked` upgrade with a precise close-tabs
 and reload instruction, closes its own connection when a future version asks it
 to yield, and surfaces storage failures in a global accessible recovery notice.
 Unit coverage holds a real fake-indexeddb v4 connection open to prove the v5
-open rejects within the bound instead of hanging, and shell coverage proves the
-notice plus Reload action remain available.
+open rejects instead of hanging, and a separate fixture queues the app open
+behind another blocked upgrade to prove the five-second production fallback.
+Shell coverage proves the notice plus Reload action remain available.

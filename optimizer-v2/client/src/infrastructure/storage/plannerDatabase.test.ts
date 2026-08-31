@@ -103,4 +103,29 @@ describe('planner database', () => {
       await opening.then((database) => database.close()).catch(() => undefined);
     }
   });
+
+  it('times out an open queued behind another blocked upgrade request', async () => {
+    const name = `planner-queued-${crypto.randomUUID()}`;
+    const legacy = await openDB(name, 4, {
+      upgrade(database) {
+        database.createObjectStore('draft');
+      },
+    });
+    const firstUpgrade = openDB(name, GUEST_DATABASE_VERSION, {
+      upgrade(database) {
+        database.createObjectStore('inventory');
+      },
+    });
+    const queued = openPlannerDatabase(name, { timeoutMs: 50 });
+
+    try {
+      await expect(queued).rejects.toThrow(
+        LOCAL_DATABASE_UPGRADE_BLOCKED_MESSAGE,
+      );
+    } finally {
+      legacy.close();
+      await firstUpgrade.then((database) => database.close());
+      await queued.catch(() => undefined);
+    }
+  });
 });

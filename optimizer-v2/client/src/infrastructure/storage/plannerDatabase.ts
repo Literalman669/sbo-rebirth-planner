@@ -19,12 +19,20 @@ const PLANNER_STORE_NAMES = [
 
 export function openPlannerDatabase(
   databaseName = DEFAULT_GUEST_DATABASE_NAME,
+  { timeoutMs = 5_000 }: { timeoutMs?: number } = {},
 ) {
   let openedDatabase: Awaited<ReturnType<typeof openDB>> | null = null;
-  let upgradeWasBlocked = false;
+  let openingWasAbandoned = false;
   let rejectBlocked!: (reason: Error) => void;
   const blocked = new Promise<never>((_, reject) => {
     rejectBlocked = reject;
+  });
+  let timeoutId: ReturnType<typeof setTimeout>;
+  const timedOut = new Promise<never>((_, reject) => {
+    timeoutId = setTimeout(() => {
+      openingWasAbandoned = true;
+      reject(new Error(LOCAL_DATABASE_UPGRADE_BLOCKED_MESSAGE));
+    }, Math.max(1, timeoutMs));
   });
   const opening = openDB(databaseName, GUEST_DATABASE_VERSION, {
     upgrade(database) {
@@ -35,7 +43,7 @@ export function openPlannerDatabase(
       }
     },
     blocked() {
-      upgradeWasBlocked = true;
+      openingWasAbandoned = true;
       rejectBlocked(new Error(LOCAL_DATABASE_UPGRADE_BLOCKED_MESSAGE));
     },
     blocking() {
@@ -46,12 +54,14 @@ export function openPlannerDatabase(
     },
   }).then((database) => {
     openedDatabase = database;
-    if (upgradeWasBlocked) {
+    if (openingWasAbandoned) {
       database.close();
       throw new Error(LOCAL_DATABASE_UPGRADE_BLOCKED_MESSAGE);
     }
     return database;
   });
 
-  return Promise.race([opening, blocked]);
+  return Promise.race([opening, blocked, timedOut]).finally(() => {
+    clearTimeout(timeoutId);
+  });
 }
