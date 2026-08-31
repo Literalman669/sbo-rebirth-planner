@@ -7,21 +7,18 @@ async function createGuestBuild(page: Page, name: string, level: number) {
   await page.getByLabel('Highest Unlocked Floor').fill('2');
   await page.getByRole('radio', { name: 'Two-Handed' }).check();
   await page.getByRole('button', { name: 'Continue' }).click();
-  await page.getByLabel('STR').fill('14');
-  await page.getByLabel('DEF').fill('0');
-  await page.getByLabel('AGI').fill('3');
-  await page.getByLabel('VIT').fill('7');
-  await page.getByLabel('LUK').fill('0');
+  await page.getByRole('spinbutton', { name: 'STR', exact: true }).fill('14');
+  await page.getByRole('spinbutton', { name: 'DEF', exact: true }).fill('0');
+  await page.getByRole('spinbutton', { name: 'AGI', exact: true }).fill('3');
+  await page.getByRole('spinbutton', { name: 'VIT', exact: true }).fill('7');
+  await page.getByRole('spinbutton', { name: 'LUK', exact: true }).fill('0');
   await page.getByRole('button', { name: 'Continue' }).click();
-  await page.getByLabel('Main-hand weapon').selectOption('iron-greatsword');
-  await page.getByLabel('Armor', { exact: true }).selectOption('beginner-armor');
+  await expect(page.getByRole('button', { name: 'Change Main-hand weapon' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Change Armor' })).toBeVisible();
   await page.getByRole('button', { name: 'Continue' }).click();
   await page.getByRole('button', { name: 'Save Build' }).click();
   await page.getByLabel('Build Name').fill(name);
-  await page
-    .locator('form.save-build-form')
-    .getByRole('button', { name: 'Save Build' })
-    .click();
+  await page.getByRole('dialog', { name: 'Save Build' }).getByRole('button', { name: 'Save' }).click();
   await expect(page.getByText('Build saved locally')).toBeVisible();
 }
 
@@ -66,7 +63,7 @@ test('imports selectively, syncs offline history, restores, shares, and revokes'
 
   await createGuestBuild(page, 'Selected Route', 8);
   await createGuestBuild(page, 'Keep Local', 9);
-  await page.getByRole('link', { name: 'SBO:Rebirth Build Optimizer' }).click();
+  await page.getByRole('link', { name: 'Builds' }).click();
   await expect(page.getByText('Selected Route')).toBeVisible();
   await expect(page.getByText('Keep Local')).toBeVisible();
 
@@ -81,14 +78,14 @@ test('imports selectively, syncs offline history, restores, shares, and revokes'
   await page.getByRole('checkbox', { name: 'Keep Local' }).uncheck();
   await page.getByRole('button', { name: 'Import selected' }).click();
 
-  const archive = page.getByRole('region', { name: 'Cloud Archive' });
+  const archive = page.getByRole('region', { name: 'Cloud builds' });
   await expect(archive).toBeVisible();
   await expect(archive.getByText('Selected Route')).toBeVisible();
   await expect(archive.getByText('Keep Local')).toHaveCount(0);
 
   const sessionB = await newSignedInPage(browser);
-  await sessionB.page.goto('/');
-  const archiveB = sessionB.page.getByRole('region', { name: 'Cloud Archive' });
+  await sessionB.page.goto('/builds');
+  const archiveB = sessionB.page.getByRole('region', { name: 'Cloud builds' });
   await expect(archiveB.getByText('Selected Route')).toBeVisible();
 
   await archive.getByRole('button', { name: 'Load Selected Route' }).click();
@@ -112,7 +109,7 @@ test('imports selectively, syncs offline history, restores, shares, and revokes'
   await expect.poll(() => pendingRevisionCount(page)).toBe(0);
   await expect(archiveB.getByText(/Level 22 ·/)).toBeVisible();
 
-  await page.getByRole('link', { name: 'SBO:Rebirth Build Optimizer' }).click();
+  await page.getByRole('link', { name: 'Builds' }).click();
   await page.getByRole('button', { name: 'History for Selected Route' }).click();
   const restorable = page.locator(
     'button[aria-label^="Restore revision"]:not([disabled])',

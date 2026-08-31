@@ -35,19 +35,19 @@ async function completeCharacter(page: Page) {
 }
 
 async function completeStats(page: Page) {
-  await page.getByLabel('STR').fill('14');
-  await page.getByLabel('DEF').fill('0');
-  await page.getByLabel('AGI').fill('3');
-  await page.getByLabel('VIT').fill('7');
-  await page.getByLabel('LUK').fill('0');
+  await page.getByRole('spinbutton', { name: 'STR', exact: true }).fill('14');
+  await page.getByRole('spinbutton', { name: 'DEF', exact: true }).fill('0');
+  await page.getByRole('spinbutton', { name: 'AGI', exact: true }).fill('3');
+  await page.getByRole('spinbutton', { name: 'VIT', exact: true }).fill('7');
+  await page.getByRole('spinbutton', { name: 'LUK', exact: true }).fill('0');
   await page.getByRole('button', { name: 'Continue' }).click();
   await expect(page).toHaveURL(/\/equipment$/);
   await expectActiveStep(page, 'Equipment');
 }
 
 async function completeEquipment(page: Page) {
-  await page.getByLabel('Main-hand weapon').selectOption('iron-greatsword');
-  await page.getByLabel('Armor', { exact: true }).selectOption('beginner-armor');
+  await expect(page.getByRole('button', { name: 'Change Main-hand weapon' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Change Armor' })).toBeVisible();
   await page.getByRole('button', { name: 'Continue' }).click();
   await expect(page).toHaveURL(/\/results$/);
   await expectActiveStep(page, 'Results');
@@ -131,53 +131,37 @@ test('survives exactly twenty routed planner cycles without duplicate results or
       await expect(page.getByLabel('Current Level')).toHaveValue('8');
       await expect(page.getByLabel('Highest Unlocked Floor')).toHaveValue('2');
       await expect(page.getByRole('radio', { name: 'Two-Handed' })).toBeChecked();
-      await expect(page.getByLabel('Optimization Goal')).toHaveValue('balanced');
+      await expect(page.getByRole('radio', { name: 'Balanced' })).toBeChecked();
     }
     if (edit.step === 'stats') {
-      await expect(page.getByLabel('STR')).toHaveValue('14');
-      await expect(page.getByLabel('DEF')).toHaveValue('0');
-      await expect(page.getByLabel('AGI')).toHaveValue('3');
-      await expect(page.getByLabel('VIT')).toHaveValue('7');
-      await expect(page.getByLabel('LUK')).toHaveValue('0');
+      await expect(page.getByRole('spinbutton', { name: 'STR', exact: true })).toHaveValue('14');
+      await expect(page.getByRole('spinbutton', { name: 'DEF', exact: true })).toHaveValue('0');
+      await expect(page.getByRole('spinbutton', { name: 'AGI', exact: true })).toHaveValue('3');
+      await expect(page.getByRole('spinbutton', { name: 'VIT', exact: true })).toHaveValue('7');
+      await expect(page.getByRole('spinbutton', { name: 'LUK', exact: true })).toHaveValue('0');
     }
     if (edit.step === 'equipment') {
-      await expect(page.getByLabel('Main-hand weapon')).toHaveValue('iron-greatsword');
-      await expect(page.getByLabel('Armor', { exact: true })).toHaveValue('beginner-armor');
+      await expect(page.getByRole('button', { name: 'Change Main-hand weapon' })).toContainText('Iron Greatsword');
+      await expect(page.getByRole('button', { name: 'Change Armor' })).toContainText('Beginner Armor');
     }
     await completeRemainingSteps(page, edit.step);
   }
   await expectRuntimeHealth(failures);
 });
 
-test('keeps invalid keyboard-only continuation on the route and focuses the first invalid control', async ({ page }) => {
+test('keeps invalid keyboard-only continuation on Stats and focuses the first invalid control', async ({ page }) => {
   const failures = collectRuntimeFailures(page);
-  await page.goto('/equipment');
-  await expect(page).toHaveURL(/\/equipment$/);
-
-  const mainHand = page.getByLabel('Main-hand weapon');
-  const continueEquipment = page.getByRole('button', { name: 'Continue' });
-  await tabTo(page, continueEquipment);
-  await page.keyboard.press('Shift+Tab');
-  await expect(page.getByRole('button', { name: 'Back' })).toBeFocused();
-  await page.keyboard.press('Tab');
-  await expect(continueEquipment).toBeFocused();
-  await page.keyboard.press('Space');
-  await expect(page).toHaveURL(/\/equipment$/);
-  await expect(mainHand).toBeFocused();
-  await expect(mainHand).toHaveAttribute('aria-invalid', 'true');
-
-  await page.keyboard.press('ArrowDown');
-  await tabTo(page, continueEquipment);
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Create Build' }).click();
+  await completeCharacter(page);
+  const strength = page.getByRole('spinbutton', { name: 'STR', exact: true });
+  await strength.fill('');
+  const continueStats = page.getByRole('button', { name: 'Continue' });
+  await tabTo(page, continueStats);
   await page.keyboard.press('Enter');
-  const armor = page.getByLabel('Armor', { exact: true });
-  await expect(page).toHaveURL(/\/equipment$/);
-  await expect(armor).toBeFocused();
-  await expect(armor).toHaveAttribute('aria-invalid', 'true');
-
-  await page.keyboard.press('ArrowDown');
-  await tabTo(page, continueEquipment);
-  await page.keyboard.press('Enter');
-  await expect(page).toHaveURL(/\/results$/);
+  await expect(page).toHaveURL(/\/stats$/);
+  await expect(strength).toBeFocused();
+  await expect(strength).toHaveAttribute('aria-invalid', 'true');
   await expectRuntimeHealth(failures);
 });
 
@@ -230,4 +214,71 @@ test('reloads direct routes with expected screens or guards and no framework ove
     await assertNoFrameworkOverlay(page);
   }
   await expectRuntimeHealth(failures);
+});
+
+test('upgrades a v3 browser database to v4 without losing its draft or saved build', async ({
+  page,
+}, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop', 'Migration browser coverage runs once.');
+  await page.addInitScript(() => {
+    const profile = {
+      schemaVersion: 2,
+      id: 'legacy-v3-build',
+      name: 'Legacy v3 route',
+      level: 8,
+      maxFloor: 2,
+      weaponPath: 'two-handed',
+      goal: 'balanced',
+      stats: { str: 14, def: 0, agi: 3, vit: 7, luk: 0 },
+      equipped: { 'main-hand': 'iron-greatsword', armor: 'beginner-armor' },
+      ownedItemIds: [],
+      datasetVersion: 'bootstrap-0',
+    };
+    const request = indexedDB.open('sbo-rebirth-optimizer-v2', 3);
+    request.onupgradeneeded = () => {
+      for (const store of ['draft', 'builds', 'pending-revisions', 'dataset-releases']) {
+        if (!request.result.objectStoreNames.contains(store)) request.result.createObjectStore(store);
+      }
+    };
+    request.onsuccess = () => {
+      const database = request.result;
+      const transaction = database.transaction(['draft', 'builds'], 'readwrite');
+      transaction.objectStore('draft').put(profile, 'active');
+      transaction.objectStore('builds').put({
+        profile,
+        createdAt: '2026-08-30T12:00:00.000Z',
+        updatedAt: '2026-08-30T12:00:00.000Z',
+      }, profile.id);
+      transaction.oncomplete = () => database.close();
+    };
+  });
+  await page.goto('/');
+  await expect(page.getByRole('button', { name: 'Resume Build' })).toBeVisible();
+  await page.getByRole('link', { name: 'Builds', exact: true }).click();
+  await expect(page).toHaveURL(/\/builds$/);
+  await expect(page.getByRole('button', { name: 'Load Legacy v3 route' })).toBeVisible();
+  expect(await page.evaluate(async () => {
+    const request = indexedDB.open('sbo-rebirth-optimizer-v2');
+    return new Promise<number>((resolve, reject) => {
+      request.onerror = () => reject(request.error);
+      request.onsuccess = () => {
+        resolve(request.result.version);
+        request.result.close();
+      };
+    });
+  })).toBe(4);
+});
+
+test('keeps the recommendation fingerprint stable across checklist and display-only changes', async ({
+  page,
+}) => {
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Create Build' }).click();
+  await completeRemainingSteps(page, 'character');
+  const results = page.locator('.results-screen');
+  const fingerprint = await results.getAttribute('data-plan-fingerprint');
+  expect(fingerprint).toMatch(/^plan-[a-f0-9]{8}$/);
+  await page.locator('.action-checklist input[type="checkbox"]').first().check();
+  await page.getByRole('button', { name: 'Show all ten levels' }).click();
+  await expect(results).toHaveAttribute('data-plan-fingerprint', fingerprint!);
 });

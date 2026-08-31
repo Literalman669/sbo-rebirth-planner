@@ -315,7 +315,10 @@ export function ResultsScreen() {
   if (!plan || !equipmentById) return null;
 
   return (
-    <section className="planner-screen results-screen">
+    <section
+      className="planner-screen results-screen"
+      data-plan-fingerprint={planFingerprint}
+    >
       <h2 data-screen-heading tabIndex={-1}>
         Your next ten levels, made clear.
       </h2>

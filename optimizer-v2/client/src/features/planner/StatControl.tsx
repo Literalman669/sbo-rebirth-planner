@@ -7,6 +7,7 @@ export function StatControl({
   value,
   maxValue,
   locked,
+  invalid = false,
   onChange,
   onInput,
   onToggleLock,
@@ -17,6 +18,7 @@ export function StatControl({
   value: number | string;
   maxValue: number;
   locked: boolean;
+  invalid?: boolean;
   onChange(value: number): void;
   onInput?(value: string): void;
   onToggleLock(): void;
@@ -35,6 +37,7 @@ export function StatControl({
             min="0"
             max="500"
             aria-label={label}
+            aria-invalid={invalid}
             value={value}
             onChange={(event) => {
               const next = event.currentTarget.value;

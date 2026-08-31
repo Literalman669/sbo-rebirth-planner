@@ -41,6 +41,7 @@ export function EquipmentDetail({
       ].flatMap(([label, value]) => (value ? [`${label} ${value}`] : []))
     : [];
   const price = comparison?.price;
+  const currentlyEquipped = profile.equipped[slot] === result.item.id;
 
   return (
     <aside className="equipment-detail" aria-label={`${result.item.name} details`}>
@@ -54,7 +55,15 @@ export function EquipmentDetail({
         </div>
         <div className="equipment-badges">
           {result.owned ? <span>Owned</span> : null}
-          <span>{result.state === 'equip-now' ? 'Equip now' : result.state === 'unlock-later' ? 'Unlock later' : 'Unavailable'}</span>
+          <span>
+            {currentlyEquipped
+              ? 'Currently equipped'
+              : result.state === 'equip-now'
+                ? 'Equip now'
+                : result.state === 'unlock-later'
+                  ? 'Unlock later'
+                  : 'Unavailable'}
+          </span>
         </div>
       </div>
       {raw.length > 0 ? <p className="raw-comparison">{raw.join(' · ')}</p> : null}
@@ -70,11 +79,11 @@ export function EquipmentDetail({
       <div className="equipment-detail-actions">
         <button
           type="button"
-          disabled={result.state !== 'equip-now'}
-          aria-label={`Equip ${result.item.name}`}
+          disabled={currentlyEquipped || result.state !== 'equip-now'}
+          aria-label={currentlyEquipped ? `Currently equipped ${result.item.name}` : `Equip ${result.item.name}`}
           onClick={onEquip}
         >
-          Equip {result.item.name}
+          {currentlyEquipped ? 'Currently equipped' : `Equip ${result.item.name}`}
         </button>
         {onMarkOwned && !result.owned ? (
           <button type="button" onClick={onMarkOwned}>

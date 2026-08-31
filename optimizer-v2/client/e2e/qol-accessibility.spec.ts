@@ -20,6 +20,7 @@ test('Release 1 routes remain accessible and contained from desktop to 320px', a
 }) => {
   for (const viewport of [
     { width: 1440, height: 1000 },
+    { width: 768, height: 1024 },
     { width: 390, height: 844 },
     { width: 320, height: 700 },
   ]) {
@@ -64,4 +65,3 @@ test('mobile sticky actions and dialogs keep controls reachable', async ({ page 
   await expect(equipmentDialog.getByRole('button', { name: 'Close' })).toBeInViewport();
   await expectAccessibleAndContained(page, 'equipment picker');
 });
-

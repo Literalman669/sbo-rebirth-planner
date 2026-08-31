@@ -34,6 +34,13 @@ test('summarizes layer statuses with documented measured thresholds', () => {
   assert.equal(summary.status, 'failed');
   assert.equal(summary.thresholds.optimizerDeterminismIterations, 1000);
   assert.equal(summary.thresholds.localBuilds, 250);
+  assert.deepEqual(summary.thresholds.browserViewports, [
+    '1440x1000',
+    '768x1024',
+    '390x844',
+    '320x700',
+  ]);
+  assert.equal(summary.thresholds.equipmentQueryRecords, 1000);
 });
 
 test('emits a failed summary and rejects when a child exits nonzero', () => {

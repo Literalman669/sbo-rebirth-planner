@@ -262,6 +262,11 @@ button:disabled {
     justify-content: flex-start;
     overflow-x: auto;
     padding-inline: 0.5rem;
+    scrollbar-width: none;
+  }
+
+  .global-navigation::-webkit-scrollbar {
+    display: none;
   }
 
   .global-navigation a,

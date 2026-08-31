@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import type { PlanAction } from '../../domain/results/actionChecklist';
 import { sumVerifiedCosts } from '../../domain/results/actionChecklist';
 
@@ -23,6 +24,7 @@ export function ActionChecklist({
   onUndo(): void;
   canUndo: boolean;
 }) {
+  const [showAllLevelActions, setShowAllLevelActions] = useState(false);
   const costs = sumVerifiedCosts(actions);
   return (
     <section className="result-band action-checklist" aria-labelledby="action-checklist-heading">
@@ -39,8 +41,13 @@ export function ActionChecklist({
         ) : null}
       </div>
       {(['do-now', 'next-level', 'next-floor', 'later'] as const).map((group) => {
-        const grouped = actions.filter((action) => action.group === group);
-        if (grouped.length === 0) return null;
+        const allGrouped = actions.filter((action) => action.group === group);
+        if (allGrouped.length === 0) return null;
+        const grouped =
+          group === 'next-level' && !showAllLevelActions
+            ? allGrouped.slice(0, 3)
+            : allGrouped;
+        const hiddenCount = allGrouped.length - grouped.length;
         return (
           <section key={group} aria-label={groupLabels[group]}>
             <h4>{groupLabels[group]}</h4>
@@ -61,6 +68,17 @@ export function ActionChecklist({
                 </li>
               ))}
             </ul>
+            {group === 'next-level' && allGrouped.length > 3 ? (
+              <button
+                type="button"
+                className="checklist-level-toggle"
+                onClick={() => setShowAllLevelActions((current) => !current)}
+              >
+                {showAllLevelActions
+                  ? 'Show only the next 3 level actions'
+                  : `Show ${hiddenCount} more level actions`}
+              </button>
+            ) : null}
           </section>
         );
       })}

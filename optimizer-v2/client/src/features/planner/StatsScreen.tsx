@@ -141,6 +141,7 @@ export function StatsScreen() {
               value={values[stat.key]}
               maxValue={maxAvailableForStat(currentProfile, stat.key, snapshot.pointsPerLevel)}
               locked={lockedStats.has(stat.key)}
+              invalid={Boolean(errors[stat.key])}
               onInput={(value) => updateStat(stat.key, value)}
               onChange={(value) => applyStats(adjustStat(currentProfile, stat.key, value - currentStats[stat.key], snapshot.pointsPerLevel))}
               onToggleLock={() => setLockedStats((current) => {

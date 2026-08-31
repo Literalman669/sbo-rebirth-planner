@@ -227,6 +227,7 @@ export function CharacterScreen() {
       <details
         open={
           draft.weaponPath === 'dual-wield' ||
+          draft.weaponSkill !== undefined ||
           Boolean(values.weaponSkill.trim())
         }
       >

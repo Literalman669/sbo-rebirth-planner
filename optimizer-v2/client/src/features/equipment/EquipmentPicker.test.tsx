@@ -39,6 +39,26 @@ function Harness() {
 }
 
 describe('EquipmentPicker', () => {
+  it('labels the saved selection as currently equipped even when entered requirements are incomplete', async () => {
+    const user = userEvent.setup();
+    render(
+      <EquipmentPicker
+        slot="main-hand"
+        label="Main-hand weapon"
+        required
+        profile={{ ...profile, weaponSkill: undefined }}
+        snapshot={fallbackRelease}
+        value="iron-greatsword"
+        onSelect={() => undefined}
+      />,
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Change Main-hand weapon' }));
+    expect(await screen.findAllByText('Currently equipped')).toHaveLength(2);
+    expect(screen.getByRole('button', { name: 'Currently equipped Iron Greatsword' })).toBeDisabled();
+    expect(screen.getByText('Requires Weapon Skill 1')).toBeVisible();
+  });
+
   it('searches, compares, and equips from one focused dialog', async () => {
     const user = userEvent.setup();
     render(<Harness />);

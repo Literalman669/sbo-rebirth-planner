@@ -137,7 +137,11 @@ describe('equipment query', () => {
       });
     }
 
+    const elapsed = performance.now() - started;
+    process.stderr.write(
+      `[equipment query] 100 searches over 1,000 records in ${elapsed.toFixed(1)}ms\n`,
+    );
     expect(lastResult.map((row) => row.item.id)).toContain('perf-armor-999');
-    expect(performance.now() - started).toBeLessThan(1_000);
+    expect(elapsed).toBeLessThan(1_000);
   });
 });

@@ -424,6 +424,7 @@ describe('planner routes', () => {
 
       expect(router.state.location.pathname).toBe('/stats');
       expect(strength).toHaveFocus();
+      expect(strength).toHaveAttribute('aria-invalid', 'true');
       expect(screen.getByRole('alert')).toHaveTextContent(
         'STR must be a whole number from 0 to 500.',
       );
@@ -441,6 +442,7 @@ describe('planner routes', () => {
 
     expect(router.state.location.pathname).toBe('/stats');
     expect(strength).toHaveFocus();
+    expect(strength).toHaveAttribute('aria-invalid', 'true');
     expect(screen.getByRole('alert')).toHaveTextContent(
       'STR must be a whole number from 0 to 500.',
     );

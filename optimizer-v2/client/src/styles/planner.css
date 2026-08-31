@@ -545,6 +545,11 @@
   gap: 0.4rem;
 }
 
+.saved-builds .build-card > .build-card__actions,
+.cloud-builds .build-card > .build-card__actions {
+  display: flex;
+}
+
 .build-card__actions button,
 .build-rename-form button,
 .recovered-data-list button,
@@ -628,6 +633,15 @@
   align-items: center;
   min-height: var(--touch-target);
   gap: 0.65rem;
+}
+
+.save-build-dialog input[type='radio'] {
+  width: 1.15rem;
+  height: 1.15rem;
+  min-height: 1.15rem;
+  flex: 0 0 1.15rem;
+  margin: 0;
+  accent-color: var(--color-aether);
 }
 
 .dialog-actions {
