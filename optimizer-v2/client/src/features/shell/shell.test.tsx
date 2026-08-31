@@ -53,6 +53,14 @@ async function renderRoute(path: string) {
                 />
               }
             >
+              <Route
+                path="inventory"
+                element={
+                  <h2 data-screen-heading tabIndex={-1}>
+                    Inventory workspace
+                  </h2>
+                }
+              />
               <Route element={<PlannerFrame />}>
                 <Route path="stats" element={<h2>Stats workspace</h2>} />
                 <Route
@@ -88,6 +96,20 @@ describe('product shell', () => {
     ).toBeVisible();
     expect(await screen.findByText('Saved locally')).toBeVisible();
     expect(screen.getByText('Frontline Route')).toBeVisible();
+  });
+
+  it('resets document scroll when leaving the planner for another workspace', async () => {
+    const user = userEvent.setup();
+    await renderRoute('/stats');
+    await screen.findByText('Stats workspace');
+    document.documentElement.scrollTop = 450;
+    document.body.scrollTop = 450;
+
+    await user.click(screen.getByRole('link', { name: 'Inventory' }));
+    await screen.findByText('Inventory workspace');
+
+    expect(document.documentElement.scrollTop).toBe(0);
+    expect(document.body.scrollTop).toBe(0);
   });
 
   it('renders reusable planner actions with a disabled next action', async () => {

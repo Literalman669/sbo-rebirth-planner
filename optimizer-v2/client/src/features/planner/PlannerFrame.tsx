@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { StepIcon } from './StepIcon';
 import { BuildSummaryBar } from '../shell/BuildSummaryBar';
@@ -20,14 +19,6 @@ export function PlannerFrame() {
   const compactPathsClass = plannerState?.preferences.compactWeaponPathsAfterFirstUse
     ? ' compact-weapon-paths'
     : '';
-
-  useEffect(() => {
-    document.documentElement.scrollTop = 0;
-    document.body.scrollTop = 0;
-    document
-      .querySelector<HTMLElement>('[data-screen-heading]')
-      ?.focus({ preventScroll: true });
-  }, [location.pathname]);
 
   return (
     <main className={`planner-frame${densityClass}${compactPathsClass}`}>

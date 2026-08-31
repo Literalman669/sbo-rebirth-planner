@@ -1,7 +1,7 @@
 import { usePublicRelease } from '../infrastructure/spacetime/PublicDataProvider';
 import type { DatasetRelease } from '../infrastructure/spacetime/releaseSelection';
-import { Link, Outlet } from 'react-router-dom';
-import type { ReactNode } from 'react';
+import { Link, Outlet, useLocation } from 'react-router-dom';
+import { useEffect, type ReactNode } from 'react';
 import { SignInControl } from '../features/auth/SignInControl';
 import type { DatasetSource } from '../infrastructure/spacetime/datasetSelection';
 import { GlobalNavigation } from '../features/shell/GlobalNavigation';
@@ -14,6 +14,16 @@ type AppProps = {
 };
 
 export function App({ release, source, authControl, warning }: AppProps) {
+  const location = useLocation();
+
+  useEffect(() => {
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+    document
+      .querySelector<HTMLElement>('[data-screen-heading]')
+      ?.focus({ preventScroll: true });
+  }, [location.pathname]);
+
   return (
     <div className="app-shell">
       <header>

@@ -350,7 +350,7 @@ price availability, projected changes, mixed-slot warnings, and source links.
 Backup export/import supports validated merge, explicit-confirmation replace,
 and reset flows.
 
-The branch verification recorded 72 client files / 485 tests and 6 module files
+The branch verification recorded 72 client files / 486 tests and 6 module files
 / 77 tests before the final six-layer gate. Fixed-local browser integration
 passed the inventory create/favorite/compare/note/own/equip/reload flow while
 proving display-only actions preserve the plan fingerprint. Core integration
@@ -361,8 +361,8 @@ Accessibility and containment checks cover Inventory, Comparison, and the
 backup dialog at 1440×1000, 768×1024, 390×844, and 320×700 with zero serious or
 critical axe violations and no document overflow. A browser-created v4 database
 upgrades to v5 while preserving draft, build, and inventory state. One hundred
-inventory queries over 1,000 synthetic records completed in 84.3 ms against a
-1,000 ms budget. The Pages artifact contains `index-D-lC1Qjn.js` (932,428
+inventory queries over 1,000 synthetic records completed in 305.9 ms against a
+1,000 ms budget. The Pages artifact contains `index-B49wEbQx.js` (932,438
 bytes) and `index-B4sdvBPO.css` (48,402 bytes); the existing vendor chunk hashes
 remain unchanged.
 
@@ -371,3 +371,12 @@ to match the canonical 2,000-item inventory limit, preventing a large valid
 inventory from becoming unsavable when copied into an active build. Production
 deployment evidence is intentionally recorded only after the branch is merged,
 pushed, and both GitHub workflows plus live smoke have completed.
+
+Final mobile visual QA found one route-level issue beyond the automated
+containment assertions: leaving a scrolled Inventory surface for Comparison
+preserved the old document scroll and opened midway through the table. The
+reset/focus effect had been scoped to `PlannerFrame`, so non-planner sibling
+routes never received it. A RED shell regression reproduced the 450 px carry,
+then the effect moved to the app route shell. The focused 37-test shell/planner
+set passed, and a browser reproduction confirmed Comparison at `scrollY: 0`,
+no document overflow, and zero console warnings/errors at 390×844.
