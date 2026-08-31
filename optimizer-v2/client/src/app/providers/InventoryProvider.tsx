@@ -222,6 +222,24 @@ export function InventoryProvider({
     }
   }, [store]);
 
+  const exportBackup = useCallback(
+    (datasetVersion: string) => store.exportBackup(datasetVersion),
+    [store],
+  );
+
+  const importBackup = useCallback(
+    async (rawJson: string, mode: 'merge' | 'replace') => {
+      const imported = await store.importBackup(rawJson, mode);
+      inventoryRef.current = imported;
+      setInventory(imported);
+      setStorageError(null);
+      setCloudPersistenceStatus(null);
+      setPersistenceStatus('saved-local');
+      return imported;
+    },
+    [store],
+  );
+
   const value = useMemo<InventoryContextValue>(
     () => ({
       inventory,
@@ -234,6 +252,8 @@ export function InventoryProvider({
       setNote,
       replaceInventory,
       resetInventory,
+      exportBackup,
+      importBackup,
       setCloudPersistenceStatus,
     }),
     [
@@ -241,6 +261,8 @@ export function InventoryProvider({
       inventory,
       isHydrated,
       persistenceStatus,
+      exportBackup,
+      importBackup,
       replaceInventory,
       resetInventory,
       setNote,

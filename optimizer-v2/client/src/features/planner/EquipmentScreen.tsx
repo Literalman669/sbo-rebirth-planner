@@ -89,6 +89,10 @@ export function EquipmentScreen() {
         value={draft.equipped[slot]}
         onSelect={(itemId) => setEquipment(slot, itemId)}
         onMarkOwned={markOwned}
+        favoriteItemIds={inventory.inventory.favoriteItemIds}
+        comparisonItemIds={inventory.inventory.comparisonItemIds}
+        onToggleFavorite={inventory.toggleFavorite}
+        onToggleComparison={inventory.toggleComparison}
         error={errors[slot]}
       />
     </div>

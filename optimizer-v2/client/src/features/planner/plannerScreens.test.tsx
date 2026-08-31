@@ -350,6 +350,50 @@ describe('planner routes', () => {
     });
   });
 
+  it('stores picker Favorite and Compare actions in canonical inventory', async () => {
+    const user = userEvent.setup();
+    const { inventoryStore } = await renderRoute('/equipment', {
+      saved: {
+        ...savedDraft(),
+        level: 5,
+        maxFloor: 2,
+        stats: { str: 5, def: 5, agi: 2, vit: 2, luk: 1 },
+        datasetVersion: fallbackRelease.version,
+      },
+      snapshot: fallbackRelease,
+    });
+
+    await user.click(
+      await screen.findByRole(
+        'button',
+        { name: 'Change Armor' },
+        { timeout: 5_000 },
+      ),
+    );
+    const search = screen.getByRole('searchbox', { name: 'Search Armor' });
+    await user.type(search, 'Fields Warrior');
+    await user.click(
+      screen.getByRole('button', { name: 'Inspect Fields Warrior' }),
+    );
+    await user.click(
+      screen.getByRole('button', { name: 'Favorite Fields Warrior' }),
+    );
+    await user.click(
+      screen.getByRole('button', {
+        name: 'Add Fields Warrior to comparison',
+      }),
+    );
+
+    await waitFor(async () => {
+      expect(await inventoryStore.load()).toEqual(
+        expect.objectContaining({
+          favoriteItemIds: ['fields-warrior'],
+          comparisonItemIds: ['fields-warrior'],
+        }),
+      );
+    });
+  });
+
   it('blocks Character Continue and focuses an invalid level', async () => {
     const user = userEvent.setup();
     const { router } = await renderRoute('/character', { saved: savedDraft() });

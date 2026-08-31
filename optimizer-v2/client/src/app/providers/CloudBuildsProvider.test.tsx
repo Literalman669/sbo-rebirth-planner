@@ -147,6 +147,8 @@ describe('CloudBuildsProvider', () => {
             setNote: vi.fn(),
             replaceInventory: vi.fn(),
             resetInventory: vi.fn(),
+            exportBackup: vi.fn(),
+            importBackup: vi.fn(),
             setCloudPersistenceStatus: setInventoryCloudStatus,
           }}
         >
@@ -212,6 +214,8 @@ describe('CloudBuildsProvider', () => {
             setNote: vi.fn(),
             replaceInventory,
             resetInventory: vi.fn(),
+            exportBackup: vi.fn(),
+            importBackup: vi.fn(),
             setCloudPersistenceStatus: vi.fn(),
           }}
         >

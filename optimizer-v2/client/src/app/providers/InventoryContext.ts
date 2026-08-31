@@ -1,6 +1,7 @@
 import { createContext, useContext } from 'react';
 import type { InventoryState } from '../../domain/inventory/state';
 import type { DraftPersistenceStatus } from '../../domain/planner/state';
+import type { InventoryImportMode } from '../../infrastructure/storage/inventoryStore';
 
 export type ComparisonToggleResult =
   | { ok: true }
@@ -17,6 +18,11 @@ export type InventoryContextValue = {
   setNote(itemId: string, note: string): void;
   replaceInventory(inventory: InventoryState): void;
   resetInventory(): Promise<void>;
+  exportBackup(datasetVersion: string): Promise<string>;
+  importBackup(
+    rawJson: string,
+    mode: InventoryImportMode,
+  ): Promise<InventoryState>;
   setCloudPersistenceStatus(
     status: 'sync-queued' | 'synced' | 'error' | null,
   ): void;

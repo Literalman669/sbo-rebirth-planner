@@ -17,6 +17,7 @@ import {
 } from '../../domain/inventory/catalog';
 import { buildEquipmentIndex } from '../../domain/equipment/equipmentQuery';
 import { InventoryItemCard } from './InventoryItemCard';
+import { InventoryBackupDialog } from './InventoryBackupDialog';
 
 const PAGE_SIZE = 100;
 const slotLabels: Record<EquipmentSlot, string> = {
@@ -49,6 +50,7 @@ export function InventoryScreen() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [noteDraft, setNoteDraft] = useState('');
   const [message, setMessage] = useState<string | null>(null);
+  const [showBackups, setShowBackups] = useState(false);
   const index = useMemo(() => buildEquipmentIndex(snapshot), [snapshot]);
   const query = useMemo<InventoryCatalogQuery>(
     () => ({
@@ -141,6 +143,9 @@ export function InventoryScreen() {
         <span>{inventory.comparisonItemIds.length}/4 comparing</span>
         <span>{inventoryState.persistenceStatus}</span>
       </section>
+      <button type="button" onClick={() => setShowBackups(true)}>
+        Manage inventory backups
+      </button>
 
       {unresolved.length > 0 ? (
         <p className="dataset-warning" role="alert">
@@ -311,6 +316,11 @@ export function InventoryScreen() {
           ) : null}
         </div>
       )}
+      <InventoryBackupDialog
+        open={showBackups}
+        datasetVersion={snapshot.version}
+        onClose={() => setShowBackups(false)}
+      />
     </main>
   );
 }

@@ -1,5 +1,6 @@
 import 'fake-indexeddb/auto';
 import {
+  fireEvent,
   render,
   screen,
   waitFor,
@@ -59,7 +60,10 @@ function inventory(
   };
 }
 
-async function renderInventory(initial = inventory()) {
+async function renderInventory(
+  initial = inventory(),
+  path = '/inventory',
+) {
   const buildStore = createGuestBuildStore({
     databaseName: `inventory-screen-build-${crypto.randomUUID()}`,
   });
@@ -70,7 +74,7 @@ async function renderInventory(initial = inventory()) {
   await inventoryStore.save(initial);
   const router = createMemoryRouter(
     createAppRoutes(<App release={release} source="bundled" />),
-    { initialEntries: ['/inventory'] },
+    { initialEntries: [path] },
   );
   render(
     <DatasetProvider snapshot={fallbackRelease}>
@@ -178,5 +182,99 @@ describe('Inventory workspace', () => {
         'No verified equipment matches the current search and filters.',
       ),
     ).toBeVisible();
+  });
+
+  it('compares selected equipment and equips a verified candidate', async () => {
+    const user = userEvent.setup();
+    const { buildStore } = await renderInventory(
+      inventory({
+        ownedItemIds: ['iron-greatsword'],
+        comparisonItemIds: ['iron-greatsword', 'steel-greatsword'],
+      }),
+      '/compare/equipment',
+    );
+
+    expect(
+      await screen.findByRole('heading', { name: 'Equipment Comparison' }),
+    ).toBeVisible();
+    expect(
+      screen.getByRole('columnheader', { name: 'Iron Greatsword' }),
+    ).toBeVisible();
+    expect(
+      screen.getByRole('columnheader', { name: 'Steel Greatsword' }),
+    ).toBeVisible();
+    expect(screen.getByRole('row', { name: /Price/ })).toHaveTextContent(
+      '231 Col',
+    );
+    expect(
+      screen.getByRole('link', { name: 'Open Steel Greatsword Wiki' }),
+    ).toHaveAttribute(
+      'href',
+      'https://swordbloxonlinerebirth.fandom.com/wiki/Steel%20Greatsword',
+    );
+
+    await user.click(
+      screen.getByRole('button', { name: 'Equip Steel Greatsword' }),
+    );
+    await waitFor(async () => {
+      expect((await buildStore.loadDraft())?.equipped['main-hand']).toBe(
+        'steel-greatsword',
+      );
+    });
+  });
+
+  it('exports and merges a validated backup while rejecting corrupt input', async () => {
+    const user = userEvent.setup();
+    const { inventoryStore } = await renderInventory(
+      inventory({ ownedItemIds: ['iron-greatsword'] }),
+    );
+    await screen.findByRole('heading', { name: 'Inventory' });
+
+    await user.click(
+      screen.getByRole('button', { name: 'Manage inventory backups' }),
+    );
+    const dialog = screen.getByRole('dialog', { name: 'Inventory backups' });
+    await user.click(
+      within(dialog).getByRole('button', { name: 'Export inventory JSON' }),
+    );
+    const exported = within(dialog).getByRole('textbox', {
+      name: 'Exported inventory JSON',
+    });
+    expect((exported as HTMLTextAreaElement).value).toContain(
+      'iron-greatsword',
+    );
+
+    const imported = JSON.stringify({
+      schemaVersion: 1,
+      exportedAt: '2026-08-31T12:00:00.000Z',
+      datasetVersion: fallbackRelease.version,
+      inventory: inventory({
+        ownedItemIds: ['beginner-armor'],
+        favoriteItemIds: ['beginner-armor'],
+      }),
+    });
+    const input = within(dialog).getByRole('textbox', {
+      name: 'Paste inventory backup JSON',
+    });
+    fireEvent.change(input, { target: { value: imported } });
+    await user.click(
+      within(dialog).getByRole('button', { name: 'Import inventory' }),
+    );
+    await waitFor(async () => {
+      expect(await inventoryStore.load()).toEqual(
+        inventory({
+          ownedItemIds: ['beginner-armor', 'iron-greatsword'],
+          favoriteItemIds: ['beginner-armor'],
+        }),
+      );
+    });
+
+    fireEvent.change(input, { target: { value: '{bad json' } });
+    await user.click(
+      within(dialog).getByRole('button', { name: 'Import inventory' }),
+    );
+    expect(
+      within(dialog).getByRole('alert'),
+    ).toHaveTextContent('Inventory backup is invalid');
   });
 });

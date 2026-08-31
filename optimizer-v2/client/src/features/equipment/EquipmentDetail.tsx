@@ -19,6 +19,10 @@ export function EquipmentDetail({
   snapshot,
   onEquip,
   onMarkOwned,
+  favorite,
+  compared,
+  onToggleFavorite,
+  onToggleComparison,
 }: {
   result: EquipmentQueryResult;
   profile: CharacterProfile;
@@ -26,6 +30,10 @@ export function EquipmentDetail({
   snapshot: DatasetSnapshot;
   onEquip(): void;
   onMarkOwned?(): void;
+  favorite?: boolean;
+  compared?: boolean;
+  onToggleFavorite?(): void;
+  onToggleComparison?(): void;
 }) {
   let comparison: ReturnType<typeof compareEquipment> | null = null;
   try {
@@ -88,6 +96,32 @@ export function EquipmentDetail({
         {onMarkOwned && !result.owned ? (
           <button type="button" onClick={onMarkOwned}>
             Mark Owned
+          </button>
+        ) : null}
+        {onToggleFavorite ? (
+          <button
+            type="button"
+            aria-label={
+              favorite
+                ? `Unfavorite ${result.item.name}`
+                : `Favorite ${result.item.name}`
+            }
+            onClick={onToggleFavorite}
+          >
+            {favorite ? 'Unfavorite' : 'Favorite'}
+          </button>
+        ) : null}
+        {onToggleComparison ? (
+          <button
+            type="button"
+            aria-label={
+              compared
+                ? `Remove ${result.item.name} from comparison`
+                : `Add ${result.item.name} to comparison`
+            }
+            onClick={onToggleComparison}
+          >
+            {compared ? 'Remove Compare' : 'Add to Compare'}
           </button>
         ) : null}
         <a href={result.item.sourceUrl} target="_blank" rel="noreferrer">

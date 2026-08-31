@@ -17,6 +17,7 @@ import {
   type EquipmentSort,
 } from '../../domain/equipment/equipmentQuery';
 import { EquipmentDetail } from './EquipmentDetail';
+import type { ComparisonToggleResult } from '../../app/providers/InventoryContext';
 
 const PAGE_SIZE = 100;
 
@@ -29,6 +30,10 @@ export function EquipmentPicker({
   value,
   onSelect,
   onMarkOwned,
+  favoriteItemIds = [],
+  comparisonItemIds = [],
+  onToggleFavorite,
+  onToggleComparison,
   error,
 }: {
   slot: EquipmentSlot;
@@ -39,6 +44,10 @@ export function EquipmentPicker({
   value?: string;
   onSelect(itemId: string | undefined): void;
   onMarkOwned?(itemId: string): void;
+  favoriteItemIds?: readonly string[];
+  comparisonItemIds?: readonly string[];
+  onToggleFavorite?(itemId: string): void;
+  onToggleComparison?(itemId: string): ComparisonToggleResult;
   error?: string;
 }) {
   const [open, setOpen] = useState(false);
@@ -47,6 +56,7 @@ export function EquipmentPicker({
   const [sort, setSort] = useState<EquipmentSort>('projected-improvement');
   const [limit, setLimit] = useState(PAGE_SIZE);
   const [selectedId, setSelectedId] = useState<string | null>(value ?? null);
+  const [inventoryMessage, setInventoryMessage] = useState<string | null>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const dialogRef = useRef<HTMLDialogElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
@@ -238,14 +248,31 @@ export function EquipmentPicker({
                   close();
                 }}
                 onMarkOwned={onMarkOwned ? () => onMarkOwned(selected.item.id) : undefined}
+                favorite={favoriteItemIds.includes(selected.item.id)}
+                compared={comparisonItemIds.includes(selected.item.id)}
+                onToggleFavorite={
+                  onToggleFavorite
+                    ? () => onToggleFavorite(selected.item.id)
+                    : undefined
+                }
+                onToggleComparison={
+                  onToggleComparison
+                    ? () => {
+                        const result = onToggleComparison(selected.item.id);
+                        setInventoryMessage(
+                          result.ok
+                            ? null
+                            : 'Remove an item before adding another comparison.',
+                        );
+                      }
+                    : undefined
+                }
               />
             ) : (
               <p>No equipment matches these filters.</p>
             )}
           </div>
-          <p className="inventory-coming-soon" aria-disabled="true">
-            Inventory workspace arrives in Release 2. Use Mark Owned here for now.
-          </p>
+          {inventoryMessage ? <p role="alert">{inventoryMessage}</p> : null}
         </div>
       </dialog>
     </section>
