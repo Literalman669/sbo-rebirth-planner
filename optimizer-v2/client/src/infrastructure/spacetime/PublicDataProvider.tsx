@@ -91,12 +91,18 @@ function PublicDatasetSubscription({
 
   useEffect(() => {
     let active = true;
-    void cache.getLatest().then((cached) => {
-      if (!active || !cached) return;
-      setSelection((current) =>
-        selectPreferredDataset(current, { snapshot: cached, source: 'cached' }),
-      );
-    });
+    void cache
+      .getLatest()
+      .then((cached) => {
+        if (!active || !cached) return;
+        setSelection((current) =>
+          selectPreferredDataset(current, {
+            snapshot: cached,
+            source: 'cached',
+          }),
+        );
+      })
+      .catch(() => undefined);
     return () => {
       active = false;
     };
