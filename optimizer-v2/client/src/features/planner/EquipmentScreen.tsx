@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useBuildDraft } from '../../app/providers/BuildDraftContext';
 import { useDataset } from '../../app/providers/DatasetProvider';
+import { useInventory } from '../../app/providers/InventoryContext';
 import type { EquipmentSlot } from '../../domain/build/model';
 import { DEFAULT_ACCESS_PREFERENCES } from '../../domain/build/model';
 import { EquipmentPicker } from '../equipment/EquipmentPicker';
@@ -17,6 +18,7 @@ export function EquipmentScreen() {
   const navigate = useNavigate();
   const { snapshot } = useDataset();
   const { draft, isHydrated, updateDraft } = useBuildDraft();
+  const inventory = useInventory();
   const [errors, setErrors] = useState<Partial<Record<EquipmentSlot, string>>>({});
   const controls = useRef<Partial<Record<EquipmentSlot, HTMLButtonElement | null>>>({});
 
@@ -64,8 +66,7 @@ export function EquipmentScreen() {
   };
 
   const markOwned = (itemId: string) => {
-    if (draft.ownedItemIds.includes(itemId)) return;
-    updateDraft({ ownedItemIds: [...draft.ownedItemIds, itemId] });
+    inventory.setOwned(itemId, true);
   };
 
   const renderPicker = (

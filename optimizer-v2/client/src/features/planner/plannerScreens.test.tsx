@@ -5,6 +5,7 @@ import { createMemoryRouter, RouterProvider } from 'react-router-dom';
 import { describe, expect, it } from 'vitest';
 import { App } from '../../app/App';
 import { BuildDraftProvider } from '../../app/providers/BuildDraftProvider';
+import { InventoryProvider } from '../../app/providers/InventoryProvider';
 import {
   DatasetContext,
   DatasetProvider,
@@ -13,6 +14,7 @@ import {
 import { createAppRoutes } from '../../app/router';
 import type { CharacterProfile } from '../../domain/build/model';
 import { createGuestBuildStore } from '../../infrastructure/storage/guestBuildStore';
+import { createInventoryStore } from '../../infrastructure/storage/inventoryStore';
 import { bootstrapRelease } from '../../data/bootstrapRelease';
 import { fallbackRelease } from '../../data/fallbackRelease';
 import type { DatasetSnapshot } from '../../domain/dataset/model';
@@ -54,6 +56,9 @@ async function renderRoute(
   const store = createGuestBuildStore({
     databaseName: `planner-route-${crypto.randomUUID()}`,
   });
+  const inventoryStore = createInventoryStore({
+    databaseName: `planner-route-inventory-${crypto.randomUUID()}`,
+  });
   if (options.saved) await store.saveDraft(options.saved);
   for (const namedBuild of options.named ?? []) {
     await store.saveBuild(namedBuild);
@@ -65,7 +70,9 @@ async function renderRoute(
 
   const planner = (
     <BuildDraftProvider store={store}>
-      <RouterProvider router={router} />
+      <InventoryProvider store={inventoryStore}>
+        <RouterProvider router={router} />
+      </InventoryProvider>
     </BuildDraftProvider>
   );
   const testOnlyDataset: DatasetContextValue | undefined =
@@ -95,7 +102,7 @@ async function renderRoute(
     ),
   );
 
-  return { router, store, unmount: view.unmount };
+  return { router, store, inventoryStore, unmount: view.unmount };
 }
 
 describe('planner routes', () => {
@@ -307,6 +314,40 @@ describe('planner routes', () => {
     await user.click(screen.getByRole('button', { name: 'Inspect Combat Armor' }));
     expect(screen.getAllByText('Requires Level 7')).not.toHaveLength(0);
     expect(screen.getByRole('button', { name: 'Equip Combat Armor' })).toBeDisabled();
+  });
+
+  it('stores Mark Owned actions in canonical inventory', async () => {
+    const user = userEvent.setup();
+    const { inventoryStore } = await renderRoute('/equipment', {
+      saved: {
+        ...savedDraft(),
+        level: 5,
+        maxFloor: 2,
+        stats: { str: 5, def: 5, agi: 2, vit: 2, luk: 1 },
+        datasetVersion: fallbackRelease.version,
+      },
+      snapshot: fallbackRelease,
+    });
+
+    await user.click(
+      await screen.findByRole(
+        'button',
+        { name: 'Change Armor' },
+        { timeout: 5_000 },
+      ),
+    );
+    const search = screen.getByRole('searchbox', { name: 'Search Armor' });
+    await user.type(search, 'Beginner Armor');
+    await user.click(
+      screen.getByRole('button', { name: 'Inspect Beginner Armor' }),
+    );
+    await user.click(screen.getByRole('button', { name: 'Mark Owned' }));
+
+    await waitFor(async () => {
+      expect((await inventoryStore.load()).ownedItemIds).toEqual([
+        'beginner-armor',
+      ]);
+    });
   });
 
   it('blocks Character Continue and focuses an invalid level', async () => {
