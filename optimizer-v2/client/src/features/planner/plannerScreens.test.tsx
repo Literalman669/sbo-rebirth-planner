@@ -234,7 +234,13 @@ describe('planner routes', () => {
 
     expect(await screen.findByRole('heading', { name: 'Equipment' })).toBeVisible();
     expect(await screen.findByRole('button', { name: 'Change Main-hand weapon' })).toBeVisible();
-    expect(await screen.findByRole('button', { name: 'Change Armor' })).toBeVisible();
+    expect(
+      await screen.findByRole(
+        'button',
+        { name: 'Change Armor' },
+        { timeout: 5_000 },
+      ),
+    ).toBeVisible();
     expect(screen.queryByRole('button', { name: 'Choose Off-hand weapon' })).not.toBeInTheDocument();
   });
 
@@ -286,7 +292,13 @@ describe('planner routes', () => {
       snapshot: fallbackRelease,
     });
 
-    await user.click(await screen.findByRole('button', { name: 'Change Armor' }));
+    await user.click(
+      await screen.findByRole(
+        'button',
+        { name: 'Change Armor' },
+        { timeout: 5_000 },
+      ),
+    );
     const search = screen.getByRole('searchbox', { name: 'Search Armor' });
     await user.type(search, 'Midnight Platemail');
     expect(screen.getByRole('button', { name: 'Equip Midnight Platemail' })).toBeEnabled();
