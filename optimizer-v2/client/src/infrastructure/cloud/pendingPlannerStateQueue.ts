@@ -3,6 +3,8 @@ import type {
   PlannerPreferences,
   PlanProgress,
 } from '../../domain/planner/state';
+import type { InventoryState } from '../../domain/inventory/state';
+import { inventoryStateSchema } from '../../domain/inventory/stateSchema';
 import {
   plannerPreferencesSchema,
   planProgressSchema,
@@ -34,6 +36,13 @@ const pendingPlannerStateMutationSchema = z.discriminatedUnion('kind', [
       preferences: plannerPreferencesSchema,
     })
     .strict(),
+  z
+    .object({
+      ...mutationBase,
+      kind: z.literal('inventory'),
+      inventory: inventoryStateSchema,
+    })
+    .strict(),
 ]);
 
 export type PendingPlannerStateMutation =
@@ -50,6 +59,14 @@ export type PendingPlannerStateMutation =
       subject: string;
       mutationId: string;
       preferences: PlannerPreferences;
+      enqueuedAt: string;
+      attempts: number;
+    }
+  | {
+      kind: 'inventory';
+      subject: string;
+      mutationId: string;
+      inventory: InventoryState;
       enqueuedAt: string;
       attempts: number;
     };

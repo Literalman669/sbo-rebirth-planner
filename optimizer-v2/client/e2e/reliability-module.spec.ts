@@ -304,6 +304,8 @@ function liveReducers(testConnection: TestConnection): CloudReducers {
       testConnection.connection.reducers.upsertPlanProgress(args),
     upsertUserPreferences: (args) =>
       testConnection.connection.reducers.upsertUserPreferences(args),
+    upsertUserInventory: (args) =>
+      testConnection.connection.reducers.upsertUserInventory(args),
     renameBuild: (args) =>
       testConnection.connection.reducers.renameBuild(args),
     setBuildArchived: (args) =>

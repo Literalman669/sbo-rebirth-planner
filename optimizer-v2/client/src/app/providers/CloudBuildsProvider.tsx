@@ -7,6 +7,8 @@ import { useCloudBuilds } from '../../infrastructure/cloud/useCloudBuilds';
 import { useBuildDraft } from './BuildDraftContext';
 import { CloudBuildsContext } from './CloudBuildsContext';
 import { useOptionalPlannerState } from './PlannerStateContext';
+import { useOptionalInventory } from './InventoryContext';
+import { mergeInventoryStates } from '../../domain/inventory/state';
 
 type CloudBuildsProviderProps = PropsWithChildren<{
   guestStore?: GuestBuildStore;
@@ -33,11 +35,16 @@ export function CloudBuildsProvider({
     setCloudPersistenceStatus,
   } = useBuildDraft();
   const planner = useOptionalPlannerState();
+  const inventory = useOptionalInventory();
   const lastDraftFingerprint = useRef(new Map<string, string>());
   const lastProgressFingerprint = useRef(new Map<string, string>());
   const lastPreferencesFingerprint = useRef<string | null>(null);
   const lastObservedCloudProgress = useRef(new Map<string, string>());
   const lastObservedCloudPreferences = useRef<string | null>(null);
+  const lastInventoryFingerprint = useRef<string | null>(null);
+  const lastObservedCloudInventory = useRef<string | null>(null);
+  const inventoryAttached = useRef(false);
+  const remoteInventoryApplyPending = useRef(false);
   const isCloudEnrolled = cloud.cloudBuilds.some(
     (build) => build.profile.id === draft.id,
   );
@@ -48,7 +55,43 @@ export function CloudBuildsProvider({
     lastPreferencesFingerprint.current = null;
     lastObservedCloudProgress.current.clear();
     lastObservedCloudPreferences.current = null;
+    lastInventoryFingerprint.current = null;
+    lastObservedCloudInventory.current = null;
+    inventoryAttached.current = false;
+    remoteInventoryApplyPending.current = false;
   }, [cloud.repository]);
+
+  useEffect(() => {
+    if (
+      !inventory?.isHydrated ||
+      !cloud.isAuthenticated ||
+      !cloud.isReady
+    ) {
+      return;
+    }
+    const remote = cloud.cloudInventory;
+    if (!remote) {
+      inventoryAttached.current = true;
+      return;
+    }
+    const remoteFingerprint = JSON.stringify(remote);
+    if (lastObservedCloudInventory.current === remoteFingerprint) return;
+    const next = inventoryAttached.current
+      ? remote
+      : mergeInventoryStates(inventory.inventory, remote);
+    inventoryAttached.current = true;
+    lastObservedCloudInventory.current = remoteFingerprint;
+    lastInventoryFingerprint.current = remoteFingerprint;
+    if (JSON.stringify(inventory.inventory) !== JSON.stringify(next)) {
+      remoteInventoryApplyPending.current = true;
+      inventory.replaceInventory(next);
+    }
+  }, [
+    cloud.cloudInventory,
+    cloud.isAuthenticated,
+    cloud.isReady,
+    inventory,
+  ]);
 
   useEffect(() => {
     if (!planner?.isHydrated || !cloud.isReady) return;
@@ -91,11 +134,12 @@ export function CloudBuildsProvider({
       !cloud.isAuthenticated ||
       !cloud.isReady ||
       cloud.needsGuestImport ||
-      (!isCloudEnrolled && !planner?.isHydrated)
+      (!isCloudEnrolled && !planner?.isHydrated && !inventory?.isHydrated)
     ) {
       if (!cloud.isAuthenticated || !isCloudEnrolled) {
         setCloudPersistenceStatus(null);
       }
+      if (!cloud.isAuthenticated) inventory?.setCloudPersistenceStatus(null);
       return;
     }
     const draftFingerprint = profileFingerprint(draft);
@@ -104,6 +148,9 @@ export function CloudBuildsProvider({
       : null;
     const preferencesFingerprint = planner
       ? JSON.stringify(planner.preferences)
+      : null;
+    const inventoryFingerprint = inventory
+      ? JSON.stringify(inventory.inventory)
       : null;
     const shouldSaveDraft =
       isCloudEnrolled &&
@@ -118,12 +165,27 @@ export function CloudBuildsProvider({
     const shouldSavePreferences =
       Boolean(planner?.isHydrated) &&
       lastPreferencesFingerprint.current !== preferencesFingerprint;
-    if (!shouldSaveDraft && !shouldSaveProgress && !shouldSavePreferences) {
+    const shouldSaveInventory =
+      Boolean(inventory?.isHydrated) &&
+      !remoteInventoryApplyPending.current &&
+      lastInventoryFingerprint.current !== inventoryFingerprint;
+    if (
+      !shouldSaveDraft &&
+      !shouldSaveProgress &&
+      !shouldSavePreferences &&
+      !shouldSaveInventory
+    ) {
       setCloudPersistenceStatus(
         cloud.pendingCount + cloud.pendingPlannerStateCount > 0
           ? 'sync-queued'
           : 'synced',
       );
+      inventory?.setCloudPersistenceStatus(
+        cloud.pendingCount + cloud.pendingPlannerStateCount > 0
+          ? 'sync-queued'
+          : 'synced',
+      );
+      remoteInventoryApplyPending.current = false;
       return;
     }
 
@@ -140,6 +202,9 @@ export function CloudBuildsProvider({
             shouldSavePreferences && planner
               ? cloud.repository.savePreferences(planner.preferences)
               : Promise.resolve(null),
+            shouldSaveInventory && inventory
+              ? cloud.repository.saveInventory(inventory.inventory)
+              : Promise.resolve(null),
           ]);
           if (shouldSaveDraft) {
             lastDraftFingerprint.current.set(draft.id, draftFingerprint);
@@ -153,6 +218,9 @@ export function CloudBuildsProvider({
           if (shouldSavePreferences) {
             lastPreferencesFingerprint.current = preferencesFingerprint;
           }
+          if (shouldSaveInventory) {
+            lastInventoryFingerprint.current = inventoryFingerprint;
+          }
           const queued = results.some(
             (result) =>
               result === 'cloud-pending' ||
@@ -161,8 +229,12 @@ export function CloudBuildsProvider({
                 result.location === 'cloud-pending'),
           );
           setCloudPersistenceStatus(queued ? 'sync-queued' : 'synced');
+          inventory?.setCloudPersistenceStatus(
+            queued ? 'sync-queued' : 'synced',
+          );
         } catch {
           setCloudPersistenceStatus('error');
+          inventory?.setCloudPersistenceStatus('error');
         } finally {
           await cloud.refreshPending();
         }
@@ -182,6 +254,7 @@ export function CloudBuildsProvider({
     hasActiveDraft,
     isHydrated,
     planner,
+    inventory,
     setCloudPersistenceStatus,
   ]);
 

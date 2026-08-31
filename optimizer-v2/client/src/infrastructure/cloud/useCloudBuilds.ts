@@ -24,6 +24,7 @@ import type {
   PlannerPreferences,
   PlanProgress,
 } from '../../domain/planner/state';
+import type { InventoryState } from '../../domain/inventory/state';
 import {
   createPendingPlannerStateQueue,
   type PendingPlannerStateQueue,
@@ -45,6 +46,7 @@ export type CloudBuildsState = {
   archivedCloudBuilds: CloudBuildRecord[];
   cloudPlanProgress: readonly PlanProgress[];
   cloudPreferences: PlannerPreferences | null;
+  cloudInventory: InventoryState | null;
   isAuthenticated: boolean;
   isReady: boolean;
   needsGuestImport: boolean;
@@ -104,6 +106,8 @@ export function useCloudBuilds({
         connection.reducers.upsertPlanProgress(args),
       upsertUserPreferences: (args) =>
         connection.reducers.upsertUserPreferences(args),
+      upsertUserInventory: (args) =>
+        connection.reducers.upsertUserInventory(args),
       renameBuild: (args) => connection.reducers.renameBuild(args),
       setBuildArchived: (args) =>
         connection.reducers.setBuildArchived(args),
@@ -212,6 +216,7 @@ export function useCloudBuilds({
     archivedCloudBuilds: selectedCloudBuilds.archived,
     cloudPlanProgress: cloud.planProgress,
     cloudPreferences: cloud.preferences,
+    cloudInventory: cloud.inventory,
     isAuthenticated: auth.status === 'authenticated',
     isReady: cloud.isReady,
     needsGuestImport:

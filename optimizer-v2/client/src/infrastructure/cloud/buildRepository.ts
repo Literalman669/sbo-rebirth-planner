@@ -1,9 +1,14 @@
 import type { CharacterProfile } from '../../domain/build/model';
+import type { InventoryState } from '../../domain/inventory/state';
 import type {
   PlannerPreferences,
   PlanProgress,
 } from '../../domain/planner/state';
 import type { GuestBuildStore } from '../storage/guestBuildStore';
+import {
+  createInventoryStore,
+  type InventoryStore,
+} from '../storage/inventoryStore';
 import {
   profileFromCloudRevision,
   profileFingerprint,
@@ -36,6 +41,7 @@ export interface CloudReducers {
     progressJson: string;
   }): Promise<void>;
   upsertUserPreferences(args: { preferencesJson: string }): Promise<void>;
+  upsertUserInventory(args: { inventoryJson: string }): Promise<void>;
   renameBuild(args: { buildId: string; name: string }): Promise<void>;
   setBuildArchived(args: {
     buildId: string;
@@ -159,6 +165,9 @@ export interface BuildRepository {
   savePreferences(
     preferences: PlannerPreferences,
   ): Promise<'cloud' | 'cloud-pending'>;
+  saveInventory(
+    inventory: InventoryState,
+  ): Promise<'cloud' | 'cloud-pending'>;
   rename(buildId: string, name: string): Promise<void>;
   archive(buildId: string, archived: boolean): Promise<void>;
   restore(buildId: string, revisionId: string): Promise<string>;
@@ -169,6 +178,7 @@ type BuildRepositoryOptions = {
   guestStore: GuestBuildStore;
   pendingQueue: PendingRevisionQueue;
   pendingPlannerStateQueue?: PendingPlannerStateQueue;
+  inventoryStore?: InventoryStore;
   accountSubject?: string;
   reducers?: CloudReducers;
   getCloudSnapshot?: () => CloudSnapshot;
@@ -180,6 +190,7 @@ export function createBuildRepository({
   guestStore,
   pendingQueue,
   pendingPlannerStateQueue = createPendingPlannerStateQueue(),
+  inventoryStore = createInventoryStore(),
   accountSubject,
   reducers,
   getCloudSnapshot = () => ({
@@ -273,9 +284,13 @@ export function createBuildRepository({
           buildId: mutation.progress.buildId,
           progressJson: JSON.stringify(mutation.progress),
         });
-      } else {
+      } else if (mutation.kind === 'preferences') {
         await reducers.upsertUserPreferences({
           preferencesJson: JSON.stringify(mutation.preferences),
+        });
+      } else {
+        await reducers.upsertUserInventory({
+          inventoryJson: JSON.stringify(mutation.inventory),
         });
       }
       await pendingPlannerStateQueue.acknowledge(subject, mutation.mutationId);
@@ -343,9 +358,13 @@ export function createBuildRepository({
               buildId: mutation.progress.buildId,
               progressJson: JSON.stringify(mutation.progress),
             });
-          } else {
+          } else if (mutation.kind === 'preferences') {
             await reducers.upsertUserPreferences({
               preferencesJson: JSON.stringify(mutation.preferences),
+            });
+          } else {
+            await reducers.upsertUserInventory({
+              inventoryJson: JSON.stringify(mutation.inventory),
             });
           }
           await pendingPlannerStateQueue.acknowledge(
@@ -383,6 +402,19 @@ export function createBuildRepository({
         subject: accountSubject,
         mutationId: 'preferences:primary',
         preferences,
+        enqueuedAt: now(),
+        attempts: 0,
+      });
+    },
+
+    async saveInventory(inventory) {
+      await inventoryStore.save(inventory);
+      if (!accountSubject) throw new Error('Sign in is required for cloud sync');
+      return sendPlannerMutation({
+        kind: 'inventory',
+        subject: accountSubject,
+        mutationId: 'inventory:primary',
+        inventory,
         enqueuedAt: now(),
         attempts: 0,
       });

@@ -20,6 +20,14 @@ const preferences = {
   compactWeaponPathsAfterFirstUse: false,
 };
 
+const inventory = {
+  schemaVersion: 1 as const,
+  ownedItemIds: ['iron-greatsword'],
+  favoriteItemIds: [],
+  comparisonItemIds: [],
+  notes: {},
+};
+
 describe('PendingPlannerStateQueue', () => {
   it('isolates stable mutation IDs between authenticated accounts', async () => {
     const queue = createPendingPlannerStateQueue({
@@ -103,5 +111,40 @@ describe('PendingPlannerStateQueue', () => {
     expect(await queue.list('account-a')).toMatchObject([{ attempts: 1 }]);
     await queue.acknowledge('account-a', 'preferences:primary');
     expect(await queue.list('account-a')).toEqual([]);
+  });
+
+  it('coalesces inventory changes under one stable account-scoped mutation', async () => {
+    const queue = createPendingPlannerStateQueue({
+      databaseName: `planner-queue-inventory-${crypto.randomUUID()}`,
+    });
+    await queue.enqueue({
+      kind: 'inventory',
+      subject: 'account-a',
+      mutationId: 'inventory:primary',
+      inventory,
+      enqueuedAt: '2026-08-31T10:00:00.000Z',
+      attempts: 2,
+    });
+    await queue.enqueue({
+      kind: 'inventory',
+      subject: 'account-a',
+      mutationId: 'inventory:primary',
+      inventory: {
+        ...inventory,
+        ownedItemIds: ['beginner-armor'],
+      },
+      enqueuedAt: '2026-08-31T10:00:01.000Z',
+      attempts: 0,
+    });
+
+    expect(await queue.list('account-a')).toMatchObject([
+      {
+        kind: 'inventory',
+        mutationId: 'inventory:primary',
+        inventory: { ownedItemIds: ['beginner-armor'] },
+        attempts: 0,
+      },
+    ]);
+    expect(await queue.list('account-b')).toEqual([]);
   });
 });

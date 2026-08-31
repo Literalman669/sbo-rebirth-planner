@@ -29,7 +29,8 @@ function Probe() {
       {cloud.isAuthenticated ? 'authenticated' : 'guest'} ·{' '}
       {cloud.isReady ? 'ready' : 'waiting'} · {cloud.builds.length} builds ·{' '}
       {cloud.planProgress.length} progress ·{' '}
-      {cloud.preferences?.density ?? 'no preferences'}
+      {cloud.preferences?.density ?? 'no preferences'} ·{' '}
+      {cloud.inventory?.ownedItemIds.length ?? 0} inventory
     </p>
   );
 }
@@ -51,7 +52,9 @@ describe('CloudDataProvider', () => {
     renderCloud({ status: 'guest', signIn: noop, signOut: noop });
 
     expect(
-      screen.getByText('guest · ready · 0 builds · 0 progress · no preferences'),
+      screen.getByText(
+        'guest · ready · 0 builds · 0 progress · no preferences · 0 inventory',
+      ),
     ).toBeVisible();
     expect(spacetime.useTable).not.toHaveBeenCalled();
   });
@@ -66,10 +69,10 @@ describe('CloudDataProvider', () => {
 
     expect(
       screen.getByText(
-        'authenticated · ready · 0 builds · 0 progress · no preferences',
+        'authenticated · ready · 0 builds · 0 progress · no preferences · 0 inventory',
       ),
     ).toBeVisible();
-    expect(spacetime.useTable).toHaveBeenCalledTimes(7);
+    expect(spacetime.useTable).toHaveBeenCalledTimes(8);
   });
 
   it('validates subscribed progress and preferences before exposing them', () => {
@@ -106,6 +109,20 @@ describe('CloudDataProvider', () => {
           },
         ],
         true,
+      ])
+      .mockImplementationOnce(() => [
+        [
+          {
+            inventoryJson: JSON.stringify({
+              schemaVersion: 1,
+              ownedItemIds: ['iron-greatsword'],
+              favoriteItemIds: [],
+              comparisonItemIds: [],
+              notes: {},
+            }),
+          },
+        ],
+        true,
       ]);
 
     renderCloud({
@@ -116,7 +133,9 @@ describe('CloudDataProvider', () => {
     });
 
     expect(
-      screen.getByText('authenticated · ready · 0 builds · 1 progress · compact'),
+      screen.getByText(
+        'authenticated · ready · 0 builds · 1 progress · compact · 1 inventory',
+      ),
     ).toBeVisible();
   });
 });

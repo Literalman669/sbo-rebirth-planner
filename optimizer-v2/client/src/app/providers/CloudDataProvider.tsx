@@ -5,6 +5,7 @@ import { createConnectionBuilder } from '../../infrastructure/spacetime/connecti
 import {
   createPlanProgressSelector,
   createPreferenceSelector,
+  createInventorySelector,
 } from '../../infrastructure/cloud/buildMappers';
 import { useAuthSession } from './AuthContext';
 import { CloudDataContext, type CloudDataState } from './CloudDataContext';
@@ -19,6 +20,8 @@ const guestCloudData: CloudDataState = {
   ownedItems: [],
   planProgress: [],
   preferences: null,
+  inventory: null,
+  inventoryRows: [],
 };
 
 function PrivateCloudSubscription({ children }: PropsWithChildren) {
@@ -31,8 +34,10 @@ function PrivateCloudSubscription({ children }: PropsWithChildren) {
   const [preferenceRows, preferencesReady] = useTable(
     tables.myUserPreferences,
   );
+  const [inventoryRows, inventoryReady] = useTable(tables.myUserInventory);
   const progressSelectorRef = useRef(createPlanProgressSelector());
   const preferenceSelectorRef = useRef(createPreferenceSelector());
+  const inventorySelectorRef = useRef(createInventorySelector());
   const planProgress = useMemo(
     () => progressSelectorRef.current.select(progressRows),
     [progressRows],
@@ -40,6 +45,10 @@ function PrivateCloudSubscription({ children }: PropsWithChildren) {
   const preferences = useMemo(
     () => preferenceSelectorRef.current.select(preferenceRows),
     [preferenceRows],
+  );
+  const inventory = useMemo(
+    () => inventorySelectorRef.current.select(inventoryRows),
+    [inventoryRows],
   );
   const value = useMemo<CloudDataState>(
     () => ({
@@ -51,7 +60,8 @@ function PrivateCloudSubscription({ children }: PropsWithChildren) {
         equipmentReady &&
         ownedItemsReady &&
         progressReady &&
-        preferencesReady,
+        preferencesReady &&
+        inventoryReady,
       profiles,
       builds,
       revisions,
@@ -59,6 +69,8 @@ function PrivateCloudSubscription({ children }: PropsWithChildren) {
       ownedItems,
       planProgress,
       preferences,
+      inventory,
+      inventoryRows,
     }),
     [
       builds,
@@ -70,6 +82,9 @@ function PrivateCloudSubscription({ children }: PropsWithChildren) {
       planProgress,
       preferences,
       preferencesReady,
+      inventory,
+      inventoryReady,
+      inventoryRows,
       profiles,
       profilesReady,
       revisions,

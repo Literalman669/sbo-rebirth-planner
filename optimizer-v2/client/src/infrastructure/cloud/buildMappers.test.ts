@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { CharacterProfile } from '../../domain/build/model';
 import {
+  createInventorySelector,
   createPreferenceSelector,
   createPlanProgressSelector,
   planProgressFromCloudRow,
@@ -30,6 +31,24 @@ const profile: CharacterProfile = {
 };
 
 describe('cloud build mappers', () => {
+  it('preserves the last validated inventory row after malformed input', () => {
+    const inventory = {
+      schemaVersion: 1 as const,
+      ownedItemIds: ['iron-greatsword'],
+      favoriteItemIds: ['beginner-armor'],
+      comparisonItemIds: ['iron-greatsword'],
+      notes: { 'iron-greatsword': 'Starter weapon' },
+    };
+    const selector = createInventorySelector();
+
+    expect(
+      selector.select([{ inventoryJson: JSON.stringify(inventory) }]),
+    ).toEqual(inventory);
+    expect(
+      selector.select([{ inventoryJson: '{"schemaVersion":99}' }]),
+    ).toEqual(inventory);
+  });
+
   it('maps identity-filtered progress JSON through the shared schema', () => {
     const progress = {
       schemaVersion: 1 as const,

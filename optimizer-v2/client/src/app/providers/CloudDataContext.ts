@@ -5,6 +5,8 @@ import MyBuildsRow from '../../module_bindings/my_builds_table';
 import MyProfileRow from '../../module_bindings/my_profile_table';
 import MyRevisionEquipmentRow from '../../module_bindings/my_revision_equipment_table';
 import MyRevisionOwnedItemsRow from '../../module_bindings/my_revision_owned_items_table';
+import MyUserInventoryRow from '../../module_bindings/my_user_inventory_table';
+import type { InventoryState } from '../../domain/inventory/state';
 import type {
   PlannerPreferences,
   PlanProgress,
@@ -20,6 +22,8 @@ export interface CloudDataState {
   ownedItems: readonly Infer<typeof MyRevisionOwnedItemsRow>[];
   planProgress: readonly PlanProgress[];
   preferences: PlannerPreferences | null;
+  inventory: InventoryState | null;
+  inventoryRows: readonly Infer<typeof MyUserInventoryRow>[];
 }
 
 export const CloudDataContext = createContext<CloudDataState | null>(null);

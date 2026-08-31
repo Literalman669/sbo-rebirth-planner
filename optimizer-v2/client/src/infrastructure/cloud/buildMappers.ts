@@ -7,6 +7,8 @@ import type {
   PlannerPreferences,
   PlanProgress,
 } from '../../domain/planner/state';
+import type { InventoryState } from '../../domain/inventory/state';
+import { migrateInventoryState } from '../../domain/inventory/stateSchema';
 import {
   migratePlannerPreferences,
   migratePlanProgress,
@@ -49,6 +51,23 @@ export type CloudPlanProgressRowLike = {
   progressJson: string;
 };
 export type CloudPreferenceRowLike = { preferencesJson: string };
+export type CloudInventoryRowLike = { inventoryJson: string };
+
+export function createInventorySelector() {
+  let previous: InventoryState | null = null;
+  return {
+    select(rows: readonly CloudInventoryRowLike[]) {
+      for (const row of rows) {
+        try {
+          previous = migrateInventoryState(JSON.parse(row.inventoryJson) as unknown);
+        } catch {
+          // A malformed subscription row never replaces validated inventory.
+        }
+      }
+      return previous;
+    },
+  };
+}
 
 export function planProgressFromCloudRow(
   row: CloudPlanProgressRowLike,

@@ -1,7 +1,9 @@
 import 'fake-indexeddb/auto';
 import { describe, expect, it, vi } from 'vitest';
 import type { CharacterProfile } from '../../domain/build/model';
+import type { InventoryState } from '../../domain/inventory/state';
 import { createGuestBuildStore } from '../storage/guestBuildStore';
+import { createInventoryStore } from '../storage/inventoryStore';
 import { createPendingRevisionQueue } from './pendingRevisionQueue';
 import { createPendingPlannerStateQueue } from './pendingPlannerStateQueue';
 import {
@@ -33,6 +35,7 @@ function adapters(label: string) {
     guestStore: createGuestBuildStore({ databaseName }),
     pendingQueue: createPendingRevisionQueue({ databaseName }),
     pendingPlannerStateQueue: createPendingPlannerStateQueue({ databaseName }),
+    inventoryStore: createInventoryStore({ databaseName }),
   };
 }
 
@@ -50,6 +53,7 @@ function reducers(
     deleteBuild: vi.fn<CloudReducers['deleteBuild']>(async () => undefined),
     upsertPlanProgress: vi.fn(async () => undefined),
     upsertUserPreferences: vi.fn(async () => undefined),
+    upsertUserInventory: vi.fn(async () => undefined),
     renameBuild: vi.fn(async () => undefined),
     setBuildArchived: vi.fn(async () => undefined),
   };
@@ -57,6 +61,13 @@ function reducers(
 
 describe('BuildRepository', () => {
   const subject = 'account-a';
+  const inventory: InventoryState = {
+    schemaVersion: 1,
+    ownedItemIds: ['iron-greatsword'],
+    favoriteItemIds: ['beginner-armor'],
+    comparisonItemIds: [],
+    notes: {},
+  };
   it('keeps a guest save local', async () => {
     const storage = adapters('repository-guest');
     const repository = createBuildRepository({
@@ -72,6 +83,35 @@ describe('BuildRepository', () => {
         ?.value.profile.id,
     ).toBe('build-a');
     expect(await storage.pendingQueue.list(subject)).toHaveLength(0);
+  });
+
+  it('queues failed inventory after local save and acknowledges it on retry', async () => {
+    const storage = adapters('repository-inventory');
+    let offline = true;
+    const cloud = reducers();
+    cloud.upsertUserInventory = vi.fn(async () => {
+      if (offline) throw new Error('offline');
+    });
+    const repository = createBuildRepository({
+      ...storage,
+      reducers: cloud,
+      accountSubject: subject,
+      now: () => '2026-08-31T10:00:00.000Z',
+    });
+
+    await expect(repository.saveInventory(inventory)).resolves.toBe(
+      'cloud-pending',
+    );
+    await expect(storage.inventoryStore.load()).resolves.toEqual(inventory);
+    await expect(storage.pendingPlannerStateQueue.list(subject)).resolves.toMatchObject([
+      { kind: 'inventory', mutationId: 'inventory:primary', attempts: 1 },
+    ]);
+
+    offline = false;
+    await repository.retryPendingPlannerState();
+
+    expect(cloud.upsertUserInventory).toHaveBeenCalledTimes(2);
+    await expect(storage.pendingPlannerStateQueue.list(subject)).resolves.toEqual([]);
   });
 
   it('stores failed revisions only in the authenticated account queue', async () => {

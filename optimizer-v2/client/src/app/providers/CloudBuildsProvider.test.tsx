@@ -3,9 +3,11 @@ import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { CharacterProfile } from '../../domain/build/model';
+import type { InventoryState } from '../../domain/inventory/state';
 import { CloudBuildsProvider } from './CloudBuildsProvider';
 import { BuildDraftContext } from './BuildDraftContext';
 import { PlannerStateContext } from './PlannerStateContext';
+import { InventoryContext } from './InventoryContext';
 
 const profile: CharacterProfile = {
   schemaVersion: 2,
@@ -42,6 +44,7 @@ const cloud = vi.hoisted(() => ({
   claimLegacyPending: vi.fn(async () => undefined),
   savePlanProgress: vi.fn(async () => 'cloud' as const),
   savePreferences: vi.fn(async () => 'cloud' as const),
+  saveInventory: vi.fn(async () => 'cloud' as const),
   cloudPlanProgress: [] as Array<{
     schemaVersion: 1;
     buildId: string;
@@ -55,6 +58,7 @@ const cloud = vi.hoisted(() => ({
     showAllLevels: boolean;
     compactWeaponPathsAfterFirstUse: boolean;
   },
+  cloudInventory: null as InventoryState | null,
 }));
 
 vi.mock('../../infrastructure/cloud/useCloudBuilds', () => ({
@@ -67,6 +71,7 @@ vi.mock('../../infrastructure/cloud/useCloudBuilds', () => ({
       delete: vi.fn(),
       savePlanProgress: cloud.savePlanProgress,
       savePreferences: cloud.savePreferences,
+      saveInventory: cloud.saveInventory,
       retryPendingPlannerState: vi.fn(),
       rename: vi.fn(),
       archive: vi.fn(),
@@ -75,6 +80,7 @@ vi.mock('../../infrastructure/cloud/useCloudBuilds', () => ({
     archivedCloudBuilds: [],
     cloudPlanProgress: cloud.cloudPlanProgress,
     cloudPreferences: cloud.cloudPreferences,
+    cloudInventory: cloud.cloudInventory,
     isAuthenticated: true,
     isReady: true,
     needsGuestImport: cloud.needsGuestImport,
@@ -94,9 +100,137 @@ afterEach(() => {
   cloud.legacyPendingCount = 0;
   cloud.cloudPlanProgress = [];
   cloud.cloudPreferences = null;
+  cloud.cloudInventory = null;
 });
 
 describe('CloudBuildsProvider', () => {
+  it('syncs inventory without creating a build revision', async () => {
+    vi.useFakeTimers();
+    const currentInventory: InventoryState = {
+      schemaVersion: 1,
+      ownedItemIds: [],
+      favoriteItemIds: ['iron-greatsword'],
+      comparisonItemIds: [],
+      notes: {},
+    };
+    const setInventoryCloudStatus = vi.fn();
+    render(
+      <BuildDraftContext.Provider
+        value={{
+          ...draftLifecycleActions,
+          draft: profile,
+          updateDraft: vi.fn(),
+          replaceDraft: vi.fn(),
+          saveNamedBuild: vi.fn(),
+          resetDraft: vi.fn(),
+          isHydrated: true,
+          hasActiveDraft: true,
+          storageError: null,
+          savedBuilds: [],
+          loadSavedBuild: vi.fn(),
+          deleteSavedBuild: vi.fn(),
+          persistenceStatus: 'saved-local',
+          canUndo: false,
+          undoLastChange: vi.fn(),
+          setCloudPersistenceStatus: vi.fn(),
+        }}
+      >
+        <InventoryContext.Provider
+          value={{
+            inventory: currentInventory,
+            isHydrated: true,
+            persistenceStatus: 'saved-local',
+            storageError: null,
+            setOwned: vi.fn(),
+            toggleFavorite: vi.fn(),
+            toggleComparison: vi.fn(() => ({ ok: true as const })),
+            setNote: vi.fn(),
+            replaceInventory: vi.fn(),
+            resetInventory: vi.fn(),
+            setCloudPersistenceStatus: setInventoryCloudStatus,
+          }}
+        >
+          <CloudBuildsProvider>
+            <p>Planner</p>
+          </CloudBuildsProvider>
+        </InventoryContext.Provider>
+      </BuildDraftContext.Provider>,
+    );
+
+    await act(async () => vi.advanceTimersByTimeAsync(751));
+
+    expect(cloud.saveInventory).toHaveBeenCalledWith(currentInventory);
+    expect(cloud.save).not.toHaveBeenCalled();
+    expect(setInventoryCloudStatus).toHaveBeenCalledWith('synced');
+  });
+
+  it('merges the first cloud inventory snapshot with local state', () => {
+    cloud.cloudInventory = {
+      schemaVersion: 1,
+      ownedItemIds: ['beginner-armor'],
+      favoriteItemIds: [],
+      comparisonItemIds: ['beginner-armor'],
+      notes: {},
+    };
+    const replaceInventory = vi.fn();
+    render(
+      <BuildDraftContext.Provider
+        value={{
+          ...draftLifecycleActions,
+          draft: profile,
+          updateDraft: vi.fn(),
+          replaceDraft: vi.fn(),
+          saveNamedBuild: vi.fn(),
+          resetDraft: vi.fn(),
+          isHydrated: true,
+          hasActiveDraft: true,
+          storageError: null,
+          savedBuilds: [],
+          loadSavedBuild: vi.fn(),
+          deleteSavedBuild: vi.fn(),
+          persistenceStatus: 'saved-local',
+          canUndo: false,
+          undoLastChange: vi.fn(),
+          setCloudPersistenceStatus: vi.fn(),
+        }}
+      >
+        <InventoryContext.Provider
+          value={{
+            inventory: {
+              schemaVersion: 1,
+              ownedItemIds: ['iron-greatsword'],
+              favoriteItemIds: ['iron-greatsword'],
+              comparisonItemIds: ['iron-greatsword'],
+              notes: {},
+            },
+            isHydrated: true,
+            persistenceStatus: 'saved-local',
+            storageError: null,
+            setOwned: vi.fn(),
+            toggleFavorite: vi.fn(),
+            toggleComparison: vi.fn(() => ({ ok: true as const })),
+            setNote: vi.fn(),
+            replaceInventory,
+            resetInventory: vi.fn(),
+            setCloudPersistenceStatus: vi.fn(),
+          }}
+        >
+          <CloudBuildsProvider>
+            <p>Planner</p>
+          </CloudBuildsProvider>
+        </InventoryContext.Provider>
+      </BuildDraftContext.Provider>,
+    );
+
+    expect(replaceInventory).toHaveBeenCalledWith({
+      schemaVersion: 1,
+      ownedItemIds: ['beginner-armor', 'iron-greatsword'],
+      favoriteItemIds: ['iron-greatsword'],
+      comparisonItemIds: ['iron-greatsword', 'beginner-armor'],
+      notes: {},
+    });
+  });
+
   it('sends a hydrated active draft through the revision repository after debounce', async () => {
     vi.useFakeTimers();
     cloud.cloudBuilds = [{ profile, headRevisionId: 'revision-0' }];

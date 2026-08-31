@@ -59,6 +59,7 @@ async function subscribeToPrivateViews(testConnection: TestConnection) {
         tables.myRevisionEquipment,
         tables.myRevisionOwnedItems,
         tables.myUserPreferences,
+        tables.myUserInventory,
       ]);
   });
   testConnection.subscription = subscription;
@@ -128,16 +129,27 @@ test('enforces identity isolation and immutable revision recovery', async ({}, t
       completedActionIds: ['level-21'],
       dismissedRecommendationIds: ['upgrade-1'],
     });
+    const inventoryJson = JSON.stringify({
+      schemaVersion: 1,
+      ownedItemIds: ['iron-greatsword'],
+      favoriteItemIds: ['beginner-armor'],
+      comparisonItemIds: ['iron-greatsword'],
+      notes: { 'iron-greatsword': 'Starter weapon' },
+    });
     await userA.connection.reducers.upsertUserPreferences({ preferencesJson });
     await userA.connection.reducers.upsertPlanProgress({
       buildId: 'build-a',
       progressJson,
     });
+    await userA.connection.reducers.upsertUserInventory({ inventoryJson });
     await expect
       .poll(() => [...userA.connection.db.myUserPreferences.iter()].length)
       .toBe(1);
     await expect
       .poll(() => [...userA.connection.db.myPlanProgress.iter()].length)
+      .toBe(1);
+    await expect
+      .poll(() => [...userA.connection.db.myUserInventory.iter()].length)
       .toBe(1);
     expect([...userA.connection.db.myUserPreferences.iter()][0]).toMatchObject({
       preferencesJson,
@@ -146,17 +158,33 @@ test('enforces identity isolation and immutable revision recovery', async ({}, t
       buildId: 'build-a',
       progressJson,
     });
+    expect([...userA.connection.db.myUserInventory.iter()][0]).toMatchObject({
+      inventoryJson,
+    });
     expect([...userB.connection.db.myUserPreferences.iter()]).toHaveLength(0);
     expect([...userB.connection.db.myPlanProgress.iter()]).toHaveLength(0);
+    expect([...userB.connection.db.myUserInventory.iter()]).toHaveLength(0);
     let profileUpdates = 0;
     const countProfileUpdate = () => {
       profileUpdates += 1;
     };
     userA.connection.db.myProfile.onUpdate(countProfileUpdate);
     await userA.connection.reducers.upsertUserPreferences({ preferencesJson });
+    await userA.connection.reducers.upsertUserInventory({ inventoryJson });
     await new Promise((resolve) => setTimeout(resolve, 25));
     userA.connection.db.myProfile.removeOnUpdate(countProfileUpdate);
     expect(profileUpdates).toBe(0);
+    await expect(
+      userA.connection.reducers.upsertUserInventory({
+        inventoryJson: JSON.stringify({
+          schemaVersion: 1,
+          ownedItemIds: [],
+          favoriteItemIds: [],
+          comparisonItemIds: ['1', '2', '3', '4', '5'],
+          notes: {},
+        }),
+      }),
+    ).rejects.toThrow(/Inventory comparison list is invalid/);
     await expect(
       userB.connection.reducers.upsertPlanProgress({
         buildId: 'build-a',
@@ -214,6 +242,11 @@ test('enforces identity isolation and immutable revision recovery', async ({}, t
     await expect
       .poll(() => [...userASecond!.connection.db.myBuilds.iter()].length)
       .toBe(1);
+    await expect
+      .poll(
+        () => [...userASecond!.connection.db.myUserInventory.iter()].length,
+      )
+      .toBe(1);
 
     await expect(
       userB.connection.reducers.saveBuildRevision({
@@ -270,6 +303,7 @@ test('enforces identity isolation and immutable revision recovery', async ({}, t
     await expect.poll(() => [...userA.connection.db.myBuilds.iter()].length).toBe(0);
     expect([...userA.connection.db.myBuildRevisions.iter()]).toHaveLength(0);
     expect([...userA.connection.db.myPlanProgress.iter()]).toHaveLength(0);
+    expect([...userA.connection.db.myUserInventory.iter()]).toHaveLength(1);
   } finally {
     if (userASecond) disconnect(userASecond);
     disconnect(userB);
