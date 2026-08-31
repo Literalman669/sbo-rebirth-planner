@@ -223,7 +223,10 @@ export function InventoryProvider({
   }, [store]);
 
   const exportBackup = useCallback(
-    (datasetVersion: string) => store.exportBackup(datasetVersion),
+    async (datasetVersion: string) => {
+      await store.save(inventoryRef.current);
+      return store.exportBackup(datasetVersion);
+    },
     [store],
   );
 

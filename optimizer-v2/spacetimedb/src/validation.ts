@@ -1,8 +1,9 @@
 export type ReleaseState = { version: string; isCurrent: boolean };
 
 const MAX_PLANNER_JSON_LENGTH = 20_000;
-const MAX_INVENTORY_JSON_LENGTH = 500_000;
+const MAX_INVENTORY_JSON_LENGTH = 2_000_000;
 const controlCharacters = /[\u0000-\u001f\u007f]/;
+const unsafeTextControls = /[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/;
 const accessPreferenceTokens = new Set([
   'active-event',
   'gamepass',
@@ -130,7 +131,7 @@ export function validateInventoryJson(value: string): string[] {
         typeof note !== 'string' ||
         note.trim().length < 1 ||
         note.length > 500 ||
-        controlCharacters.test(note),
+        unsafeTextControls.test(note),
     )
   ) {
     return ['Stored inventory is invalid'];

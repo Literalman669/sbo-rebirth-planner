@@ -99,6 +99,17 @@ describe('inventory state', () => {
     expect(() =>
       migrateInventoryState(inventory({ notes: { '': 'invalid key' } })),
     ).toThrow('Stored inventory is invalid');
+    expect(() =>
+      migrateInventoryState(inventory({ notes: { sword: 'unsafe\0note' } })),
+    ).toThrow('Stored inventory is invalid');
+  });
+
+  it('preserves safe multiline personal notes', () => {
+    expect(
+      migrateInventoryState(
+        inventory({ notes: { sword: 'First line\nSecond line' } }),
+      ).notes.sword,
+    ).toBe('First line\nSecond line');
   });
 
   it('parses a versioned backup and rejects a mismatched envelope', () => {

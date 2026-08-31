@@ -240,9 +240,11 @@ describe('Inventory workspace', () => {
     const exported = within(dialog).getByRole('textbox', {
       name: 'Exported inventory JSON',
     });
-    expect((exported as HTMLTextAreaElement).value).toContain(
-      'iron-greatsword',
-    );
+    await waitFor(() => {
+      expect((exported as HTMLTextAreaElement).value).toContain(
+        'iron-greatsword',
+      );
+    });
 
     const imported = JSON.stringify({
       schemaVersion: 1,

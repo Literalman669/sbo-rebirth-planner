@@ -7,6 +7,7 @@ import {
 } from './state';
 
 const controlCharacters = /[\u0000-\u001f\u007f]/;
+const unsafeTextControls = /[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/;
 const persistedIdSchema = z
   .string()
   .trim()
@@ -27,7 +28,18 @@ export const inventoryStateSchema = z
     favoriteItemIds: uniqueIdList(2_000),
     comparisonItemIds: uniqueIdList(4),
     notes: z
-      .record(persistedIdSchema, z.string().trim().min(1).max(500))
+      .record(
+        persistedIdSchema,
+        z
+          .string()
+          .trim()
+          .min(1)
+          .max(500)
+          .refine(
+            (value) => !unsafeTextControls.test(value),
+            'Note is invalid',
+          ),
+      )
       .refine((notes) => Object.keys(notes).length <= 500, 'Too many notes'),
   })
   .strict();

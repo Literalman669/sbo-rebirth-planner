@@ -65,6 +65,48 @@ describe('planner state validation', () => {
     ).toEqual([]);
   });
 
+  it('accepts a maximum-sized client inventory and safe multiline notes', () => {
+    const itemIds = Array.from(
+      { length: 2_000 },
+      (_, index) =>
+        `item-${String(index).padStart(4, '0')}-${'x'.repeat(245)}`,
+    );
+    const notes = Object.fromEntries(
+      itemIds.slice(0, 500).map((itemId) => [
+        itemId,
+        `line one\n${'n'.repeat(491)}`,
+      ]),
+    );
+
+    expect(
+      validateInventoryJson(
+        JSON.stringify({
+          schemaVersion: 1,
+          ownedItemIds: itemIds,
+          favoriteItemIds: itemIds,
+          comparisonItemIds: itemIds.slice(0, 4),
+          notes,
+        }),
+      ),
+    ).toEqual([]);
+  });
+
+  it('rejects unsafe note controls while preserving safe whitespace', () => {
+    const inventory = (note: string) =>
+      JSON.stringify({
+        schemaVersion: 1,
+        ownedItemIds: [],
+        favoriteItemIds: [],
+        comparisonItemIds: [],
+        notes: { item: note },
+      });
+
+    expect(validateInventoryJson(inventory('first\nsecond\tthird'))).toEqual([]);
+    expect(validateInventoryJson(inventory('unsafe\0note'))).toEqual([
+      'Stored inventory is invalid',
+    ]);
+  });
+
   it('keeps build ownership validation aligned with the 2,000-item inventory limit', () => {
     const maximumInventory = Array.from(
       { length: 2_000 },

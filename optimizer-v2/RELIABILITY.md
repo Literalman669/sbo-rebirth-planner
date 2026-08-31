@@ -350,8 +350,8 @@ price availability, projected changes, mixed-slot warnings, and source links.
 Backup export/import supports validated merge, explicit-confirmation replace,
 and reset flows.
 
-The branch verification recorded 72 client files / 486 tests and 6 module files
-/ 77 tests before the final six-layer gate. Fixed-local browser integration
+The branch verification recorded 72 client files / 488 tests and 6 module files
+/ 79 tests before the final six-layer gate. Fixed-local browser integration
 passed the inventory create/favorite/compare/note/own/equip/reload flow while
 proving display-only actions preserve the plan fingerprint. Core integration
 passed 31 cases with 7 intentional mobile-only skips, and the isolated
@@ -361,8 +361,8 @@ Accessibility and containment checks cover Inventory, Comparison, and the
 backup dialog at 1440×1000, 768×1024, 390×844, and 320×700 with zero serious or
 critical axe violations and no document overflow. A browser-created v4 database
 upgrades to v5 while preserving draft, build, and inventory state. One hundred
-inventory queries over 1,000 synthetic records completed in 305.9 ms against a
-1,000 ms budget. The Pages artifact contains `index-B49wEbQx.js` (932,438
+inventory queries over 1,000 synthetic records completed in 225.2 ms against a
+1,000 ms budget. The Pages artifact contains `index-RdLxJIeG.js` (932,563
 bytes) and `index-B4sdvBPO.css` (48,402 bytes); the existing vendor chunk hashes
 remain unchanged.
 
@@ -380,3 +380,13 @@ routes never received it. A RED shell regression reproduced the 450 px carry,
 then the effect moved to the app route shell. The focused 37-test shell/planner
 set passed, and a browser reproduction confirmed Comparison at `scrollY: 0`,
 no document overflow, and zero console warnings/errors at 390×844.
+
+The final contract review found two storage-boundary mismatches and one backup
+race. The server's former 500 KB inventory ceiling could reject a client-valid
+maximum inventory, and it rejected safe newline/tab note whitespace that the
+local schema accepted. RED/GREEN client/server tests now prove 2,000 maximum-
+length owned/favorite IDs, four comparison IDs, 500 bounded notes, safe
+multiline text, and rejection of NUL/unsafe controls under the aligned 2 MB
+envelope. Export now flushes the current in-memory inventory before reading the
+versioned backup, so a favorite or note changed immediately before Export is
+included instead of waiting for the 250 ms autosave.

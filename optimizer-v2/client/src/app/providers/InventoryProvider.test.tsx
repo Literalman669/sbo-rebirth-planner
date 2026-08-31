@@ -1,4 +1,5 @@
 import 'fake-indexeddb/auto';
+import { useState } from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import type { CharacterProfile } from '../../domain/build/model';
@@ -52,6 +53,7 @@ function inventory(
 }
 
 function Consumer() {
+  const [backupFavorites, setBackupFavorites] = useState('none');
   const { draft, loadSavedBuild } = useBuildDraft();
   const {
     inventory: current,
@@ -63,6 +65,7 @@ function Consumer() {
     toggleComparison,
     setNote,
     resetInventory,
+    exportBackup,
     setCloudPersistenceStatus,
   } = useInventory();
 
@@ -76,6 +79,7 @@ function Consumer() {
       <p>Note {current.notes['iron-greatsword'] ?? 'none'}</p>
       <p>Draft owned {draft.ownedItemIds.join(',') || 'none'}</p>
       <p>Status {persistenceStatus}</p>
+      <p>Backup favorites {backupFavorites}</p>
       <p>{storageError ?? 'Inventory storage ready'}</p>
       <button type="button" onClick={() => setOwned('beginner-armor', true)}>
         Own armor
@@ -119,6 +123,21 @@ function Consumer() {
         onClick={() => setCloudPersistenceStatus('sync-queued')}
       >
         Queue cloud
+      </button>
+      <button
+        type="button"
+        onClick={() => {
+          void exportBackup('2026.08.30.1').then((rawJson) => {
+            const backup = JSON.parse(rawJson) as {
+              inventory: { favoriteItemIds: string[] };
+            };
+            setBackupFavorites(
+              backup.inventory.favoriteItemIds.join(',') || 'none',
+            );
+          });
+        }}
+      >
+        Export inventory
       </button>
     </div>
   );
@@ -253,5 +272,18 @@ describe('InventoryProvider', () => {
 
     expect(screen.getByText('Owned beginner-armor')).toBeVisible();
     expect(await screen.findByText('Inventory storage failed')).toBeVisible();
+  });
+
+  it('exports the latest in-memory change before the autosave delay', async () => {
+    const { buildStore, inventoryStore } = await stores('fresh-export');
+    renderProvider(buildStore, inventoryStore);
+    await screen.findByText('Favorites none');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Favorite sword' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Export inventory' }));
+
+    expect(
+      await screen.findByText('Backup favorites iron-greatsword'),
+    ).toBeVisible();
   });
 });
