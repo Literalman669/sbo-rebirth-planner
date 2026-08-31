@@ -1,7 +1,7 @@
 import { openDB } from 'idb';
 
 export const DEFAULT_GUEST_DATABASE_NAME = 'sbo-rebirth-optimizer-v2';
-export const GUEST_DATABASE_VERSION = 4;
+export const GUEST_DATABASE_VERSION = 5;
 
 const PLANNER_STORE_NAMES = [
   'draft',
@@ -12,6 +12,7 @@ const PLANNER_STORE_NAMES = [
   'plan-progress',
   'pending-planner-state',
   'quarantine',
+  'inventory',
 ] as const;
 
 export function openPlannerDatabase(

@@ -216,7 +216,7 @@ test('reloads direct routes with expected screens or guards and no framework ove
   await expectRuntimeHealth(failures);
 });
 
-test('upgrades a v3 browser database to v4 without losing its draft or saved build', async ({
+test('upgrades a v4 browser database to v5 without losing its draft or saved build', async ({
   page,
 }, testInfo) => {
   test.skip(testInfo.project.name !== 'desktop', 'Migration browser coverage runs once.');
@@ -234,9 +234,18 @@ test('upgrades a v3 browser database to v4 without losing its draft or saved bui
       ownedItemIds: [],
       datasetVersion: 'bootstrap-0',
     };
-    const request = indexedDB.open('sbo-rebirth-optimizer-v2', 3);
+    const request = indexedDB.open('sbo-rebirth-optimizer-v2', 4);
     request.onupgradeneeded = () => {
-      for (const store of ['draft', 'builds', 'pending-revisions', 'dataset-releases']) {
+      for (const store of [
+        'draft',
+        'builds',
+        'pending-revisions',
+        'dataset-releases',
+        'planner-preferences',
+        'plan-progress',
+        'pending-planner-state',
+        'quarantine',
+      ]) {
         if (!request.result.objectStoreNames.contains(store)) request.result.createObjectStore(store);
       }
     };
@@ -259,14 +268,20 @@ test('upgrades a v3 browser database to v4 without losing its draft or saved bui
   await expect(page.getByRole('button', { name: 'Load Legacy v3 route' })).toBeVisible();
   expect(await page.evaluate(async () => {
     const request = indexedDB.open('sbo-rebirth-optimizer-v2');
-    return new Promise<number>((resolve, reject) => {
+    return new Promise<{ version: number; stores: string[] }>((resolve, reject) => {
       request.onerror = () => reject(request.error);
       request.onsuccess = () => {
-        resolve(request.result.version);
+        resolve({
+          version: request.result.version,
+          stores: Array.from(request.result.objectStoreNames),
+        });
         request.result.close();
       };
     });
-  })).toBe(4);
+  })).toEqual(expect.objectContaining({
+    version: 5,
+    stores: expect.arrayContaining(['draft', 'builds', 'inventory']),
+  }));
 });
 
 test('keeps the recommendation fingerprint stable across checklist and display-only changes', async ({

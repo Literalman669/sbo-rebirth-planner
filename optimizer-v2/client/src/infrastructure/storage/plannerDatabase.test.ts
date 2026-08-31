@@ -24,17 +24,35 @@ function profile(): CharacterProfile {
 }
 
 describe('planner database', () => {
-  it('upgrades a version three database without losing its draft', async () => {
+  it('upgrades a version four database without losing existing planner state', async () => {
     const name = `planner-upgrade-${crypto.randomUUID()}`;
-    const legacy = await openDB(name, 3, {
+    const legacy = await openDB(name, 4, {
       upgrade(database) {
-        database.createObjectStore('draft');
-        database.createObjectStore('builds');
-        database.createObjectStore('pending-revisions');
-        database.createObjectStore('dataset-releases');
+        for (const store of [
+          'draft',
+          'builds',
+          'pending-revisions',
+          'dataset-releases',
+          'planner-preferences',
+          'plan-progress',
+          'pending-planner-state',
+          'quarantine',
+        ]) {
+          database.createObjectStore(store);
+        }
       },
     });
     await legacy.put('draft', profile(), 'active');
+    await legacy.put(
+      'plan-progress',
+      {
+        schemaVersion: 1,
+        buildId: profile().id,
+        completedActionIds: ['level-9'],
+        dismissedRecommendationIds: [],
+      },
+      profile().id,
+    );
     legacy.close();
 
     const database = await openPlannerDatabase(name);
@@ -44,6 +62,7 @@ describe('planner database', () => {
       'builds',
       'dataset-releases',
       'draft',
+      'inventory',
       'pending-planner-state',
       'pending-revisions',
       'plan-progress',
@@ -51,6 +70,9 @@ describe('planner database', () => {
       'quarantine',
     ]);
     await expect(database.get('draft', 'active')).resolves.toEqual(profile());
+    await expect(database.get('plan-progress', profile().id)).resolves.toEqual(
+      expect.objectContaining({ completedActionIds: ['level-9'] }),
+    );
     database.close();
   });
 });
