@@ -18,6 +18,7 @@ import {
 } from '../storage/datasetCache';
 import { mapPublishedRelease, mapPublishedReleaseV2 } from './datasetMapper';
 import {
+  isCuratedReleaseVersion,
   selectPreferredDataset,
   type DatasetSelection,
   type DatasetSource,
@@ -103,7 +104,10 @@ function PublicDatasetSubscription({
 
   useEffect(() => {
     if (!allReady) return;
-    const currentRows = releaseRows.filter((release) => release.isCurrent);
+    const currentRows = releaseRows.filter(
+      (release) =>
+        release.isCurrent && isCuratedReleaseVersion(release.version),
+    );
     if (currentRows.length !== 1) {
       setWarning(
         currentRows.length === 0
@@ -114,6 +118,7 @@ function PublicDatasetSubscription({
     }
     const mapped = new Map<string, DatasetSnapshot>();
     for (const release of releaseRows) {
+      if (!isCuratedReleaseVersion(release.version)) continue;
       try {
         const snapshot =
           release.formulaSetVersion === 'sbor-stats-v2'

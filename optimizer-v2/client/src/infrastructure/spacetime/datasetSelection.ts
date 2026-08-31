@@ -12,10 +12,15 @@ const sourcePriority: Record<DatasetSource, number> = {
   live: 2,
 };
 
+export function isCuratedReleaseVersion(version: string): boolean {
+  return /^\d{4}\.\d{2}\.\d{2}\.\d+$/.test(version);
+}
+
 export function selectPreferredDataset(
   current: DatasetSelection,
   candidate: DatasetSelection,
 ): DatasetSelection {
+  if (!isCuratedReleaseVersion(candidate.snapshot.version)) return current;
   const publishedComparison = candidate.snapshot.publishedAt.localeCompare(
     current.snapshot.publishedAt,
   );

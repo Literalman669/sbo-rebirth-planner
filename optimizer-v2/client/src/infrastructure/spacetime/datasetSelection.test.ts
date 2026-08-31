@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { bootstrapRelease } from '../../data/bootstrapRelease';
-import { selectPreferredDataset } from './datasetSelection';
+import {
+  isCuratedReleaseVersion,
+  selectPreferredDataset,
+} from './datasetSelection';
 
 const bundled = {
   ...bootstrapRelease,
@@ -46,5 +49,15 @@ describe('selectPreferredDataset', () => {
         { snapshot: bundled, source: 'live' },
       ).source,
     ).toBe('cached');
+  });
+});
+
+describe('isCuratedReleaseVersion', () => {
+  it('rejects the empty connection-check bootstrap release', () => {
+    expect(isCuratedReleaseVersion('bootstrap-0')).toBe(false);
+  });
+
+  it('accepts reviewed date-versioned releases', () => {
+    expect(isCuratedReleaseVersion('2026.08.30.1')).toBe(true);
   });
 });

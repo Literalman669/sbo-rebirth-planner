@@ -71,6 +71,16 @@ test('imports selectively, syncs offline history, restores, shares, and revokes'
   test.skip(testInfo.project.name !== 'desktop', 'Cloud browser flow runs once.');
   test.setTimeout(process.env.CI ? 180_000 : 90_000);
 
+  await page.goto('/');
+  await expect(
+    page.getByText(
+      'Live dataset is unavailable; using the last valid local release.',
+    ),
+  ).toBeVisible();
+  await expect(
+    page.getByText(/Dataset 2026\.08\.30\.1 · bundled/),
+  ).toBeVisible();
+
   await createGuestBuild(page, 'Selected Route', 8);
   await createGuestBuild(page, 'Keep Local', 9);
   await page.getByRole('link', { name: 'Builds' }).click();

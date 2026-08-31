@@ -323,7 +323,7 @@ passed the 100-revision composite in 9.6 seconds, publication validation in
 
 The final performance diagnostics were 928.5 ms for 1,000 deterministic
 optimizer serializations and 30.8 ms for 100 searches over 1,000 equipment
-records. The production artifact contains `index-zl6077SD.js` (907,567 bytes),
+records. The production artifact contains `index-B73FA0xr.js` (907,693 bytes),
 `index-D-mcFrzm.css` (41,473 bytes), `react-vendor-CBRsJp3P.js` (353,721
 bytes), `spacetime-vendor-Do-ucTAG.js` (129,149 bytes), and
 `data-vendor-BpuTNvJb.js` (89,295 bytes).
