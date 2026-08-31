@@ -54,11 +54,26 @@ async function newSignedInPage(browser: Browser) {
   return { context, page };
 }
 
-async function continueFromCharacterToResults(page: Page) {
+async function continueFromCharacterToResults(page: Page, level: number) {
   await page.getByRole('button', { name: 'Continue' }).click();
   await expect(page).toHaveURL(/\/stats$/);
   await page.getByRole('button', { name: 'Continue' }).click();
   await expect(page).toHaveURL(/\/equipment$/);
+  await expect(
+    page.getByText(/Dataset 2026\.08\.30\.1 · bundled/),
+  ).toBeVisible();
+  const summary = page.getByRole('region', { name: 'Current build summary' });
+  await expect(
+    summary.getByText(`Level ${level} · Floor 2 · Two-Handed`),
+  ).toBeVisible();
+  await expect(summary.getByText('Equipment 2/2')).toBeVisible();
+  await expect(summary.getByText('Dataset 2026.08.30.1')).toBeVisible();
+  await expect(
+    page.getByRole('button', { name: 'Change Main-hand weapon' }),
+  ).toContainText('Iron Greatsword');
+  await expect(
+    page.getByRole('button', { name: 'Change Armor' }),
+  ).toContainText('Beginner Armor');
   await page.getByRole('button', { name: 'Continue' }).click();
   await expect(page).toHaveURL(/\/results$/);
   await expect(page.getByRole('link', { name: 'Edit Character' })).toBeVisible();
@@ -111,7 +126,7 @@ test('imports selectively, syncs offline history, restores, shares, and revokes'
   await archive.getByRole('button', { name: 'Load Selected Route' }).click();
   await page.getByRole('link', { name: 'Edit Character' }).click();
   await page.getByLabel('Current Level').fill('21');
-  await continueFromCharacterToResults(page);
+  await continueFromCharacterToResults(page, 21);
   await page.waitForTimeout(900);
   await expect(archiveB.getByText(/Level 21 ·/)).toBeVisible();
 
@@ -119,7 +134,7 @@ test('imports selectively, syncs offline history, restores, shares, and revokes'
   await expect(page).toHaveURL(/\/character$/);
   await page.context().setOffline(true);
   await page.getByLabel('Current Level').fill('22');
-  await continueFromCharacterToResults(page);
+  await continueFromCharacterToResults(page, 22);
   await expect.poll(() => pendingRevisionCount(page)).toBeGreaterThan(0);
 
   await page.context().setOffline(false);
