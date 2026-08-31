@@ -300,3 +300,35 @@ migrating existing player/build/share data. Production auth verification,
 Pages artifact tests, upload, and deployment passed. Live read-only smoke
 confirmed the v1 dataset badge, Level-1 three-point spend-now advice, actual
 Levels 2–11, zero console warnings/errors, and a 375/375 mobile width.
+
+## QOL Release 1 verified branch gate (2026-08-31, `76f35de`)
+
+The final `npm run test:reliability` invocation returned
+`{"kind":"sbo-rebirth-reliability-summary","status":"passed"}` with every
+direct child layer passed: unit, typecheck, coverage, SpacetimeDB build,
+four-phase integration, and Pages.
+
+The unit layer passed 67 client files / 448 tests, 6 module files / 73 tests,
+20 script tests, and 6 wiki-tool tests. Coverage accepted verified release
+`2026.08.30.1`. Generated TypeScript bindings were regenerated from
+SpacetimeDB 2.8.3 and `git diff --exit-code -- client/src/module_bindings`
+remained clean.
+
+Core browser integration passed 30 cases with 6 intentional mobile-only skips,
+including guest QOL management, cloud import/offline replay/history/share,
+v3-to-v4 IndexedDB migration, fingerprint stability, twenty routed cycles,
+accessibility, and four explicit viewport sizes. Fresh isolated phases then
+passed the 100-revision composite in 9.6 seconds, publication validation in
+4.4 seconds, and share/revoke in 162 ms. Pages passed 3/3 in 1.7 seconds.
+
+The final performance diagnostics were 928.5 ms for 1,000 deterministic
+optimizer serializations and 30.8 ms for 100 searches over 1,000 equipment
+records. The production artifact contains `index-JOhQ_N01.js` (907,567 bytes),
+`index-D-mcFrzm.css` (41,473 bytes), `react-vendor-CBRsJp3P.js` (353,721
+bytes), `spacetime-vendor-Do-ucTAG.js` (129,149 bytes), and
+`data-vendor-BpuTNvJb.js` (89,295 bytes).
+
+In-app visual QA covered every Release 1 workspace plus both dialogs at desktop
+and mobile widths and recorded zero browser warnings/errors. No external CI,
+Maincloud publication, GitHub Pages deployment, or live smoke was performed for
+this branch; those actions remain gated on explicit owner approval.

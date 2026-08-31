@@ -75,3 +75,40 @@ Third-party social providers remain disabled until their provider-specific
 OAuth client IDs and secrets are supplied. Magic-link email login and guest
 mode are enabled, so optional sign-in remains functional without weakening the
 database issuer/audience checks.
+
+## QOL Release 1 local acceptance (2026-08-31, `76f35de`)
+
+The `codex/qol-release-1` implementation passed the complete local acceptance
+gate without publishing or mutating production. The accepted flow now includes
+the routed Home/Character/Stats/Equipment/Results/Builds workspaces, versioned
+local persistence, optional cloud state, undo/save status, guided stat controls,
+the complete verified equipment picker, actionable results, focused save modes,
+and local/cloud build lifecycle controls.
+
+- Client units: 67 files, 448 tests passed.
+- SpacetimeDB module units: 6 files, 73 tests passed.
+- Root scripts: 20 tests passed; wiki tools: 6 tests passed.
+- Coverage: verified fallback release `2026.08.30.1` passed.
+- Integration core: 30 passed and 6 intentional mobile-only skips.
+- Isolated backend stress: 100-revision convergence, atomic publication, and
+  owner-free share/revoke each passed in fresh local SpacetimeDB phases.
+- Pages artifact: 3/3 deep-link, callback, share, and favicon checks passed.
+- Accessibility/responsiveness: zero serious or critical axe violations and no
+  document overflow at 1440×1000, 768×1024, 390×844, and 320×700.
+- Migration: a browser-created v3 database upgraded to v4 while preserving its
+  active draft and saved build.
+- Fingerprint stability: checklist completion and display expansion left the
+  deterministic plan fingerprint unchanged.
+- Equipment query: 100 searches over a synthetic 1,000-record index completed
+  in 30.8 ms during the final reliability run (1,000 ms budget).
+- Visual QA: Home, Character, Stats, Equipment, picker, Results, Save dialog,
+  and Builds were inspected at desktop and mobile widths with zero captured
+  browser warnings/errors. Visual inspection additionally corrected equipped
+  item labeling, radio sizing, checklist density, and build-card action layout.
+
+Known release boundaries remain explicit: social OAuth providers are not
+configured; Inventory and Progress are Release 2 surfaces; unresolved wiki
+layouts remain excluded rather than guessed; the production live dataset is
+still `2026.08.29.1`; and the 907,567-byte main entry chunk retains Vite's
+non-blocking code-splitting warning. This branch is verified but not merged,
+pushed, published, or deployed pending owner approval.
