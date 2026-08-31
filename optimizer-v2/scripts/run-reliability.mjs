@@ -9,7 +9,7 @@ const spacetimeModule = new URL('../spacetimedb/', import.meta.url);
 
 export const RELIABILITY_MEASUREMENTS = Object.freeze({
   optimizerDeterminismIterations: 1000,
-  optimizerDeterminismElapsedMs: 826.1,
+  optimizerDeterminismElapsedMs: 561.0,
   localBuilds: 250,
   cloudRevisions: 100,
   sameTokenConvergenceRevisions: 20,
@@ -20,11 +20,11 @@ export const RELIABILITY_MEASUREMENTS = Object.freeze({
   equipmentQueryRecords: 1000,
   equipmentQueryIterations: 100,
   equipmentQueryBudgetMs: 1000,
-  equipmentQueryElapsedMs: 23.0,
+  equipmentQueryElapsedMs: 27.4,
   inventoryQueryRecords: 1000,
   inventoryQueryIterations: 100,
   inventoryQueryBudgetMs: 1000,
-  inventoryQueryElapsedMs: 255.7,
+  inventoryQueryElapsedMs: 201.8,
   accessibilityGate: 'zero serious or critical axe violations',
   testDurations: {
     cloudRevisionDesktopStressMs: 9700,
@@ -35,7 +35,7 @@ export const RELIABILITY_MEASUREMENTS = Object.freeze({
   builtChunks: {
     'data-vendor-BpuTNvJb.js': 89295,
     'index-B4sdvBPO.css': 48402,
-    'index-BkncDf1j.js': 933407,
+    'index-BrRwfigR.js': 933453,
     'react-vendor-CBRsJp3P.js': 353721,
     'rolldown-runtime-CbXtAM7H.js': 589,
     'spacetime-vendor-Do-ucTAG.js': 129149,

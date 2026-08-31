@@ -189,7 +189,7 @@ export function useCloudBuilds({
   );
 
   useEffect(() => {
-    void refreshPending();
+    void refreshPending().catch(() => undefined);
   }, [pendingQueue, refreshPending]);
 
   useEffect(() => {
@@ -198,7 +198,9 @@ export function useCloudBuilds({
       void Promise.all([
         repository.retryPending(),
         repository.retryPendingPlannerState(),
-      ]).finally(() => void refreshPending());
+      ])
+        .catch(() => undefined)
+        .then(() => refreshPending().catch(() => undefined));
     };
     retry();
     window.addEventListener('online', retry);
