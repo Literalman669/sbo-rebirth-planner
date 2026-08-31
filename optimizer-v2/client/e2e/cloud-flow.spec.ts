@@ -54,15 +54,22 @@ async function newSignedInPage(browser: Browser) {
   return { context, page };
 }
 
+async function continueFromCharacterToResults(page: Page) {
+  await page.getByRole('button', { name: 'Continue' }).click();
+  await expect(page).toHaveURL(/\/stats$/);
+  await page.getByRole('button', { name: 'Continue' }).click();
+  await expect(page).toHaveURL(/\/equipment$/);
+  await page.getByRole('button', { name: 'Continue' }).click();
+  await expect(page).toHaveURL(/\/results$/);
+  await expect(page.getByRole('link', { name: 'Edit Character' })).toBeVisible();
+}
+
 test('imports selectively, syncs offline history, restores, shares, and revokes', async ({
   browser,
   page,
 }, testInfo) => {
   test.skip(testInfo.project.name !== 'desktop', 'Cloud browser flow runs once.');
-  // GitHub's shared runners can take several minutes to process the complete
-  // two-session SpacetimeDB lifecycle. Keep local feedback strict while giving
-  // the CI-only end-to-end transaction enough time to finish every assertion.
-  test.setTimeout(process.env.CI ? 360_000 : 90_000);
+  test.setTimeout(process.env.CI ? 180_000 : 90_000);
 
   await createGuestBuild(page, 'Selected Route', 8);
   await createGuestBuild(page, 'Keep Local', 9);
@@ -94,9 +101,7 @@ test('imports selectively, syncs offline history, restores, shares, and revokes'
   await archive.getByRole('button', { name: 'Load Selected Route' }).click();
   await page.getByRole('link', { name: 'Edit Character' }).click();
   await page.getByLabel('Current Level').fill('21');
-  await page.getByRole('button', { name: 'Continue' }).click();
-  await page.getByRole('button', { name: 'Continue' }).click();
-  await page.getByRole('button', { name: 'Continue' }).click();
+  await continueFromCharacterToResults(page);
   await page.waitForTimeout(900);
   await expect(archiveB.getByText(/Level 21 ·/)).toBeVisible();
 
@@ -104,9 +109,7 @@ test('imports selectively, syncs offline history, restores, shares, and revokes'
   await expect(page).toHaveURL(/\/character$/);
   await page.context().setOffline(true);
   await page.getByLabel('Current Level').fill('22');
-  await page.getByRole('button', { name: 'Continue' }).click();
-  await page.getByRole('button', { name: 'Continue' }).click();
-  await page.getByRole('button', { name: 'Continue' }).click();
+  await continueFromCharacterToResults(page);
   await expect.poll(() => pendingRevisionCount(page)).toBeGreaterThan(0);
 
   await page.context().setOffline(false);

@@ -97,7 +97,7 @@ test('cloud lifecycle keeps a strict local watchdog with a CI-only ceiling', () 
   const source = readFileSync(cloudFlowSpecPath, 'utf8');
 
   expect(source).toMatch(
-    /test\.setTimeout\(process\.env\.CI \? 360_000 : 90_000\);/,
+    /test\.setTimeout\(process\.env\.CI \? 180_000 : 90_000\);/,
   );
 });
 
