@@ -25,7 +25,7 @@ function normalizedIds(ids: readonly string[], sort: boolean) {
   const unique = [
     ...new Set(ids.map((id) => id.trim()).filter((id) => id.length > 0)),
   ];
-  return sort ? unique.toSorted((left, right) => left.localeCompare(right)) : unique;
+  return sort ? unique.sort((left, right) => left.localeCompare(right)) : unique;
 }
 
 export function normalizeInventoryState(input: InventoryState): InventoryState {
@@ -42,7 +42,7 @@ export function normalizeInventoryState(input: InventoryState): InventoryState {
     favoriteItemIds: normalizedIds(input.favoriteItemIds, true),
     comparisonItemIds: normalizedIds(input.comparisonItemIds, false),
     notes: Object.fromEntries(
-      Object.entries(notes).toSorted(([left], [right]) =>
+      Object.entries(notes).sort(([left], [right]) =>
         left.localeCompare(right),
       ),
     ),
