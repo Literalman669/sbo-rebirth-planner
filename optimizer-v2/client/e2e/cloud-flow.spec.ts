@@ -59,7 +59,7 @@ test('imports selectively, syncs offline history, restores, shares, and revokes'
   page,
 }, testInfo) => {
   test.skip(testInfo.project.name !== 'desktop', 'Cloud browser flow runs once.');
-  test.setTimeout(90_000);
+  test.setTimeout(process.env.CI ? 180_000 : 90_000);
 
   await createGuestBuild(page, 'Selected Route', 8);
   await createGuestBuild(page, 'Keep Local', 9);

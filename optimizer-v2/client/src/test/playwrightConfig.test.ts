@@ -15,6 +15,7 @@ const reliabilityModuleSpecPath = path.resolve(
   clientRoot,
   'e2e/reliability-module.spec.ts',
 );
+const cloudFlowSpecPath = path.resolve(clientRoot, 'e2e/cloud-flow.spec.ts');
 
 function integrationWebServer() {
   const webServer = integrationConfig.webServer;
@@ -90,6 +91,14 @@ test('only bounded reliability-module stress tests receive explicit watchdogs', 
     /rejects invalid publications atomically and carries one reviewed row into a second release'[\s\S]*?test\.setTimeout\(60_000\);/,
   );
   expect(source.match(/test\.setTimeout\(/g)).toHaveLength(2);
+});
+
+test('cloud lifecycle keeps a strict local watchdog with a CI-only ceiling', () => {
+  const source = readFileSync(cloudFlowSpecPath, 'utf8');
+
+  expect(source).toMatch(
+    /test\.setTimeout\(process\.env\.CI \? 180_000 : 90_000\);/,
+  );
 });
 
 test('fixed-local integration rejects an occupied app port without using its owner', async () => {
