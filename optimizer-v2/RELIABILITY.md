@@ -361,8 +361,8 @@ Accessibility and containment checks cover Inventory, Comparison, and the
 backup dialog at 1440×1000, 768×1024, 390×844, and 320×700 with zero serious or
 critical axe violations and no document overflow. A browser-created v4 database
 upgrades to v5 while preserving draft, build, and inventory state. One hundred
-inventory queries over 1,000 synthetic records completed in 193.3 ms against a
-1,000 ms budget. The Pages artifact contains `index-nPTvcUfX.js` (933,383
+inventory queries over 1,000 synthetic records completed in 255.7 ms against a
+1,000 ms budget. The Pages artifact contains `index-BkncDf1j.js` (933,407
 bytes) and `index-B4sdvBPO.css` (48,402 bytes); the existing vendor chunk hashes
 remain unchanged.
 
@@ -401,3 +401,6 @@ Unit coverage holds a real fake-indexeddb v4 connection open to prove the v5
 open rejects instead of hanging, and a separate fixture queues the app open
 behind another blocked upgrade to prove the five-second production fallback.
 Shell coverage proves the notice plus Reload action remain available.
+Module-load stores attach a no-op rejection observer to prevent duplicate
+`unhandledrejection` console noise; consumers still receive and render the
+original rejection unchanged.

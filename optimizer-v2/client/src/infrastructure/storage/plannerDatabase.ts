@@ -61,7 +61,12 @@ export function openPlannerDatabase(
     return database;
   });
 
-  return Promise.race([opening, blocked, timedOut]).finally(() => {
+  const result = Promise.race([opening, blocked, timedOut]).finally(() => {
     clearTimeout(timeoutId);
   });
+  // Stores are created at module load but may not be read immediately. Mark the
+  // rejection handled here while returning the same rejecting promise to the
+  // provider that eventually consumes it.
+  void result.catch(() => undefined);
+  return result;
 }

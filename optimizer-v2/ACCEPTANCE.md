@@ -126,7 +126,7 @@ pushed, published, or deployed pending owner approval.
 | 7 | The server and client accept at most 2,000 unique owned IDs, four comparison IDs, and 500 bounded notes; malformed or cross-identity state is rejected. | `spacetimedb/src/plannerState.test.ts`, `client/src/domain/inventory/stateSchema.test.ts`, `client/e2e/cloud-module.spec.ts` | Pass |
 | 8 | Inventory, comparison, and backup surfaces remain keyboard-accessible and width-safe at the four supported viewports with zero serious/critical accessibility violations. | `client/e2e/qol-accessibility.spec.ts` | Pass |
 | 9 | Favorites, comparison choices, and notes preserve the deterministic plan fingerprint; owning/equipping an item deliberately changes planner inputs. | `client/e2e/inventory-flow.spec.ts`, `client/src/app/providers/InventoryProvider.test.tsx` | Pass |
-| 10 | Catalog querying remains bounded at scale. | 100 queries × 1,000 records in 193.3 ms during the final reliability gate (1,000 ms budget) | Pass |
+| 10 | Catalog querying remains bounded at scale. | 100 queries × 1,000 records in 255.7 ms during the final reliability gate (1,000 ms budget) | Pass |
 
 This inventory batch deliberately leaves the later Release 2 build-comparison,
 presets, progress-dashboard, and player-stat-tracking work for separately
