@@ -21,6 +21,13 @@ test('appends new build columns after every deployed column with defaults', () =
 test('appends new tables after the complete deployed schema order', () => {
   assert.match(
     source,
-    /mechanic,\s*releaseStrategyPolicy,\s*buildPlanProgress,\s*userPreference,\s*}\);/,
+    /mechanic,\s*releaseStrategyPolicy,\s*buildPlanProgress,\s*userPreference,\s*userInventory,\s*}\);/,
+  );
+});
+
+test('defines inventory as an additive private identity row', () => {
+  assert.match(
+    source,
+    /export const userInventory = table\(\s*\{ name: 'user_inventory' \},\s*\{\s*identity: t\.identity\(\)\.primaryKey\(\),\s*inventoryJson: t\.string\(\),\s*updatedAt: t\.timestamp\(\),\s*},\s*\);/,
   );
 });

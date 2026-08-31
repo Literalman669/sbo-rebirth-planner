@@ -10,6 +10,7 @@ export {
   saveBuildRevision,
   setBuildArchived,
   upsertPlanProgress,
+  upsertUserInventory,
   upsertUserPreferences,
 } from './playerReducers';
 export {
@@ -20,6 +21,7 @@ export {
   myRevisionEquipment,
   myRevisionOwnedItems,
   myUserPreferences,
+  myUserInventory,
 } from './playerViews';
 export { createBuildShare, revokeBuildShare } from './sharing';
 export {

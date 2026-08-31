@@ -7,6 +7,7 @@ import spacetimedb, {
   revisionOwnedItem,
   userProfile,
   userPreference,
+  userInventory,
 } from './schema';
 
 export const myBuilds = spacetimedb.view(
@@ -29,6 +30,15 @@ export const myUserPreferences = spacetimedb.view(
   t.array(userPreference.rowType),
   (ctx) => {
     const row = ctx.db.userPreference.identity.find(ctx.sender);
+    return row ? [row] : [];
+  },
+);
+
+export const myUserInventory = spacetimedb.view(
+  { name: 'my_user_inventory', public: true },
+  t.array(userInventory.rowType),
+  (ctx) => {
+    const row = ctx.db.userInventory.identity.find(ctx.sender);
     return row ? [row] : [];
   },
 );

@@ -92,6 +92,15 @@ export const userPreference = table(
   },
 );
 
+export const userInventory = table(
+  { name: 'user_inventory' },
+  {
+    identity: t.identity().primaryKey(),
+    inventoryJson: t.string(),
+    updatedAt: t.timestamp(),
+  },
+);
+
 export const buildRevision = table(
   {
     name: 'build_revision',
@@ -918,6 +927,7 @@ const spacetimedb = schema({
   releaseStrategyPolicy,
   buildPlanProgress,
   userPreference,
+  userInventory,
 });
 
 export type AppSchema = (typeof spacetimedb)['schemaType'];

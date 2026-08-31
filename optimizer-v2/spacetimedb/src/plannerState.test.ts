@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   validateAccessPreferences,
+  validateInventoryJson,
   validatePlanProgressJson,
   validatePlanProgressOwnership,
   validatePreferenceJson,
@@ -47,5 +48,73 @@ describe('planner state validation', () => {
     expect(validateAccessPreferences('gamepass,gamepass,unknown')).toEqual([
       'Access preferences are invalid',
     ]);
+  });
+
+  it('accepts exact version-one inventory JSON', () => {
+    expect(
+      validateInventoryJson(
+        JSON.stringify({
+          schemaVersion: 1,
+          ownedItemIds: ['iron-greatsword'],
+          favoriteItemIds: ['beginner-armor'],
+          comparisonItemIds: ['iron-greatsword', 'beginner-armor'],
+          notes: { 'iron-greatsword': 'Starter weapon' },
+        }),
+      ),
+    ).toEqual([]);
+  });
+
+  it('rejects comparison overflow separately from other invalid inventory', () => {
+    expect(
+      validateInventoryJson(
+        JSON.stringify({
+          schemaVersion: 1,
+          ownedItemIds: [],
+          favoriteItemIds: [],
+          comparisonItemIds: ['1', '2', '3', '4', '5'],
+          notes: {},
+        }),
+      ),
+    ).toEqual(['Inventory comparison list is invalid']);
+    expect(
+      validateInventoryJson(
+        JSON.stringify({
+          schemaVersion: 1,
+          ownedItemIds: ['same', 'same'],
+          favoriteItemIds: [],
+          comparisonItemIds: [],
+          notes: {},
+        }),
+      ),
+    ).toEqual(['Stored inventory is invalid']);
+  });
+
+  it('rejects unknown keys, excessive notes, and invalid note values', () => {
+    const notes = Object.fromEntries(
+      Array.from({ length: 501 }, (_, index) => [`item-${index}`, 'note']),
+    );
+    expect(
+      validateInventoryJson(
+        JSON.stringify({
+          schemaVersion: 1,
+          ownedItemIds: [],
+          favoriteItemIds: [],
+          comparisonItemIds: [],
+          notes,
+        }),
+      ),
+    ).toEqual(['Stored inventory is invalid']);
+    expect(
+      validateInventoryJson(
+        JSON.stringify({
+          schemaVersion: 1,
+          ownedItemIds: [],
+          favoriteItemIds: [],
+          comparisonItemIds: [],
+          notes: { item: 'x'.repeat(501) },
+          extra: true,
+        }),
+      ),
+    ).toEqual(['Stored inventory is invalid']);
   });
 });

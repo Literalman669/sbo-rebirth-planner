@@ -36,6 +36,7 @@ import UpsertDraftMechanicReducer from "../upsert_draft_mechanic_reducer";
 import UpsertDraftSourceReferenceReducer from "../upsert_draft_source_reference_reducer";
 import UpsertDraftStrategyPolicyReducer from "../upsert_draft_strategy_policy_reducer";
 import UpsertPlanProgressReducer from "../upsert_plan_progress_reducer";
+import UpsertUserInventoryReducer from "../upsert_user_inventory_reducer";
 import UpsertUserPreferencesReducer from "../upsert_user_preferences_reducer";
 import UpsertWikiPageSnapshotReducer from "../upsert_wiki_page_snapshot_reducer";
 
@@ -69,6 +70,7 @@ export type UpsertDraftMechanicParams = __Infer<typeof UpsertDraftMechanicReduce
 export type UpsertDraftSourceReferenceParams = __Infer<typeof UpsertDraftSourceReferenceReducer>;
 export type UpsertDraftStrategyPolicyParams = __Infer<typeof UpsertDraftStrategyPolicyReducer>;
 export type UpsertPlanProgressParams = __Infer<typeof UpsertPlanProgressReducer>;
+export type UpsertUserInventoryParams = __Infer<typeof UpsertUserInventoryReducer>;
 export type UpsertUserPreferencesParams = __Infer<typeof UpsertUserPreferencesReducer>;
 export type UpsertWikiPageSnapshotParams = __Infer<typeof UpsertWikiPageSnapshotReducer>;
 

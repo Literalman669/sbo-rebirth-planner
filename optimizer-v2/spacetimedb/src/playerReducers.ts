@@ -3,6 +3,7 @@ import { assertAppUser, assertOwner, type AppReducerCtx } from './auth';
 import spacetimedb from './schema';
 import {
   validateAccessPreferences,
+  validateInventoryJson,
   validatePlanProgressJson,
   validatePlanProgressOwnership,
   validatePreferenceJson,
@@ -433,6 +434,31 @@ export const upsertUserPreferences = spacetimedb.reducer(
       ctx.db.userPreference.insert({
         identity: ctx.sender,
         preferencesJson,
+        updatedAt: ctx.timestamp,
+      });
+    }
+  },
+);
+
+export const upsertUserInventory = spacetimedb.reducer(
+  { inventoryJson: t.string() },
+  (ctx, { inventoryJson }) => {
+    assertAppUser(ctx);
+    const validationErrors = validateInventoryJson(inventoryJson);
+    if (validationErrors[0]) throw new SenderError(validationErrors[0]);
+    const current = ctx.db.userInventory.identity.find(ctx.sender);
+    if (current?.inventoryJson === inventoryJson) return;
+    ensureProfile(ctx);
+    if (current) {
+      ctx.db.userInventory.identity.update({
+        ...current,
+        inventoryJson,
+        updatedAt: ctx.timestamp,
+      });
+    } else {
+      ctx.db.userInventory.insert({
+        identity: ctx.sender,
+        inventoryJson,
         updatedAt: ctx.timestamp,
       });
     }

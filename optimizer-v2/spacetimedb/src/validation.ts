@@ -1,6 +1,8 @@
 export type ReleaseState = { version: string; isCurrent: boolean };
 
 const MAX_PLANNER_JSON_LENGTH = 20_000;
+const MAX_INVENTORY_JSON_LENGTH = 500_000;
+const controlCharacters = /[\u0000-\u001f\u007f]/;
 const accessPreferenceTokens = new Set([
   'active-event',
   'gamepass',
@@ -35,6 +37,23 @@ function isUniqueIdArray(value: unknown): value is string[] {
   );
 }
 
+function isInventoryId(value: string): boolean {
+  return (
+    value.length >= 1 &&
+    value.length <= 255 &&
+    !controlCharacters.test(value)
+  );
+}
+
+function isInventoryIdArray(value: unknown, maximum: number): value is string[] {
+  return (
+    Array.isArray(value) &&
+    value.length <= maximum &&
+    value.every((id) => typeof id === 'string' && isInventoryId(id)) &&
+    new Set(value).size === value.length
+  );
+}
+
 function parsePlannerJson(value: string): unknown {
   if (value.length > MAX_PLANNER_JSON_LENGTH) return undefined;
   try {
@@ -62,6 +81,47 @@ export function validatePreferenceJson(value: string): string[] {
     typeof parsed.compactWeaponPathsAfterFirstUse !== 'boolean'
   ) {
     return ['Stored planner preferences are invalid'];
+  }
+  return [];
+}
+
+export function validateInventoryJson(value: string): string[] {
+  if (value.length > MAX_INVENTORY_JSON_LENGTH) {
+    return ['Stored inventory is invalid'];
+  }
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(value) as unknown;
+  } catch {
+    return ['Stored inventory is invalid'];
+  }
+  if (
+    !isRecord(parsed) ||
+    !hasExactKeys(parsed, [
+      'schemaVersion',
+      'ownedItemIds',
+      'favoriteItemIds',
+      'comparisonItemIds',
+      'notes',
+    ]) ||
+    parsed.schemaVersion !== 1 ||
+    !isInventoryIdArray(parsed.ownedItemIds, 2_000) ||
+    !isInventoryIdArray(parsed.favoriteItemIds, 2_000) ||
+    !isRecord(parsed.notes) ||
+    Object.keys(parsed.notes).length > 500 ||
+    Object.entries(parsed.notes).some(
+      ([itemId, note]) =>
+        !isInventoryId(itemId) ||
+        typeof note !== 'string' ||
+        note.trim().length < 1 ||
+        note.length > 500 ||
+        controlCharacters.test(note),
+    )
+  ) {
+    return ['Stored inventory is invalid'];
+  }
+  if (!isInventoryIdArray(parsed.comparisonItemIds, 4)) {
+    return ['Inventory comparison list is invalid'];
   }
   return [];
 }

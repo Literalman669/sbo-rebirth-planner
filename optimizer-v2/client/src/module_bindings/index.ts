@@ -64,6 +64,7 @@ import UpsertDraftMechanicReducer from "./upsert_draft_mechanic_reducer";
 import UpsertDraftSourceReferenceReducer from "./upsert_draft_source_reference_reducer";
 import UpsertDraftStrategyPolicyReducer from "./upsert_draft_strategy_policy_reducer";
 import UpsertPlanProgressReducer from "./upsert_plan_progress_reducer";
+import UpsertUserInventoryReducer from "./upsert_user_inventory_reducer";
 import UpsertUserPreferencesReducer from "./upsert_user_preferences_reducer";
 import UpsertWikiPageSnapshotReducer from "./upsert_wiki_page_snapshot_reducer";
 
@@ -100,6 +101,7 @@ import MyReleaseDraftsRow from "./my_release_drafts_table";
 import MyReviewDecisionsRow from "./my_review_decisions_table";
 import MyRevisionEquipmentRow from "./my_revision_equipment_table";
 import MyRevisionOwnedItemsRow from "./my_revision_owned_items_table";
+import MyUserInventoryRow from "./my_user_inventory_table";
 import MyUserPreferencesRow from "./my_user_preferences_table";
 import MyWikiCandidatesRow from "./my_wiki_candidates_table";
 import MyWikiPageSnapshotsRow from "./my_wiki_page_snapshots_table";
@@ -444,6 +446,13 @@ const tablesSchema = __schema({
     constraints: [
     ],
   }, MyRevisionOwnedItemsRow),
+  myUserInventory: __table({
+    name: 'my_user_inventory',
+    indexes: [
+    ],
+    constraints: [
+    ],
+  }, MyUserInventoryRow),
   myUserPreferences: __table({
     name: 'my_user_preferences',
     indexes: [
@@ -499,6 +508,7 @@ const reducersSchema = __reducers(
   __reducerSchema("upsert_draft_source_reference", UpsertDraftSourceReferenceReducer),
   __reducerSchema("upsert_draft_strategy_policy", UpsertDraftStrategyPolicyReducer),
   __reducerSchema("upsert_plan_progress", UpsertPlanProgressReducer),
+  __reducerSchema("upsert_user_inventory", UpsertUserInventoryReducer),
   __reducerSchema("upsert_user_preferences", UpsertUserPreferencesReducer),
   __reducerSchema("upsert_wiki_page_snapshot", UpsertWikiPageSnapshotReducer),
 );

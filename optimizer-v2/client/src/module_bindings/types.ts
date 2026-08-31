@@ -449,6 +449,9 @@ export type MyRevisionEquipment = __Infer<typeof MyRevisionEquipment>;
 export const MyRevisionOwnedItems = __t.object("MyRevisionOwnedItems", {});
 export type MyRevisionOwnedItems = __Infer<typeof MyRevisionOwnedItems>;
 
+export const MyUserInventory = __t.object("MyUserInventory", {});
+export type MyUserInventory = __Infer<typeof MyUserInventory>;
+
 export const MyUserPreferences = __t.object("MyUserPreferences", {});
 export type MyUserPreferences = __Infer<typeof MyUserPreferences>;
 
@@ -552,6 +555,13 @@ export const SourceReference = __t.object("SourceReference", {
   candidateId: __t.string(),
 });
 export type SourceReference = __Infer<typeof SourceReference>;
+
+export const UserInventory = __t.object("UserInventory", {
+  identity: __t.identity(),
+  inventoryJson: __t.string(),
+  updatedAt: __t.timestamp(),
+});
+export type UserInventory = __Infer<typeof UserInventory>;
 
 export const UserPreference = __t.object("UserPreference", {
   identity: __t.identity(),
