@@ -28,9 +28,9 @@ export const Build = __t.object("Build", {
   owner: __t.identity(),
   name: __t.string(),
   headRevisionId: __t.string(),
-  archivedAt: __t.option(__t.timestamp()),
   createdAt: __t.timestamp(),
   updatedAt: __t.timestamp(),
+  archivedAt: __t.option(__t.timestamp()),
 });
 export type Build = __Infer<typeof Build>;
 
@@ -59,8 +59,8 @@ export const BuildRevision = __t.object("BuildRevision", {
   vit: __t.u32(),
   luk: __t.u32(),
   datasetVersion: __t.string(),
-  accessPreferences: __t.option(__t.string()),
   createdAt: __t.timestamp(),
+  accessPreferences: __t.option(__t.string()),
 });
 export type BuildRevision = __Infer<typeof BuildRevision>;
 
@@ -520,8 +520,8 @@ export const SharedBuild = __t.object("SharedBuild", {
   vit: __t.u32(),
   luk: __t.u32(),
   datasetVersion: __t.string(),
-  accessPreferences: __t.option(__t.string()),
   createdAt: __t.timestamp(),
+  accessPreferences: __t.option(__t.string()),
 });
 export type SharedBuild = __Infer<typeof SharedBuild>;
 

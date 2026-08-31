@@ -57,9 +57,9 @@ export const build = table(
     owner: t.identity(),
     name: t.string(),
     headRevisionId: t.string(),
-    archivedAt: t.timestamp().optional(),
     createdAt: t.timestamp(),
     updatedAt: t.timestamp(),
+    archivedAt: t.timestamp().optional().default(undefined),
   },
 );
 
@@ -127,8 +127,8 @@ export const buildRevision = table(
     vit: t.u32(),
     luk: t.u32(),
     datasetVersion: t.string(),
-    accessPreferences: t.string().optional(),
     createdAt: t.timestamp(),
+    accessPreferences: t.string().optional().default(undefined),
   },
 );
 
@@ -228,8 +228,8 @@ export const sharedBuild = table(
     vit: t.u32(),
     luk: t.u32(),
     datasetVersion: t.string(),
-    accessPreferences: t.string().optional(),
     createdAt: t.timestamp(),
+    accessPreferences: t.string().optional().default(undefined),
   },
 );
 
@@ -881,8 +881,6 @@ const spacetimedb = schema({
   authConfig,
   userProfile,
   build,
-  buildPlanProgress,
-  userPreference,
   buildRevision,
   revisionEquipment,
   revisionOwnedItem,
@@ -918,6 +916,8 @@ const spacetimedb = schema({
   equipmentSpecialEffect,
   mechanic,
   releaseStrategyPolicy,
+  buildPlanProgress,
+  userPreference,
 });
 
 export type AppSchema = (typeof spacetimedb)['schemaType'];

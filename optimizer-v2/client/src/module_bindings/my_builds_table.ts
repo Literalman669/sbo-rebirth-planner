@@ -15,7 +15,7 @@ export default __t.row({
   owner: __t.identity(),
   name: __t.string(),
   headRevisionId: __t.string().name("head_revision_id"),
-  archivedAt: __t.option(__t.timestamp()).name("archived_at"),
   createdAt: __t.timestamp().name("created_at"),
   updatedAt: __t.timestamp().name("updated_at"),
+  archivedAt: __t.option(__t.timestamp()).name("archived_at"),
 });

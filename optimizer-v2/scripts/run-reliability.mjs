@@ -31,7 +31,7 @@ export const RELIABILITY_MEASUREMENTS = Object.freeze({
   builtChunks: {
     'data-vendor-BpuTNvJb.js': 89295,
     'index-D-mcFrzm.css': 41473,
-    'index-JOhQ_N01.js': 907567,
+    'index-zl6077SD.js': 907567,
     'react-vendor-CBRsJp3P.js': 353721,
     'rolldown-runtime-CbXtAM7H.js': 589,
     'spacetime-vendor-Do-ucTAG.js': 129149,
