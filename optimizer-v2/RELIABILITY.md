@@ -350,7 +350,7 @@ price availability, projected changes, mixed-slot warnings, and source links.
 Backup export/import supports validated merge, explicit-confirmation replace,
 and reset flows.
 
-The branch verification recorded 72 client files / 491 tests and 6 module files
+The branch verification recorded 72 client files / 492 tests and 6 module files
 / 79 tests before the final six-layer gate. Fixed-local browser integration
 passed the inventory create/favorite/compare/note/own/equip/reload flow while
 proving display-only actions preserve the plan fingerprint. Core integration
@@ -361,8 +361,8 @@ Accessibility and containment checks cover Inventory, Comparison, and the
 backup dialog at 1440×1000, 768×1024, 390×844, and 320×700 with zero serious or
 critical axe violations and no document overflow. A browser-created v4 database
 upgrades to v5 while preserving draft, build, and inventory state. One hundred
-inventory queries over 1,000 synthetic records completed in 285.8 ms against a
-1,000 ms budget. The Pages artifact contains `index-DKoxffhN.js` (933,471
+inventory queries over 1,000 synthetic records completed in 266.9 ms against a
+1,000 ms budget. The Pages artifact contains `index-Bzx65K-e.js` (933,664
 bytes) and `index-B4sdvBPO.css` (48,402 bytes); the existing vendor chunk hashes
 remain unchanged.
 
@@ -410,3 +410,11 @@ user-facing failure path instead of duplicating it in the console.
 The public-dataset cache bootstrap follows the same boundary; live data remains
 usable and its existing offline-cache warning remains visible when persistence
 is unavailable.
+
+An Equipment-to-Results regression was reproduced for historical saved builds:
+the picker used the current catalog, but equipping a current-only item left the
+active draft pinned to its older dataset. Results then validated the new item
+against the historical release and immediately redirected back to Equipment.
+Equipment changes now move only the active draft to the current verified
+dataset, show an explicit dataset-update status, persist that version, and reach
+Results. The original named/cloud build remains unchanged until the player saves.

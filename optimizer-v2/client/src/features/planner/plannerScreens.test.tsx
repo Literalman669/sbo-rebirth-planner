@@ -273,6 +273,52 @@ describe('planner routes', () => {
     expect(router.state.location.pathname).toBe('/equipment');
   });
 
+  it('moves an edited historical build to the current dataset before Results', async () => {
+    const user = userEvent.setup();
+    const historicalDraft: CharacterProfile = {
+      ...savedDraft(),
+      datasetVersion: bootstrapRelease.version,
+      equipped: {
+        'main-hand': 'iron-greatsword',
+        armor: 'fields-warrior',
+      },
+    };
+    const { router, store } = await renderRoute('/equipment', {
+      saved: historicalDraft,
+      snapshot: fallbackRelease,
+      historicalSnapshots: [bootstrapRelease],
+    });
+
+    await user.click(
+      await screen.findByRole('button', { name: 'Change Armor' }),
+    );
+    await user.type(screen.getByRole('searchbox', { name: 'Search Armor' }), 'Combat Armor');
+    await user.click(
+      screen.getByRole('button', { name: 'Inspect Combat Armor' }),
+    );
+    await user.click(
+      screen.getByRole('button', { name: 'Equip Combat Armor' }),
+    );
+    expect(
+      await screen.findByText(
+        `Equipment changes now use verified dataset ${fallbackRelease.version}.`,
+      ),
+    ).toBeVisible();
+    await user.click(screen.getByRole('button', { name: 'Continue' }));
+
+    expect(
+      await screen.findByRole('heading', {
+        name: 'Your next ten levels, made clear.',
+      }),
+    ).toBeVisible();
+    expect(router.state.location.pathname).toBe('/results');
+    await waitFor(async () => {
+      expect((await store.loadDraft())?.datasetVersion).toBe(
+        fallbackRelease.version,
+      );
+    });
+  });
+
   it('moves focus to the next screen heading after Continue', async () => {
     const user = userEvent.setup();
     await renderRoute('/character');

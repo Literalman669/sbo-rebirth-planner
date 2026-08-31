@@ -20,6 +20,7 @@ export function EquipmentScreen() {
   const { draft, isHydrated, updateDraft } = useBuildDraft();
   const inventory = useInventory();
   const [errors, setErrors] = useState<Partial<Record<EquipmentSlot, string>>>({});
+  const [datasetMessage, setDatasetMessage] = useState<string | null>(null);
   const controls = useRef<Partial<Record<EquipmentSlot, HTMLButtonElement | null>>>({});
 
   useEffect(() => {
@@ -62,7 +63,12 @@ export function EquipmentScreen() {
     if (itemId) equipped[slot] = itemId;
     else delete equipped[slot];
     setErrors((current) => ({ ...current, [slot]: undefined }));
-    updateDraft({ equipped });
+    if (draft.datasetVersion !== snapshot.version) {
+      setDatasetMessage(
+        `Equipment changes now use verified dataset ${snapshot.version}.`,
+      );
+    }
+    updateDraft({ equipped, datasetVersion: snapshot.version });
   };
 
   const markOwned = (itemId: string) => {
@@ -129,6 +135,7 @@ export function EquipmentScreen() {
         Each slot opens the complete verified catalog with eligibility, price,
         source, and equipped-item comparison.
       </p>
+      {datasetMessage ? <p role="status">{datasetMessage}</p> : null}
       <div className="equipment-fields">
         {renderPicker('main-hand', 'Main-hand weapon', true)}
         {draft.weaponPath === 'dual-wield'
