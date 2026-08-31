@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 import type { CharacterProfile } from '../../domain/build/model';
 import {
   GUEST_DATABASE_VERSION,
+  LOCAL_DATABASE_UPGRADE_BLOCKED_MESSAGE,
   openPlannerDatabase,
 } from './plannerDatabase';
 
@@ -74,5 +75,32 @@ describe('planner database', () => {
       expect.objectContaining({ completedActionIds: ['level-9'] }),
     );
     database.close();
+  });
+
+  it('rejects a blocked upgrade instead of leaving providers loading forever', async () => {
+    expect(LOCAL_DATABASE_UPGRADE_BLOCKED_MESSAGE).toBe(
+      'Close other SBO planner tabs, then reload this page to finish the local data upgrade.',
+    );
+    const name = `planner-blocked-${crypto.randomUUID()}`;
+    const legacy = await openDB(name, 4, {
+      upgrade(database) {
+        database.createObjectStore('draft');
+      },
+    });
+    const opening = openPlannerDatabase(name);
+
+    try {
+      await expect(
+        Promise.race([
+          opening,
+          new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('blocked test timed out')), 250),
+          ),
+        ]),
+      ).rejects.toThrow(LOCAL_DATABASE_UPGRADE_BLOCKED_MESSAGE);
+    } finally {
+      legacy.close();
+      await opening.then((database) => database.close()).catch(() => undefined);
+    }
   });
 });

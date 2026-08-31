@@ -5,15 +5,25 @@ import { useEffect, type ReactNode } from 'react';
 import { SignInControl } from '../features/auth/SignInControl';
 import type { DatasetSource } from '../infrastructure/spacetime/datasetSelection';
 import { GlobalNavigation } from '../features/shell/GlobalNavigation';
+import { useBuildDraft } from './providers/BuildDraftContext';
+import { useOptionalInventory } from './providers/InventoryContext';
+import { useOptionalPlannerState } from './providers/PlannerStateContext';
 
 type AppProps = {
   release: DatasetRelease;
   source: DatasetSource;
   authControl?: ReactNode;
   warning?: string | null;
+  storageWarning?: string | null;
 };
 
-export function App({ release, source, authControl, warning }: AppProps) {
+export function App({
+  release,
+  source,
+  authControl,
+  warning,
+  storageWarning,
+}: AppProps) {
   const location = useLocation();
 
   useEffect(() => {
@@ -39,6 +49,15 @@ export function App({ release, source, authControl, warning }: AppProps) {
         {warning && <p className="dataset-warning" role="status">{warning}</p>}
       </header>
       <GlobalNavigation />
+      {storageWarning ? (
+        <aside className="dataset-warning local-storage-warning" role="alert">
+          <strong>Local storage needs attention.</strong>
+          <p>{storageWarning}</p>
+          <button type="button" onClick={() => window.location.reload()}>
+            Reload app
+          </button>
+        </aside>
+      ) : null}
       <Outlet />
     </div>
   );
@@ -46,12 +65,21 @@ export function App({ release, source, authControl, warning }: AppProps) {
 
 export function ConnectedApp() {
   const { release, source, warning } = usePublicRelease();
+  const draft = useBuildDraft();
+  const inventory = useOptionalInventory();
+  const planner = useOptionalPlannerState();
+  const storageWarning =
+    draft.storageError ??
+    inventory?.storageError ??
+    planner?.storageError ??
+    null;
 
   return (
     <App
       release={release}
       source={source}
       warning={warning}
+      storageWarning={storageWarning}
       authControl={<SignInControl />}
     />
   );

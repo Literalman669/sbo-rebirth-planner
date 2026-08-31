@@ -77,6 +77,40 @@ async function renderRoute(path: string) {
 }
 
 describe('product shell', () => {
+  it('shows a global recovery notice for local storage failures', async () => {
+    render(
+      <MemoryRouter>
+        <Routes>
+          <Route
+            path="/"
+            element={
+              <App
+                release={{
+                  version: '2026.08.30.1',
+                  formulaSetVersion: 'sbor-stats-v2',
+                  sourceSummary: 'Verified release',
+                  publishedAtMicros: 0n,
+                  lastReviewedAt: '2026-08-30',
+                }}
+                source="bundled"
+                storageWarning="Close other SBO planner tabs, then reload this page."
+              />
+            }
+          >
+            <Route index element={<h2>Home workspace</h2>} />
+          </Route>
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Close other SBO planner tabs, then reload this page.',
+    );
+    expect(
+      screen.getByRole('button', { name: 'Reload app' }),
+    ).toBeVisible();
+  });
+
   it('separates global navigation from planner progress', async () => {
     await renderRoute('/stats');
 
