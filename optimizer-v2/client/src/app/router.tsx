@@ -15,6 +15,7 @@ import { BuildHistoryScreen } from '../features/builds/BuildHistoryScreen';
 import { BuildsScreen } from '../features/builds/BuildsScreen';
 import { SharedBuildScreen } from '../features/share/SharedBuildScreen';
 import { CurationScreen } from '../features/curation/CurationScreen';
+import { InventoryScreen } from '../features/inventory/InventoryScreen';
 
 export function createAppRoutes(
   rootElement: ReactNode = <ConnectedApp />,
@@ -30,6 +31,7 @@ export function createAppRoutes(
         { path: 'builds/:buildId/history', element: <BuildHistoryScreen /> },
         { path: 'shared/:shareId', element: <SharedBuildScreen /> },
         { path: 'curation', element: <CurationScreen /> },
+        { path: 'inventory', element: <InventoryScreen /> },
         {
           element: <PlannerFrame />,
           children: [
