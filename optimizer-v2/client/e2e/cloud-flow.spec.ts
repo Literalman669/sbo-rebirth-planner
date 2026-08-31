@@ -97,8 +97,9 @@ test('imports selectively, syncs offline history, restores, shares, and revokes'
   await page.waitForTimeout(900);
   await expect(archiveB.getByText(/Level 21 ·/)).toBeVisible();
 
-  await page.context().setOffline(true);
   await page.getByRole('link', { name: 'Edit Character' }).click();
+  await expect(page).toHaveURL(/\/character$/);
+  await page.context().setOffline(true);
   await page.getByLabel('Current Level').fill('22');
   await page.getByRole('button', { name: 'Continue' }).click();
   await page.getByRole('button', { name: 'Continue' }).click();
