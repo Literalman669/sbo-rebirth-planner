@@ -1,6 +1,7 @@
 @import './tokens.css';
 @import './planner.css';
 @import './curation.css';
+@import './inventory.css';
 
 :root {
   color-scheme: dark;

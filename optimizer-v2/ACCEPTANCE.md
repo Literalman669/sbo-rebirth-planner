@@ -112,3 +112,23 @@ layouts remain excluded rather than guessed; the production live dataset is
 still `2026.08.29.1`; and the 907,567-byte main entry chunk retains Vite's
 non-blocking code-splitting warning. This branch is verified but not merged,
 pushed, published, or deployed pending owner approval.
+
+## QOL Release 2 inventory local acceptance (2026-08-31)
+
+| # | Inventory criterion | Proof | Status |
+|---|---|---|---|
+| 1 | Guests and signed-in players have one canonical inventory across builds, while ownership updates the active build without recording an undo edit. | `client/src/app/providers/InventoryProvider.test.tsx`, `client/e2e/inventory-flow.spec.ts` | Pass |
+| 2 | The inventory workspace exposes the complete verified catalog with search, filters, sorting, progressive rendering, ownership, favorites, comparison, notes, and direct equip actions. | `client/src/domain/inventory/catalog.test.ts`, `client/src/features/inventory/inventory.test.tsx` | Pass |
+| 3 | Two to four items can be compared with verified raw stats, prices or explicit missing-price labels, projected change, slot warnings, and direct wiki provenance. | `client/src/features/inventory/inventory.test.tsx`, `client/e2e/qol-accessibility.spec.ts` | Pass |
+| 4 | Inventory backups are versioned and validated; merge is non-destructive, while replace and reset require explicit confirmation. | `client/src/domain/inventory/stateSchema.test.ts`, `client/src/features/inventory/inventory.test.tsx` | Pass |
+| 5 | Local inventory survives reload and the v4-to-v5 IndexedDB migration without losing the active draft or saved builds. | `client/src/infrastructure/storage/inventoryStore.test.ts`, `client/src/infrastructure/storage/plannerDatabase.test.ts`, `client/e2e/reliability-flow.spec.ts` | Pass |
+| 6 | Cloud inventory is private, identity-scoped, local-first, retryable, merge-safe on first attachment, and does not manufacture immutable build revisions for favorites, comparison, or notes. | `client/src/app/providers/CloudBuildsProvider.test.tsx`, `client/src/infrastructure/cloud/buildRepository.test.ts`, `client/e2e/cloud-module.spec.ts` | Pass |
+| 7 | The server and client accept at most 2,000 unique owned IDs, four comparison IDs, and 500 bounded notes; malformed or cross-identity state is rejected. | `spacetimedb/src/plannerState.test.ts`, `client/src/domain/inventory/stateSchema.test.ts`, `client/e2e/cloud-module.spec.ts` | Pass |
+| 8 | Inventory, comparison, and backup surfaces remain keyboard-accessible and width-safe at the four supported viewports with zero serious/critical accessibility violations. | `client/e2e/qol-accessibility.spec.ts` | Pass |
+| 9 | Favorites, comparison choices, and notes preserve the deterministic plan fingerprint; owning/equipping an item deliberately changes planner inputs. | `client/e2e/inventory-flow.spec.ts`, `client/src/app/providers/InventoryProvider.test.tsx` | Pass |
+| 10 | Catalog querying remains bounded at scale. | 100 queries × 1,000 records in 84.3 ms during the focused branch gate (1,000 ms budget) | Pass |
+
+This inventory batch deliberately leaves the later Release 2 build-comparison,
+presets, progress-dashboard, and player-stat-tracking work for separately
+scoped plans. It does not guess unresolved wiki records or publish a new
+verified game-data release.

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   validateAccessPreferences,
   validateInventoryJson,
+  validateOwnedItemIds,
   validatePlanProgressJson,
   validatePlanProgressOwnership,
   validatePreferenceJson,
@@ -62,6 +63,21 @@ describe('planner state validation', () => {
         }),
       ),
     ).toEqual([]);
+  });
+
+  it('keeps build ownership validation aligned with the 2,000-item inventory limit', () => {
+    const maximumInventory = Array.from(
+      { length: 2_000 },
+      (_, index) => `item-${index}`,
+    );
+
+    expect(validateOwnedItemIds(maximumInventory)).toEqual([]);
+    expect(validateOwnedItemIds([...maximumInventory, 'one-too-many'])).toEqual([
+      'Too many owned items',
+    ]);
+    expect(validateOwnedItemIds(['duplicate', 'duplicate'])).toEqual([
+      'Owned item IDs must be unique',
+    ]);
   });
 
   it('rejects comparison overflow separately from other invalid inventory', () => {

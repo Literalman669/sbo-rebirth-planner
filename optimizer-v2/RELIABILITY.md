@@ -332,3 +332,42 @@ In-app visual QA covered every Release 1 workspace plus both dialogs at desktop
 and mobile widths and recorded zero browser warnings/errors. No external CI,
 Maincloud publication, GitHub Pages deployment, or live smoke was performed for
 this branch; those actions remain gated on explicit owner approval.
+
+## QOL Release 2 inventory branch gate (2026-08-31)
+
+Release 2 adds a versioned, app-wide inventory without changing the optimizer's
+deterministic inputs for display-only actions. Owned items are canonical and
+flow into the active build; favorites, comparison choices, and notes do not
+change the plan fingerprint or create build revisions. The local-first store
+uses IndexedDB v5, and the private `user_inventory` SpacetimeDB row is exposed
+only through the sender-filtered `my_user_inventory` view and protected reducer.
+
+The inventory browser covers every verified catalog slot with search, ownership,
+favorites, upgrade/price filters, deterministic sorting, incremental rendering,
+item notes, direct equip actions, and explicit unresolved-ID reporting. The
+comparison workspace supports two to four verified items and shows raw stats,
+price availability, projected changes, mixed-slot warnings, and source links.
+Backup export/import supports validated merge, explicit-confirmation replace,
+and reset flows.
+
+The branch verification recorded 72 client files / 485 tests and 6 module files
+/ 77 tests before the final six-layer gate. Fixed-local browser integration
+passed the inventory create/favorite/compare/note/own/equip/reload flow while
+proving display-only actions preserve the plan fingerprint. Core integration
+passed 31 cases with 7 intentional mobile-only skips, and the isolated
+100-revision, publication, and share phases also passed.
+
+Accessibility and containment checks cover Inventory, Comparison, and the
+backup dialog at 1440×1000, 768×1024, 390×844, and 320×700 with zero serious or
+critical axe violations and no document overflow. A browser-created v4 database
+upgrades to v5 while preserving draft, build, and inventory state. One hundred
+inventory queries over 1,000 synthetic records completed in 84.3 ms against a
+1,000 ms budget. The Pages artifact contains `index-D-lC1Qjn.js` (932,428
+bytes) and `index-B4sdvBPO.css` (48,402 bytes); the existing vendor chunk hashes
+remain unchanged.
+
+The legacy build-revision owned-item boundary was raised and regression-tested
+to match the canonical 2,000-item inventory limit, preventing a large valid
+inventory from becoming unsavable when copied into an active build. Production
+deployment evidence is intentionally recorded only after the branch is merged,
+pushed, and both GitHub workflows plus live smoke have completed.

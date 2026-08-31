@@ -47,6 +47,13 @@ test('Release 1 routes remain accessible and contained from desktop to 320px', a
     await page.getByRole('link', { name: 'Builds' }).click();
     await expect(page).toHaveURL(/\/builds$/);
     await expectAccessibleAndContained(page, 'builds');
+
+    await page.getByRole('link', { name: 'Inventory' }).click();
+    await expect(page).toHaveURL(/\/inventory$/);
+    await expectAccessibleAndContained(page, 'inventory');
+
+    await page.goto('/compare/equipment');
+    await expectAccessibleAndContained(page, 'equipment comparison');
   }
 });
 
@@ -64,4 +71,11 @@ test('mobile sticky actions and dialogs keep controls reachable', async ({ page 
   await expect(equipmentDialog).toBeVisible();
   await expect(equipmentDialog.getByRole('button', { name: 'Close' })).toBeInViewport();
   await expectAccessibleAndContained(page, 'equipment picker');
+
+  await page.goto('/inventory');
+  await page.getByRole('button', { name: 'Manage inventory backups' }).click();
+  const backupDialog = page.getByRole('dialog', { name: 'Inventory backups' });
+  await expect(backupDialog).toBeVisible();
+  await expect(backupDialog.getByRole('button', { name: 'Close' })).toBeInViewport();
+  await expectAccessibleAndContained(page, 'inventory backup dialog');
 });

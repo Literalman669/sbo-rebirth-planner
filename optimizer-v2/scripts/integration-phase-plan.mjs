@@ -8,6 +8,7 @@ export const INTEGRATION_PHASES = Object.freeze([
       'e2e/curation-module.spec.ts',
       'e2e/foundation.spec.ts',
       'e2e/guest-flow.spec.ts',
+      'e2e/inventory-flow.spec.ts',
       'e2e/qol-accessibility.spec.ts',
       'e2e/reliability-flow.spec.ts',
     ],

@@ -4,6 +4,7 @@ import spacetimedb from './schema';
 import {
   validateAccessPreferences,
   validateInventoryJson,
+  validateOwnedItemIds,
   validatePlanProgressJson,
   validatePlanProgressOwnership,
   validatePreferenceJson,
@@ -127,13 +128,8 @@ function assertEquipment(equipment: readonly CloudEquipmentInput[]): void {
 }
 
 function assertOwnedItems(ownedItemIds: readonly string[]): void {
-  if (ownedItemIds.length > 100) throw new SenderError('Too many owned items');
-  const seen = new Set<string>();
-  for (const itemId of ownedItemIds) {
-    assertText(itemId, 'Owned item ID', 100);
-    if (seen.has(itemId)) throw new SenderError('Owned item IDs must be unique');
-    seen.add(itemId);
-  }
+  const errors = validateOwnedItemIds(ownedItemIds);
+  if (errors[0]) throw new SenderError(errors[0]);
 }
 
 function ensureProfile(ctx: AppReducerCtx): void {

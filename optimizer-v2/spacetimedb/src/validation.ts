@@ -54,6 +54,21 @@ function isInventoryIdArray(value: unknown, maximum: number): value is string[] 
   );
 }
 
+export function validateOwnedItemIds(
+  ownedItemIds: readonly string[],
+): string[] {
+  if (ownedItemIds.length > 2_000) return ['Too many owned items'];
+  if (
+    ownedItemIds.some((itemId) => !isInventoryId(itemId))
+  ) {
+    return ['Owned item ID is invalid'];
+  }
+  if (new Set(ownedItemIds).size !== ownedItemIds.length) {
+    return ['Owned item IDs must be unique'];
+  }
+  return [];
+}
+
 function parsePlannerJson(value: string): unknown {
   if (value.length > MAX_PLANNER_JSON_LENGTH) return undefined;
   try {

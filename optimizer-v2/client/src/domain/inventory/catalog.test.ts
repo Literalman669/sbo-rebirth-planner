@@ -152,6 +152,10 @@ describe('inventory catalog', () => {
     }
     const elapsed = performance.now() - started;
 
+    process.stderr.write(
+      `[inventory query] 100 searches over 1,000 records in ${elapsed.toFixed(1)}ms\n`,
+    );
+
     expect(finalCount).toBe(1_000);
     expect(elapsed).toBeLessThan(1_000);
   });

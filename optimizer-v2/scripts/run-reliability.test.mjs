@@ -41,6 +41,13 @@ test('summarizes layer statuses with documented measured thresholds', () => {
     '320x700',
   ]);
   assert.equal(summary.thresholds.equipmentQueryRecords, 1000);
+  assert.equal(summary.thresholds.inventoryQueryRecords, 1000);
+  assert.equal(summary.thresholds.inventoryQueryIterations, 100);
+  assert.equal(summary.thresholds.inventoryQueryBudgetMs, 1000);
+  assert.equal(
+    summary.thresholds.indexedDbMigration,
+    'v4-to-v5-with-inventory-preservation',
+  );
 });
 
 test('emits a failed summary and rejects when a child exits nonzero', () => {
