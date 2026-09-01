@@ -70,6 +70,15 @@ function disconnect(testConnection: TestConnection) {
   testConnection.connection.disconnect();
 }
 
+function progressFor(testConnection: TestConnection) {
+  const row = [...testConnection.connection.db.myPlanProgress.iter()][0];
+  return row ? JSON.parse(row.progressJson) as {
+    schemaVersion: number;
+    objectives: Array<{ actionKey: string; status: string }>;
+    history: Array<{ id: string; label: string }>;
+  } : null;
+}
+
 test('enforces identity isolation and immutable revision recovery', async ({}, testInfo) => {
   test.skip(testInfo.project.name !== 'desktop', 'Module integration runs once.');
 
@@ -154,9 +163,12 @@ test('enforces identity isolation and immutable revision recovery', async ({}, t
     expect([...userA.connection.db.myUserPreferences.iter()][0]).toMatchObject({
       preferencesJson,
     });
-    expect([...userA.connection.db.myPlanProgress.iter()][0]).toMatchObject({
-      buildId: 'build-a',
-      progressJson,
+    expect(progressFor(userA)).toMatchObject({
+      schemaVersion: 2,
+      objectives: [
+        { actionKey: 'level-21', status: 'completed' },
+        { actionKey: 'upgrade-1', status: 'skipped' },
+      ],
     });
     expect([...userA.connection.db.myUserInventory.iter()][0]).toMatchObject({
       inventoryJson,
@@ -247,6 +259,85 @@ test('enforces identity isolation and immutable revision recovery', async ({}, t
         () => [...userASecond!.connection.db.myUserInventory.iter()].length,
       )
       .toBe(1);
+
+    const progressA = {
+      schemaVersion: 2,
+      buildId: 'build-a',
+      wallet: { balance: 10_000, updatedAt: '2026-09-01T12:00:00.000Z' },
+      objectives: [
+        {
+          actionKey: 'manual:quest',
+          category: 'manual-objective',
+          status: 'pending',
+          source: 'manual',
+          planFingerprint: 'plan-sync',
+          updatedAt: '2026-09-01T12:00:00.000Z',
+        },
+      ],
+      history: [
+        {
+          id: 'event-a',
+          actionKey: 'manual:quest',
+          category: 'manual-objective',
+          label: 'Quest started',
+          outcome: 'reopened',
+          source: 'manual',
+          planFingerprint: 'plan-sync',
+          occurredAt: '2026-09-01T12:00:00.000Z',
+        },
+      ],
+      currentPlanFingerprint: 'plan-sync',
+    };
+    const progressB = {
+      ...progressA,
+      wallet: { balance: 9_000, updatedAt: '2026-09-01T13:00:00.000Z' },
+      objectives: [
+        {
+          ...progressA.objectives[0],
+          status: 'completed',
+          updatedAt: '2026-09-01T13:00:00.000Z',
+        },
+      ],
+      history: [
+        {
+          ...progressA.history[0],
+          id: 'event-b',
+          label: 'Quest completed',
+          outcome: 'completed',
+          occurredAt: '2026-09-01T13:00:00.000Z',
+        },
+      ],
+    };
+    await Promise.all([
+      userA.connection.reducers.upsertPlanProgress({
+        buildId: 'build-a',
+        progressJson: JSON.stringify(progressA),
+      }),
+      userASecond.connection.reducers.upsertPlanProgress({
+        buildId: 'build-a',
+        progressJson: JSON.stringify(progressB),
+      }),
+    ]);
+    await expect
+      .poll(() => progressFor(userA)?.history.map((event) => event.id))
+      .toEqual(expect.arrayContaining(['event-a', 'event-b']));
+    await expect
+      .poll(() => progressFor(userASecond!)?.history.map((event) => event.id))
+      .toEqual(expect.arrayContaining(['event-a', 'event-b']));
+    expect(
+      progressFor(userA)?.objectives.find(
+        (objective) => objective.actionKey === 'manual:quest',
+      )?.status,
+    ).toBe('completed');
+    await expect(
+      userA.connection.reducers.upsertPlanProgress({
+        buildId: 'build-a',
+        progressJson: JSON.stringify({
+          ...progressA,
+          history: [{ ...progressA.history[0], label: 'Conflicting event' }],
+        }),
+      }),
+    ).rejects.toThrow(/history event ID conflict/i);
 
     await expect(
       userB.connection.reducers.saveBuildRevision({
