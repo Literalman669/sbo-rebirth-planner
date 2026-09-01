@@ -85,6 +85,21 @@ describe('BuildRepository', () => {
     expect(await storage.pendingQueue.list(subject)).toHaveLength(0);
   });
 
+  it('persists a guest personal preset locally with its record kind', async () => {
+    const storage = adapters('repository-guest-preset');
+    const repository = createBuildRepository({ ...storage });
+
+    await expect(
+      repository.save(profile('preset-a'), { kind: 'personal-preset' }),
+    ).resolves.toEqual({ location: 'local' });
+    expect(
+      (await storage.guestStore.listBuilds()).find((result) => result.ok),
+    ).toMatchObject({
+      ok: true,
+      value: { kind: 'personal-preset' },
+    });
+  });
+
   it('queues failed inventory after local save and acknowledges it on retry', async () => {
     const storage = adapters('repository-inventory');
     let offline = true;
@@ -127,7 +142,7 @@ describe('BuildRepository', () => {
     await repository.save(profile());
 
     expect(await storage.pendingQueue.list(subject)).toMatchObject([
-      { revisionId: 'revision-1', subject },
+      { revisionId: 'revision-1', kind: 'build', subject },
     ]);
     expect(await storage.pendingQueue.list('account-b')).toHaveLength(0);
   });
@@ -153,6 +168,9 @@ describe('BuildRepository', () => {
       location: 'cloud',
     });
     expect(await storage.pendingQueue.list(subject)).toHaveLength(0);
+    expect(saveBuildRevision).toHaveBeenCalledWith(
+      expect.objectContaining({ kind: 'build' }),
+    );
   });
 
   it('does not create another revision for identical cloud profile content', async () => {
@@ -208,6 +226,55 @@ describe('BuildRepository', () => {
     });
     expect(cloud.saveBuildRevision).not.toHaveBeenCalled();
     expect(await storage.pendingQueue.list(subject)).toEqual([]);
+  });
+
+  it('does not deduplicate a personal preset against identical normal-build content', async () => {
+    const storage = adapters('repository-kind-deduplicate');
+    const cloud = reducers();
+    const repository = createBuildRepository({
+      ...storage,
+      reducers: cloud,
+      accountSubject: subject,
+      randomUUID: () => 'preset-revision',
+      getCloudSnapshot: () => ({
+        builds: [{
+          id: 'build-a',
+          name: 'Build build-a',
+          headRevisionId: 'revision-1',
+          kind: 'build',
+        }],
+        revisions: [{
+          id: 'revision-1',
+          buildId: 'build-a',
+          schemaVersion: 2,
+          level: 20,
+          maxFloor: 3,
+          weaponPath: 'two-handed',
+          goal: 'balanced',
+          weaponSkill: 18,
+          str: 20,
+          def: 10,
+          agi: 12,
+          vit: 8,
+          luk: 5,
+          datasetVersion: 'bootstrap-0',
+          kind: 'build',
+        }],
+        equipment: [{
+          revisionId: 'revision-1',
+          slot: 'main-hand',
+          itemId: 'iron-greatsword',
+        }],
+        ownedItems: [{ revisionId: 'revision-1', itemId: 'iron-greatsword' }],
+      }),
+    });
+
+    await expect(
+      repository.save(profile(), { kind: 'personal-preset' }),
+    ).resolves.toMatchObject({ revisionId: 'preset-revision' });
+    expect(cloud.saveBuildRevision).toHaveBeenCalledWith(
+      expect.objectContaining({ kind: 'personal-preset' }),
+    );
   });
 
   it('does not create another revision while identical content is already pending', async () => {
@@ -542,6 +609,38 @@ describe('CloudBuildSelector', () => {
       'revision-1',
       'revision-2',
     ]);
+  });
+
+  it('preserves personal-preset kind on the current record and every history row', () => {
+    const selector = createCloudBuildSelector();
+    const result = selector.select({
+      builds: [{ ...baseBuild, kind: 'personal-preset' }],
+      revisions: [{ ...baseRevision, kind: 'personal-preset' }],
+      equipment: [],
+      ownedItems: [],
+    });
+
+    expect(result[0]).toMatchObject({
+      kind: 'personal-preset',
+      history: [{ kind: 'personal-preset' }],
+    });
+  });
+
+  it('retains the prior validated record when current and head kinds disagree', () => {
+    const selector = createCloudBuildSelector();
+    expect(selector.select({
+      builds: [{ ...baseBuild, kind: 'build' }],
+      revisions: [{ ...baseRevision, kind: 'build' }],
+      equipment: [],
+      ownedItems: [],
+    })[0]?.kind).toBe('build');
+
+    expect(selector.select({
+      builds: [{ ...baseBuild, kind: 'personal-preset' }],
+      revisions: [{ ...baseRevision, kind: 'build' }],
+      equipment: [],
+      ownedItems: [],
+    })[0]?.kind).toBe('build');
   });
 
   it('keeps archived rows out of the active list and available to the archived filter', () => {

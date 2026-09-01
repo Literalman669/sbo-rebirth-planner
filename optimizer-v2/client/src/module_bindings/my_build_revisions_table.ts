@@ -29,4 +29,5 @@ export default __t.row({
   datasetVersion: __t.string().name("dataset_version"),
   createdAt: __t.timestamp().name("created_at"),
   accessPreferences: __t.option(__t.string()).name("access_preferences"),
+  kind: __t.string(),
 });

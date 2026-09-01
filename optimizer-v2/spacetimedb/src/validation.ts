@@ -10,6 +10,18 @@ const accessPreferenceTokens = new Set([
   'badge',
   'limited',
 ]);
+const buildKinds = new Set(['build', 'personal-preset']);
+
+export function validateBuildKind(value: string): string[] {
+  return buildKinds.has(value) ? [] : ['Build kind is invalid'];
+}
+
+export function validateShareableBuildKind(value: string): string[] {
+  if (value === 'personal-preset') {
+    return ['Personal presets must be copied to a build before sharing'];
+  }
+  return validateBuildKind(value);
+}
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);

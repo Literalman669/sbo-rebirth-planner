@@ -1,6 +1,8 @@
 import { z } from 'zod';
 import type { CharacterProfile } from '../../domain/build/model';
 import { characterProfileSchema } from '../../domain/build/schema';
+import type { SavedBuildKind } from '../../domain/build/record';
+import { savedBuildKindSchema } from '../../domain/build/recordSchema';
 import {
   DEFAULT_GUEST_DATABASE_NAME,
   openPlannerDatabase,
@@ -9,6 +11,7 @@ import {
 const legacyPendingRevisionSchema = z.object({
   revisionId: z.string().min(1).max(100),
   buildId: z.string().min(1).max(100),
+  kind: savedBuildKindSchema.default('build'),
   profile: characterProfileSchema,
   parentRevisionId: z.string().min(1).max(100).optional(),
   enqueuedAt: z.iso.datetime(),
@@ -22,6 +25,7 @@ export interface PendingRevision {
   subject: string;
   revisionId: string;
   buildId: string;
+  kind: SavedBuildKind;
   profile: CharacterProfile;
   parentRevisionId?: string;
   enqueuedAt: string;
@@ -29,9 +33,12 @@ export interface PendingRevision {
 }
 
 export type LegacyPendingRevision = Omit<PendingRevision, 'subject'>;
+export type PendingRevisionInput = Omit<PendingRevision, 'kind'> & {
+  kind?: SavedBuildKind;
+};
 
 export interface PendingRevisionQueue {
-  enqueue(revision: PendingRevision): Promise<void>;
+  enqueue(revision: PendingRevisionInput): Promise<void>;
   list(subject: string): Promise<PendingRevision[]>;
   acknowledge(subject: string, revisionId: string): Promise<void>;
   incrementAttempts(subject: string, revisionId: string): Promise<void>;

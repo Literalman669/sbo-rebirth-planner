@@ -3,6 +3,7 @@ import { assertAppUser, assertOwner, type AppReducerCtx } from './auth';
 import spacetimedb from './schema';
 import {
   validateAccessPreferences,
+  validateBuildKind,
   validateInventoryJson,
   validateOwnedItemIds,
   validatePlanProgressJson,
@@ -160,6 +161,7 @@ function insertRevision(
     buildId: string;
     revisionId: string;
     parentRevisionId?: string;
+    kind: string;
     profile: CloudProfileInput;
     equipment: readonly CloudEquipmentInput[];
     ownedItemIds: readonly string[];
@@ -184,6 +186,7 @@ function insertRevision(
     luk: profile.luk,
     datasetVersion: profile.datasetVersion,
     accessPreferences: profile.accessPreferences,
+    kind: args.kind,
     createdAt: ctx.timestamp,
   });
 
@@ -222,6 +225,7 @@ function isIdempotentRevisionRetry(
     buildId: string;
     revisionId: string;
     parentRevisionId?: string;
+    kind: string;
     profile: CloudProfileInput;
     equipment: readonly CloudEquipmentInput[];
     ownedItemIds: readonly string[];
@@ -232,7 +236,8 @@ function isIdempotentRevisionRetry(
     !revision ||
     !revision.owner.equals(ctx.sender) ||
     revision.buildId !== args.buildId ||
-    revision.parentRevisionId !== args.parentRevisionId
+    revision.parentRevisionId !== args.parentRevisionId ||
+    revision.kind !== args.kind
   ) {
     return false;
   }
@@ -303,6 +308,7 @@ export const saveBuildRevision = spacetimedb.reducer(
     buildId: t.string(),
     revisionId: t.string(),
     name: t.string(),
+    kind: t.string().optional(),
     parentRevisionId: t.string().optional(),
     profile: cloudProfileInput,
     equipment: t.array(equipmentInput),
@@ -313,6 +319,9 @@ export const saveBuildRevision = spacetimedb.reducer(
     assertText(args.buildId, 'Build ID', 100);
     assertText(args.revisionId, 'Revision ID', 100);
     assertText(args.name.trim(), 'Build name', 60);
+    const kind = args.kind ?? 'build';
+    const kindErrors = validateBuildKind(kind);
+    if (kindErrors[0]) throw new SenderError(kindErrors[0]);
     if (args.parentRevisionId !== undefined) {
       assertText(args.parentRevisionId, 'Parent revision ID', 100);
     }
@@ -321,7 +330,7 @@ export const saveBuildRevision = spacetimedb.reducer(
     assertOwnedItems(args.ownedItemIds);
 
     if (ctx.db.buildRevision.id.find(args.revisionId)) {
-      if (isIdempotentRevisionRetry(ctx, args)) return;
+      if (isIdempotentRevisionRetry(ctx, { ...args, kind })) return;
       throw new SenderError('Revision ID already exists with different content');
     }
 
@@ -344,12 +353,13 @@ export const saveBuildRevision = spacetimedb.reducer(
     }
 
     ensureProfile(ctx);
-    insertRevision(ctx, args);
+    insertRevision(ctx, { ...args, kind });
 
     if (currentBuild) {
       ctx.db.build.id.update({
         ...currentBuild,
         name: args.name.trim(),
+        kind,
         headRevisionId: args.revisionId,
         updatedAt: ctx.timestamp,
       });
@@ -360,6 +370,7 @@ export const saveBuildRevision = spacetimedb.reducer(
         name: args.name.trim(),
         headRevisionId: args.revisionId,
         archivedAt: undefined,
+        kind,
         createdAt: ctx.timestamp,
         updatedAt: ctx.timestamp,
       });
@@ -551,11 +562,13 @@ export const restoreBuildRevision = spacetimedb.reducer(
         datasetVersion: source.datasetVersion,
         accessPreferences: source.accessPreferences,
       },
+      kind: source.kind,
       equipment,
       ownedItemIds,
     });
     ctx.db.build.id.update({
       ...currentBuild,
+      kind: source.kind,
       headRevisionId: newRevisionId,
       updatedAt: ctx.timestamp,
     });

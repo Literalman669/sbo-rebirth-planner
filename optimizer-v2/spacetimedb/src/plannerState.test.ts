@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   validateAccessPreferences,
+  validateBuildKind,
   validateInventoryJson,
   validateOwnedItemIds,
   validatePlanProgressJson,
@@ -11,6 +12,12 @@ import {
 const sender = { id: 'sender' };
 
 describe('planner state validation', () => {
+  it('accepts only normal builds and private personal presets', () => {
+    expect(validateBuildKind('build')).toEqual([]);
+    expect(validateBuildKind('personal-preset')).toEqual([]);
+    expect(validateBuildKind('marketplace')).toEqual(['Build kind is invalid']);
+  });
+
   it('rejects plan progress for another identity build', () => {
     const otherOwnerBuild = {
       owner: { equals: (identity: unknown) => identity !== sender },

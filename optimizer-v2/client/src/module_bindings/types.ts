@@ -31,6 +31,7 @@ export const Build = __t.object("Build", {
   createdAt: __t.timestamp(),
   updatedAt: __t.timestamp(),
   archivedAt: __t.option(__t.timestamp()),
+  kind: __t.string(),
 });
 export type Build = __Infer<typeof Build>;
 
@@ -61,6 +62,7 @@ export const BuildRevision = __t.object("BuildRevision", {
   datasetVersion: __t.string(),
   createdAt: __t.timestamp(),
   accessPreferences: __t.option(__t.string()),
+  kind: __t.string(),
 });
 export type BuildRevision = __Infer<typeof BuildRevision>;
 

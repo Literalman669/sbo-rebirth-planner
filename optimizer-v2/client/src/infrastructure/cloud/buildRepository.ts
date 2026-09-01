@@ -1,4 +1,5 @@
 import type { CharacterProfile } from '../../domain/build/model';
+import type { SavedBuildKind } from '../../domain/build/record';
 import type { InventoryState } from '../../domain/inventory/state';
 import type {
   PlannerPreferences,
@@ -12,6 +13,7 @@ import {
 import {
   profileFromCloudRevision,
   profileFingerprint,
+  normalizeCloudBuildKind,
   toSaveBuildRevisionArgs,
   type CloudBuildRowLike,
   type CloudEquipmentRowLike,
@@ -61,12 +63,14 @@ export interface CloudBuildHistoryItem {
   createdAt: string;
   datasetVersion: string;
   profile: CharacterProfile;
+  kind: SavedBuildKind;
 }
 
 export interface CloudBuildRecord {
   headRevisionId: string;
   archivedAt?: string;
   profile: CharacterProfile;
+  kind: SavedBuildKind;
   history: CloudBuildHistoryItem[];
 }
 
@@ -89,6 +93,8 @@ export function createCloudBuildSelector(): CloudBuildSelector {
         for (const revision of snapshot.revisions) {
           if (revision.buildId !== build.id) continue;
           try {
+            const kind = normalizeCloudBuildKind(revision.kind);
+            if (!kind) continue;
             history.push({
               revisionId: revision.id,
               createdAt: normalizeCloudTimestamp(revision.createdAt),
@@ -99,6 +105,7 @@ export function createCloudBuildSelector(): CloudBuildSelector {
                 snapshot.equipment,
                 snapshot.ownedItems,
               ),
+              kind,
             });
           } catch {
             // A malformed subscription row never replaces a validated local view.
@@ -107,7 +114,8 @@ export function createCloudBuildSelector(): CloudBuildSelector {
         const head = history.find(
           (item) => item.revisionId === build.headRevisionId,
         );
-        const record = head
+        const buildKind = normalizeCloudBuildKind(build.kind);
+        const record = head && buildKind === head.kind
           ? {
               headRevisionId: build.headRevisionId,
               ...(normalizeOptionalCloudTimestamp(build.archivedAt)
@@ -118,6 +126,7 @@ export function createCloudBuildSelector(): CloudBuildSelector {
                   }
                 : {}),
               profile: head.profile,
+              kind: head.kind,
               history,
             }
           : previous.get(build.id);
@@ -152,7 +161,10 @@ function normalizeOptionalCloudTimestamp(value: unknown): string | undefined {
 }
 
 export interface BuildRepository {
-  save(profile: CharacterProfile): Promise<{
+  save(
+    profile: CharacterProfile,
+    options?: { kind?: SavedBuildKind },
+  ): Promise<{
     revisionId?: string;
     location: 'local' | 'cloud-pending' | 'cloud';
   }>;
@@ -206,8 +218,11 @@ export function createBuildRepository({
     throw new Error('An authenticated account subject is required for cloud sync');
   }
 
-  async function save(profile: CharacterProfile) {
-    await guestStore.saveBuild(profile);
+  async function save(
+    profile: CharacterProfile,
+    { kind = 'build' }: { kind?: SavedBuildKind } = {},
+  ) {
+    await guestStore.saveBuild(profile, { kind });
     if (!reducers) return { location: 'local' as const };
     const subject = accountSubject!;
 
@@ -216,7 +231,8 @@ export function createBuildRepository({
     );
     const identicalPending = pendingForBuild.find(
       (revision) =>
-        profileFingerprint(revision.profile) === profileFingerprint(profile),
+        profileFingerprint(revision.profile, revision.kind) ===
+        profileFingerprint(profile, kind),
     );
     if (identicalPending) {
       return {
@@ -239,8 +255,8 @@ export function createBuildRepository({
       : undefined;
     if (
       currentCloudRecord &&
-      profileFingerprint(currentCloudRecord.profile) ===
-        profileFingerprint(profile)
+      profileFingerprint(currentCloudRecord.profile, currentCloudRecord.kind) ===
+        profileFingerprint(profile, kind)
     ) {
       return {
         revisionId: currentCloudRecord.headRevisionId,
@@ -254,6 +270,7 @@ export function createBuildRepository({
       subject,
       revisionId,
       buildId: profile.id,
+      kind,
       profile,
       ...(parentRevisionId ? { parentRevisionId } : {}),
       enqueuedAt: now(),
@@ -262,7 +279,7 @@ export function createBuildRepository({
 
     try {
       await reducers.saveBuildRevision(
-        toSaveBuildRevisionArgs(profile, revisionId, parentRevisionId),
+        toSaveBuildRevisionArgs(profile, kind, revisionId, parentRevisionId),
       );
       await pendingQueue.acknowledge(subject, revisionId);
       return { revisionId, location: 'cloud' as const };
@@ -313,14 +330,14 @@ export function createBuildRepository({
       const localBuilds = await guestStore.listBuilds();
       const selected = localBuilds.flatMap((result) =>
         result.ok && selectedIds.has(result.value.profile.id)
-          ? [result.value.profile]
+          ? [result.value]
           : [],
       );
       if (selected.length !== selectedIds.size) {
         throw new Error('One or more selected guest builds are unavailable');
       }
-      for (const profile of selected) {
-        const result = await save(profile);
+      for (const record of selected) {
+        const result = await save(record.profile, { kind: record.kind });
         if (result.location !== 'cloud') {
           throw new Error('Guest import is pending synchronization');
         }
@@ -336,6 +353,7 @@ export function createBuildRepository({
           await reducers.saveBuildRevision(
             toSaveBuildRevisionArgs(
               revision.profile,
+              revision.kind,
               revision.revisionId,
               revision.parentRevisionId,
             ),

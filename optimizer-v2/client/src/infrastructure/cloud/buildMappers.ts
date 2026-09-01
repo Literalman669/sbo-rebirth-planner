@@ -3,6 +3,8 @@ import type {
   EquipmentSlot,
 } from '../../domain/build/model';
 import { characterProfileSchema } from '../../domain/build/schema';
+import type { SavedBuildKind } from '../../domain/build/record';
+import { savedBuildKindSchema } from '../../domain/build/recordSchema';
 import type {
   PlannerPreferences,
   PlanProgress,
@@ -18,6 +20,7 @@ export type CloudBuildRowLike = {
   id: string;
   name: string;
   headRevisionId: string;
+  kind?: string;
   archivedAt?: unknown;
 };
 
@@ -38,6 +41,7 @@ export type CloudRevisionRowLike = {
   accessPreferences?: string;
   datasetVersion: string;
   createdAt?: unknown;
+  kind?: string;
 };
 
 export type CloudEquipmentRowLike = {
@@ -116,10 +120,19 @@ export function createPlanProgressSelector() {
   };
 }
 
-export function profileFingerprint(input: CharacterProfile): string {
+export function normalizeCloudBuildKind(value?: string): SavedBuildKind | null {
+  const parsed = savedBuildKindSchema.safeParse(value ?? 'build');
+  return parsed.success ? parsed.data : null;
+}
+
+export function profileFingerprint(
+  input: CharacterProfile,
+  kind: SavedBuildKind = 'build',
+): string {
   const profile = characterProfileSchema.parse(input);
   const access = profile.accessPreferences;
   return JSON.stringify({
+    kind,
     ...profile,
     stats: { ...profile.stats },
     equipped: Object.fromEntries(
@@ -162,6 +175,7 @@ function serializeAccessPreferences(
 
 export function toSaveBuildRevisionArgs(
   input: CharacterProfile,
+  kind: SavedBuildKind,
   revisionId: string,
   parentRevisionId?: string,
 ) {
@@ -172,6 +186,7 @@ export function toSaveBuildRevisionArgs(
   return {
     buildId: profile.id,
     revisionId,
+    kind,
     name: profile.name?.trim() || 'Untitled build',
     ...(parentRevisionId ? { parentRevisionId } : {}),
     profile: {

@@ -1,6 +1,7 @@
 import { SenderError, t } from 'spacetimedb/server';
 import { assertAppUser } from './auth';
 import spacetimedb from './schema';
+import { validateShareableBuildKind } from './validation';
 
 const shareIdPattern = /^[a-zA-Z0-9_-]{22,64}$/;
 
@@ -19,6 +20,8 @@ export const createBuildShare = spacetimedb.reducer(
     if (!build || !build.owner.equals(ctx.sender)) {
       throw new SenderError('Build not found for this identity');
     }
+    const kindErrors = validateShareableBuildKind(build.kind);
+    if (kindErrors[0]) throw new SenderError(kindErrors[0]);
     if (
       build.name.length < 1 ||
       build.name.length > 60 ||

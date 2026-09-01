@@ -23,18 +23,21 @@ function profile(level: number): CharacterProfile {
 const record: CloudBuildRecord = {
   headRevisionId: 'revision-2',
   profile: profile(21),
+  kind: 'build',
   history: [
     {
       revisionId: 'revision-1',
       createdAt: '2026-08-29T10:00:00.000Z',
       datasetVersion: 'bootstrap-0',
       profile: profile(20),
+      kind: 'build',
     },
     {
       revisionId: 'revision-2',
       createdAt: '2026-08-29T11:00:00.000Z',
       datasetVersion: 'bootstrap-0',
       profile: profile(21),
+      kind: 'build',
     },
   ],
 };

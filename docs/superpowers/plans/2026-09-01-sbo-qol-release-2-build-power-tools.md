@@ -398,8 +398,9 @@ saves pass `personal-preset`.
 Run:
 
 ```bash
-cd optimizer-v2
-spacetime build --project-path spacetimedb
+cd optimizer-v2/spacetimedb
+spacetime build
+cd ..
 spacetime generate --lang typescript --out-dir ./client/src/module_bindings --module-path ./spacetimedb --yes
 npm run typecheck
 ```

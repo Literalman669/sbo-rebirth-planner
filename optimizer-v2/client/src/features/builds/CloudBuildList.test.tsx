@@ -22,12 +22,14 @@ const profile: CharacterProfile = {
 const record: CloudBuildRecord = {
   headRevisionId: 'revision-1',
   profile,
+  kind: 'build',
   history: [
     {
       revisionId: 'revision-1',
       createdAt: '2026-08-29T10:00:00.000Z',
       datasetVersion: 'bootstrap-0',
       profile,
+      kind: 'build',
     },
   ],
 };

@@ -104,6 +104,7 @@ describe('cloud build mappers', () => {
   it('creates the exact reducer payload without BigInt values', () => {
     const payload = toSaveBuildRevisionArgs(
       profile,
+      'personal-preset',
       'revision-2',
       'revision-1',
     );
@@ -111,6 +112,7 @@ describe('cloud build mappers', () => {
     expect(payload).toMatchObject({
       buildId: 'build-a',
       revisionId: 'revision-2',
+      kind: 'personal-preset',
       parentRevisionId: 'revision-1',
       name: 'Alicization Route',
       profile: {
@@ -178,7 +180,11 @@ describe('cloud build mappers', () => {
 
   it('keeps the optional weapon-skill field explicit for generated reducers', () => {
     const { weaponSkill: _weaponSkill, ...withoutSkill } = profile;
-    const payload = toSaveBuildRevisionArgs(withoutSkill, 'revision-1');
+    const payload = toSaveBuildRevisionArgs(
+      withoutSkill,
+      'build',
+      'revision-1',
+    );
 
     expect(payload.profile).toHaveProperty('weaponSkill', undefined);
   });
@@ -186,6 +192,7 @@ describe('cloud build mappers', () => {
   it('keeps an explicit empty access preference optional for generated reducers', () => {
     const payload = toSaveBuildRevisionArgs(
       { ...profile, accessPreferences: undefined },
+      'build',
       'revision-1',
     );
 

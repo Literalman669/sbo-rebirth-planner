@@ -19,6 +19,7 @@ export default {
   buildId: __t.string(),
   revisionId: __t.string(),
   name: __t.string(),
+  kind: __t.option(__t.string()),
   parentRevisionId: __t.option(__t.string()),
   get profile() {
     return CloudProfileInput;

@@ -49,6 +49,7 @@ describe('PendingRevisionQueue', () => {
     expect((await queue.list('account-a')).map((row) => row.buildId)).toEqual([
       'build-a',
     ]);
+    expect((await queue.list('account-a'))[0]?.kind).toBe('build');
     expect((await queue.list('account-b')).map((row) => row.buildId)).toEqual([
       'build-b',
     ]);
@@ -83,7 +84,27 @@ describe('PendingRevisionQueue', () => {
 
     expect(await queue.listLegacyUnscoped()).toHaveLength(0);
     expect(await queue.list(subject)).toMatchObject([
-      { subject, revisionId: 'legacy-revision', attempts: 2 },
+      { subject, revisionId: 'legacy-revision', kind: 'build', attempts: 2 },
+    ]);
+  });
+
+  it('persists personal-preset kind through a fresh adapter and retry metadata', async () => {
+    const databaseName = `pending-kind-${crypto.randomUUID()}`;
+    const first = createPendingRevisionQueue({ databaseName });
+    await first.enqueue({
+      subject,
+      revisionId: 'preset-revision',
+      buildId: 'preset-build',
+      kind: 'personal-preset',
+      profile: profile('preset-build'),
+      enqueuedAt: '2026-08-29T10:00:01.000Z',
+      attempts: 0,
+    });
+    await first.incrementAttempts(subject, 'preset-revision');
+
+    const second = createPendingRevisionQueue({ databaseName });
+    await expect(second.list(subject)).resolves.toMatchObject([
+      { revisionId: 'preset-revision', kind: 'personal-preset', attempts: 1 },
     ]);
   });
 

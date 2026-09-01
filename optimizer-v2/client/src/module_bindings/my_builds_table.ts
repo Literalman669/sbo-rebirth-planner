@@ -18,4 +18,5 @@ export default __t.row({
   createdAt: __t.timestamp().name("created_at"),
   updatedAt: __t.timestamp().name("updated_at"),
   archivedAt: __t.option(__t.timestamp()).name("archived_at"),
+  kind: __t.string(),
 });

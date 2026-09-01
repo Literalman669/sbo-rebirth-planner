@@ -41,7 +41,7 @@ export function PlannerStateProvider({
   children,
   store = defaultStore,
 }: PlannerStateProviderProps) {
-  const { draft } = useBuildDraft();
+  const { draft, isHydrated: isDraftHydrated } = useBuildDraft();
   const [preferences, setPreferences] = useState<PlannerPreferences>(() => ({
     ...DEFAULT_PLANNER_PREFERENCES,
   }));
@@ -89,6 +89,10 @@ export function PlannerStateProvider({
   }, [store]);
 
   useEffect(() => {
+    if (!isDraftHydrated) {
+      setProgressBuildId(null);
+      return;
+    }
     let active = true;
     const buildId = draft.id;
     setProgressBuildId(null);
@@ -116,7 +120,7 @@ export function PlannerStateProvider({
     return () => {
       active = false;
     };
-  }, [draft.id, store]);
+  }, [draft.id, isDraftHydrated, store]);
 
   const updatePreferences = useCallback(
     (patch: Partial<PlannerPreferences>) => {
@@ -187,11 +191,14 @@ export function PlannerStateProvider({
       updateProgress,
       resetProgress,
       isHydrated:
-        preferencesHydrated && progressBuildId === draft.id,
+        isDraftHydrated &&
+        preferencesHydrated &&
+        progressBuildId === draft.id,
       storageError,
     }),
     [
       draft.id,
+      isDraftHydrated,
       preferences,
       preferencesHydrated,
       progress,

@@ -10,11 +10,11 @@ const source = readFileSync(
 test('appends new build columns after every deployed column with defaults', () => {
   assert.match(
     source,
-    /headRevisionId: t\.string\(\),[\s\S]*?createdAt: t\.timestamp\(\),[\s\S]*?updatedAt: t\.timestamp\(\),[\s\S]*?archivedAt: t\.timestamp\(\)\.optional\(\)\.default\(undefined\),/,
+    /headRevisionId: t\.string\(\),[\s\S]*?createdAt: t\.timestamp\(\),[\s\S]*?updatedAt: t\.timestamp\(\),[\s\S]*?archivedAt: t\.timestamp\(\)\.optional\(\)\.default\(undefined\),\s*kind: t\.string\(\)\.default\('build'\),/,
   );
   assert.match(
     source,
-    /datasetVersion: t\.string\(\),\s*createdAt: t\.timestamp\(\),\s*accessPreferences: t\.string\(\)\.optional\(\)\.default\(undefined\),/,
+    /datasetVersion: t\.string\(\),\s*createdAt: t\.timestamp\(\),\s*accessPreferences: t\.string\(\)\.optional\(\)\.default\(undefined\),\s*kind: t\.string\(\)\.default\('build'\),/,
   );
 });
 

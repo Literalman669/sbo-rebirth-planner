@@ -60,6 +60,7 @@ export const build = table(
     createdAt: t.timestamp(),
     updatedAt: t.timestamp(),
     archivedAt: t.timestamp().optional().default(undefined),
+    kind: t.string().default('build'),
   },
 );
 
@@ -138,6 +139,7 @@ export const buildRevision = table(
     datasetVersion: t.string(),
     createdAt: t.timestamp(),
     accessPreferences: t.string().optional().default(undefined),
+    kind: t.string().default('build'),
   },
 );
 
