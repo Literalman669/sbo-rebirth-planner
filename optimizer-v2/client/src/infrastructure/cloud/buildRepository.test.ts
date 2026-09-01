@@ -2,6 +2,7 @@ import 'fake-indexeddb/auto';
 import { describe, expect, it, vi } from 'vitest';
 import type { CharacterProfile } from '../../domain/build/model';
 import type { InventoryState } from '../../domain/inventory/state';
+import type { PortableBuildRecord } from '../../domain/build/portable';
 import { createGuestBuildStore } from '../storage/guestBuildStore';
 import { createInventoryStore } from '../storage/inventoryStore';
 import { createPendingRevisionQueue } from './pendingRevisionQueue';
@@ -542,6 +543,61 @@ describe('BuildRepository', () => {
       sourceRevisionId: 'revision-1',
       newRevisionId: 'restored-revision',
     });
+  });
+
+  it('queues an imported revision chain in parent order and resumes after failure', async () => {
+    const storage = adapters('repository-portable-import');
+    const importedProfile = profile('imported-build');
+    const record: PortableBuildRecord = {
+      profile: { ...importedProfile, level: 22 },
+      kind: 'personal-preset',
+      headRevisionId: 'import-revision-3',
+      createdAt: '2026-09-01T10:00:00.000Z',
+      updatedAt: '2026-09-01T12:00:00.000Z',
+      revisions: [20, 21, 22].map((level, index) => ({
+        id: `import-revision-${index + 1}`,
+        buildId: 'imported-build',
+        ...(index > 0
+          ? { parentRevisionId: `import-revision-${index}` }
+          : {}),
+        kind: 'personal-preset' as const,
+        profile: { ...importedProfile, level },
+        createdAt: `2026-09-01T1${index}:00:00.000Z`,
+      })),
+    };
+    let offline = true;
+    const replayed: string[] = [];
+    const cloud = reducers(async (args) => {
+      replayed.push(args.revisionId);
+      if (offline) throw new Error('offline');
+    });
+    const repository = createBuildRepository({
+      ...storage,
+      reducers: cloud,
+      accountSubject: subject,
+    });
+
+    await expect(repository.importBuildRecords([record])).resolves.toBe(
+      'cloud-pending',
+    );
+    const pending = await storage.pendingQueue.list(subject);
+    expect(pending).toMatchObject([
+      { revisionId: 'import-revision-1', attempts: 1, kind: 'personal-preset' },
+      { revisionId: 'import-revision-2', parentRevisionId: 'import-revision-1', attempts: 0, kind: 'personal-preset' },
+      { revisionId: 'import-revision-3', parentRevisionId: 'import-revision-2', attempts: 0, kind: 'personal-preset' },
+    ]);
+    expect(pending[0]).not.toHaveProperty('parentRevisionId');
+
+    offline = false;
+    await repository.retryPending();
+
+    expect(replayed).toEqual([
+      'import-revision-1',
+      'import-revision-1',
+      'import-revision-2',
+      'import-revision-3',
+    ]);
+    await expect(storage.pendingQueue.list(subject)).resolves.toEqual([]);
   });
 });
 

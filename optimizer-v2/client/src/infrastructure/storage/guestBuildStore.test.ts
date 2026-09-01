@@ -6,6 +6,12 @@ import type { PlanProgress } from '../../domain/planner/state';
 import { DEFAULT_PLANNER_PREFERENCES } from '../../domain/planner/stateSchema';
 import { buildStressProfile } from '../../test/stressFixtures';
 import {
+  createBuildBackup,
+  planBuildImport,
+  type BuildImportPlan,
+  type PortableBuildRecord,
+} from '../../domain/build/portable';
+import {
   createGuestBuildStore,
   GUEST_DATABASE_VERSION,
 } from './guestBuildStore';
@@ -526,5 +532,146 @@ describe('GuestBuildStore', () => {
       id: 'broken-build',
       error: 'Stored build is invalid',
     });
+  });
+
+  it('exports current profile, progress, kind, and complete local history', async () => {
+    const store = createGuestBuildStore({
+      databaseName: databaseName('portable-export'),
+      now: (() => {
+        const values = [
+          '2026-09-01T10:00:00.000Z',
+          '2026-09-01T11:00:00.000Z',
+        ];
+        return () => values.shift()!;
+      })(),
+    });
+    await store.saveBuild(profile('portable-build'), {
+      kind: 'personal-preset',
+      revisionId: 'portable-revision-1',
+    });
+    await store.saveBuild(
+      { ...profile('portable-build'), level: 9, stats: { str: 17, def: 0, agi: 3, vit: 7, luk: 0 } },
+      { kind: 'personal-preset', revisionId: 'portable-revision-2' },
+    );
+    await store.savePlanProgress({
+      schemaVersion: 1,
+      buildId: 'portable-build',
+      completedActionIds: ['level-9'],
+      dismissedRecommendationIds: [],
+    });
+
+    await expect(store.exportBuildRecords(['portable-build'])).resolves.toMatchObject([
+      {
+        kind: 'personal-preset',
+        profile: { id: 'portable-build', level: 9 },
+        headRevisionId: 'portable-revision-2',
+        planProgress: { buildId: 'portable-build', completedActionIds: ['level-9'] },
+        revisions: [
+          { id: 'portable-revision-1', kind: 'personal-preset' },
+          { id: 'portable-revision-2', parentRevisionId: 'portable-revision-1' },
+        ],
+      },
+    ]);
+  });
+
+  it('imports a duplicate plan atomically with remapped history and progress', async () => {
+    const store = createGuestBuildStore({ databaseName: databaseName('portable-import') });
+    await store.saveBuild(profile('source-build'), { revisionId: 'existing-head' });
+    const exported = (await store.exportBuildRecords(['source-build']))[0]!;
+    const ids = ['duplicate-build', 'duplicate-revision'];
+    const plan = planBuildImport(
+      createBuildBackup({
+        scope: 'single',
+        exportedAt: '2026-09-01T12:00:00.000Z',
+        records: [exported],
+      }),
+      new Map([['source-build', { headRevisionId: 'existing-head' }]]),
+      { randomUUID: () => ids.shift()! },
+    );
+
+    await store.importBuildPlan(plan);
+
+    expect(
+      (await store.listBuilds())
+        .filter((row) => row.ok)
+        .map((row) => row.value.profile.id)
+        .sort(),
+    ).toEqual(['duplicate-build', 'source-build']);
+    await expect(store.listBuildHistory('duplicate-build')).resolves.toMatchObject([
+      { id: 'duplicate-revision', buildId: 'duplicate-build' },
+    ]);
+  });
+
+  it('appends an overwrite plan to existing history without deleting the prior head', async () => {
+    const store = createGuestBuildStore({ databaseName: databaseName('portable-overwrite') });
+    await store.saveBuild(profile('overwrite-build'), { revisionId: 'existing-head' });
+    const incoming: PortableBuildRecord = {
+      profile: { ...profile('overwrite-build'), level: 9, stats: { str: 17, def: 0, agi: 3, vit: 7, luk: 0 } },
+      kind: 'build',
+      headRevisionId: 'incoming-head',
+      createdAt: '2026-09-01T11:00:00.000Z',
+      updatedAt: '2026-09-01T11:00:00.000Z',
+      revisions: [{
+        id: 'incoming-head',
+        buildId: 'overwrite-build',
+        kind: 'build',
+        profile: { ...profile('overwrite-build'), level: 9, stats: { str: 17, def: 0, agi: 3, vit: 7, luk: 0 } },
+        createdAt: '2026-09-01T11:00:00.000Z',
+      }],
+    };
+    const ids = ['imported-head'];
+    const plan = planBuildImport(
+      createBuildBackup({
+        scope: 'single',
+        exportedAt: '2026-09-01T12:00:00.000Z',
+        records: [incoming],
+      }),
+      new Map([['overwrite-build', { headRevisionId: 'existing-head' }]]),
+      { mode: 'overwrite', randomUUID: () => ids.shift()! },
+    );
+
+    await store.importBuildPlan(plan);
+
+    expect(await store.listBuildHistory('overwrite-build')).toMatchObject([
+      { id: 'existing-head' },
+      { id: 'imported-head', parentRevisionId: 'existing-head' },
+    ]);
+    expect(
+      (await store.listBuilds()).find(
+        (row) => row.ok && row.value.profile.id === 'overwrite-build',
+      ),
+    ).toMatchObject({ ok: true, value: { profile: { level: 9 } } });
+  });
+
+  it('rejects a malformed multi-record import before writing any record', async () => {
+    const store = createGuestBuildStore({ databaseName: databaseName('portable-rollback') });
+    const valid: PortableBuildRecord = {
+      profile: profile('valid-import'),
+      kind: 'build',
+      headRevisionId: 'valid-revision',
+      createdAt: '2026-09-01T10:00:00.000Z',
+      updatedAt: '2026-09-01T10:00:00.000Z',
+      revisions: [{
+        id: 'valid-revision',
+        buildId: 'valid-import',
+        kind: 'build',
+        profile: profile('valid-import'),
+        createdAt: '2026-09-01T10:00:00.000Z',
+      }],
+    };
+    const malformed = {
+      ...structuredClone(valid),
+      profile: { ...valid.profile, id: 'malformed-import', level: 0 },
+    } as unknown as PortableBuildRecord;
+    const plan = {
+      mode: 'duplicate',
+      records: [valid, malformed],
+      preview: [],
+    } satisfies BuildImportPlan;
+
+    await expect(store.importBuildPlan(plan)).rejects.toThrow(
+      'Build import plan is invalid',
+    );
+    await expect(store.listBuilds()).resolves.toEqual([]);
   });
 });

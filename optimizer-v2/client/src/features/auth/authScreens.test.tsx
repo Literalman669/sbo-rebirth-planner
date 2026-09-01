@@ -63,6 +63,8 @@ function homeDraftContext(): BuildDraftContextValue {
     savePersonalPreset: async () => profile(),
     loadSavedBuildHistory: async () => [],
     restoreSavedBuildRevision: async () => profile(),
+    exportSavedBuildRecords: async () => [],
+    importSavedBuildPlan: async () => undefined,
     quarantinedRecords: [],
     exportQuarantinedRecord: async () => null,
     deleteQuarantinedRecord: async () => undefined,

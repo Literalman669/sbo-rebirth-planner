@@ -52,6 +52,20 @@ export interface BuildImportPlan {
   preview: BuildImportPreviewRow[];
 }
 
+export interface CloudPortableBuildSource {
+  profile: CharacterProfile;
+  kind: SavedBuildKind;
+  headRevisionId: string;
+  archivedAt?: string;
+  history: Array<{
+    revisionId: string;
+    createdAt: string;
+    datasetVersion: string;
+    profile: CharacterProfile;
+    kind: SavedBuildKind;
+  }>;
+}
+
 const strictProfileSchema = characterProfileSchema.strict();
 
 const portableRevisionSchema = buildRevisionSnapshotSchema.superRefine(
@@ -214,6 +228,41 @@ export function parseBuildBackup(text: string): PortableBuildEnvelope {
     throw new Error('Build backup is invalid or unsupported');
   }
   return normalizeEnvelope(parsed.data);
+}
+
+export function portableRecordFromCloud(
+  source: CloudPortableBuildSource,
+  planProgress?: PlanProgress,
+): PortableBuildRecord {
+  const history = [...source.history].sort(
+    (left, right) =>
+      left.createdAt.localeCompare(right.createdAt) ||
+      left.revisionId.localeCompare(right.revisionId),
+  );
+  const revisions = history.map((revision, index) =>
+    buildRevisionSnapshotSchema.parse({
+      id: revision.revisionId,
+      buildId: source.profile.id,
+      ...(index > 0
+        ? { parentRevisionId: history[index - 1]!.revisionId }
+        : {}),
+      kind: revision.kind,
+      profile: revision.profile,
+      createdAt: revision.createdAt,
+    }),
+  );
+  return portableRecordSchema.parse({
+    profile: source.profile,
+    kind: source.kind,
+    headRevisionId: source.headRevisionId,
+    createdAt: history[0]?.createdAt,
+    updatedAt:
+      history.find((revision) => revision.revisionId === source.headRevisionId)
+        ?.createdAt ?? history.at(-1)?.createdAt,
+    archivedAt: source.archivedAt,
+    ...(planProgress ? { planProgress } : {}),
+    revisions,
+  });
 }
 
 function importedName(profile: CharacterProfile) {

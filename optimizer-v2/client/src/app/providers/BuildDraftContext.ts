@@ -2,6 +2,10 @@ import { createContext, useContext } from 'react';
 import type { CharacterProfile } from '../../domain/build/model';
 import type { BuildRevisionSnapshot } from '../../domain/build/record';
 import type {
+  BuildImportPlan,
+  PortableBuildRecord,
+} from '../../domain/build/portable';
+import type {
   DraftPersistenceStatus,
   QuarantinedRecord,
 } from '../../domain/planner/state';
@@ -34,6 +38,8 @@ export type BuildDraftContextValue = {
     buildId: string,
     revisionId: string,
   ): Promise<CharacterProfile>;
+  exportSavedBuildRecords(ids?: readonly string[]): Promise<PortableBuildRecord[]>;
+  importSavedBuildPlan(plan: BuildImportPlan): Promise<void>;
   quarantinedRecords: readonly QuarantinedRecord[];
   exportQuarantinedRecord(id: string): Promise<string | null>;
   deleteQuarantinedRecord(id: string): Promise<void>;

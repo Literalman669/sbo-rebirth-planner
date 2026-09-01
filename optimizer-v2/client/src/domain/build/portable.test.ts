@@ -6,6 +6,7 @@ import {
   createBuildBackup,
   parseBuildBackup,
   planBuildImport,
+  portableRecordFromCloud,
   serializeBuildBackup,
 } from './portable';
 
@@ -192,5 +193,67 @@ describe('portable build backups', () => {
       'overwrite',
       'create',
     ]);
+  });
+
+  it('converts available cloud history into a portable parent chain', () => {
+    const first = profile('cloud-build');
+    const second = { ...first, level: 9, stats: { ...first.stats, str: 17 } };
+
+    expect(
+      portableRecordFromCloud({
+        profile: second,
+        kind: 'personal-preset',
+        headRevisionId: 'cloud-revision-2',
+        archivedAt: '2026-09-01T12:00:00.000Z',
+        history: [
+          {
+            revisionId: 'cloud-revision-1',
+            createdAt: '2026-09-01T10:00:00.000Z',
+            datasetVersion: first.datasetVersion,
+            profile: first,
+            kind: 'personal-preset',
+          },
+          {
+            revisionId: 'cloud-revision-2',
+            createdAt: '2026-09-01T11:00:00.000Z',
+            datasetVersion: second.datasetVersion,
+            profile: second,
+            kind: 'personal-preset',
+          },
+        ],
+      }),
+    ).toMatchObject({
+      kind: 'personal-preset',
+      createdAt: '2026-09-01T10:00:00.000Z',
+      updatedAt: '2026-09-01T11:00:00.000Z',
+      archivedAt: '2026-09-01T12:00:00.000Z',
+      revisions: [
+        { id: 'cloud-revision-1' },
+        { id: 'cloud-revision-2', parentRevisionId: 'cloud-revision-1' },
+      ],
+    });
+    expect(
+      portableRecordFromCloud({
+        profile: second,
+        kind: 'personal-preset',
+        headRevisionId: 'cloud-revision-2',
+        history: [
+          {
+            revisionId: 'cloud-revision-1',
+            createdAt: '2026-09-01T10:00:00.000Z',
+            datasetVersion: first.datasetVersion,
+            profile: first,
+            kind: 'personal-preset',
+          },
+          {
+            revisionId: 'cloud-revision-2',
+            createdAt: '2026-09-01T11:00:00.000Z',
+            datasetVersion: second.datasetVersion,
+            profile: second,
+            kind: 'personal-preset',
+          },
+        ],
+      }).revisions[0],
+    ).not.toHaveProperty('parentRevisionId');
   });
 });

@@ -8,6 +8,15 @@ import { CloudBuildList } from './CloudBuildList';
 import { GuestImportDialog } from './GuestImportDialog';
 import { LocalBuildList } from './LocalBuildList';
 import { BuildWorkspaceNav } from './BuildWorkspaceNav';
+import {
+  createBuildBackup,
+  portableRecordFromCloud,
+  serializeBuildBackup,
+  type PortableBuildRecord,
+} from '../../domain/build/portable';
+import { mergeBuildLibrary } from '../../domain/build/library';
+import { BuildBackupDialog } from './BuildBackupDialog';
+import { BuildImportDialog } from './BuildImportDialog';
 
 type BuildStatus = 'active' | 'archived' | 'all';
 type BuildSort = 'updated' | 'name' | 'level' | 'floor';
@@ -16,12 +25,23 @@ function buildName(profile: CharacterProfile) {
   return profile.name ?? `Level ${profile.level} build`;
 }
 
-function exportProfile(profile: CharacterProfile) {
-  const blob = new Blob([JSON.stringify(profile, null, 2)], { type: 'application/json' });
+function downloadBuildBackup(
+  records: readonly PortableBuildRecord[],
+  scope: 'single' | 'library',
+  filename: string,
+) {
+  const json = serializeBuildBackup(
+    createBuildBackup({
+      scope,
+      exportedAt: new Date().toISOString(),
+      records,
+    }),
+  );
+  const blob = new Blob([json], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement('a');
   anchor.href = url;
-  anchor.download = `${buildName(profile).replace(/[^a-z0-9]+/gi, '-').toLowerCase()}.json`;
+  anchor.download = filename;
   anchor.click();
   URL.revokeObjectURL(url);
 }
@@ -70,6 +90,8 @@ export function BuildsScreen() {
     quarantinedRecords,
     savedBuilds,
     setBuildArchived,
+    exportSavedBuildRecords,
+    importSavedBuildPlan,
   } = useBuildDraft();
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState<BuildStatus>('active');
@@ -84,6 +106,11 @@ export function BuildsScreen() {
     source: 'local' | 'cloud';
   } | null>(null);
   const cancelDeleteRef = useRef<HTMLButtonElement>(null);
+  const backupTriggerRef = useRef<HTMLButtonElement>(null);
+  const importTriggerRef = useRef<HTMLButtonElement>(null);
+  const [backupOpen, setBackupOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
+  const [backupRecords, setBackupRecords] = useState<PortableBuildRecord[]>([]);
   const localProfiles = savedBuilds.flatMap((result) => result.ok ? [result.value.profile] : []);
   const visibleLocalBuilds = useMemo(
     () => filterAndSortLocalBuilds(savedBuilds, search, status, sort),
@@ -106,6 +133,42 @@ export function BuildsScreen() {
         return (b.history.at(-1)?.createdAt ?? '').localeCompare(a.history.at(-1)?.createdAt ?? '');
       });
   }, [cloud?.archivedCloudBuilds, cloud?.cloudBuilds, search, sort, status]);
+  const allCloudBuilds = useMemo(
+    () => [...(cloud?.cloudBuilds ?? []), ...(cloud?.archivedCloudBuilds ?? [])],
+    [cloud?.archivedCloudBuilds, cloud?.cloudBuilds],
+  );
+  const libraryEntries = useMemo(
+    () => mergeBuildLibrary(savedBuilds, allCloudBuilds),
+    [allCloudBuilds, savedBuilds],
+  );
+  const existingBuilds = useMemo(
+    () =>
+      new Map(
+        libraryEntries.map((entry) => [
+          entry.id,
+          { headRevisionId: entry.headRevisionId },
+        ]),
+      ),
+    [libraryEntries],
+  );
+
+  const loadPortableLibrary = async () => {
+    const local = await exportSavedBuildRecords();
+    const records = new Map<string, PortableBuildRecord>();
+    for (const record of allCloudBuilds) {
+      records.set(
+        record.profile.id,
+        portableRecordFromCloud(
+          record,
+          cloud?.cloudPlanProgress.find(
+            (progress) => progress.buildId === record.profile.id,
+          ),
+        ),
+      );
+    }
+    for (const record of local) records.set(record.profile.id, record);
+    return [...records.values()];
+  };
 
   useEffect(() => {
     if (deleteTarget) cancelDeleteRef.current?.focus();
@@ -121,6 +184,34 @@ export function BuildsScreen() {
         <p>Search, compare, organize, and reopen every route from one place.</p>
       </header>
       <BuildWorkspaceNav />
+
+      <section className="build-library-tools" aria-label="Build portable tools">
+        <button
+          ref={importTriggerRef}
+          type="button"
+          onClick={() => setImportOpen(true)}
+        >
+          Import builds
+        </button>
+        <button
+          ref={backupTriggerRef}
+          type="button"
+          onClick={() => {
+            void loadPortableLibrary()
+              .then((records) => {
+                setBackupRecords(records);
+                setBackupOpen(true);
+              })
+              .catch((error: unknown) =>
+                setMessage(
+                  error instanceof Error ? error.message : 'Build export failed',
+                ),
+              );
+          }}
+        >
+          Back up library
+        </button>
+      </section>
 
       <section className="build-library-toolbar" aria-label="Build library controls">
         <label className="build-library-search">
@@ -176,7 +267,15 @@ export function BuildsScreen() {
             onLoad={(build) => { loadSavedBuild(build); navigate('/character'); }}
             onDuplicate={(id) => { void duplicateSavedBuild(id).then(() => setMessage('Build duplicated.')); }}
             onArchive={(id, archived) => { void setBuildArchived(id, archived).then(() => setMessage(archived ? 'Build archived.' : 'Build restored.')); }}
-            onExport={exportProfile}
+            onExport={(profile) => {
+              void exportSavedBuildRecords([profile.id]).then((records) =>
+                downloadBuildBackup(
+                  records,
+                  'single',
+                  `${buildName(profile).replace(/[^a-z0-9]+/gi, '-').toLowerCase()}-v1.json`,
+                ),
+              );
+            }}
             onCompare={(id) => navigate(`/builds/compare?left=${encodeURIComponent(id)}`)}
             onSaveAsPreset={(profile) => {
               const name = `${buildName(profile)} preset`.slice(0, 60);
@@ -218,7 +317,20 @@ export function BuildsScreen() {
           onArchive={(buildId, archived) => {
             void cloud.repository.archive(buildId, archived).then(() => setMessage(archived ? 'Cloud build archived.' : 'Cloud build restored.'));
           }}
-          onExport={exportProfile}
+          onExport={(record) =>
+            downloadBuildBackup(
+              [
+                portableRecordFromCloud(
+                  record,
+                  cloud.cloudPlanProgress.find(
+                    (progress) => progress.buildId === record.profile.id,
+                  ),
+                ),
+              ],
+              'single',
+              `${buildName(record.profile).replace(/[^a-z0-9]+/gi, '-').toLowerCase()}-v1.json`,
+            )
+          }
           onCompare={(id) => navigate(`/builds/compare?left=${encodeURIComponent(id)}`)}
           onSaveAsPreset={(profile) => {
             const name = `${buildName(profile)} preset`.slice(0, 60);
@@ -308,6 +420,42 @@ export function BuildsScreen() {
             </div>
           </div>
         </div>
+      ) : null}
+      {backupOpen ? (
+        <BuildBackupDialog
+          records={backupRecords}
+          cloudAvailable={Boolean(cloud?.isAuthenticated && cloud.isReady)}
+          onClose={() => {
+            setBackupOpen(false);
+            backupTriggerRef.current?.focus();
+          }}
+        />
+      ) : null}
+      {importOpen ? (
+        <BuildImportDialog
+          existing={existingBuilds}
+          onClose={() => {
+            setImportOpen(false);
+            importTriggerRef.current?.focus();
+          }}
+          onImport={async (plan) => {
+            await importSavedBuildPlan(plan);
+            if (!cloud?.isAuthenticated) {
+              setMessage('Builds imported locally.');
+              return 'local';
+            }
+            const location = await cloud.repository.importBuildRecords(
+              plan.records,
+            );
+            await cloud.refreshPending();
+            setMessage(
+              location === 'cloud'
+                ? 'Builds imported and synced.'
+                : 'Builds imported locally and queued for cloud sync.',
+            );
+            return location;
+          }}
+        />
       ) : null}
     </main>
   );

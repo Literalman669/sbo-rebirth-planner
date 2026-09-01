@@ -45,6 +45,33 @@ async function renderBuilds() {
 }
 
 describe('BuildsScreen', () => {
+  it('opens focused import and backup dialogs from the library toolbar', async () => {
+    const user = userEvent.setup();
+    await renderBuilds();
+    await screen.findByRole('heading', { name: 'Your Builds' });
+
+    const importButton = screen.getByRole('button', { name: 'Import builds' });
+    await user.click(importButton);
+    expect(
+      screen.getByRole('dialog', { name: 'Import builds' }),
+    ).toBeVisible();
+    await user.click(screen.getByRole('button', { name: 'Close' }));
+    expect(importButton).toHaveFocus();
+
+    const backupButton = screen.getByRole('button', { name: 'Back up library' });
+    await user.click(backupButton);
+    expect(
+      await screen.findByRole('dialog', { name: 'Build backups' }),
+    ).toBeVisible();
+    expect(
+      screen.getByText(
+        'Cloud builds are unavailable; this backup contains local records only.',
+      ),
+    ).toBeVisible();
+    await user.click(screen.getByRole('button', { name: 'Close' }));
+    expect(backupButton).toHaveFocus();
+  });
+
   it('searches, renames, duplicates, and archives local builds', async () => {
     const user = userEvent.setup();
     await renderBuilds();

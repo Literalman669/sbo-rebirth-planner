@@ -316,6 +316,19 @@ export function BuildDraftProvider({
     [replaceDraft, store],
   );
 
+  const exportSavedBuildRecords = useCallback(
+    (ids?: readonly string[]) => store.exportBuildRecords(ids),
+    [store],
+  );
+
+  const importSavedBuildPlan = useCallback(
+    async (plan: Parameters<GuestBuildStore['importBuildPlan']>[0]) => {
+      await store.importBuildPlan(plan);
+      setSavedBuilds(await store.listBuilds());
+    },
+    [store],
+  );
+
   const exportQuarantinedRecord = useCallback(
     (id: string) => store.exportQuarantinedRecord(id),
     [store],
@@ -374,6 +387,8 @@ export function BuildDraftProvider({
       savePersonalPreset,
       loadSavedBuildHistory,
       restoreSavedBuildRevision,
+      exportSavedBuildRecords,
+      importSavedBuildPlan,
       quarantinedRecords,
       exportQuarantinedRecord,
       deleteQuarantinedRecord,
@@ -408,6 +423,8 @@ export function BuildDraftProvider({
       savePersonalPreset,
       loadSavedBuildHistory,
       restoreSavedBuildRevision,
+      exportSavedBuildRecords,
+      importSavedBuildPlan,
       quarantinedRecords,
       exportQuarantinedRecord,
       deleteQuarantinedRecord,

@@ -1,5 +1,6 @@
 import type { CharacterProfile } from '../../domain/build/model';
 import type { SavedBuildKind } from '../../domain/build/record';
+import type { PortableBuildRecord } from '../../domain/build/portable';
 import type { InventoryState } from '../../domain/inventory/state';
 import type {
   PlannerPreferences,
@@ -169,6 +170,9 @@ export interface BuildRepository {
     location: 'local' | 'cloud-pending' | 'cloud';
   }>;
   importGuestBuilds(ids: readonly string[]): Promise<void>;
+  importBuildRecords(
+    records: readonly PortableBuildRecord[],
+  ): Promise<'cloud' | 'cloud-pending'>;
   retryPending(): Promise<void>;
   retryPendingPlannerState(): Promise<void>;
   savePlanProgress(
@@ -343,6 +347,44 @@ export function createBuildRepository({
         }
       }
       await reducers.completeGuestImport();
+    },
+
+    async importBuildRecords(records) {
+      if (!reducers || !accountSubject) {
+        throw new Error('Sign in is required for cloud import');
+      }
+      const subject = accountSubject;
+      const snapshot = getCloudSnapshot();
+      const pending = await pendingQueue.list(subject);
+      for (const record of records) {
+        const pendingForBuild = pending.filter(
+          (revision) => revision.buildId === record.profile.id,
+        );
+        let parentRevisionId =
+          pendingForBuild.at(-1)?.revisionId ??
+          snapshot.builds.find((build) => build.id === record.profile.id)
+            ?.headRevisionId;
+        for (const revision of record.revisions) {
+          await pendingQueue.enqueue({
+            subject,
+            revisionId: revision.id,
+            buildId: revision.buildId,
+            kind: revision.kind,
+            profile: revision.profile,
+            ...(parentRevisionId ? { parentRevisionId } : {}),
+            enqueuedAt: revision.createdAt,
+            attempts: 0,
+          });
+          parentRevisionId = revision.id;
+        }
+      }
+      await this.retryPending();
+      const importedIds = new Set(records.map((record) => record.profile.id));
+      return (await pendingQueue.list(subject)).some((revision) =>
+        importedIds.has(revision.buildId),
+      )
+        ? 'cloud-pending'
+        : 'cloud';
     },
 
     async retryPending() {

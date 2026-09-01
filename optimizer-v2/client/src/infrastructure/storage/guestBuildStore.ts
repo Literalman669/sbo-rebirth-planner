@@ -14,6 +14,10 @@ import {
   savedBuildRecordSchema,
 } from '../../domain/build/recordSchema';
 import type {
+  BuildImportPlan,
+  PortableBuildRecord,
+} from '../../domain/build/portable';
+import type {
   PlannerPreferences,
   PlanProgress,
   QuarantinedRecord,
@@ -70,6 +74,8 @@ export interface GuestBuildStore {
     sourceRevisionId: string,
     newRevisionId: string,
   ): Promise<CharacterProfile>;
+  exportBuildRecords(ids?: readonly string[]): Promise<PortableBuildRecord[]>;
+  importBuildPlan(plan: BuildImportPlan): Promise<void>;
   deleteBuild(id: string): Promise<void>;
   renameBuild(id: string, name: string): Promise<void>;
   duplicateBuild(
@@ -108,6 +114,86 @@ function sameSavedInput(
     current.kind === kind &&
     JSON.stringify(current.profile) === JSON.stringify(profile)
   );
+}
+
+function sortRevisionHistory(
+  revisions: readonly BuildRevisionSnapshot[],
+): BuildRevisionSnapshot[] {
+  const byId = new Map(revisions.map((revision) => [revision.id, revision]));
+  const visited = new Set<string>();
+  const ordered: BuildRevisionSnapshot[] = [];
+  const visit = (revision: BuildRevisionSnapshot) => {
+    if (visited.has(revision.id)) return;
+    visited.add(revision.id);
+    const parent = revision.parentRevisionId
+      ? byId.get(revision.parentRevisionId)
+      : undefined;
+    if (parent) visit(parent);
+    ordered.push(revision);
+  };
+  for (const revision of [...revisions].sort(
+    (left, right) =>
+      left.createdAt.localeCompare(right.createdAt) ||
+      left.id.localeCompare(right.id),
+  )) {
+    visit(revision);
+  }
+  return ordered;
+}
+
+function validateImportPlan(plan: BuildImportPlan) {
+  if (
+    !plan ||
+    !['duplicate', 'overwrite'].includes(plan.mode) ||
+    !Array.isArray(plan.records) ||
+    plan.records.length > 250
+  ) {
+    throw new Error('Build import plan is invalid');
+  }
+  const buildIds = new Set<string>();
+  try {
+    for (const record of plan.records) {
+      const current = savedBuildRecordSchema.parse({
+        profile: record.profile,
+        kind: record.kind,
+        headRevisionId: record.headRevisionId,
+        createdAt: record.createdAt,
+        updatedAt: record.updatedAt,
+        archivedAt: record.archivedAt,
+      });
+      if (buildIds.has(current.profile.id)) throw new Error('duplicate build');
+      buildIds.add(current.profile.id);
+      if (record.revisions.length < 1 || record.revisions.length > 100) {
+        throw new Error('invalid revision count');
+      }
+      const revisionIds = new Set<string>();
+      for (const [index, rawRevision] of record.revisions.entries()) {
+        const revision = buildRevisionSnapshotSchema.parse(rawRevision);
+        if (
+          revision.buildId !== current.profile.id ||
+          revisionIds.has(revision.id) ||
+          (index > 0 &&
+            revision.parentRevisionId !== undefined &&
+            !revisionIds.has(revision.parentRevisionId))
+        ) {
+          throw new Error('invalid revision chain');
+        }
+        revisionIds.add(revision.id);
+      }
+      const head = record.revisions.find(
+        (revision) => revision.id === current.headRevisionId,
+      );
+      if (!head || head.kind !== current.kind) throw new Error('invalid head');
+      if (record.planProgress) {
+        const progress = planProgressSchema.parse(record.planProgress);
+        if (progress.buildId !== current.profile.id) {
+          throw new Error('invalid progress owner');
+        }
+      }
+    }
+  } catch {
+    throw new Error('Build import plan is invalid');
+  }
 }
 
 export function createGuestBuildStore({
@@ -285,18 +371,13 @@ export function createGuestBuildStore({
     async listBuildHistory(buildId) {
       const validBuildId = storedIdSchema.parse(buildId);
       const database = await databasePromise;
-      return (await database.getAll('build-revisions'))
+      return sortRevisionHistory((await database.getAll('build-revisions'))
         .flatMap((raw) => {
           const parsed = buildRevisionSnapshotSchema.safeParse(raw);
           return parsed.success && parsed.data.buildId === validBuildId
             ? [parsed.data]
             : [];
-        })
-        .sort(
-          (left, right) =>
-            left.createdAt.localeCompare(right.createdAt) ||
-            left.id.localeCompare(right.id),
-        );
+        }));
     },
 
     async restoreBuildRevision(buildId, sourceRevisionId, newRevisionId) {
@@ -365,6 +446,129 @@ export function createGuestBuildStore({
       await transaction.objectStore('builds').put(stored, validBuildId);
       await transaction.done;
       return restoredProfile;
+    },
+
+    async exportBuildRecords(ids) {
+      const selectedIds = ids ? new Set(ids.map((id) => storedIdSchema.parse(id))) : null;
+      const builds = (await this.listBuilds()).flatMap((result) =>
+        result.ok && (!selectedIds || selectedIds.has(result.value.profile.id))
+          ? [result.value]
+          : [],
+      );
+      if (selectedIds && builds.length !== selectedIds.size) {
+        throw new Error('One or more selected builds are unavailable');
+      }
+      const database = await databasePromise;
+      const transaction = database.transaction(
+        ['build-revisions', 'plan-progress'],
+        'readonly',
+      );
+      const [rawRevisions, rawProgress] = await Promise.all([
+        transaction.objectStore('build-revisions').getAll(),
+        transaction.objectStore('plan-progress').getAll(),
+      ]);
+      await transaction.done;
+      const revisions = rawRevisions.flatMap((raw) => {
+        const parsed = buildRevisionSnapshotSchema.safeParse(raw);
+        return parsed.success ? [parsed.data] : [];
+      });
+      const progress = rawProgress.flatMap((raw) => {
+        const parsed = planProgressSchema.safeParse(raw);
+        return parsed.success ? [parsed.data] : [];
+      });
+      return builds.map<PortableBuildRecord>((build) => ({
+        profile: structuredClone(build.profile),
+        kind: build.kind,
+        headRevisionId: build.headRevisionId,
+        createdAt: build.createdAt,
+        updatedAt: build.updatedAt,
+        ...(build.archivedAt ? { archivedAt: build.archivedAt } : {}),
+        ...(progress.find((item) => item.buildId === build.profile.id)
+          ? {
+              planProgress: structuredClone(
+                progress.find((item) => item.buildId === build.profile.id)!,
+              ),
+            }
+          : {}),
+        revisions: sortRevisionHistory(
+          revisions
+            .filter((revision) => revision.buildId === build.profile.id)
+            .map((revision) => structuredClone(revision)),
+        ),
+      }));
+    },
+
+    async importBuildPlan(plan) {
+      validateImportPlan(plan);
+      const database = await databasePromise;
+      const transaction = database.transaction(
+        ['builds', 'build-revisions', 'plan-progress'],
+        'readwrite',
+      );
+      try {
+        const prepared: Array<{
+          record: PortableBuildRecord;
+          current: SavedBuildRecord;
+        }> = [];
+        for (const record of plan.records) {
+          const existingRaw = await transaction.objectStore('builds').get(
+            record.profile.id,
+          );
+          if (plan.mode === 'duplicate' && existingRaw !== undefined) {
+            throw new Error('Duplicate import target already exists');
+          }
+          const existing = existingRaw === undefined
+            ? null
+            : migrateSavedBuildRecord(existingRaw);
+          for (const revision of record.revisions) {
+            if (
+              await transaction.objectStore('build-revisions').get(
+                revisionKey(revision.buildId, revision.id),
+              )
+            ) {
+              throw new Error('Imported revision ID already exists');
+            }
+          }
+          prepared.push({
+            record,
+            current: savedBuildRecordSchema.parse({
+              profile: record.profile,
+              kind: record.kind,
+              headRevisionId: record.headRevisionId,
+              createdAt: existing?.createdAt ?? record.createdAt,
+              updatedAt: record.updatedAt,
+              archivedAt: record.archivedAt,
+            }),
+          });
+        }
+        for (const { record, current } of prepared) {
+          for (const revision of record.revisions) {
+            await transaction.objectStore('build-revisions').put(
+              revision,
+              revisionKey(revision.buildId, revision.id),
+            );
+          }
+          if (record.planProgress) {
+            await transaction.objectStore('plan-progress').put(
+              record.planProgress,
+              record.planProgress.buildId,
+            );
+          }
+          await transaction.objectStore('builds').put(
+            current,
+            current.profile.id,
+          );
+        }
+        await transaction.done;
+      } catch (error) {
+        try {
+          transaction.abort();
+        } catch {
+          // The transaction may already have aborted or completed.
+        }
+        await transaction.done.catch(() => undefined);
+        throw error;
+      }
     },
 
     async deleteBuild(id) {

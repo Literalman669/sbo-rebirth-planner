@@ -30,6 +30,8 @@ const draftLifecycleActions = {
   savePersonalPreset: vi.fn(),
   loadSavedBuildHistory: vi.fn(),
   restoreSavedBuildRevision: vi.fn(),
+  exportSavedBuildRecords: vi.fn(),
+  importSavedBuildPlan: vi.fn(),
   quarantinedRecords: [],
   exportQuarantinedRecord: vi.fn(),
   deleteQuarantinedRecord: vi.fn(),
@@ -69,6 +71,7 @@ vi.mock('../../infrastructure/cloud/useCloudBuilds', () => ({
     repository: {
       save: cloud.save,
       importGuestBuilds: vi.fn(),
+      importBuildRecords: vi.fn(),
       retryPending: vi.fn(),
       restore: vi.fn(),
       delete: vi.fn(),

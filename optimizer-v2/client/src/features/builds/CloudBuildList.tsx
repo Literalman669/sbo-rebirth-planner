@@ -10,7 +10,7 @@ type CloudBuildListProps = {
   onRename(buildId: string, name: string): void;
   onDuplicate(profile: CharacterProfile): void;
   onArchive(buildId: string, archived: boolean): void;
-  onExport(profile: CharacterProfile): void;
+  onExport(record: CloudBuildRecord): void;
   onShare(buildId: string): void;
   onCompare?(buildId: string): void;
   onSaveAsPreset?(profile: CharacterProfile): void;
@@ -87,7 +87,7 @@ export function CloudBuildList({
                     <button type="button" aria-label={`Duplicate ${name}`} onClick={() => onDuplicate(build)}>Duplicate</button>
                     <button type="button" aria-label={`History for ${name}`} onClick={() => onHistory(build.id)}>History</button>
                     <button type="button" aria-label={`${record.archivedAt ? 'Unarchive' : 'Archive'} ${name}`} onClick={() => onArchive(build.id, !record.archivedAt)}>{record.archivedAt ? 'Unarchive' : 'Archive'}</button>
-                    <button type="button" aria-label={`Export ${name}`} onClick={() => onExport(build)}>Export</button>
+                    <button type="button" aria-label={`Export ${name}`} onClick={() => onExport(record)}>Export</button>
                     {record.kind === 'build' ? (
                       <button type="button" aria-label={`Share ${name}`} onClick={() => onShare(build.id)}>Share</button>
                     ) : null}
