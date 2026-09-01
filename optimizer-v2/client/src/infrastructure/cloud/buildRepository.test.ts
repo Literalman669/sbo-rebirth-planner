@@ -12,6 +12,7 @@ import {
   createCloudBuildSelector,
   type CloudReducers,
 } from './buildRepository';
+import { progressFixture } from '../../test/progressFixtures';
 
 function profile(id = 'build-a'): CharacterProfile {
   return {
@@ -314,12 +315,7 @@ describe('BuildRepository', () => {
       accountSubject: subject,
       now: () => '2026-08-30T10:00:00.000Z',
     });
-    const planProgress = {
-      schemaVersion: 1 as const,
-      buildId: 'build-a',
-      completedActionIds: ['level-21'],
-      dismissedRecommendationIds: [],
-    };
+    const planProgress = progressFixture('build-a', ['level-21']);
     const plannerPreferences = {
       schemaVersion: 1 as const,
       mode: 'beginner' as const,
@@ -378,12 +374,7 @@ describe('BuildRepository', () => {
       kind: 'progress',
       subject,
       mutationId: 'progress:build-a',
-      progress: {
-        schemaVersion: 1,
-        buildId: 'build-a',
-        completedActionIds: ['level-21'],
-        dismissedRecommendationIds: [],
-      },
+      progress: progressFixture('build-a', ['level-21']),
       enqueuedAt: '2026-08-30T10:00:00.000Z',
       attempts: 0,
     });

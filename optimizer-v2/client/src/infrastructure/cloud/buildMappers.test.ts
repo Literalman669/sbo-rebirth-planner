@@ -56,12 +56,36 @@ describe('cloud build mappers', () => {
       completedActionIds: ['level-2'],
       dismissedRecommendationIds: [],
     };
+    const migratedProgress = {
+      schemaVersion: 2,
+      buildId: 'build-1',
+      objectives: [
+        {
+          actionKey: 'level-2',
+          category: 'manual-objective',
+          status: 'completed',
+          source: 'legacy',
+          planFingerprint: 'legacy',
+        },
+      ],
+      history: [
+        {
+          id: 'legacy:completed:level-2',
+          actionKey: 'level-2',
+          category: 'manual-objective',
+          label: 'level-2',
+          outcome: 'completed',
+          source: 'legacy',
+          planFingerprint: 'legacy',
+        },
+      ],
+    };
     expect(
       planProgressFromCloudRow({
         buildId: 'build-1',
         progressJson: JSON.stringify(progress),
       }),
-    ).toEqual(progress);
+    ).toEqual(migratedProgress);
   });
 
   it('preserves the last validated preference row after a malformed update', () => {
@@ -88,17 +112,41 @@ describe('cloud build mappers', () => {
       completedActionIds: ['level-2'],
       dismissedRecommendationIds: [],
     };
+    const migratedProgress = {
+      schemaVersion: 2,
+      buildId: 'build-1',
+      objectives: [
+        {
+          actionKey: 'level-2',
+          category: 'manual-objective',
+          status: 'completed',
+          source: 'legacy',
+          planFingerprint: 'legacy',
+        },
+      ],
+      history: [
+        {
+          id: 'legacy:completed:level-2',
+          actionKey: 'level-2',
+          category: 'manual-objective',
+          label: 'level-2',
+          outcome: 'completed',
+          source: 'legacy',
+          planFingerprint: 'legacy',
+        },
+      ],
+    };
     const selector = createPlanProgressSelector();
     expect(
       selector.select([
         { buildId: 'build-1', progressJson: JSON.stringify(progress) },
       ]),
-    ).toEqual([progress]);
+    ).toEqual([migratedProgress]);
     expect(
       selector.select([
         { buildId: 'build-1', progressJson: '{"schemaVersion":99}' },
       ]),
-    ).toEqual([progress]);
+    ).toEqual([migratedProgress]);
   });
 
   it('creates the exact reducer payload without BigInt values', () => {

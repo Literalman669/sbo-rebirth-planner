@@ -2,14 +2,10 @@ import 'fake-indexeddb/auto';
 import { describe, expect, it } from 'vitest';
 import { openPlannerDatabase } from '../storage/plannerDatabase';
 import { createPendingPlannerStateQueue } from './pendingPlannerStateQueue';
+import { progressFixture } from '../../test/progressFixtures';
 
 function progress(buildId: string, actionId: string) {
-  return {
-    schemaVersion: 1 as const,
-    buildId,
-    completedActionIds: [actionId],
-    dismissedRecommendationIds: [],
-  };
+  return progressFixture(buildId, [actionId]);
 }
 
 const preferences = {
@@ -82,7 +78,9 @@ describe('PendingPlannerStateQueue', () => {
     expect(await queue.list('account-a')).toMatchObject([
       {
         kind: 'progress',
-        progress: { completedActionIds: ['level-3'] },
+        progress: {
+          objectives: [{ actionKey: 'level-3', status: 'completed' }],
+        },
         attempts: 0,
       },
     ]);

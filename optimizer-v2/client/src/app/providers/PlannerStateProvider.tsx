@@ -10,6 +10,10 @@ import type {
   PlannerPreferences,
   PlanProgress,
 } from '../../domain/planner/state';
+import {
+  createEmptyPlanProgress,
+  planProgressSchema,
+} from '../../domain/progress/schema';
 import { DEFAULT_PLANNER_PREFERENCES } from '../../domain/planner/stateSchema';
 import {
   createGuestBuildStore,
@@ -24,15 +28,6 @@ import {
 
 const defaultStore = createGuestBuildStore();
 
-function createEmptyProgress(buildId: string): PlanProgress {
-  return {
-    schemaVersion: 1,
-    buildId,
-    completedActionIds: [],
-    dismissedRecommendationIds: [],
-  };
-}
-
 type PlannerStateProviderProps = PropsWithChildren<{
   store?: GuestBuildStore;
 }>;
@@ -46,7 +41,7 @@ export function PlannerStateProvider({
     ...DEFAULT_PLANNER_PREFERENCES,
   }));
   const [progress, setProgress] = useState<PlanProgress>(() =>
-    createEmptyProgress(draft.id),
+    createEmptyPlanProgress(draft.id),
   );
   const [preferencesHydrated, setPreferencesHydrated] = useState(false);
   const [progressBuildId, setProgressBuildId] = useState<string | null>(null);
@@ -96,14 +91,14 @@ export function PlannerStateProvider({
     let active = true;
     const buildId = draft.id;
     setProgressBuildId(null);
-    const empty = createEmptyProgress(buildId);
+    const empty = createEmptyPlanProgress(buildId);
     progressRef.current = empty;
     setProgress(empty);
     void store
       .loadPlanProgress(buildId)
       .then((stored) => {
         if (!active) return;
-        const next = stored ?? createEmptyProgress(buildId);
+        const next = stored ?? createEmptyPlanProgress(buildId);
         progressRef.current = next;
         setProgress(next);
       })
@@ -152,11 +147,11 @@ export function PlannerStateProvider({
         typeof update === 'function'
           ? update(current)
           : { ...current, ...update };
-      const next: PlanProgress = {
+      const next = planProgressSchema.parse({
         ...candidate,
-        schemaVersion: 1,
+        schemaVersion: 2,
         buildId: draft.id,
-      };
+      });
       progressRef.current = next;
       setProgress(next);
       setStorageError(null);
@@ -170,7 +165,7 @@ export function PlannerStateProvider({
   );
 
   const resetProgress = useCallback(async () => {
-    const empty = createEmptyProgress(draft.id);
+    const empty = createEmptyPlanProgress(draft.id);
     progressRef.current = empty;
     setProgress(empty);
     setStorageError(null);

@@ -4,10 +4,12 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { CharacterProfile } from '../../domain/build/model';
 import type { InventoryState } from '../../domain/inventory/state';
+import type { PlanProgress } from '../../domain/progress/model';
 import { CloudBuildsProvider } from './CloudBuildsProvider';
 import { BuildDraftContext } from './BuildDraftContext';
 import { PlannerStateContext } from './PlannerStateContext';
 import { InventoryContext } from './InventoryContext';
+import { progressFixture } from '../../test/progressFixtures';
 
 const profile: CharacterProfile = {
   schemaVersion: 2,
@@ -50,12 +52,7 @@ const cloud = vi.hoisted(() => ({
   savePlanProgress: vi.fn(async () => 'cloud' as const),
   savePreferences: vi.fn(async () => 'cloud' as const),
   saveInventory: vi.fn(async () => 'cloud' as const),
-  cloudPlanProgress: [] as Array<{
-    schemaVersion: 1;
-    buildId: string;
-    completedActionIds: string[];
-    dismissedRecommendationIds: string[];
-  }>,
+  cloudPlanProgress: [] as PlanProgress[],
   cloudPreferences: null as null | {
     schemaVersion: 1;
     mode: 'beginner' | 'detailed';
@@ -416,12 +413,7 @@ describe('CloudBuildsProvider', () => {
               compactWeaponPathsAfterFirstUse: false,
             },
             updatePreferences: vi.fn(),
-            progress: {
-              schemaVersion: 1,
-              buildId: profile.id,
-              completedActionIds: ['level-21'],
-              dismissedRecommendationIds: [],
-            },
+            progress: progressFixture(profile.id, ['level-21']),
             updateProgress: vi.fn(),
             resetProgress: vi.fn(),
             isHydrated: true,
@@ -452,14 +444,7 @@ describe('CloudBuildsProvider', () => {
       showAllLevels: true,
       compactWeaponPathsAfterFirstUse: true,
     };
-    cloud.cloudPlanProgress = [
-      {
-        schemaVersion: 1,
-        buildId: profile.id,
-        completedActionIds: ['level-22'],
-        dismissedRecommendationIds: [],
-      },
-    ];
+    cloud.cloudPlanProgress = [progressFixture(profile.id, ['level-22'])];
     const updatePreferences = vi.fn();
     const updateProgress = vi.fn();
     render(
@@ -493,12 +478,7 @@ describe('CloudBuildsProvider', () => {
               compactWeaponPathsAfterFirstUse: false,
             },
             updatePreferences,
-            progress: {
-              schemaVersion: 1,
-              buildId: profile.id,
-              completedActionIds: [],
-              dismissedRecommendationIds: [],
-            },
+            progress: progressFixture(profile.id),
             updateProgress,
             resetProgress: vi.fn(),
             isHydrated: true,

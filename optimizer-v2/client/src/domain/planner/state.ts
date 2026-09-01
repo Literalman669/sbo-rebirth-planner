@@ -6,14 +6,7 @@ export type PlannerPreferences = {
   compactWeaponPathsAfterFirstUse: boolean;
 };
 
-export type PlanProgress = {
-  schemaVersion: 1;
-  buildId: string;
-  completedActionIds: string[];
-  dismissedRecommendationIds: string[];
-  reconciledThroughLevel?: number;
-  acknowledgedDatasetVersion?: string;
-};
+export type { PlanProgress } from '../progress/model';
 
 export type DraftPersistenceStatus =
   | 'idle'

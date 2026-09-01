@@ -39,7 +39,13 @@ function Consumer() {
     <div>
       <p>Draft {draft.id}</p>
       <p>Density {preferences.density}</p>
-      <p>Completed {progress.completedActionIds.join(',') || 'none'}</p>
+      <p>
+        Completed{' '}
+        {progress.objectives
+          .filter((objective) => objective.status === 'completed')
+          .map((objective) => objective.actionKey)
+          .join(',') || 'none'}
+      </p>
       <button
         type="button"
         onClick={() => updatePreferences({ density: 'compact' })}
@@ -48,7 +54,20 @@ function Consumer() {
       </button>
       <button
         type="button"
-        onClick={() => updateProgress({ completedActionIds: ['level-13'] })}
+        onClick={() =>
+          updateProgress({
+            objectives: [
+              {
+                actionKey: 'level-13',
+                category: 'level-milestone',
+                status: 'completed',
+                source: 'manual',
+                planFingerprint: 'plan-test',
+                updatedAt: '2026-09-01T12:00:00.000Z',
+              },
+            ],
+          })
+        }
       >
         Complete level 13
       </button>
@@ -101,10 +120,19 @@ describe('PlannerStateProvider', () => {
     });
     await store.saveDraft(profile('active-build'));
     await store.savePlanProgress({
-      schemaVersion: 1,
+      schemaVersion: 2,
       buildId: 'other-build',
-      completedActionIds: ['level-21'],
-      dismissedRecommendationIds: [],
+      objectives: [
+        {
+          actionKey: 'level-21',
+          category: 'level-milestone',
+          status: 'completed',
+          source: 'manual',
+          planFingerprint: 'plan-test',
+          updatedAt: '2026-09-01T12:00:00.000Z',
+        },
+      ],
+      history: [],
     });
     renderProviders(store);
     await screen.findByText('Completed none');
@@ -114,7 +142,7 @@ describe('PlannerStateProvider', () => {
     await screen.findByText('Completed level-13');
     await waitFor(async () => {
       expect(await store.loadPlanProgress('active-build')).toMatchObject({
-        completedActionIds: ['level-13'],
+        objectives: [{ actionKey: 'level-13', status: 'completed' }],
       });
     });
     fireEvent.click(screen.getByRole('button', { name: 'Load other build' }));

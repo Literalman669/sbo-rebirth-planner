@@ -9,6 +9,7 @@ import {
   portableRecordFromCloud,
   serializeBuildBackup,
 } from './portable';
+import { progressFixture } from '../../test/progressFixtures';
 
 function profile(id: string, name = `Build ${id}`): CharacterProfile {
   return {
@@ -38,12 +39,7 @@ function record(id: string): PortableBuildRecord {
     headRevisionId: `${id}-revision-2`,
     createdAt: '2026-09-01T10:00:00.000Z',
     updatedAt: '2026-09-01T11:00:00.000Z',
-    planProgress: {
-      schemaVersion: 1,
-      buildId: id,
-      completedActionIds: ['level-9'],
-      dismissedRecommendationIds: [],
-    },
+    planProgress: progressFixture(id, ['level-9']),
     revisions: [
       {
         id: `${id}-revision-1`,

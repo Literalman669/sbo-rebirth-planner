@@ -39,6 +39,34 @@ function databaseName(label: string) {
   return `sbo-rebirth-optimizer-v2-${label}-${crypto.randomUUID()}`;
 }
 
+function progress(
+  buildId: string,
+  completedActionIds: readonly string[] = [],
+  skippedActionIds: readonly string[] = [],
+): PlanProgress {
+  return {
+    schemaVersion: 2,
+    buildId,
+    objectives: [
+      ...completedActionIds.map((actionKey) => ({
+        actionKey,
+        category: 'manual-objective' as const,
+        status: 'completed' as const,
+        source: 'legacy' as const,
+        planFingerprint: 'legacy',
+      })),
+      ...skippedActionIds.map((actionKey) => ({
+        actionKey,
+        category: 'manual-objective' as const,
+        status: 'skipped' as const,
+        source: 'legacy' as const,
+        planFingerprint: 'legacy',
+      })),
+    ],
+    history: [],
+  };
+}
+
 async function createVersionThreeFixture(
   name: string,
   storedProfile: CharacterProfile,
@@ -105,11 +133,8 @@ describe('GuestBuildStore', () => {
   it('persists preferences and progress independently from the build profile', async () => {
     const name = databaseName('planner-state');
     const first = createGuestBuildStore({ databaseName: name });
-    const progress: PlanProgress = {
-      schemaVersion: 1,
-      buildId: 'build-1',
-      completedActionIds: ['level-2'],
-      dismissedRecommendationIds: ['upgrade-1'],
+    const storedProgress: PlanProgress = {
+      ...progress('build-1', ['level-2'], ['upgrade-1']),
       reconciledThroughLevel: 2,
     };
     await first.savePreferences({
@@ -117,14 +142,16 @@ describe('GuestBuildStore', () => {
       mode: 'detailed',
       density: 'compact',
     });
-    await first.savePlanProgress(progress);
+    await first.savePlanProgress(storedProgress);
 
     const second = createGuestBuildStore({ databaseName: name });
     await expect(second.loadPreferences()).resolves.toMatchObject({
       mode: 'detailed',
       density: 'compact',
     });
-    await expect(second.loadPlanProgress('build-1')).resolves.toEqual(progress);
+    await expect(second.loadPlanProgress('build-1')).resolves.toEqual(
+      storedProgress,
+    );
 
     await second.deletePlanProgress('build-1');
     await expect(second.loadPlanProgress('build-1')).resolves.toBeNull();
@@ -165,12 +192,7 @@ describe('GuestBuildStore', () => {
   it('quarantines malformed progress without deleting valid neighboring progress', async () => {
     const name = databaseName('quarantine-progress');
     const store = createGuestBuildStore({ databaseName: name });
-    await store.savePlanProgress({
-      schemaVersion: 1,
-      buildId: 'valid-build',
-      completedActionIds: [],
-      dismissedRecommendationIds: [],
-    });
+    await store.savePlanProgress(progress('valid-build'));
     const database = await openDB(name, GUEST_DATABASE_VERSION);
     await database.put(
       'plan-progress',
@@ -342,12 +364,7 @@ describe('GuestBuildStore', () => {
       kind: 'personal-preset',
       revisionId: 'preset-revision',
     });
-    await store.savePlanProgress({
-      schemaVersion: 1,
-      buildId: 'preset',
-      completedActionIds: [],
-      dismissedRecommendationIds: [],
-    });
+    await store.savePlanProgress(progress('preset'));
 
     await store.duplicateBuild('preset', 'preset-copy', 'Preset copy');
     const copied = (await store.listBuilds()).find(
@@ -553,19 +570,17 @@ describe('GuestBuildStore', () => {
       { ...profile('portable-build'), level: 9, stats: { str: 17, def: 0, agi: 3, vit: 7, luk: 0 } },
       { kind: 'personal-preset', revisionId: 'portable-revision-2' },
     );
-    await store.savePlanProgress({
-      schemaVersion: 1,
-      buildId: 'portable-build',
-      completedActionIds: ['level-9'],
-      dismissedRecommendationIds: [],
-    });
+    await store.savePlanProgress(progress('portable-build', ['level-9']));
 
     await expect(store.exportBuildRecords(['portable-build'])).resolves.toMatchObject([
       {
         kind: 'personal-preset',
         profile: { id: 'portable-build', level: 9 },
         headRevisionId: 'portable-revision-2',
-        planProgress: { buildId: 'portable-build', completedActionIds: ['level-9'] },
+        planProgress: {
+          buildId: 'portable-build',
+          objectives: [{ actionKey: 'level-9', status: 'completed' }],
+        },
         revisions: [
           { id: 'portable-revision-1', kind: 'personal-preset' },
           { id: 'portable-revision-2', parentRevisionId: 'portable-revision-1' },
