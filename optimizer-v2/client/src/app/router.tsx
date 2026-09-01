@@ -1,7 +1,9 @@
 import type { ReactNode } from 'react';
 import {
   createBrowserRouter,
+  Navigate,
   type RouteObject,
+  useLocation,
 } from 'react-router-dom';
 import { ConnectedApp } from './App';
 import { HomeScreen } from '../features/home/HomeScreen';
@@ -17,6 +19,12 @@ import { SharedBuildScreen } from '../features/share/SharedBuildScreen';
 import { CurationScreen } from '../features/curation/CurationScreen';
 import { InventoryScreen } from '../features/inventory/InventoryScreen';
 import { EquipmentComparisonScreen } from '../features/inventory/EquipmentComparisonScreen';
+import { BuildComparisonScreen } from '../features/builds/BuildComparisonScreen';
+
+function LegacyBuildComparisonRedirect() {
+  const location = useLocation();
+  return <Navigate to={`/builds/compare${location.search}`} replace />;
+}
 
 export function createAppRoutes(
   rootElement: ReactNode = <ConnectedApp />,
@@ -29,11 +37,13 @@ export function createAppRoutes(
         { index: true, element: <HomeScreen /> },
         { path: 'auth/callback', element: <AuthCallbackScreen /> },
         { path: 'builds', element: <BuildsScreen /> },
+        { path: 'builds/compare', element: <BuildComparisonScreen /> },
         { path: 'builds/:buildId/history', element: <BuildHistoryScreen /> },
         { path: 'shared/:shareId', element: <SharedBuildScreen /> },
         { path: 'curation', element: <CurationScreen /> },
         { path: 'inventory', element: <InventoryScreen /> },
         { path: 'compare/equipment', element: <EquipmentComparisonScreen /> },
+        { path: 'compare/builds', element: <LegacyBuildComparisonRedirect /> },
         {
           element: <PlannerFrame />,
           children: [

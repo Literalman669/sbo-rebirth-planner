@@ -7,6 +7,7 @@ import type { GuestBuildListResult } from '../../infrastructure/storage/guestBui
 import { CloudBuildList } from './CloudBuildList';
 import { GuestImportDialog } from './GuestImportDialog';
 import { LocalBuildList } from './LocalBuildList';
+import { BuildWorkspaceNav } from './BuildWorkspaceNav';
 
 type BuildStatus = 'active' | 'archived' | 'all';
 type BuildSort = 'updated' | 'name' | 'level' | 'floor';
@@ -118,6 +119,7 @@ export function BuildsScreen() {
         <h2>Your Builds</h2>
         <p>Search, compare, organize, and reopen every route from one place.</p>
       </header>
+      <BuildWorkspaceNav />
 
       <section className="build-library-toolbar" aria-label="Build library controls">
         <label className="build-library-search">
@@ -174,6 +176,7 @@ export function BuildsScreen() {
             onDuplicate={(id) => { void duplicateSavedBuild(id).then(() => setMessage('Build duplicated.')); }}
             onArchive={(id, archived) => { void setBuildArchived(id, archived).then(() => setMessage(archived ? 'Build archived.' : 'Build restored.')); }}
             onExport={exportProfile}
+            onCompare={(id) => navigate(`/builds/compare?left=${encodeURIComponent(id)}`)}
             onDelete={(id, name) => setDeleteTarget({ id, name, source: 'local' })}
           />
         </section>
@@ -209,6 +212,7 @@ export function BuildsScreen() {
             void cloud.repository.archive(buildId, archived).then(() => setMessage(archived ? 'Cloud build archived.' : 'Cloud build restored.'));
           }}
           onExport={exportProfile}
+          onCompare={(id) => navigate(`/builds/compare?left=${encodeURIComponent(id)}`)}
           onShare={(buildId) => {
             void cloud.createShare(buildId).then((shareId) => {
               const shareUrl = new URL(`${import.meta.env.BASE_URL}shared/${shareId}`, window.location.href).href;

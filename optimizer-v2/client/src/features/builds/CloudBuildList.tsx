@@ -12,6 +12,7 @@ type CloudBuildListProps = {
   onArchive(buildId: string, archived: boolean): void;
   onExport(profile: CharacterProfile): void;
   onShare(buildId: string): void;
+  onCompare?(buildId: string): void;
 };
 
 export function CloudBuildList({
@@ -24,6 +25,7 @@ export function CloudBuildList({
   onArchive,
   onExport,
   onShare,
+  onCompare,
 }: CloudBuildListProps) {
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState('');
@@ -84,6 +86,9 @@ export function CloudBuildList({
                     <button type="button" aria-label={`${record.archivedAt ? 'Unarchive' : 'Archive'} ${name}`} onClick={() => onArchive(build.id, !record.archivedAt)}>{record.archivedAt ? 'Unarchive' : 'Archive'}</button>
                     <button type="button" aria-label={`Export ${name}`} onClick={() => onExport(build)}>Export</button>
                     <button type="button" aria-label={`Share ${name}`} onClick={() => onShare(build.id)}>Share</button>
+                    {onCompare ? (
+                      <button type="button" aria-label={`Compare ${name}`} onClick={() => onCompare(build.id)}>Compare</button>
+                    ) : null}
                     <button type="button" aria-label={`Delete ${name}`} onClick={() => onDelete(build.id)}>Delete</button>
                   </div>
                 ) : null}

@@ -8,6 +8,7 @@ type LocalBuildListProps = {
   onDuplicate?(id: string): void;
   onArchive?(id: string, archived: boolean): void;
   onExport?(profile: CharacterProfile): void;
+  onCompare?(id: string): void;
   renamingId?: string | null;
   renameValue?: string;
   onStartRename?(profile: CharacterProfile): void;
@@ -23,6 +24,7 @@ export function LocalBuildList({
   onDuplicate,
   onArchive,
   onExport,
+  onCompare,
   renamingId,
   renameValue = '',
   onStartRename,
@@ -108,6 +110,9 @@ export function LocalBuildList({
                 ) : null}
                 {onExport ? (
                   <button type="button" aria-label={`Export ${name}`} onClick={() => onExport(build)}>Export</button>
+                ) : null}
+                {onCompare ? (
+                  <button type="button" aria-label={`Compare ${name}`} onClick={() => onCompare(build.id)}>Compare</button>
                 ) : null}
                 <button type="button" aria-label={`Delete ${name}`} onClick={() => onDelete(build.id, name)}>Delete</button>
               </div>
