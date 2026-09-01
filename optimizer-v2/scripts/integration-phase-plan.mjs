@@ -3,6 +3,7 @@ export const INTEGRATION_PHASES = Object.freeze([
     id: 'core',
     testFiles: [
       'e2e/acceptance.spec.ts',
+      'e2e/build-power-tools.spec.ts',
       'e2e/cloud-flow.spec.ts',
       'e2e/cloud-module.spec.ts',
       'e2e/curation-module.spec.ts',

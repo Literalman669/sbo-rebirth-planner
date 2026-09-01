@@ -3,6 +3,8 @@ import { expect, test } from '@playwright/test';
 for (const directPath of [
   '/auth/callback?code=proof-code&state=proof-state#complete',
   '/shared/proof-share?view=compact',
+  '/builds/compare?left=proof-a&right=proof-b',
+  '/builds/presets',
 ]) {
   test(`recovers ${directPath} through the built GitHub Pages artifact`, async ({
     page,
@@ -23,11 +25,19 @@ for (const directPath of [
           name: /Completing sign in|Sign-in (?:was not completed|could not be completed)/,
         }),
       ).toBeVisible();
-    } else {
+    } else if (directPath.startsWith('/shared/')) {
       await expect(
         page.getByText(
           /Loading shared build|This shared build is unavailable|Read-only shared snapshot/,
         ),
+      ).toBeVisible();
+    } else if (directPath.startsWith('/builds/compare')) {
+      await expect(
+        page.getByRole('heading', { name: 'Compare Builds' }),
+      ).toBeVisible();
+    } else {
+      await expect(
+        page.getByRole('heading', { name: 'Build Presets' }),
       ).toBeVisible();
     }
     expect(pageErrors).toEqual([]);

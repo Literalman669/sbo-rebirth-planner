@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useBuildDraft } from '../../app/providers/BuildDraftContext';
 import { useOptionalCloudBuilds } from '../../app/providers/CloudBuildsContext';
 import type { CloudBuildRecord } from '../../infrastructure/cloud/buildRepository';
@@ -66,6 +66,8 @@ export function BuildHistoryView({
 
 export function BuildHistoryScreen() {
   const { buildId } = useParams();
+  const [searchParams] = useSearchParams();
+  const requestedSource = searchParams.get('source');
   const navigate = useNavigate();
   const cloud = useOptionalCloudBuilds();
   const {
@@ -100,7 +102,7 @@ export function BuildHistoryScreen() {
       active = false;
     };
   }, [loadSavedBuildHistory, local?.ok, local?.ok ? local.value.profile.id : null]);
-  const localRecord = local?.ok && localHistory
+  const localRecord = requestedSource !== 'cloud' && local?.ok && localHistory
     ? {
         headRevisionId: local.value.headRevisionId,
         profile: local.value.profile,
@@ -114,7 +116,11 @@ export function BuildHistoryScreen() {
         })),
       }
     : null;
-  const record = localRecord ?? cloudRecord;
+  const record = requestedSource === 'local'
+    ? localRecord
+    : requestedSource === 'cloud'
+      ? cloudRecord
+      : localRecord ?? cloudRecord;
 
   useEffect(() => {
     if (!cloudRecord || cloudRecord.headRevisionId !== waitingForHead) return;
@@ -122,14 +128,20 @@ export function BuildHistoryScreen() {
     navigate('/results');
   }, [cloudRecord, navigate, replaceDraft, waitingForHead]);
 
-  if (!isHydrated || (local?.ok && !localHistory)) {
+  if (
+    !isHydrated ||
+    (requestedSource !== 'cloud' && local?.ok && !localHistory)
+  ) {
     return (
       <main className="planner-screen build-history-screen">
         <h2>Loading build history…</h2>
       </main>
     );
   }
-  if (!local?.ok && !cloud?.isAuthenticated) {
+  if (
+    (requestedSource === 'cloud' && !cloud?.isAuthenticated) ||
+    (requestedSource !== 'local' && !local?.ok && !cloud?.isAuthenticated)
+  ) {
     return (
       <main className="planner-screen build-history-screen">
         <h2>Cloud history requires sign-in.</h2>

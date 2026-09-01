@@ -304,6 +304,32 @@ test('enforces identity isolation and immutable revision recovery', async ({}, t
     expect([...userA.connection.db.myBuildRevisions.iter()]).toHaveLength(0);
     expect([...userA.connection.db.myPlanProgress.iter()]).toHaveLength(0);
     expect([...userA.connection.db.myUserInventory.iter()]).toHaveLength(1);
+
+    await userA.connection.reducers.saveBuildRevision({
+      buildId: 'private-preset',
+      revisionId: 'private-preset-revision-1',
+      name: 'Private Preset',
+      kind: 'personal-preset',
+      profile: firstProfile,
+      equipment: [{ slot: 'main-hand', itemId: 'iron-greatsword' }],
+      ownedItemIds: ['iron-greatsword'],
+    });
+    await expect
+      .poll(
+        () =>
+          [...userA.connection.db.myBuilds.iter()].find(
+            (build) => build.id === 'private-preset',
+          )?.kind,
+      )
+      .toBe('personal-preset');
+    expect([...userB.connection.db.myBuilds.iter()]).toHaveLength(0);
+    await expect(
+      userA.connection.reducers.createBuildShare({
+        buildId: 'private-preset',
+        shareId: 'private_preset_share_01',
+      }),
+    ).rejects.toThrow(/copied to a build before sharing/i);
+    await userA.connection.reducers.deleteBuild({ buildId: 'private-preset' });
   } finally {
     if (userASecond) disconnect(userASecond);
     disconnect(userB);

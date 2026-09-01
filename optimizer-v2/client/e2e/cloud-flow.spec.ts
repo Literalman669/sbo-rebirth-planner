@@ -142,7 +142,10 @@ test('imports selectively, syncs offline history, restores, shares, and revokes'
   await expect(archiveB.getByText(/Level 22 ·/)).toBeVisible();
 
   await page.getByRole('link', { name: 'Builds' }).click();
-  await page.getByRole('button', { name: 'History for Selected Route' }).click();
+  await page
+    .getByRole('region', { name: 'Cloud builds' })
+    .getByRole('button', { name: 'History for Selected Route' })
+    .click();
   const restorable = page.locator(
     'button[aria-label^="Restore revision"]:not([disabled])',
   );

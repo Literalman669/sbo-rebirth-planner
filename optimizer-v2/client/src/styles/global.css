@@ -2,6 +2,7 @@
 @import './planner.css';
 @import './curation.css';
 @import './inventory.css';
+@import './builds.css';
 
 :root {
   color-scheme: dark;

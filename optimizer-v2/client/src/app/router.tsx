@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { lazy, Suspense, type ReactNode } from 'react';
 import {
   createBrowserRouter,
   Navigate,
@@ -19,8 +19,25 @@ import { SharedBuildScreen } from '../features/share/SharedBuildScreen';
 import { CurationScreen } from '../features/curation/CurationScreen';
 import { InventoryScreen } from '../features/inventory/InventoryScreen';
 import { EquipmentComparisonScreen } from '../features/inventory/EquipmentComparisonScreen';
-import { BuildComparisonScreen } from '../features/builds/BuildComparisonScreen';
-import { BuildPresetsScreen } from '../features/builds/BuildPresetsScreen';
+
+const BuildComparisonScreen = lazy(() =>
+  import('../features/builds/BuildComparisonScreen').then((module) => ({
+    default: module.BuildComparisonScreen,
+  })),
+);
+const BuildPresetsScreen = lazy(() =>
+  import('../features/builds/BuildPresetsScreen').then((module) => ({
+    default: module.BuildPresetsScreen,
+  })),
+);
+
+function BuildToolRoute({ children }: { children: ReactNode }) {
+  return (
+    <Suspense fallback={<main className="builds-screen"><p>Loading build tools…</p></main>}>
+      {children}
+    </Suspense>
+  );
+}
 
 function LegacyBuildComparisonRedirect() {
   const location = useLocation();
@@ -38,8 +55,14 @@ export function createAppRoutes(
         { index: true, element: <HomeScreen /> },
         { path: 'auth/callback', element: <AuthCallbackScreen /> },
         { path: 'builds', element: <BuildsScreen /> },
-        { path: 'builds/compare', element: <BuildComparisonScreen /> },
-        { path: 'builds/presets', element: <BuildPresetsScreen /> },
+        {
+          path: 'builds/compare',
+          element: <BuildToolRoute><BuildComparisonScreen /></BuildToolRoute>,
+        },
+        {
+          path: 'builds/presets',
+          element: <BuildToolRoute><BuildPresetsScreen /></BuildToolRoute>,
+        },
         { path: 'builds/:buildId/history', element: <BuildHistoryScreen /> },
         { path: 'shared/:shareId', element: <SharedBuildScreen /> },
         { path: 'curation', element: <CurationScreen /> },

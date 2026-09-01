@@ -283,6 +283,7 @@ export function BuildsScreen() {
                 setMessage('Personal preset saved.'),
               );
             }}
+            onHistory={(id) => navigate(`/builds/${id}/history?source=local`)}
             onDelete={(id, name) => setDeleteTarget({ id, name, source: 'local' })}
           />
         </section>
@@ -299,7 +300,7 @@ export function BuildsScreen() {
         <CloudBuildList
           builds={visibleCloudBuilds}
           onLoad={(profile) => { loadSavedBuild(profile); navigate('/results'); }}
-          onHistory={(buildId) => navigate(`/builds/${buildId}/history`)}
+          onHistory={(buildId) => navigate(`/builds/${buildId}/history?source=cloud`)}
           onRename={(buildId, name) => {
             void cloud.repository.rename(buildId, name).then(() => setMessage('Cloud build renamed.'));
           }}
@@ -441,18 +442,12 @@ export function BuildsScreen() {
           onImport={async (plan) => {
             await importSavedBuildPlan(plan);
             if (!cloud?.isAuthenticated) {
-              setMessage('Builds imported locally.');
               return 'local';
             }
             const location = await cloud.repository.importBuildRecords(
               plan.records,
             );
             await cloud.refreshPending();
-            setMessage(
-              location === 'cloud'
-                ? 'Builds imported and synced.'
-                : 'Builds imported locally and queued for cloud sync.',
-            );
             return location;
           }}
         />

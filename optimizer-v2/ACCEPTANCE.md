@@ -134,3 +134,25 @@ This inventory batch deliberately leaves the later Release 2 build-comparison,
 presets, progress-dashboard, and player-stat-tracking work for separately
 scoped plans. It does not guess unresolved wiki records or publish a new
 verified game-data release.
+
+## QOL Release 2 Build Power Tools local acceptance (2026-09-01)
+
+| # | Build Power Tools criterion | Proof | Status |
+|---|---|---|---|
+| 1 | Two distinct valid local/cloud builds can be compared without mutating either saved record or the active draft. | `client/src/features/builds/buildLibrary.test.ts`, `client/src/domain/buildComparison/evaluateBuild.test.ts`, `client/e2e/build-power-tools.spec.ts` | Pass |
+| 2 | Each side defaults to its pinned verified dataset; current-data comparison is an explicit temporary preview that can create a separate new draft. | `client/src/domain/buildComparison/evaluateBuild.test.ts`, `client/src/features/builds/BuildComparisonScreen.test.tsx`, `client/e2e/build-power-tools.spec.ts` | Pass |
+| 3 | Comparison exposes stats, ten-level allocation, equipment, prices, sources, shopping totals, and supported projected metrics without inventing an overall score. | `client/src/domain/buildComparison/evaluateBuild.test.ts`, `client/src/features/builds/BuildComparisonScreen.test.tsx` | Pass |
+| 4 | Six bundled curated starts create guided baseline drafts while leaving stats, gear, and optimizer advice to verified planner logic. | `client/src/data/curatedBuildPresets.test.ts`, `client/src/features/builds/BuildPresetsScreen.test.tsx` | Pass |
+| 5 | Personal presets apply with new IDs, remain private, and retain recoverable local/cloud history. | `client/src/app/providers/BuildLibraryProvider.test.tsx`, `client/src/infrastructure/cloud/buildRepository.test.ts`, `client/e2e/cloud-module.spec.ts` | Pass |
+| 6 | Individual exports and deduplicated full-library backups round-trip through one strict, versioned validator. | `client/src/domain/buildTransfer/portableBuilds.test.ts`, `client/src/app/providers/BuildLibraryProvider.test.tsx`, `client/e2e/build-power-tools.spec.ts` | Pass |
+| 7 | Imports are atomic and duplicate-first; overwrite requires confirmation and preserves the replaced state through immutable history. | `client/src/infrastructure/storage/buildImportStore.test.ts`, `client/src/features/builds/BuildImportDialog.test.tsx`, `client/e2e/build-power-tools.spec.ts` | Pass |
+| 8 | Portable files reject identity, credential, share-owner, cloud-row, and pending-queue fields instead of silently serializing private metadata. | `client/src/domain/buildTransfer/portableBuilds.test.ts` | Pass |
+| 9 | IndexedDB v5 upgrades to v6 with draft, builds, inventory, progress, archive state, kinds, and revision history preserved; SpacetimeDB kind fields are additive and old calls default to normal builds. | `client/src/infrastructure/storage/plannerDatabase.test.ts`, `spacetimedb/src/playerReducers.test.ts`, `client/e2e/reliability-flow.spec.ts` | Pass |
+| 10 | Library, Compare, Presets, selectors, backup, import, and overwrite flows are keyboard/touch usable, contained from 320 px upward, and have zero serious/critical axe violations. | `client/e2e/qol-accessibility.spec.ts`, rendered Browser QA | Pass |
+| 11 | Unit, module, migration, integration, stress, publication, sharing, and Pages gates pass on the branch; merged CI, deployment, and live-smoke evidence is recorded after publication. | `npm run test:integration`, `npm run test:pages`, `scripts/run-reliability.mjs` | Local pass; external pending |
+
+The shipped browser boundaries are explicit: portable files are limited to
+10 MiB, 250 builds, and 100 revisions per build; imports validate completely
+before writing; personal presets cannot be shared directly; and unresolved
+wiki data remains excluded rather than guessed. Compare and Presets are routed
+workspaces, not additions to the guided planner pages.

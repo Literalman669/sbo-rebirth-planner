@@ -16,7 +16,7 @@ export const RELIABILITY_MEASUREMENTS = Object.freeze({
   shareRevokeCycles: 50,
   routeCycles: 20,
   browserViewports: ['1440x1000', '768x1024', '390x844', '320x700'],
-  indexedDbMigration: 'v4-to-v5-with-inventory-preservation',
+  indexedDbMigration: 'v5-to-v6-with-build-history-preservation',
   equipmentQueryRecords: 1000,
   equipmentQueryIterations: 100,
   equipmentQueryBudgetMs: 1000,
@@ -33,12 +33,14 @@ export const RELIABILITY_MEASUREMENTS = Object.freeze({
     browserRouteCycleDuration: 5.4,
   },
   builtChunks: {
+    'BuildComparisonScreen-CbnpqN_s.js': 10058,
+    'BuildPresetsScreen-DOaBIp4w.js': 4170,
     'data-vendor-BpuTNvJb.js': 89295,
-    'index-B4sdvBPO.css': 48402,
-    'index-Bzx65K-e.js': 933664,
-    'react-vendor-CBRsJp3P.js': 353721,
+    'index-B3FVfsBs.js': 959411,
+    'index-Bk8WGtK0.css': 55288,
+    'react-vendor-Dzb7su-e.js': 354604,
     'rolldown-runtime-CbXtAM7H.js': 589,
-    'spacetime-vendor-Do-ucTAG.js': 129149,
+    'spacetime-vendor-BWfLuweQ.js': 129149,
   },
 });
 

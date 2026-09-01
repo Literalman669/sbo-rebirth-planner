@@ -102,7 +102,11 @@ export function BuildPresetsScreen() {
                   </button>
                   <button
                     type="button"
-                    onClick={() => navigate(`/builds/${entry.id}/history`)}
+                    onClick={() =>
+                      navigate(
+                        `/builds/${entry.id}/history?source=${entry.source === 'cloud' ? 'cloud' : 'local'}`,
+                      )
+                    }
                   >
                     History for {name}
                   </button>

@@ -46,8 +46,11 @@ test('summarizes layer statuses with documented measured thresholds', () => {
   assert.equal(summary.thresholds.inventoryQueryBudgetMs, 1000);
   assert.equal(
     summary.thresholds.indexedDbMigration,
-    'v4-to-v5-with-inventory-preservation',
+    'v5-to-v6-with-build-history-preservation',
   );
+  assert.equal(summary.thresholds.cloudRevisions, 100);
+  assert.equal(summary.thresholds.builtChunks['BuildComparisonScreen-CbnpqN_s.js'], 10058);
+  assert.equal(summary.thresholds.builtChunks['BuildPresetsScreen-DOaBIp4w.js'], 4170);
 });
 
 test('emits a failed summary and rejects when a child exits nonzero', () => {

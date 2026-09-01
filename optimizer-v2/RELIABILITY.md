@@ -427,3 +427,63 @@ the visible selections against the same verified catalog the editor displayed.
 The regression uses current-only Combat Armor with the historical bootstrap
 release and proves the repaired draft reaches Results and persists the current
 dataset version.
+
+## QOL Release 2 Build Power Tools branch gate (2026-09-01)
+
+Build Power Tools extends the saved-build system with two-build comparison,
+six conservative curated starts, private personal presets, immutable local and
+cloud revision recovery, and strict portable backup/import. IndexedDB v6 adds
+the `build-revisions` store and an explicit `build` / `personal-preset` kind;
+the v5-to-v6 browser fixture preserves the active draft, saved builds,
+inventory, progress, archive state, and prior timestamps.
+
+Portable JSON is bounded to 10 MiB, 250 records, and 100 revisions per record.
+The validator is strict and privacy allowlisted: authentication identities and
+tokens, owner/profile metadata, cloud row/order fields, public-share state,
+pending-sync internals, and device IndexedDB keys are neither exported nor
+accepted. Duplicate is the default conflict policy. Confirmed overwrite is
+recoverable, and local multi-record writes roll back atomically. Cloud replay
+uses ordered immutable revisions and stops after a reducer failure so reconnect
+can resume idempotently.
+
+The final pre-documentation integration run passed all four fresh-owned-server
+phases: core 32 passed / 8 intentional project skips; 100-revision convergence,
+offline replay, 50 share cycles, and eight same-parent race pairs passed;
+atomic publication passed; and owner-free share/revoke passed. Private personal
+presets were rejected by the sharing reducer, and source-qualified history
+routes restored the intended local or cloud record.
+
+Accessibility and containment coverage now includes Library, Compare, Presets,
+selectors, Backup, Import Preview, and Overwrite Confirmation at 1440x1000,
+768x1024, 390x844, and 320x700. The gate requires no document overflow and zero
+serious or critical axe violations; keyboard selection, dialog Escape handling,
+focus return, and reachable mobile actions passed. Browser QA separately checked
+historical comparison, current preview, presets, import, desktop, and 390 px
+mobile presentation with no captured application warnings or errors.
+
+The production-shaped Pages artifact deep-link suite covers five routes,
+including `/builds/compare?left=proof-a&right=proof-b` and `/builds/presets`.
+Route-level splitting produced `BuildComparisonScreen-CbnpqN_s.js` (10,058
+bytes) and `BuildPresetsScreen-DOaBIp4w.js` (4,170 bytes). Other measured assets
+are `index-B3FVfsBs.js` (959,411 bytes), `index-Bk8WGtK0.css` (55,288 bytes),
+`react-vendor-Dzb7su-e.js` (354,604 bytes), `spacetime-vendor-BWfLuweQ.js`
+(129,149 bytes), `data-vendor-BpuTNvJb.js` (89,295 bytes), and
+`rolldown-runtime-CbXtAM7H.js` (589 bytes). The main entry remains above Vite's
+500 kB advisory threshold; the new workspaces do not add their complete screen
+cost to initial planner navigation.
+
+Known boundaries remain intentional: comparison is exactly two builds and has
+no fabricated overall score; current-data preview is temporary; curated presets
+contain strategy intent rather than game-stat claims; invalid records stay
+recoverable but cannot enter optimizer metrics; unresolved wiki pages remain
+excluded; and Progress, floor tracking, shopping budgets, and boss readiness
+remain separate future work.
+
+The final six-layer `npm run test:reliability` invocation returned a passed
+summary for unit, typecheck, coverage, SpacetimeDB build, integration, and
+Pages. It recorded 81 client files / 547 tests, 7 module files / 81 tests,
+23 root script tests, and 6 wiki-tool tests. The fresh performance diagnostics
+were 784.8 ms for 1,000 deterministic optimizer serializations, 31.1 ms for
+100 equipment queries over 1,000 records, and 253.8 ms for 100 inventory
+queries over 1,000 records. The core browser phase passed 32 cases with 8
+intentional cross-project skips, and the built Pages artifact passed 5/5.

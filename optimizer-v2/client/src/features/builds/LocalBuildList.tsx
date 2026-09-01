@@ -10,6 +10,7 @@ type LocalBuildListProps = {
   onExport?(profile: CharacterProfile): void;
   onCompare?(id: string): void;
   onSaveAsPreset?(profile: CharacterProfile): void;
+  onHistory?(id: string): void;
   renamingId?: string | null;
   renameValue?: string;
   onStartRename?(profile: CharacterProfile): void;
@@ -27,6 +28,7 @@ export function LocalBuildList({
   onExport,
   onCompare,
   onSaveAsPreset,
+  onHistory,
   renamingId,
   renameValue = '',
   onStartRename,
@@ -113,6 +115,9 @@ export function LocalBuildList({
                 ) : null}
                 {onExport ? (
                   <button type="button" aria-label={`Export ${name}`} onClick={() => onExport(build)}>Export</button>
+                ) : null}
+                {onHistory ? (
+                  <button type="button" aria-label={`History for ${name}`} onClick={() => onHistory(build.id)}>History</button>
                 ) : null}
                 {onCompare ? (
                   <button type="button" aria-label={`Compare ${name}`} onClick={() => onCompare(build.id)}>Compare</button>

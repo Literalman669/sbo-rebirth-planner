@@ -54,6 +54,12 @@ test('Release 1 routes remain accessible and contained from desktop to 320px', a
 
     await page.goto('/compare/equipment');
     await expectAccessibleAndContained(page, 'equipment comparison');
+
+    await page.goto('/builds/compare');
+    await expectAccessibleAndContained(page, 'build comparison');
+
+    await page.goto('/builds/presets');
+    await expectAccessibleAndContained(page, 'build presets');
   }
 });
 
@@ -78,4 +84,23 @@ test('mobile sticky actions and dialogs keep controls reachable', async ({ page 
   await expect(backupDialog).toBeVisible();
   await expect(backupDialog.getByRole('button', { name: 'Close' })).toBeInViewport();
   await expectAccessibleAndContained(page, 'inventory backup dialog');
+
+  await page.goto('/builds');
+  const importTrigger = page.getByRole('button', { name: 'Import builds' });
+  await importTrigger.click();
+  const importDialog = page.getByRole('dialog', { name: 'Import builds' });
+  await expect(importDialog).toBeVisible();
+  await expect(importDialog.getByRole('button', { name: 'Close' })).toBeInViewport();
+  await expectAccessibleAndContained(page, 'build import dialog');
+  await importDialog.getByRole('button', { name: 'Close' }).click();
+  await expect(importTrigger).toBeFocused();
+
+  const backupTrigger = page.getByRole('button', { name: 'Back up library' });
+  await backupTrigger.click();
+  const buildBackupDialog = page.getByRole('dialog', { name: 'Build backups' });
+  await expect(buildBackupDialog).toBeVisible();
+  await expect(buildBackupDialog.getByRole('button', { name: 'Close' })).toBeInViewport();
+  await expectAccessibleAndContained(page, 'build backup dialog');
+  await buildBackupDialog.getByRole('button', { name: 'Close' }).click();
+  await expect(backupTrigger).toBeFocused();
 });
