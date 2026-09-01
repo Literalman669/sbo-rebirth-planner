@@ -1,4 +1,8 @@
-import type { CharacterProfile, EquipmentSlot } from '../build/model';
+import type {
+  CharacterProfile,
+  EquipmentSlot,
+  StatBlock,
+} from '../build/model';
 import type { DatasetSnapshot } from '../dataset/model';
 import type { RecommendationPlan } from '../optimizer/optimizeBuild';
 import {
@@ -17,6 +21,8 @@ export interface PlanAction {
   level?: number;
   verifiedCost?: { amount: number; currency: string };
   sourceUrl?: string;
+  targetStats?: StatBlock;
+  targetFloor?: number;
 }
 
 function equipmentAction(
@@ -91,6 +97,7 @@ export function buildActionChecklist(
         .map(([stat, value]) => `${stat.toUpperCase()} +${value}`)
         .join(' · '),
       level: profile.level,
+      targetStats: { ...plan.statPlan.spendNow.totals },
     });
   }
   for (const row of plan.statPlan.levelRows) {
@@ -104,6 +111,7 @@ export function buildActionChecklist(
         .map(([stat, value]) => `${stat.toUpperCase()} +${value}`)
         .join(' · '),
       level: row.level,
+      targetStats: { ...row.totals },
     });
   }
   for (const target of plan.upgradeTargets) {

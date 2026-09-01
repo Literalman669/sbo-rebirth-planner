@@ -24,6 +24,8 @@ import {
   replaceDismissedRecommendations,
 } from '../../domain/results/actionChecklist';
 import type { PlanProgress } from '../../domain/planner/state';
+import { setManualTaskState } from '../../domain/progress/reconcile';
+import { progressTaskFromPlanAction } from '../../domain/progress/tasks';
 import { summarizeDatasetImpact } from '../../domain/results/datasetImpact';
 import { ActionChecklist } from './ActionChecklist';
 import { PlanExportActions } from './PlanExportActions';
@@ -169,8 +171,13 @@ export function ResultsScreen() {
     [draft, itemNames, plan],
   );
   const dismissedActionIds = useMemo(
-    () => new Set(plannerState?.progress.dismissedRecommendationIds ?? []),
-    [plannerState?.progress.dismissedRecommendationIds],
+    () =>
+      new Set(
+        plannerState?.progress.objectives
+          .filter((objective) => objective.status === 'skipped')
+          .map((objective) => objective.actionKey) ?? [],
+      ),
+    [plannerState?.progress.objectives],
   );
   const actions = useMemo(
     () =>
@@ -185,8 +192,13 @@ export function ResultsScreen() {
     [baseActions, dismissedActionIds, draft, planSnapshot],
   );
   const completedActionIds = useMemo(
-    () => new Set(plannerState?.progress.completedActionIds ?? []),
-    [plannerState?.progress.completedActionIds],
+    () =>
+      new Set(
+        plannerState?.progress.objectives
+          .filter((objective) => objective.status === 'completed')
+          .map((objective) => objective.actionKey) ?? [],
+      ),
+    [plannerState?.progress.objectives],
   );
   const datasetImpact = useMemo(
     () =>
@@ -234,38 +246,46 @@ export function ResultsScreen() {
   };
 
   const updateChecklistProgress = (
-    patch: Partial<Omit<PlanProgress, 'schemaVersion' | 'buildId'>>,
+    next: PlanProgress,
     message: string,
   ) => {
     if (!plannerState) return;
-    previousProgress.current = {
-      ...plannerState.progress,
-      completedActionIds: [...plannerState.progress.completedActionIds],
-      dismissedRecommendationIds: [
-        ...plannerState.progress.dismissedRecommendationIds,
-      ],
-    };
-    plannerState.updateProgress(patch);
+    previousProgress.current = structuredClone(plannerState.progress);
+    plannerState.updateProgress(next);
     setChecklistMessage(message);
   };
 
   const toggleAction = (actionId: string) => {
-    const completed = new Set(plannerState?.progress.completedActionIds ?? []);
-    const wasCompleted = completed.delete(actionId);
-    if (!wasCompleted) completed.add(actionId);
+    if (!plannerState) return;
+    const action = actions.find((candidate) => candidate.id === actionId);
+    if (!action) return;
+    const wasCompleted = completedActionIds.has(actionId);
+    const next = setManualTaskState({
+      progress: plannerState.progress,
+      task: progressTaskFromPlanAction(action, planFingerprint),
+      status: wasCompleted ? 'pending' : 'completed',
+      now: () => new Date().toISOString(),
+      randomUUID: () => crypto.randomUUID(),
+    });
     updateChecklistProgress(
-      { completedActionIds: [...completed] },
+      next,
       wasCompleted ? 'Action marked incomplete' : 'Action completed',
     );
   };
 
   const dismissAction = (actionId: string) => {
-    const dismissed = new Set(
-      plannerState?.progress.dismissedRecommendationIds ?? [],
-    );
-    dismissed.add(actionId);
+    if (!plannerState) return;
+    const action = actions.find((candidate) => candidate.id === actionId);
+    if (!action) return;
+    const next = setManualTaskState({
+      progress: plannerState.progress,
+      task: progressTaskFromPlanAction(action, planFingerprint),
+      status: 'skipped',
+      now: () => new Date().toISOString(),
+      randomUUID: () => crypto.randomUUID(),
+    });
     updateChecklistProgress(
-      { dismissedRecommendationIds: [...dismissed] },
+      next,
       'Recommendation dismissed and replaced when another verified option exists',
     );
   };

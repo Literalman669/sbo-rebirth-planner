@@ -85,6 +85,10 @@ describe('action checklist', () => {
       kind: 'buy',
       verifiedCost: { amount: 3360, currency: 'Col' },
     });
+    expect(actions[1]).toMatchObject({
+      level: 11,
+      targetStats: rows[0]!.totals,
+    });
   });
 
   it('sums verified costs separately from unknown prices', () => {

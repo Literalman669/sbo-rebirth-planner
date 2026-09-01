@@ -81,7 +81,19 @@ describe('ResultsScreen', () => {
     await user.click(completion);
     await waitFor(async () => {
       expect(await store.loadPlanProgress(profile.id)).toMatchObject({
-        completedActionIds: ['equipment:main-hand:steel-greatsword'],
+        objectives: [
+          {
+            actionKey: 'equipment:main-hand:steel-greatsword',
+            status: 'completed',
+          },
+        ],
+        history: [
+          {
+            actionKey: 'equipment:main-hand:steel-greatsword',
+            outcome: 'completed',
+            source: 'manual',
+          },
+        ],
       });
     });
 
