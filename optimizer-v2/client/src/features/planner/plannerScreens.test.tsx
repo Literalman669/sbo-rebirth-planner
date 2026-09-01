@@ -319,6 +319,38 @@ describe('planner routes', () => {
     });
   });
 
+  it('repairs historical dataset metadata for current-catalog gear on Continue', async () => {
+    const user = userEvent.setup();
+    const historicalDraft: CharacterProfile = {
+      ...savedDraft(),
+      datasetVersion: bootstrapRelease.version,
+      equipped: {
+        'main-hand': 'iron-greatsword',
+        armor: 'combat-armor',
+      },
+    };
+    const { router, store } = await renderRoute('/equipment', {
+      saved: historicalDraft,
+      snapshot: fallbackRelease,
+      historicalSnapshots: [bootstrapRelease],
+    });
+
+    await screen.findByRole('heading', { name: 'Equipment' });
+    await user.click(screen.getByRole('button', { name: 'Continue' }));
+
+    expect(
+      await screen.findByRole('heading', {
+        name: 'Your next ten levels, made clear.',
+      }),
+    ).toBeVisible();
+    expect(router.state.location.pathname).toBe('/results');
+    await waitFor(async () => {
+      expect((await store.loadDraft())?.datasetVersion).toBe(
+        fallbackRelease.version,
+      );
+    });
+  });
+
   it('moves focus to the next screen heading after Continue', async () => {
     const user = userEvent.setup();
     await renderRoute('/character');

@@ -128,6 +128,7 @@ pushed, published, or deployed pending owner approval.
 | 9 | Favorites, comparison choices, and notes preserve the deterministic plan fingerprint; owning/equipping an item deliberately changes planner inputs. | `client/e2e/inventory-flow.spec.ts`, `client/src/app/providers/InventoryProvider.test.tsx` | Pass |
 | 10 | Catalog querying remains bounded at scale. | 100 queries × 1,000 records in 266.9 ms during the final reliability gate (1,000 ms budget) | Pass |
 | 11 | Editing a historical build with current-catalog equipment updates the active draft to the current verified dataset and reaches Results without silently bouncing back to Equipment. | `client/src/features/planner/plannerScreens.test.tsx`, rendered Equipment → Results browser QA | Pass |
+| 12 | A previously inconsistent saved draft with current-catalog gear and historical dataset metadata is repaired on Equipment Continue, reaches Results, and persists the current dataset version. | `client/src/features/planner/plannerScreens.test.tsx`, production-state browser reproduction | Pass |
 
 This inventory batch deliberately leaves the later Release 2 build-comparison,
 presets, progress-dashboard, and player-stat-tracking work for separately

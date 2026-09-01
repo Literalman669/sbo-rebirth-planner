@@ -119,6 +119,12 @@ export function EquipmentScreen() {
       controls.current[firstMissing]?.focus();
       return;
     }
+    if (draft.datasetVersion !== snapshot.version) {
+      updateDraft(
+        { datasetVersion: snapshot.version },
+        { recordUndo: false },
+      );
+    }
     navigate('/results');
   };
 

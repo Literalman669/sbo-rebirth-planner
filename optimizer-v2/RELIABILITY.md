@@ -418,3 +418,12 @@ against the historical release and immediately redirected back to Equipment.
 Equipment changes now move only the active draft to the current verified
 dataset, show an explicit dataset-update status, persist that version, and reach
 Results. The original named/cloud build remains unchanged until the player saves.
+
+A second production reproduction covered drafts already left inconsistent by
+the earlier bug: their selected equipment belonged to the current catalog while
+their metadata still named the historical release. Equipment Continue now also
+repairs that active draft's dataset metadata before routing, so Results validates
+the visible selections against the same verified catalog the editor displayed.
+The regression uses current-only Combat Armor with the historical bootstrap
+release and proves the repaired draft reaches Results and persists the current
+dataset version.
