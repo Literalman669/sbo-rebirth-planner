@@ -15,9 +15,11 @@ async function expectAccessibleAndContained(page: Page, route: string) {
   ).toBeLessThanOrEqual(await page.evaluate(() => window.innerWidth));
 }
 
-test('Release 1 routes remain accessible and contained from desktop to 320px', async ({
+test('Release routes remain accessible and contained from desktop to 320px', async ({
   page,
 }) => {
+  test.setTimeout(120_000);
+
   for (const viewport of [
     { width: 1440, height: 1000 },
     { width: 768, height: 1024 },

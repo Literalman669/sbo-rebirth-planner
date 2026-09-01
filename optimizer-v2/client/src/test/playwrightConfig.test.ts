@@ -16,6 +16,10 @@ const reliabilityModuleSpecPath = path.resolve(
   'e2e/reliability-module.spec.ts',
 );
 const cloudFlowSpecPath = path.resolve(clientRoot, 'e2e/cloud-flow.spec.ts');
+const accessibilitySpecPath = path.resolve(
+  clientRoot,
+  'e2e/qol-accessibility.spec.ts',
+);
 
 function integrationWebServer() {
   const webServer = integrationConfig.webServer;
@@ -99,6 +103,16 @@ test('cloud lifecycle keeps a strict local watchdog with a CI-only ceiling', () 
   expect(source).toMatch(
     /test\.setTimeout\(process\.env\.CI \? 180_000 : 90_000\);/,
   );
+});
+
+test('the bounded multi-viewport accessibility audit owns its extended watchdog', () => {
+  const source = readFileSync(accessibilitySpecPath, 'utf8');
+
+  expect(integrationConfig.timeout).toBeUndefined();
+  expect(source).toMatch(
+    /routes remain accessible and contained from desktop to 320px'[\s\S]*?test\.setTimeout\(120_000\);/,
+  );
+  expect(source.match(/test\.setTimeout\(/g)).toHaveLength(1);
 });
 
 test('fixed-local integration rejects an occupied app port without using its owner', async () => {

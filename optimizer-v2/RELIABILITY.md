@@ -481,9 +481,18 @@ remain separate future work.
 
 The final six-layer `npm run test:reliability` invocation returned a passed
 summary for unit, typecheck, coverage, SpacetimeDB build, integration, and
-Pages. It recorded 81 client files / 547 tests, 7 module files / 81 tests,
+Pages. It recorded 81 client files / 548 tests, 7 module files / 81 tests,
 23 root script tests, and 6 wiki-tool tests. The fresh performance diagnostics
 were 784.8 ms for 1,000 deterministic optimizer serializations, 31.1 ms for
 100 equipment queries over 1,000 records, and 253.8 ms for 100 inventory
 queries over 1,000 records. The core browser phase passed 32 cases with 8
 intentional cross-project skips, and the built Pages artifact passed 5/5.
+
+The first merged GitHub run exposed only a CI-speed boundary in that expanded
+accessibility case: forty axe/containment scans exceeded Playwright's inherited
+30-second per-test limit on both projects while the same assertions remained
+green locally. The audit now owns a bounded 120-second watchdog; the global
+timeout and every ordinary test remain unchanged. Its source-contract RED/GREEN
+test proves there is exactly one accessibility watchdog. A CI/GitHub-shaped
+focused run passed all four cases in 41.1 seconds, followed by another complete
+six-layer local reliability pass.
