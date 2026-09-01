@@ -12,6 +12,7 @@ import {
 } from './recommendEquipment';
 import { assessOptimizationReadiness } from './planReadiness';
 import { compileMechanics } from './mechanics';
+import { equipmentTotalsForProfile } from './equipmentTotals';
 
 export interface RecommendationPlan {
   datasetVersion: string;
@@ -46,16 +47,7 @@ export function optimizeBuild(
     statPlan: allocateStatPlan({
       level: profile.level,
       stats: profile.stats,
-      gear: dataset.equipment.reduce(
-        (totals, item) => {
-          if (!Object.values(profile.equipped).includes(item.id)) return totals;
-          totals.attack += item.attack;
-          totals.defense += item.defense;
-          totals.dexterity += item.dexterity;
-          return totals;
-        },
-        { attack: 0, defense: 0, dexterity: 0 },
-      ),
+      gear: equipmentTotalsForProfile(profile, dataset),
       goal: profile.goal,
       mechanics,
       unspentPoints: statBudget.difference,
