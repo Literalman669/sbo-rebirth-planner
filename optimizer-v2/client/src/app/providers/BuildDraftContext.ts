@@ -1,5 +1,6 @@
 import { createContext, useContext } from 'react';
 import type { CharacterProfile } from '../../domain/build/model';
+import type { BuildRevisionSnapshot } from '../../domain/build/record';
 import type {
   DraftPersistenceStatus,
   QuarantinedRecord,
@@ -24,6 +25,15 @@ export type BuildDraftContextValue = {
   renameSavedBuild(id: string, name: string): Promise<void>;
   duplicateSavedBuild(id: string): Promise<CharacterProfile>;
   setBuildArchived(id: string, archived: boolean): Promise<void>;
+  savePersonalPreset(
+    source: CharacterProfile,
+    name: string,
+  ): Promise<CharacterProfile>;
+  loadSavedBuildHistory(buildId: string): Promise<BuildRevisionSnapshot[]>;
+  restoreSavedBuildRevision(
+    buildId: string,
+    revisionId: string,
+  ): Promise<CharacterProfile>;
   quarantinedRecords: readonly QuarantinedRecord[];
   exportQuarantinedRecord(id: string): Promise<string | null>;
   deleteQuarantinedRecord(id: string): Promise<void>;

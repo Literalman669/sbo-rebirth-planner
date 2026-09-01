@@ -275,6 +275,47 @@ export function BuildDraftProvider({
     [store],
   );
 
+  const savePersonalPreset = useCallback(
+    async (source: CharacterProfile, name: string) => {
+      const trimmedName = name.trim();
+      if (!trimmedName) throw new Error('Preset name is required');
+      const preset: CharacterProfile = {
+        ...structuredClone(source),
+        id: crypto.randomUUID(),
+        name: trimmedName,
+      };
+      await store.saveBuild(preset, { kind: 'personal-preset' });
+      setSavedBuilds(await store.listBuilds());
+      return preset;
+    },
+    [store],
+  );
+
+  const loadSavedBuildHistory = useCallback(
+    (buildId: string) => store.listBuildHistory(buildId),
+    [store],
+  );
+
+  const restoreSavedBuildRevision = useCallback(
+    async (buildId: string, revisionId: string) => {
+      const restored = await store.restoreBuildRevision(
+        buildId,
+        revisionId,
+        crypto.randomUUID(),
+      );
+      const nextBuilds = await store.listBuilds();
+      setSavedBuilds(nextBuilds);
+      const record = nextBuilds.find(
+        (result) => result.ok && result.value.profile.id === buildId,
+      );
+      if (record?.ok && record.value.kind === 'build') {
+        replaceDraft(restored);
+      }
+      return restored;
+    },
+    [replaceDraft, store],
+  );
+
   const exportQuarantinedRecord = useCallback(
     (id: string) => store.exportQuarantinedRecord(id),
     [store],
@@ -330,6 +371,9 @@ export function BuildDraftProvider({
       renameSavedBuild,
       duplicateSavedBuild,
       setBuildArchived,
+      savePersonalPreset,
+      loadSavedBuildHistory,
+      restoreSavedBuildRevision,
       quarantinedRecords,
       exportQuarantinedRecord,
       deleteQuarantinedRecord,
@@ -361,6 +405,9 @@ export function BuildDraftProvider({
       renameSavedBuild,
       duplicateSavedBuild,
       setBuildArchived,
+      savePersonalPreset,
+      loadSavedBuildHistory,
+      restoreSavedBuildRevision,
       quarantinedRecords,
       exportQuarantinedRecord,
       deleteQuarantinedRecord,

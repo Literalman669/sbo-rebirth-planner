@@ -1,5 +1,6 @@
 import 'fake-indexeddb/auto';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { useState } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import type { CharacterProfile } from '../../domain/build/model';
 import {
@@ -108,6 +109,48 @@ function Consumer() {
   );
 }
 
+function BuildRecordOperationsConsumer() {
+  const {
+    draft,
+    isHydrated,
+    loadSavedBuildHistory,
+    restoreSavedBuildRevision,
+    savePersonalPreset,
+  } = useBuildDraft();
+  const [historyCount, setHistoryCount] = useState<number | null>(null);
+  if (!isHydrated) return <p>Loading record operations</p>;
+  return (
+    <div>
+      <p>Operations draft {draft.id} level {draft.level}</p>
+      <p>History {historyCount ?? 'not loaded'}</p>
+      <button
+        type="button"
+        onClick={() => void savePersonalPreset(draft, 'Personal Start')}
+      >
+        Save personal preset
+      </button>
+      <button
+        type="button"
+        onClick={() => {
+          void loadSavedBuildHistory('history-build').then((history) =>
+            setHistoryCount(history.length),
+          );
+        }}
+      >
+        Load saved history
+      </button>
+      <button
+        type="button"
+        onClick={() =>
+          void restoreSavedBuildRevision('history-build', 'history-revision-1')
+        }
+      >
+        Restore first revision
+      </button>
+    </div>
+  );
+}
+
 function renderProvider(store: GuestBuildStore) {
   return render(
     <DatasetProvider>
@@ -118,7 +161,68 @@ function renderProvider(store: GuestBuildStore) {
   );
 }
 
+function renderOperationsProvider(store: GuestBuildStore) {
+  return render(
+    <DatasetProvider>
+      <BuildDraftProvider store={store}>
+        <BuildRecordOperationsConsumer />
+      </BuildDraftProvider>
+    </DatasetProvider>,
+  );
+}
+
 describe('BuildDraftProvider', () => {
+  it('creates a personal preset with a new identity and exposes its history', async () => {
+    const store = createGuestBuildStore({
+      databaseName: `provider-preset-${crypto.randomUUID()}`,
+    });
+    await store.saveDraft(profile());
+    renderOperationsProvider(store);
+    await screen.findByText('Operations draft saved-draft level 12');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Save personal preset' }));
+
+    await waitFor(async () => {
+      const [saved] = (await store.listBuilds()).filter((row) => row.ok);
+      expect(saved).toMatchObject({
+        ok: true,
+        value: {
+          kind: 'personal-preset',
+          profile: { name: 'Personal Start' },
+        },
+      });
+      expect(saved?.value.profile.id).not.toBe(profile().id);
+      await expect(
+        store.listBuildHistory(saved!.value.profile.id),
+      ).resolves.toHaveLength(1);
+    });
+  });
+
+  it('loads local history and restores a normal build into the active draft', async () => {
+    const store = createGuestBuildStore({
+      databaseName: `provider-history-${crypto.randomUUID()}`,
+    });
+    const first = { ...profile(), id: 'history-build', level: 12 };
+    const second = {
+      ...first,
+      level: 13,
+      stats: { ...first.stats, str: first.stats.str + 3 },
+    };
+    await store.saveBuild(first, { revisionId: 'history-revision-1' });
+    await store.saveBuild(second, { revisionId: 'history-revision-2' });
+    renderOperationsProvider(store);
+    await screen.findByText(/Operations draft .+ level 1/);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Load saved history' }));
+    expect(await screen.findByText('History 2')).toBeVisible();
+    fireEvent.click(screen.getByRole('button', { name: 'Restore first revision' }));
+
+    expect(
+      await screen.findByText('Operations draft history-build level 12'),
+    ).toBeVisible();
+    await expect(store.listBuildHistory('history-build')).resolves.toHaveLength(3);
+  });
+
   it('hydrates a previously saved active draft', async () => {
     const store = createGuestBuildStore({
       databaseName: `provider-hydrate-${crypto.randomUUID()}`,
