@@ -1174,7 +1174,7 @@ git commit -m "feat: import and back up build libraries"
 - New Pages deep links: `/builds/compare?left=proof-a&right=proof-b` and `/builds/presets`.
 - Reliability evidence records `v5-to-v6-with-build-history-preservation`.
 
-- [ ] **Step 1: Write the failing end-to-end guest build-tools journey**
+- [x] **Step 1: Write the failing end-to-end guest build-tools journey**
 
 Create two valid saved builds, compare them on their pinned release, switch to
 current preview, prove no source fingerprint changes, create a new draft from
@@ -1196,7 +1196,7 @@ test('compares, presets, backs up, imports, and restores guest builds', async ({
 });
 ```
 
-- [ ] **Step 2: Extend cloud-module coverage**
+- [x] **Step 2: Extend cloud-module coverage**
 
 Save a personal preset, verify sender-only views, create 100 revisions with
 kind retained, reject cross-identity mutation, reject direct preset sharing,
@@ -1219,7 +1219,7 @@ await expect(
 expect([...userB.connection.db.myBuilds.iter()]).toHaveLength(0);
 ```
 
-- [ ] **Step 3: Add failing accessibility and containment coverage**
+- [x] **Step 3: Add failing accessibility and containment coverage**
 
 Run Library, Compare, selectors, Presets, Backup, Import Preview, and Overwrite
 Confirmation at 1440x1000, 768x1024, 390x844, and 320x700. Require zero
@@ -1235,7 +1235,7 @@ await page.getByRole('button', { name: 'Import builds' }).click();
 await expectAccessibleAndContained(page, 'build import dialog');
 ```
 
-- [ ] **Step 4: Run focused e2e and verify RED**
+- [x] **Step 4: Run focused e2e and verify RED**
 
 Run:
 
@@ -1248,7 +1248,7 @@ npm run test:pages
 Expected: FAIL until build-tool styling, route phases, migration fixtures, and
 Pages deep links are complete.
 
-- [ ] **Step 5: Implement route-specific responsive styling**
+- [x] **Step 5: Implement route-specific responsive styling**
 
 Import `builds.css` from `global.css`. Desktop comparison uses aligned columns;
 below 800 px it becomes labeled stacked groups. Only a contained comparison
@@ -1270,7 +1270,7 @@ surfaces reuse current tokens instead of new colors.
 }
 ```
 
-- [ ] **Step 6: Register the e2e phase and Pages routes**
+- [x] **Step 6: Register the e2e phase and Pages routes**
 
 Add `build-power-tools.spec.ts` once to the core phase and assert phase
 non-overlap. Add the two deep-link cases to the built Pages artifact tests.
@@ -1282,7 +1282,7 @@ const deepLinks = [
 ];
 ```
 
-- [ ] **Step 7: Run the complete local verification gate**
+- [x] **Step 7: Run the complete local verification gate**
 
 Run:
 
@@ -1298,28 +1298,28 @@ Expected: all client/module/script/wiki/integration/stress/publication/share and
 Pages layers pass; generated bindings are clean; only intentional source/docs
 changes and the untouched root `.playwright-mcp/` directory remain.
 
-- [ ] **Step 8: Perform rendered browser QA before documenting acceptance**
+- [x] **Step 8: Perform rendered browser QA before documenting acceptance**
 
 Using the Browser workflow, verify page identity, nonblank content, no framework
 overlay, zero relevant app warnings/errors, one complete interaction loop, and
 screenshots for Library, Compare historical/current, Presets, Import Preview,
 and mobile 390x844. Confirm exact source links and explicit missing-data labels.
 
-- [ ] **Step 9: Record acceptance and reliability evidence**
+- [x] **Step 9: Record acceptance and reliability evidence**
 
 Update `ACCEPTANCE.md` with the eleven spec criteria and exact test evidence.
 Update `RELIABILITY.md` with test counts, v5-to-v6 migration proof, import byte
 and record limits, cloud ordering/recovery, accessibility viewports, query/
 optimizer timings, Pages asset names/sizes, and remaining known boundaries.
 
-- [ ] **Step 10: Commit final Release 2 Build Power Tools evidence**
+- [x] **Step 10: Commit final Release 2 Build Power Tools evidence**
 
 ```bash
 git add optimizer-v2
 git commit -m "test: verify build power tools release"
 ```
 
-- [ ] **Step 11: Push, monitor both workflows, and smoke production**
+- [x] **Step 11: Push, monitor both workflows, and smoke production**
 
 ```bash
 git push origin main

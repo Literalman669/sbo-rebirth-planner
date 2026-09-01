@@ -496,3 +496,18 @@ timeout and every ordinary test remain unchanged. Its source-contract RED/GREEN
 test proves there is exactly one accessibility watchdog. A CI/GitHub-shaped
 focused run passed all four cases in 41.1 seconds, followed by another complete
 six-layer local reliability pass.
+
+Replacement [Optimizer V2 CI 33555658626](https://github.com/Literalman669/sbo-rebirth-planner/actions/runs/33555658626)
+passed the complete fixed-local gate in 5m11s. [Deploy Optimizer V2 33555658513](https://github.com/Literalman669/sbo-rebirth-planner/actions/runs/33555658513)
+also passed through Maincloud publication, production authentication checks,
+production build, five Pages artifact routes, upload, and deployment.
+
+The deployed production smoke used disposable local-only records and no sign-in
+or production-player mutation. It exercised duplicate, comparison selection and
+refresh-safe query parameters, current-data preview, presets, backup download,
+validated two-record import preview, duplicate import, and explicit deletion of
+every disposable record. Verified price/source evidence and explicit missing
+data rendered on Compare. The mobile route remained width-contained. No
+application-origin warning or error was present; the only observed console
+noise came from a browser extension, while an isolated direct-route request
+showed GitHub Pages' expected 404-to-query recovery before the app loaded.

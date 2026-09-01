@@ -149,10 +149,27 @@ verified game-data release.
 | 8 | Portable files reject identity, credential, share-owner, cloud-row, and pending-queue fields instead of silently serializing private metadata. | `client/src/domain/buildTransfer/portableBuilds.test.ts` | Pass |
 | 9 | IndexedDB v5 upgrades to v6 with draft, builds, inventory, progress, archive state, kinds, and revision history preserved; SpacetimeDB kind fields are additive and old calls default to normal builds. | `client/src/infrastructure/storage/plannerDatabase.test.ts`, `spacetimedb/src/playerReducers.test.ts`, `client/e2e/reliability-flow.spec.ts` | Pass |
 | 10 | Library, Compare, Presets, selectors, backup, import, and overwrite flows are keyboard/touch usable, contained from 320 px upward, and have zero serious/critical axe violations. | `client/e2e/qol-accessibility.spec.ts`, rendered Browser QA | Pass |
-| 11 | Unit, module, migration, integration, stress, publication, sharing, and Pages gates pass on the branch; merged CI, deployment, and live-smoke evidence is recorded after publication. | `npm run test:integration`, `npm run test:pages`, `scripts/run-reliability.mjs` | Local pass; external pending |
+| 11 | Unit, module, migration, integration, stress, publication, sharing, and Pages gates pass on the final merged tree and the deployed production site. | `npm run test:integration`, `npm run test:pages`, `scripts/run-reliability.mjs`, [CI 33555658626](https://github.com/Literalman669/sbo-rebirth-planner/actions/runs/33555658626), [deployment 33555658513](https://github.com/Literalman669/sbo-rebirth-planner/actions/runs/33555658513), and the live smoke below | Pass |
 
 The shipped browser boundaries are explicit: portable files are limited to
 10 MiB, 250 builds, and 100 revisions per build; imports validate completely
 before writing; personal presets cannot be shared directly; and unresolved
 wiki data remains excluded rather than guessed. Compare and Presets are routed
 workspaces, not additions to the guided planner pages.
+
+The first merged workflows correctly stopped before publication when the
+expanded forty-scan accessibility case exceeded its inherited 30-second test
+watchdog on GitHub's runner. The scoped 120-second audit watchdog retained the
+global limit and every assertion; a CI-shaped focused run passed in 41.1
+seconds. Replacement [Optimizer V2 CI 33555658626](https://github.com/Literalman669/sbo-rebirth-planner/actions/runs/33555658626)
+and [Deploy Optimizer V2 33555658513](https://github.com/Literalman669/sbo-rebirth-planner/actions/runs/33555658513)
+then passed on commit `e591898`.
+
+Live production smoke verified Library, two-build URL-backed Compare, temporary
+current-data preview, all six curated presets, personal build actions, verified
+prices, explicit missing-data labels, and exact item wiki links. A local-only
+backup downloaded, previewed as two valid records, and imported as duplicates;
+all four disposable records were then removed. The mobile comparison route had
+equal viewport and document widths. No application-origin console warning or
+error was captured; browser-extension output and GitHub Pages' expected initial
+direct-route recovery request were excluded from app-origin results.
