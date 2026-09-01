@@ -13,6 +13,7 @@ type CloudBuildListProps = {
   onExport(profile: CharacterProfile): void;
   onShare(buildId: string): void;
   onCompare?(buildId: string): void;
+  onSaveAsPreset?(profile: CharacterProfile): void;
 };
 
 export function CloudBuildList({
@@ -26,6 +27,7 @@ export function CloudBuildList({
   onExport,
   onShare,
   onCompare,
+  onSaveAsPreset,
 }: CloudBuildListProps) {
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState('');
@@ -70,6 +72,7 @@ export function CloudBuildList({
                   ) : (
                     <>
                       <strong>{name}</strong>
+                      {record.kind === 'personal-preset' ? <span>Personal preset</span> : null}
                       <span>Level {build.level} · Floor {build.maxFloor} · {build.weaponPath}</span>
                       <small>
                         {record.archivedAt ? 'Archived' : 'Cloud synced'} · {record.history.length} revision{record.history.length === 1 ? '' : 's'} · dataset {build.datasetVersion}
@@ -85,9 +88,14 @@ export function CloudBuildList({
                     <button type="button" aria-label={`History for ${name}`} onClick={() => onHistory(build.id)}>History</button>
                     <button type="button" aria-label={`${record.archivedAt ? 'Unarchive' : 'Archive'} ${name}`} onClick={() => onArchive(build.id, !record.archivedAt)}>{record.archivedAt ? 'Unarchive' : 'Archive'}</button>
                     <button type="button" aria-label={`Export ${name}`} onClick={() => onExport(build)}>Export</button>
-                    <button type="button" aria-label={`Share ${name}`} onClick={() => onShare(build.id)}>Share</button>
+                    {record.kind === 'build' ? (
+                      <button type="button" aria-label={`Share ${name}`} onClick={() => onShare(build.id)}>Share</button>
+                    ) : null}
                     {onCompare ? (
                       <button type="button" aria-label={`Compare ${name}`} onClick={() => onCompare(build.id)}>Compare</button>
+                    ) : null}
+                    {onSaveAsPreset && record.kind === 'build' ? (
+                      <button type="button" aria-label={`Save ${name} as preset`} onClick={() => onSaveAsPreset(build)}>Save as preset</button>
                     ) : null}
                     <button type="button" aria-label={`Delete ${name}`} onClick={() => onDelete(build.id)}>Delete</button>
                   </div>

@@ -3,9 +3,10 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useBuildDraft } from '../../app/providers/BuildDraftContext';
 import { useOptionalCloudBuilds } from '../../app/providers/CloudBuildsContext';
 import type { CloudBuildRecord } from '../../infrastructure/cloud/buildRepository';
+import type { BuildRevisionSnapshot } from '../../domain/build/record';
 
 type BuildHistoryViewProps = {
-  record: CloudBuildRecord;
+  record: Pick<CloudBuildRecord, 'headRevisionId' | 'profile' | 'kind' | 'history'>;
   onRestore(revisionId: string): Promise<void>;
 };
 
@@ -67,23 +68,72 @@ export function BuildHistoryScreen() {
   const { buildId } = useParams();
   const navigate = useNavigate();
   const cloud = useOptionalCloudBuilds();
-  const { replaceDraft } = useBuildDraft();
+  const {
+    isHydrated,
+    loadSavedBuildHistory,
+    replaceDraft,
+    restoreSavedBuildRevision,
+    savedBuilds,
+  } = useBuildDraft();
   const [waitingForHead, setWaitingForHead] = useState<string | null>(null);
-  const record = cloud?.cloudBuilds.find(
+  const [localHistory, setLocalHistory] = useState<
+    BuildRevisionSnapshot[] | null
+  >(null);
+  const local = savedBuilds.find(
+    (candidate) => candidate.ok && candidate.value.profile.id === buildId,
+  );
+  const cloudRecord = cloud?.cloudBuilds.find(
     (candidate) => candidate.profile.id === buildId,
   );
+  useEffect(() => {
+    let active = true;
+    if (!local?.ok) {
+      setLocalHistory(null);
+      return () => {
+        active = false;
+      };
+    }
+    void loadSavedBuildHistory(local.value.profile.id).then((history) => {
+      if (active) setLocalHistory(history);
+    });
+    return () => {
+      active = false;
+    };
+  }, [loadSavedBuildHistory, local?.ok, local?.ok ? local.value.profile.id : null]);
+  const localRecord = local?.ok && localHistory
+    ? {
+        headRevisionId: local.value.headRevisionId,
+        profile: local.value.profile,
+        kind: local.value.kind,
+        history: localHistory.map((revision) => ({
+          revisionId: revision.id,
+          createdAt: revision.createdAt,
+          datasetVersion: revision.profile.datasetVersion,
+          profile: revision.profile,
+          kind: revision.kind,
+        })),
+      }
+    : null;
+  const record = localRecord ?? cloudRecord;
 
   useEffect(() => {
-    if (!record || record.headRevisionId !== waitingForHead) return;
-    replaceDraft(record.profile);
+    if (!cloudRecord || cloudRecord.headRevisionId !== waitingForHead) return;
+    replaceDraft(cloudRecord.profile);
     navigate('/results');
-  }, [navigate, record, replaceDraft, waitingForHead]);
+  }, [cloudRecord, navigate, replaceDraft, waitingForHead]);
 
-  if (!cloud?.isAuthenticated) {
+  if (!isHydrated || (local?.ok && !localHistory)) {
+    return (
+      <main className="planner-screen build-history-screen">
+        <h2>Loading build history…</h2>
+      </main>
+    );
+  }
+  if (!local?.ok && !cloud?.isAuthenticated) {
     return (
       <main className="planner-screen build-history-screen">
         <h2>Cloud history requires sign-in.</h2>
-        <Link to="/">Return Home</Link>
+        <Link to="/builds">Return to Builds</Link>
       </main>
     );
   }
@@ -101,6 +151,12 @@ export function BuildHistoryScreen() {
       <BuildHistoryView
         record={record}
         onRestore={async (revisionId) => {
+          if (localRecord) {
+            await restoreSavedBuildRevision(record.profile.id, revisionId);
+            navigate(record.kind === 'build' ? '/character' : '/builds/presets');
+            return;
+          }
+          if (!cloud) throw new Error('Cloud history is unavailable');
           const newRevisionId = await cloud.repository.restore(
             record.profile.id,
             revisionId,
@@ -109,7 +165,7 @@ export function BuildHistoryScreen() {
         }}
       />
       {waitingForHead ? <p role="status">Waiting for restored head…</p> : null}
-      <Link to="/">Return Home</Link>
+      <Link to="/builds">Return to Builds</Link>
     </main>
   );
 }

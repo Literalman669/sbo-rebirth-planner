@@ -9,6 +9,7 @@ type LocalBuildListProps = {
   onArchive?(id: string, archived: boolean): void;
   onExport?(profile: CharacterProfile): void;
   onCompare?(id: string): void;
+  onSaveAsPreset?(profile: CharacterProfile): void;
   renamingId?: string | null;
   renameValue?: string;
   onStartRename?(profile: CharacterProfile): void;
@@ -25,6 +26,7 @@ export function LocalBuildList({
   onArchive,
   onExport,
   onCompare,
+  onSaveAsPreset,
   renamingId,
   renameValue = '',
   onStartRename,
@@ -79,6 +81,7 @@ export function LocalBuildList({
               ) : (
                 <>
                   <strong>{name}</strong>
+                  {record.kind === 'personal-preset' ? <span>Personal preset</span> : null}
                   <span>Level {build.level} · Floor {build.maxFloor} · {build.weaponPath}</span>
                   <small>
                     {record.archivedAt ? 'Archived' : 'Active'} · updated{' '}
@@ -113,6 +116,9 @@ export function LocalBuildList({
                 ) : null}
                 {onCompare ? (
                   <button type="button" aria-label={`Compare ${name}`} onClick={() => onCompare(build.id)}>Compare</button>
+                ) : null}
+                {onSaveAsPreset && record.kind === 'build' ? (
+                  <button type="button" aria-label={`Save ${name} as preset`} onClick={() => onSaveAsPreset(build)}>Save as preset</button>
                 ) : null}
                 <button type="button" aria-label={`Delete ${name}`} onClick={() => onDelete(build.id, name)}>Delete</button>
               </div>

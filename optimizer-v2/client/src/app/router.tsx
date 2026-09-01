@@ -20,6 +20,7 @@ import { CurationScreen } from '../features/curation/CurationScreen';
 import { InventoryScreen } from '../features/inventory/InventoryScreen';
 import { EquipmentComparisonScreen } from '../features/inventory/EquipmentComparisonScreen';
 import { BuildComparisonScreen } from '../features/builds/BuildComparisonScreen';
+import { BuildPresetsScreen } from '../features/builds/BuildPresetsScreen';
 
 function LegacyBuildComparisonRedirect() {
   const location = useLocation();
@@ -38,6 +39,7 @@ export function createAppRoutes(
         { path: 'auth/callback', element: <AuthCallbackScreen /> },
         { path: 'builds', element: <BuildsScreen /> },
         { path: 'builds/compare', element: <BuildComparisonScreen /> },
+        { path: 'builds/presets', element: <BuildPresetsScreen /> },
         { path: 'builds/:buildId/history', element: <BuildHistoryScreen /> },
         { path: 'shared/:shareId', element: <SharedBuildScreen /> },
         { path: 'curation', element: <CurationScreen /> },

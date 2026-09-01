@@ -66,6 +66,7 @@ export function BuildsScreen() {
     isHydrated,
     loadSavedBuild,
     renameSavedBuild,
+    savePersonalPreset,
     quarantinedRecords,
     savedBuilds,
     setBuildArchived,
@@ -177,6 +178,12 @@ export function BuildsScreen() {
             onArchive={(id, archived) => { void setBuildArchived(id, archived).then(() => setMessage(archived ? 'Build archived.' : 'Build restored.')); }}
             onExport={exportProfile}
             onCompare={(id) => navigate(`/builds/compare?left=${encodeURIComponent(id)}`)}
+            onSaveAsPreset={(profile) => {
+              const name = `${buildName(profile)} preset`.slice(0, 60);
+              void savePersonalPreset(profile, name).then(() =>
+                setMessage('Personal preset saved.'),
+              );
+            }}
             onDelete={(id, name) => setDeleteTarget({ id, name, source: 'local' })}
           />
         </section>
@@ -213,6 +220,19 @@ export function BuildsScreen() {
           }}
           onExport={exportProfile}
           onCompare={(id) => navigate(`/builds/compare?left=${encodeURIComponent(id)}`)}
+          onSaveAsPreset={(profile) => {
+            const name = `${buildName(profile)} preset`.slice(0, 60);
+            void savePersonalPreset(profile, name)
+              .then((preset) => cloud.repository.save(preset, { kind: 'personal-preset' }))
+              .then(async (result) => {
+                await cloud.refreshPending();
+                setMessage(
+                  result.location === 'cloud'
+                    ? 'Cloud personal preset saved.'
+                    : 'Personal preset queued for cloud sync.',
+                );
+              });
+          }}
           onShare={(buildId) => {
             void cloud.createShare(buildId).then((shareId) => {
               const shareUrl = new URL(`${import.meta.env.BASE_URL}shared/${shareId}`, window.location.href).href;
