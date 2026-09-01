@@ -216,7 +216,7 @@ test('reloads direct routes with expected screens or guards and no framework ove
   await expectRuntimeHealth(failures);
 });
 
-test('upgrades a v4 browser database to v5 without losing its draft or saved build', async ({
+test('upgrades a v5 browser database to v6 without losing its draft, saved build, or inventory', async ({
   page,
 }, testInfo) => {
   test.skip(testInfo.project.name !== 'desktop', 'Migration browser coverage runs once.');
@@ -234,7 +234,7 @@ test('upgrades a v4 browser database to v5 without losing its draft or saved bui
       ownedItemIds: [],
       datasetVersion: 'bootstrap-0',
     };
-    const request = indexedDB.open('sbo-rebirth-optimizer-v2', 4);
+    const request = indexedDB.open('sbo-rebirth-optimizer-v2', 5);
     request.onupgradeneeded = () => {
       for (const store of [
         'draft',
@@ -245,19 +245,27 @@ test('upgrades a v4 browser database to v5 without losing its draft or saved bui
         'plan-progress',
         'pending-planner-state',
         'quarantine',
+        'inventory',
       ]) {
         if (!request.result.objectStoreNames.contains(store)) request.result.createObjectStore(store);
       }
     };
     request.onsuccess = () => {
       const database = request.result;
-      const transaction = database.transaction(['draft', 'builds'], 'readwrite');
+      const transaction = database.transaction(['draft', 'builds', 'inventory'], 'readwrite');
       transaction.objectStore('draft').put(profile, 'active');
       transaction.objectStore('builds').put({
         profile,
         createdAt: '2026-08-30T12:00:00.000Z',
         updatedAt: '2026-08-30T12:00:00.000Z',
       }, profile.id);
+      transaction.objectStore('inventory').put({
+        schemaVersion: 1,
+        ownedItemIds: ['iron-greatsword'],
+        favoriteItemIds: [],
+        comparisonItemIds: [],
+        notes: {},
+      }, 'primary');
       transaction.oncomplete = () => database.close();
     };
   });
@@ -279,9 +287,25 @@ test('upgrades a v4 browser database to v5 without losing its draft or saved bui
       };
     });
   })).toEqual(expect.objectContaining({
-    version: 5,
-    stores: expect.arrayContaining(['draft', 'builds', 'inventory']),
+    version: 6,
+    stores: expect.arrayContaining(['draft', 'builds', 'inventory', 'build-revisions']),
   }));
+  expect(await page.evaluate(async () => {
+    const request = indexedDB.open('sbo-rebirth-optimizer-v2');
+    return new Promise<number>((resolve, reject) => {
+      request.onerror = () => reject(request.error);
+      request.onsuccess = () => {
+        const database = request.result;
+        const transaction = database.transaction('build-revisions', 'readonly');
+        const count = transaction.objectStore('build-revisions').count();
+        count.onerror = () => reject(count.error);
+        count.onsuccess = () => {
+          resolve(count.result);
+          database.close();
+        };
+      };
+    });
+  })).toBe(1);
 });
 
 test('keeps the recommendation fingerprint stable across checklist and display-only changes', async ({

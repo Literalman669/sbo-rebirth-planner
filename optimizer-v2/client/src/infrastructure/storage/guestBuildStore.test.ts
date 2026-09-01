@@ -49,6 +49,39 @@ async function createVersionThreeFixture(
   return database;
 }
 
+async function createVersionFiveFixture(
+  name: string,
+  storedProfile: CharacterProfile,
+) {
+  const database = await openDB(name, 5, {
+    upgrade(legacyDatabase) {
+      for (const store of [
+        'draft',
+        'builds',
+        'pending-revisions',
+        'dataset-releases',
+        'planner-preferences',
+        'plan-progress',
+        'pending-planner-state',
+        'quarantine',
+        'inventory',
+      ]) {
+        legacyDatabase.createObjectStore(store);
+      }
+    },
+  });
+  await database.put(
+    'builds',
+    {
+      profile: storedProfile,
+      createdAt: '2026-08-30T10:00:00.000Z',
+      updatedAt: '2026-08-30T11:00:00.000Z',
+    },
+    storedProfile.id,
+  );
+  return database;
+}
+
 describe('GuestBuildStore', () => {
   it('adds preference and plan-progress stores without losing v3 builds', async () => {
     const name = databaseName('v4-upgrade');
@@ -177,6 +210,152 @@ describe('GuestBuildStore', () => {
       'newer',
       'older',
     ]);
+  });
+
+  it('migrates a deployed v5 build row and synthesizes one immutable revision', async () => {
+    const name = databaseName('v6-build-migration');
+    const legacyProfile = profile('legacy-build');
+    const legacy = await createVersionFiveFixture(name, legacyProfile);
+    legacy.close();
+
+    const store = createGuestBuildStore({ databaseName: name });
+    const builds = await store.listBuilds();
+
+    expect(builds).toEqual([
+      {
+        ok: true,
+        value: {
+          profile: legacyProfile,
+          kind: 'build',
+          headRevisionId: 'legacy:legacy-build',
+          createdAt: '2026-08-30T10:00:00.000Z',
+          updatedAt: '2026-08-30T11:00:00.000Z',
+        },
+      },
+    ]);
+    await expect(store.listBuildHistory('legacy-build')).resolves.toEqual([
+      {
+        id: 'legacy:legacy-build',
+        buildId: 'legacy-build',
+        kind: 'build',
+        profile: legacyProfile,
+        createdAt: '2026-08-30T10:00:00.000Z',
+      },
+    ]);
+  });
+
+  it('synthesizes the legacy baseline before a direct save without listing first', async () => {
+    const name = databaseName('v6-direct-save-migration');
+    const legacyProfile = profile('legacy-direct');
+    const legacy = await createVersionFiveFixture(name, legacyProfile);
+    legacy.close();
+    const store = createGuestBuildStore({ databaseName: name });
+
+    await store.saveBuild(
+      {
+        ...legacyProfile,
+        level: 9,
+        stats: { ...legacyProfile.stats, str: 17 },
+      },
+      { revisionId: 'revision-after-migration' },
+    );
+
+    expect((await store.listBuildHistory('legacy-direct')).map((row) => row.id))
+      .toEqual(['legacy:legacy-direct', 'revision-after-migration']);
+  });
+
+  it('synthesizes the legacy baseline before a direct restore without listing first', async () => {
+    const name = databaseName('v6-direct-restore-migration');
+    const legacyProfile = profile('legacy-restore');
+    const legacy = await createVersionFiveFixture(name, legacyProfile);
+    legacy.close();
+    const store = createGuestBuildStore({ databaseName: name });
+
+    await store.restoreBuildRevision(
+      'legacy-restore',
+      'legacy:legacy-restore',
+      'restored-revision',
+    );
+
+    expect((await store.listBuildHistory('legacy-restore')).map((row) => row.id))
+      .toEqual(['legacy:legacy-restore', 'restored-revision']);
+  });
+
+  it('stores immutable revisions, skips identical saves, and restores through a new head', async () => {
+    const timestamps = [
+      '2026-08-30T10:00:00.000Z',
+      '2026-08-30T11:00:00.000Z',
+      '2026-08-30T12:00:00.000Z',
+      '2026-08-30T13:00:00.000Z',
+    ];
+    const store = createGuestBuildStore({
+      databaseName: databaseName('revision-history'),
+      now: () => timestamps.shift()!,
+    });
+    const levelEight = profile('history-build');
+    const levelNine = {
+      ...levelEight,
+      level: 9,
+      stats: { ...levelEight.stats, str: 17 },
+    };
+
+    await store.saveBuild(levelEight, { revisionId: 'revision-1' });
+    await store.saveBuild(levelEight, { revisionId: 'ignored-identical' });
+    await store.saveBuild(levelNine, { revisionId: 'revision-2' });
+
+    expect((await store.listBuildHistory('history-build')).map((row) => row.id))
+      .toEqual(['revision-1', 'revision-2']);
+    await store.restoreBuildRevision(
+      'history-build',
+      'revision-1',
+      'revision-3',
+    );
+
+    const [current] = await store.listBuilds();
+    expect(current).toMatchObject({
+      ok: true,
+      value: {
+        profile: { id: 'history-build', level: 8 },
+        kind: 'build',
+        headRevisionId: 'revision-3',
+      },
+    });
+    const history = await store.listBuildHistory('history-build');
+    expect(history).toMatchObject([
+      { id: 'revision-1' },
+      { id: 'revision-2', parentRevisionId: 'revision-1' },
+      { id: 'revision-3', parentRevisionId: 'revision-2', profile: { level: 8 } },
+    ]);
+    expect(history[0]).not.toHaveProperty('parentRevisionId');
+  });
+
+  it('preserves personal-preset kind through duplicate and deletes history with the build', async () => {
+    const name = databaseName('kind-and-delete');
+    const store = createGuestBuildStore({ databaseName: name });
+    await store.saveBuild(profile('preset'), {
+      kind: 'personal-preset',
+      revisionId: 'preset-revision',
+    });
+    await store.savePlanProgress({
+      schemaVersion: 1,
+      buildId: 'preset',
+      completedActionIds: [],
+      dismissedRecommendationIds: [],
+    });
+
+    await store.duplicateBuild('preset', 'preset-copy', 'Preset copy');
+    const copied = (await store.listBuilds()).find(
+      (row) => row.ok && row.value.profile.id === 'preset-copy',
+    );
+    expect(copied).toMatchObject({
+      ok: true,
+      value: { kind: 'personal-preset', headRevisionId: expect.any(String) },
+    });
+    await expect(store.listBuildHistory('preset-copy')).resolves.toHaveLength(1);
+
+    await store.deleteBuild('preset');
+    await expect(store.listBuildHistory('preset')).resolves.toEqual([]);
+    await expect(store.loadPlanProgress('preset')).resolves.toBeNull();
   });
 
   it('renames, duplicates deeply, and archives without changing the original identity', async () => {

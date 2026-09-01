@@ -1,7 +1,7 @@
 import { openDB } from 'idb';
 
 export const DEFAULT_GUEST_DATABASE_NAME = 'sbo-rebirth-optimizer-v2';
-export const GUEST_DATABASE_VERSION = 5;
+export const GUEST_DATABASE_VERSION = 6;
 export const LOCAL_DATABASE_UPGRADE_BLOCKED_MESSAGE =
   'Close other SBO planner tabs, then reload this page to finish the local data upgrade.';
 
@@ -15,6 +15,7 @@ const PLANNER_STORE_NAMES = [
   'pending-planner-state',
   'quarantine',
   'inventory',
+  'build-revisions',
 ] as const;
 
 export function openPlannerDatabase(
