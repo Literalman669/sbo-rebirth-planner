@@ -49,6 +49,61 @@ describe('planner state validation', () => {
     ).toEqual(['Stored plan progress is invalid']);
   });
 
+  it('accepts strict version two progress and rejects unsafe current state', () => {
+    const valid = {
+      schemaVersion: 2,
+      buildId: 'build-1',
+      wallet: { balance: 10_000, updatedAt: '2026-09-01T12:00:00.000Z' },
+      objectives: [
+        {
+          actionKey: 'manual:quest',
+          category: 'manual-objective',
+          status: 'pending',
+          source: 'manual',
+          planFingerprint: 'plan-1',
+          updatedAt: '2026-09-01T12:00:00.000Z',
+          note: 'Try with a party',
+        },
+      ],
+      history: [
+        {
+          id: 'event-1',
+          actionKey: 'manual:quest',
+          category: 'manual-objective',
+          label: 'Complete quest',
+          outcome: 'reopened',
+          source: 'manual',
+          planFingerprint: 'plan-1',
+          datasetVersion: '2026.08.30.1',
+          occurredAt: '2026-09-01T12:00:00.000Z',
+        },
+      ],
+      currentPlanFingerprint: 'plan-1',
+      reconciledThroughLevel: 20,
+      acknowledgedDatasetVersion: '2026.08.30.1',
+    };
+
+    expect(validatePlanProgressJson(JSON.stringify(valid), 'build-1')).toEqual([]);
+    expect(
+      validatePlanProgressJson(
+        JSON.stringify({
+          ...valid,
+          objectives: [{ ...valid.objectives[0], updatedAt: undefined }],
+        }),
+        'build-1',
+      ),
+    ).toEqual(['Stored plan progress is invalid']);
+    expect(
+      validatePlanProgressJson(
+        JSON.stringify({
+          ...valid,
+          history: [valid.history[0], valid.history[0]],
+        }),
+        'build-1',
+      ),
+    ).toEqual(['Stored plan progress is invalid']);
+  });
+
   it('accepts only unique known access-preference tokens', () => {
     expect(
       validateAccessPreferences('active-event,gamepass,badge,limited'),

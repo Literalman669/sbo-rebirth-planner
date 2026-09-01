@@ -6,10 +6,11 @@ import {
   validateBuildKind,
   validateInventoryJson,
   validateOwnedItemIds,
-  validatePlanProgressJson,
+  parseAndValidatePlanProgressJson,
   validatePlanProgressOwnership,
   validatePreferenceJson,
 } from './validation';
+import { mergePlanProgress } from './progressMerge';
 
 const weaponPaths = new Set([
   'two-handed',
@@ -400,22 +401,31 @@ export const upsertPlanProgress = spacetimedb.reducer(
       ctx.sender,
     );
     if (ownershipErrors[0]) throw new SenderError(ownershipErrors[0]);
-    const validationErrors = validatePlanProgressJson(progressJson, buildId);
-    if (validationErrors[0]) throw new SenderError(validationErrors[0]);
-
     const current = ctx.db.buildPlanProgress.buildId.find(buildId);
-    if (current?.progressJson === progressJson) return;
+    let mergedJson: string;
+    try {
+      const incoming = parseAndValidatePlanProgressJson(progressJson, buildId);
+      const existing = current
+        ? parseAndValidatePlanProgressJson(current.progressJson, buildId)
+        : undefined;
+      mergedJson = JSON.stringify(mergePlanProgress(existing, incoming));
+    } catch (error) {
+      throw new SenderError(
+        error instanceof Error ? error.message : 'Stored plan progress is invalid',
+      );
+    }
+    if (current?.progressJson === mergedJson) return;
     if (current) {
       ctx.db.buildPlanProgress.buildId.update({
         ...current,
-        progressJson,
+        progressJson: mergedJson,
         updatedAt: ctx.timestamp,
       });
     } else {
       ctx.db.buildPlanProgress.insert({
         buildId,
         owner: ctx.sender,
-        progressJson,
+        progressJson: mergedJson,
         updatedAt: ctx.timestamp,
       });
     }

@@ -1,6 +1,14 @@
+import {
+  MAX_PROGRESS_HISTORY,
+  MAX_PROGRESS_OBJECTIVES,
+  migrateServerPlanProgress,
+  type ServerPlanProgress,
+} from './progressMerge';
+
 export type ReleaseState = { version: string; isCurrent: boolean };
 
 const MAX_PLANNER_JSON_LENGTH = 20_000;
+const MAX_PROGRESS_JSON_LENGTH = 1_000_000;
 const MAX_INVENTORY_JSON_LENGTH = 2_000_000;
 const controlCharacters = /[\u0000-\u001f\u007f]/;
 const unsafeTextControls = /[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/;
@@ -158,39 +166,210 @@ export function validatePlanProgressJson(
   value: string,
   expectedBuildId?: string,
 ): string[] {
-  const parsed = parsePlannerJson(value);
+  if (value.length > MAX_PROGRESS_JSON_LENGTH) {
+    return ['Stored plan progress is invalid'];
+  }
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(value) as unknown;
+  } catch {
+    return ['Stored plan progress is invalid'];
+  }
+  if (!isRecord(parsed)) return ['Stored plan progress is invalid'];
+  if (parsed.schemaVersion === 1) {
+    if (
+      !hasExactKeys(
+        parsed,
+        [
+          'schemaVersion',
+          'buildId',
+          'completedActionIds',
+          'dismissedRecommendationIds',
+        ],
+        ['reconciledThroughLevel', 'acknowledgedDatasetVersion'],
+      ) ||
+      !isProgressBuildId(parsed.buildId, expectedBuildId) ||
+      !isUniqueIdArray(parsed.completedActionIds) ||
+      !isUniqueIdArray(parsed.dismissedRecommendationIds) ||
+      !isOptionalProgressMetadataValid(parsed)
+    ) {
+      return ['Stored plan progress is invalid'];
+    }
+    return [];
+  }
   if (
-    !isRecord(parsed) ||
     !hasExactKeys(
       parsed,
+      ['schemaVersion', 'buildId', 'objectives', 'history'],
       [
-        'schemaVersion',
-        'buildId',
-        'completedActionIds',
-        'dismissedRecommendationIds',
+        'wallet',
+        'currentPlanFingerprint',
+        'reconciledThroughLevel',
+        'acknowledgedDatasetVersion',
       ],
-      ['reconciledThroughLevel', 'acknowledgedDatasetVersion'],
     ) ||
-    parsed.schemaVersion !== 1 ||
-    typeof parsed.buildId !== 'string' ||
-    parsed.buildId.length < 1 ||
-    parsed.buildId.length > 255 ||
-    (expectedBuildId !== undefined && parsed.buildId !== expectedBuildId) ||
-    !isUniqueIdArray(parsed.completedActionIds) ||
-    !isUniqueIdArray(parsed.dismissedRecommendationIds) ||
-    (parsed.reconciledThroughLevel !== undefined &&
-      (typeof parsed.reconciledThroughLevel !== 'number' ||
-        !Number.isInteger(parsed.reconciledThroughLevel) ||
-        parsed.reconciledThroughLevel < 1 ||
-        parsed.reconciledThroughLevel > 10_000)) ||
-    (parsed.acknowledgedDatasetVersion !== undefined &&
-      (typeof parsed.acknowledgedDatasetVersion !== 'string' ||
-        parsed.acknowledgedDatasetVersion.length < 1 ||
-        parsed.acknowledgedDatasetVersion.length > 255))
+    parsed.schemaVersion !== 2 ||
+    !isProgressBuildId(parsed.buildId, expectedBuildId) ||
+    !isProgressObjectives(parsed.objectives) ||
+    !isProgressHistory(parsed.history) ||
+    !isProgressWallet(parsed.wallet) ||
+    !isOptionalProgressId(parsed.currentPlanFingerprint) ||
+    !isOptionalProgressMetadataValid(parsed)
   ) {
     return ['Stored plan progress is invalid'];
   }
   return [];
+}
+
+const progressCategories = new Set([
+  'stat-allocation',
+  'equipment-upgrade',
+  'level-milestone',
+  'floor-milestone',
+  'manual-objective',
+]);
+const progressStatuses = new Set(['pending', 'completed', 'skipped']);
+const progressOutcomes = new Set([
+  'completed',
+  'skipped',
+  'reopened',
+  'superseded',
+]);
+const progressSources = new Set(['automatic', 'manual', 'legacy']);
+
+function isProgressId(value: unknown): value is string {
+  return (
+    typeof value === 'string' &&
+    value.length >= 1 &&
+    value.length <= 255 &&
+    !controlCharacters.test(value)
+  );
+}
+
+function isOptionalProgressId(value: unknown) {
+  return value === undefined || isProgressId(value);
+}
+
+function isProgressBuildId(value: unknown, expected?: string) {
+  return isProgressId(value) && (expected === undefined || value === expected);
+}
+
+function isSafeProgressText(value: unknown, maximum: number) {
+  return (
+    typeof value === 'string' &&
+    value.trim().length >= 1 &&
+    value.length <= maximum &&
+    !unsafeTextControls.test(value)
+  );
+}
+
+function isIsoTimestamp(value: unknown): value is string {
+  return (
+    typeof value === 'string' &&
+    /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{3})?Z$/.test(value) &&
+    Number.isFinite(Date.parse(value))
+  );
+}
+
+function isProgressObjectives(value: unknown) {
+  if (!Array.isArray(value) || value.length > MAX_PROGRESS_OBJECTIVES) return false;
+  const actionKeys = new Set<string>();
+  for (const objective of value) {
+    if (
+      !isRecord(objective) ||
+      !hasExactKeys(
+        objective,
+        ['actionKey', 'category', 'status', 'source', 'planFingerprint'],
+        ['updatedAt', 'note'],
+      ) ||
+      !isProgressId(objective.actionKey) ||
+      actionKeys.has(objective.actionKey) ||
+      !progressCategories.has(String(objective.category)) ||
+      !progressStatuses.has(String(objective.status)) ||
+      !progressSources.has(String(objective.source)) ||
+      !isProgressId(objective.planFingerprint) ||
+      (objective.source !== 'legacy' && !isIsoTimestamp(objective.updatedAt)) ||
+      (objective.updatedAt !== undefined && !isIsoTimestamp(objective.updatedAt)) ||
+      (objective.note !== undefined && !isSafeProgressText(objective.note, 500))
+    ) {
+      return false;
+    }
+    actionKeys.add(objective.actionKey);
+  }
+  return true;
+}
+
+function isProgressHistory(value: unknown) {
+  if (!Array.isArray(value) || value.length > MAX_PROGRESS_HISTORY) return false;
+  const ids = new Set<string>();
+  for (const event of value) {
+    if (
+      !isRecord(event) ||
+      !hasExactKeys(
+        event,
+        [
+          'id',
+          'actionKey',
+          'category',
+          'label',
+          'outcome',
+          'source',
+          'planFingerprint',
+        ],
+        ['datasetVersion', 'occurredAt', 'note'],
+      ) ||
+      !isProgressId(event.id) ||
+      ids.has(event.id) ||
+      !isProgressId(event.actionKey) ||
+      !progressCategories.has(String(event.category)) ||
+      !isSafeProgressText(event.label, 200) ||
+      !progressOutcomes.has(String(event.outcome)) ||
+      !progressSources.has(String(event.source)) ||
+      !isProgressId(event.planFingerprint) ||
+      !isOptionalProgressId(event.datasetVersion) ||
+      (event.source !== 'legacy' && !isIsoTimestamp(event.occurredAt)) ||
+      (event.occurredAt !== undefined && !isIsoTimestamp(event.occurredAt)) ||
+      (event.note !== undefined && !isSafeProgressText(event.note, 500))
+    ) {
+      return false;
+    }
+    ids.add(event.id);
+  }
+  return true;
+}
+
+function isProgressWallet(value: unknown) {
+  return (
+    value === undefined ||
+    (isRecord(value) &&
+      hasExactKeys(value, ['balance', 'updatedAt']) &&
+      typeof value.balance === 'number' &&
+      Number.isSafeInteger(value.balance) &&
+      value.balance >= 0 &&
+      isIsoTimestamp(value.updatedAt))
+  );
+}
+
+function isOptionalProgressMetadataValid(value: Record<string, unknown>) {
+  return (
+    (value.reconciledThroughLevel === undefined ||
+      (typeof value.reconciledThroughLevel === 'number' &&
+        Number.isInteger(value.reconciledThroughLevel) &&
+        value.reconciledThroughLevel >= 1 &&
+        value.reconciledThroughLevel <= 10_000)) &&
+    isOptionalProgressId(value.acknowledgedDatasetVersion)
+  );
+}
+
+export function parseAndValidatePlanProgressJson(
+  value: string,
+  expectedBuildId?: string,
+): ServerPlanProgress {
+  const errors = validatePlanProgressJson(value, expectedBuildId);
+  if (errors[0]) throw new Error(errors[0]);
+  return migrateServerPlanProgress(
+    JSON.parse(value) as Parameters<typeof migrateServerPlanProgress>[0],
+  );
 }
 
 type IdentityOwner = { equals(identity: unknown): boolean };
