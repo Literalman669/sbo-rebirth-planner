@@ -15,6 +15,9 @@ export type PlannerStateContextValue = {
   updateProgress(
     update: PlanProgressPatch | ((current: PlanProgress) => PlanProgress),
   ): void;
+  loadProgressForBuild(buildId: string): Promise<PlanProgress>;
+  saveProgressForBuild(progress: PlanProgress): Promise<void>;
+  resetProgressForBuild(buildId: string): Promise<void>;
   resetProgress(): Promise<void>;
   isHydrated: boolean;
   storageError: string | null;

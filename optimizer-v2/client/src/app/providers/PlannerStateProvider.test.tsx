@@ -8,6 +8,7 @@ import { useBuildDraft } from './BuildDraftContext';
 import { DatasetProvider } from './DatasetProvider';
 import { usePlannerState } from './PlannerStateContext';
 import { PlannerStateProvider } from './PlannerStateProvider';
+import { progressFixture } from '../../test/progressFixtures';
 
 function profile(id: string, level = 12): CharacterProfile {
   return {
@@ -32,6 +33,7 @@ function Consumer() {
     updatePreferences,
     progress,
     updateProgress,
+    saveProgressForBuild,
     isHydrated,
   } = usePlannerState();
   if (!isHydrated) return <p>Loading planner state</p>;
@@ -76,6 +78,16 @@ function Consumer() {
         onClick={() => replaceDraft(profile('other-build', 20))}
       >
         Load other build
+      </button>
+      <button
+        type="button"
+        onClick={() =>
+          void saveProgressForBuild(
+            progressFixture('saved-build', ['saved-level-20']),
+          )
+        }
+      >
+        Save viewed build progress
       </button>
     </div>
   );
@@ -148,5 +160,27 @@ describe('PlannerStateProvider', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Load other build' }));
     expect(await screen.findByText('Draft other-build')).toBeVisible();
     expect(await screen.findByText('Completed level-21')).toBeVisible();
+  });
+
+  it('saves another build progress without replacing active draft state', async () => {
+    const store = createGuestBuildStore({
+      databaseName: `planner-progress-other-${crypto.randomUUID()}`,
+    });
+    await store.saveDraft(profile('active-build'));
+    renderProviders(store);
+    await screen.findByText('Draft active-build');
+
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Save viewed build progress' }),
+    );
+
+    await waitFor(async () => {
+      expect(await store.loadPlanProgress('saved-build')).toMatchObject({
+        buildId: 'saved-build',
+        objectives: [{ actionKey: 'saved-level-20', status: 'completed' }],
+      });
+    });
+    expect(screen.getByText('Draft active-build')).toBeVisible();
+    expect(screen.getByText('Completed none')).toBeVisible();
   });
 });

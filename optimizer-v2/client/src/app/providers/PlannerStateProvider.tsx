@@ -138,6 +138,52 @@ export function PlannerStateProvider({
     [store],
   );
 
+  const loadProgressForBuild = useCallback(
+    async (buildId: string) =>
+      (await store.loadPlanProgress(buildId)) ?? createEmptyPlanProgress(buildId),
+    [store],
+  );
+
+  const saveProgressForBuild = useCallback(
+    async (nextProgress: PlanProgress) => {
+      const valid = planProgressSchema.parse(nextProgress);
+      if (valid.buildId === draft.id) {
+        progressRef.current = valid;
+        setProgress(valid);
+      }
+      setStorageError(null);
+      try {
+        await store.savePlanProgress(valid);
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : 'Plan progress storage failed';
+        setStorageError(message);
+        throw error;
+      }
+    },
+    [draft.id, store],
+  );
+
+  const resetProgressForBuild = useCallback(
+    async (buildId: string) => {
+      const empty = createEmptyPlanProgress(buildId);
+      if (buildId === draft.id) {
+        progressRef.current = empty;
+        setProgress(empty);
+      }
+      setStorageError(null);
+      try {
+        await store.deletePlanProgress(buildId);
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : 'Plan progress storage failed';
+        setStorageError(message);
+        throw error;
+      }
+    },
+    [draft.id, store],
+  );
+
   const updateProgress = useCallback(
     (
       update: PlanProgressPatch | ((current: PlanProgress) => PlanProgress),
@@ -154,29 +200,14 @@ export function PlannerStateProvider({
       });
       progressRef.current = next;
       setProgress(next);
-      setStorageError(null);
-      void store.savePlanProgress(next).catch((error: unknown) => {
-        setStorageError(
-          error instanceof Error ? error.message : 'Plan progress storage failed',
-        );
-      });
+      void saveProgressForBuild(next).catch(() => undefined);
     },
-    [draft.id, store],
+    [draft.id, saveProgressForBuild],
   );
 
   const resetProgress = useCallback(async () => {
-    const empty = createEmptyPlanProgress(draft.id);
-    progressRef.current = empty;
-    setProgress(empty);
-    setStorageError(null);
-    try {
-      await store.deletePlanProgress(draft.id);
-    } catch (error) {
-      setStorageError(
-        error instanceof Error ? error.message : 'Plan progress storage failed',
-      );
-    }
-  }, [draft.id, store]);
+    await resetProgressForBuild(draft.id);
+  }, [draft.id, resetProgressForBuild]);
 
   const value = useMemo<PlannerStateContextValue>(
     () => ({
@@ -184,6 +215,9 @@ export function PlannerStateProvider({
       updatePreferences,
       progress,
       updateProgress,
+      loadProgressForBuild,
+      saveProgressForBuild,
+      resetProgressForBuild,
       resetProgress,
       isHydrated:
         isDraftHydrated &&
@@ -198,7 +232,10 @@ export function PlannerStateProvider({
       preferencesHydrated,
       progress,
       progressBuildId,
+      loadProgressForBuild,
       resetProgress,
+      resetProgressForBuild,
+      saveProgressForBuild,
       storageError,
       updatePreferences,
       updateProgress,
