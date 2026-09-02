@@ -21,7 +21,14 @@ test('appends new build columns after every deployed column with defaults', () =
 test('appends new tables after the complete deployed schema order', () => {
   assert.match(
     source,
-    /mechanic,\s*releaseStrategyPolicy,\s*buildPlanProgress,\s*userPreference,\s*userInventory,\s*}\);/,
+    /mechanic,\s*releaseStrategyPolicy,\s*buildPlanProgress,\s*userPreference,\s*userInventory,\s*buildDatasetReview,\s*}\);/,
+  );
+});
+
+test('defines dataset review as an additive private build-owned row', () => {
+  assert.match(
+    source,
+    /export const buildDatasetReview = table\([\s\S]*?name: 'build_dataset_review'[\s\S]*?buildId: t\.string\(\)\.primaryKey\(\)[\s\S]*?owner: t\.identity\(\)[\s\S]*?receiptJson: t\.string\(\)[\s\S]*?updatedAt: t\.timestamp\(\)/,
   );
 });
 

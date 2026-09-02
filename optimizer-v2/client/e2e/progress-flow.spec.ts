@@ -16,6 +16,7 @@ async function seedProgressBuilds(page: Page) {
       'quarantine',
       'inventory',
       'build-revisions',
+      'dataset-review-receipts',
     ];
     const active = {
       schemaVersion: 2,
@@ -36,7 +37,7 @@ async function seedProgressBuilds(page: Page) {
       name: 'Progress Proof Saved',
       level: 9,
     };
-    const request = indexedDB.open(databaseName, 6);
+    const request = indexedDB.open(databaseName, 7);
     request.onerror = () => reject(request.error);
     request.onupgradeneeded = () => {
       for (const store of stores) {

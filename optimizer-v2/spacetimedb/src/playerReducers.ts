@@ -11,6 +11,11 @@ import {
   validatePreferenceJson,
 } from './validation';
 import { mergePlanProgress } from './progressMerge';
+import {
+  createDatasetPinnedRevisionProfile,
+  mergeDatasetReview,
+  parseAndValidateDatasetReviewJson,
+} from './datasetReview';
 
 const weaponPaths = new Set([
   'two-handed',
@@ -449,6 +454,148 @@ export const deletePlanProgress = spacetimedb.reducer(
   },
 );
 
+export const upsertDatasetReview = spacetimedb.reducer(
+  { buildId: t.string(), receiptJson: t.string() },
+  (ctx, { buildId, receiptJson }) => {
+    assertAppUser(ctx);
+    assertText(buildId, 'Build ID', 100);
+    assertOwnedBuild(ctx, buildId);
+    const current = ctx.db.buildDatasetReview.buildId.find(buildId);
+    let mergedJson: string;
+    try {
+      const incoming = parseAndValidateDatasetReviewJson(receiptJson, buildId);
+      const existing = current
+        ? parseAndValidateDatasetReviewJson(current.receiptJson, buildId)
+        : undefined;
+      mergedJson = JSON.stringify(mergeDatasetReview(existing, incoming));
+    } catch (error) {
+      throw new SenderError(
+        error instanceof Error ? error.message : 'Stored dataset review is invalid',
+      );
+    }
+    if (current?.receiptJson === mergedJson) return;
+    if (current) {
+      ctx.db.buildDatasetReview.buildId.update({
+        ...current,
+        receiptJson: mergedJson,
+        updatedAt: ctx.timestamp,
+      });
+    } else {
+      ctx.db.buildDatasetReview.insert({
+        buildId,
+        owner: ctx.sender,
+        receiptJson: mergedJson,
+        updatedAt: ctx.timestamp,
+      });
+    }
+  },
+);
+
+export const deleteDatasetReview = spacetimedb.reducer(
+  { buildId: t.string() },
+  (ctx, { buildId }) => {
+    assertAppUser(ctx);
+    assertText(buildId, 'Build ID', 100);
+    assertOwnedBuild(ctx, buildId);
+    const current = ctx.db.buildDatasetReview.buildId.find(buildId);
+    if (current?.owner.equals(ctx.sender)) {
+      ctx.db.buildDatasetReview.buildId.delete(buildId);
+    }
+  },
+);
+
+export const applyDatasetVersionUpdate = spacetimedb.reducer(
+  {
+    buildId: t.string(),
+    expectedHeadRevisionId: t.string(),
+    revisionId: t.string(),
+    targetDatasetVersion: t.string(),
+  },
+  (ctx, args) => {
+    assertAppUser(ctx);
+    assertText(args.buildId, 'Build ID', 100);
+    assertText(args.expectedHeadRevisionId, 'Expected head revision ID', 100);
+    assertText(args.revisionId, 'Revision ID', 100);
+    assertText(args.targetDatasetVersion, 'Target dataset version', 100);
+    const currentBuild = assertOwnedBuild(ctx, args.buildId);
+    const source = ctx.db.buildRevision.id.find(args.expectedHeadRevisionId);
+    if (
+      !source ||
+      source.buildId !== args.buildId ||
+      !source.owner.equals(ctx.sender)
+    ) {
+      throw new SenderError('Expected build revision is unavailable');
+    }
+    const targetRelease = ctx.db.datasetRelease.version.find(
+      args.targetDatasetVersion,
+    );
+    if (!targetRelease?.isCurrent) {
+      throw new SenderError('Target dataset release is not current');
+    }
+    const equipment = Array.from(
+      ctx.db.revisionEquipment.revisionEquipmentRevisionId.filter(source.id),
+      (row) => ({ slot: row.slot, itemId: row.itemId }),
+    );
+    const ownedItemIds = Array.from(
+      ctx.db.revisionOwnedItem.revisionOwnedItemRevisionId.filter(source.id),
+      (row) => row.itemId,
+    );
+    const profile = createDatasetPinnedRevisionProfile(
+      {
+        schemaVersion: source.schemaVersion,
+        level: source.level,
+        maxFloor: source.maxFloor,
+        weaponPath: source.weaponPath,
+        goal: source.goal,
+        weaponSkill: source.weaponSkill,
+        str: source.str,
+        def: source.def,
+        agi: source.agi,
+        vit: source.vit,
+        luk: source.luk,
+        datasetVersion: source.datasetVersion,
+        accessPreferences: source.accessPreferences,
+      },
+      args.targetDatasetVersion,
+    );
+    if (ctx.db.buildRevision.id.find(args.revisionId)) {
+      if (
+        currentBuild.headRevisionId === args.revisionId &&
+        isIdempotentRevisionRetry(ctx, {
+          buildId: args.buildId,
+          revisionId: args.revisionId,
+          parentRevisionId: source.id,
+          kind: source.kind,
+          profile,
+          equipment,
+          ownedItemIds,
+        })
+      ) {
+        return;
+      }
+      throw new SenderError('Revision ID already exists with different content');
+    }
+    if (currentBuild.headRevisionId !== args.expectedHeadRevisionId) {
+      throw new SenderError('Build changed since dataset impact review');
+    }
+    insertRevision(ctx, {
+      buildId: args.buildId,
+      revisionId: args.revisionId,
+      parentRevisionId: source.id,
+      kind: source.kind,
+      profile,
+      equipment,
+      ownedItemIds,
+    });
+    ctx.db.build.id.update({
+      ...currentBuild,
+      headRevisionId: args.revisionId,
+      updatedAt: ctx.timestamp,
+    });
+    ensureProfile(ctx);
+  },
+);
+
 export const upsertUserPreferences = spacetimedb.reducer(
   { preferencesJson: t.string() },
   (ctx, { preferencesJson }) => {
@@ -611,6 +758,7 @@ export const deleteBuild = spacetimedb.reducer(
     assertOwnedBuild(ctx, buildId);
 
     ctx.db.buildPlanProgress.buildId.delete(buildId);
+    ctx.db.buildDatasetReview.buildId.delete(buildId);
 
     const revisions = Array.from(
       ctx.db.buildRevision.buildRevisionBuildId.filter(buildId),

@@ -4,12 +4,25 @@ import {
   migrateServerPlanProgress,
   type ServerPlanProgress,
 } from './progressMerge';
+import { parseAndValidateDatasetReviewJson } from './datasetReview';
 
 export type ReleaseState = { version: string; isCurrent: boolean };
 
 const MAX_PLANNER_JSON_LENGTH = 20_000;
 const MAX_PROGRESS_JSON_LENGTH = 1_000_000;
 const MAX_INVENTORY_JSON_LENGTH = 2_000_000;
+
+export function validateDatasetReviewJson(
+  value: string,
+  expectedBuildId: string,
+): string[] {
+  try {
+    parseAndValidateDatasetReviewJson(value, expectedBuildId);
+    return [];
+  } catch {
+    return ['Stored dataset review is invalid'];
+  }
+}
 const controlCharacters = /[\u0000-\u001f\u007f]/;
 const unsafeTextControls = /[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/;
 const accessPreferenceTokens = new Set([

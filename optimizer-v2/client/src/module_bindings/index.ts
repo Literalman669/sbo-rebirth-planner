@@ -34,12 +34,14 @@ import {
 } from "spacetimedb";
 
 // Import all reducer arg schemas
+import ApplyDatasetVersionUpdateReducer from "./apply_dataset_version_update_reducer";
 import CompleteGuestImportReducer from "./complete_guest_import_reducer";
 import ConfigureAuthReducer from "./configure_auth_reducer";
 import CreateBuildShareReducer from "./create_build_share_reducer";
 import CreateReleaseDraftReducer from "./create_release_draft_reducer";
 import CreateReleaseDraftFromCurrentReducer from "./create_release_draft_from_current_reducer";
 import DeleteBuildReducer from "./delete_build_reducer";
+import DeleteDatasetReviewReducer from "./delete_dataset_review_reducer";
 import DeletePlanProgressReducer from "./delete_plan_progress_reducer";
 import GrantCuratorReducer from "./grant_curator_reducer";
 import PublishCatalogReleaseReducer from "./publish_catalog_release_reducer";
@@ -54,6 +56,7 @@ import SaveBuildRevisionReducer from "./save_build_revision_reducer";
 import SetBuildArchivedReducer from "./set_build_archived_reducer";
 import StageWikiFixtureForLocalTestReducer from "./stage_wiki_fixture_for_local_test_reducer";
 import UpsertCoverageManifestReducer from "./upsert_coverage_manifest_reducer";
+import UpsertDatasetReviewReducer from "./upsert_dataset_review_reducer";
 import UpsertDraftCatalogEquipmentReducer from "./upsert_draft_catalog_equipment_reducer";
 import UpsertDraftEquipmentReducer from "./upsert_draft_equipment_reducer";
 import UpsertDraftEquipmentAcquisitionReducer from "./upsert_draft_equipment_acquisition_reducer";
@@ -86,6 +89,7 @@ import MyBuildRevisionsRow from "./my_build_revisions_table";
 import MyBuildsRow from "./my_builds_table";
 import MyCoverageManifestsRow from "./my_coverage_manifests_table";
 import MyCuratorAccessRow from "./my_curator_access_table";
+import MyDatasetReviewsRow from "./my_dataset_reviews_table";
 import MyDraftCatalogEquipmentRow from "./my_draft_catalog_equipment_table";
 import MyDraftEquipmentRow from "./my_draft_equipment_table";
 import MyDraftEquipmentAcquisitionsRow from "./my_draft_equipment_acquisitions_table";
@@ -335,6 +339,13 @@ const tablesSchema = __schema({
     constraints: [
     ],
   }, MyCuratorAccessRow),
+  myDatasetReviews: __table({
+    name: 'my_dataset_reviews',
+    indexes: [
+    ],
+    constraints: [
+    ],
+  }, MyDatasetReviewsRow),
   myDraftCatalogEquipment: __table({
     name: 'my_draft_catalog_equipment',
     indexes: [
@@ -479,12 +490,14 @@ const tablesSchema = __schema({
 
 /** The schema information for all reducers in this module. This is defined the same way as the reducers would have been defined in the server, except the body of the reducer is omitted in code generation. */
 const reducersSchema = __reducers(
+  __reducerSchema("apply_dataset_version_update", ApplyDatasetVersionUpdateReducer),
   __reducerSchema("complete_guest_import", CompleteGuestImportReducer),
   __reducerSchema("configure_auth", ConfigureAuthReducer),
   __reducerSchema("create_build_share", CreateBuildShareReducer),
   __reducerSchema("create_release_draft", CreateReleaseDraftReducer),
   __reducerSchema("create_release_draft_from_current", CreateReleaseDraftFromCurrentReducer),
   __reducerSchema("delete_build", DeleteBuildReducer),
+  __reducerSchema("delete_dataset_review", DeleteDatasetReviewReducer),
   __reducerSchema("delete_plan_progress", DeletePlanProgressReducer),
   __reducerSchema("grant_curator", GrantCuratorReducer),
   __reducerSchema("publish_catalog_release", PublishCatalogReleaseReducer),
@@ -499,6 +512,7 @@ const reducersSchema = __reducers(
   __reducerSchema("set_build_archived", SetBuildArchivedReducer),
   __reducerSchema("stage_wiki_fixture_for_local_test", StageWikiFixtureForLocalTestReducer),
   __reducerSchema("upsert_coverage_manifest", UpsertCoverageManifestReducer),
+  __reducerSchema("upsert_dataset_review", UpsertDatasetReviewReducer),
   __reducerSchema("upsert_draft_catalog_equipment", UpsertDraftCatalogEquipmentReducer),
   __reducerSchema("upsert_draft_equipment", UpsertDraftEquipmentReducer),
   __reducerSchema("upsert_draft_equipment_acquisition", UpsertDraftEquipmentAcquisitionReducer),

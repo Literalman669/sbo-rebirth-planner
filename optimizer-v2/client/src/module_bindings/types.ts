@@ -35,6 +35,14 @@ export const Build = __t.object("Build", {
 });
 export type Build = __Infer<typeof Build>;
 
+export const BuildDatasetReview = __t.object("BuildDatasetReview", {
+  buildId: __t.string(),
+  owner: __t.identity(),
+  receiptJson: __t.string(),
+  updatedAt: __t.timestamp(),
+});
+export type BuildDatasetReview = __Infer<typeof BuildDatasetReview>;
+
 export const BuildPlanProgress = __t.object("BuildPlanProgress", {
   buildId: __t.string(),
   owner: __t.identity(),
@@ -402,6 +410,9 @@ export type MyCoverageManifests = __Infer<typeof MyCoverageManifests>;
 
 export const MyCuratorAccess = __t.object("MyCuratorAccess", {});
 export type MyCuratorAccess = __Infer<typeof MyCuratorAccess>;
+
+export const MyDatasetReviews = __t.object("MyDatasetReviews", {});
+export type MyDatasetReviews = __Infer<typeof MyDatasetReviews>;
 
 export const MyDraftCatalogEquipment = __t.object("MyDraftCatalogEquipment", {});
 export type MyDraftCatalogEquipment = __Infer<typeof MyDraftCatalogEquipment>;

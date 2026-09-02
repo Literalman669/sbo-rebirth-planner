@@ -8,6 +8,7 @@ import spacetimedb, {
   userProfile,
   userPreference,
   userInventory,
+  buildDatasetReview,
 } from './schema';
 
 export const myBuilds = spacetimedb.view(
@@ -22,6 +23,15 @@ export const myPlanProgress = spacetimedb.view(
   (ctx) =>
     Array.from(
       ctx.db.buildPlanProgress.buildPlanProgressOwner.filter(ctx.sender),
+    ),
+);
+
+export const myDatasetReviews = spacetimedb.view(
+  { name: 'my_dataset_reviews', public: true },
+  t.array(buildDatasetReview.rowType),
+  (ctx) =>
+    Array.from(
+      ctx.db.buildDatasetReview.buildDatasetReviewOwner.filter(ctx.sender),
     ),
 );
 

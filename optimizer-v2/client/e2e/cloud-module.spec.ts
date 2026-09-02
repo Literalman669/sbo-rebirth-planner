@@ -54,6 +54,7 @@ async function subscribeToPrivateViews(testConnection: TestConnection) {
       .subscribe([
         tables.myProfile,
         tables.myBuilds,
+        tables.myDatasetReviews,
         tables.myPlanProgress,
         tables.myBuildRevisions,
         tables.myRevisionEquipment,
@@ -77,6 +78,12 @@ function progressFor(testConnection: TestConnection) {
     objectives: Array<{ actionKey: string; status: string }>;
     history: Array<{ id: string; label: string }>;
   } : null;
+}
+
+function datasetReviewsFor(testConnection: TestConnection) {
+  return [...testConnection.connection.db.myDatasetReviews.iter()].map((row) =>
+    JSON.parse(row.receiptJson) as { buildId: string; status: string },
+  );
 }
 
 test('enforces identity isolation and immutable revision recovery', async ({}, testInfo) => {
@@ -402,6 +409,105 @@ test('enforces identity isolation and immutable revision recovery', async ({}, t
     expect([...userA.connection.db.myBuildRevisions.iter()]).toHaveLength(0);
     expect([...userA.connection.db.myPlanProgress.iter()]).toHaveLength(0);
     expect([...userA.connection.db.myUserInventory.iter()]).toHaveLength(1);
+
+    const updateProfile = {
+      ...firstProfile,
+      datasetVersion: 'legacy-pin',
+    };
+    await userA.connection.reducers.saveBuildRevision({
+      buildId: 'dataset-update-build',
+      revisionId: 'dataset-update-revision-1',
+      name: 'Dataset Update Route',
+      profile: updateProfile,
+      equipment: [{ slot: 'main-hand', itemId: 'iron-greatsword' }],
+      ownedItemIds: ['iron-greatsword'],
+    });
+    const reviewJson = JSON.stringify({
+      schemaVersion: 1,
+      buildId: 'dataset-update-build',
+      inputFingerprint: 'build-input-00000001',
+      pinnedDatasetVersion: 'legacy-pin',
+      targetDatasetVersion: 'bootstrap-0',
+      impactKeyFingerprint: 'impact-00000002',
+      reportFingerprint: 'impact-report-00000003',
+      status: 'reviewed',
+      reviewedAt: '2026-09-02T00:00:00.000Z',
+    });
+    await userA.connection.reducers.upsertDatasetReview({
+      buildId: 'dataset-update-build',
+      receiptJson: reviewJson,
+    });
+    await expect
+      .poll(() => datasetReviewsFor(userASecond!))
+      .toEqual([
+        expect.objectContaining({
+          buildId: 'dataset-update-build',
+          status: 'reviewed',
+        }),
+      ]);
+    await expect(
+      userB.connection.reducers.upsertDatasetReview({
+        buildId: 'dataset-update-build',
+        receiptJson: reviewJson,
+      }),
+    ).rejects.toThrow(/Build not found for this identity/);
+    await userA.connection.reducers.applyDatasetVersionUpdate({
+      buildId: 'dataset-update-build',
+      expectedHeadRevisionId: 'dataset-update-revision-1',
+      revisionId: 'dataset-update-revision-2',
+      targetDatasetVersion: 'bootstrap-0',
+    });
+    await expect
+      .poll(
+        () =>
+          [...userASecond!.connection.db.myBuilds.iter()].find(
+            (build) => build.id === 'dataset-update-build',
+          )?.headRevisionId,
+      )
+      .toBe('dataset-update-revision-2');
+    const updatedRevision = [
+      ...userA.connection.db.myBuildRevisions.iter(),
+    ].find((revision) => revision.id === 'dataset-update-revision-2');
+    expect(updatedRevision).toMatchObject({
+      parentRevisionId: 'dataset-update-revision-1',
+      level: updateProfile.level,
+      str: updateProfile.str,
+      datasetVersion: 'bootstrap-0',
+      kind: 'build',
+    });
+    expect(
+      [...userA.connection.db.myRevisionEquipment.iter()].filter(
+        (row) => row.revisionId === 'dataset-update-revision-2',
+      ),
+    ).toMatchObject([{ slot: 'main-hand', itemId: 'iron-greatsword' }]);
+    await expect(
+      userA.connection.reducers.applyDatasetVersionUpdate({
+        buildId: 'dataset-update-build',
+        expectedHeadRevisionId: 'dataset-update-revision-1',
+        revisionId: 'dataset-update-revision-2',
+        targetDatasetVersion: 'bootstrap-0',
+      }),
+    ).resolves.toBeUndefined();
+    await expect(
+      userA.connection.reducers.applyDatasetVersionUpdate({
+        buildId: 'dataset-update-build',
+        expectedHeadRevisionId: 'dataset-update-revision-1',
+        revisionId: 'dataset-update-revision-3',
+        targetDatasetVersion: 'bootstrap-0',
+      }),
+    ).rejects.toThrow(/Build changed since dataset impact review/);
+    await expect(
+      userB.connection.reducers.deleteDatasetReview({
+        buildId: 'dataset-update-build',
+      }),
+    ).rejects.toThrow(/Build not found for this identity/);
+    await userA.connection.reducers.deleteDatasetReview({
+      buildId: 'dataset-update-build',
+    });
+    await expect.poll(() => datasetReviewsFor(userASecond!)).toEqual([]);
+    await userA.connection.reducers.deleteBuild({
+      buildId: 'dataset-update-build',
+    });
 
     await userA.connection.reducers.saveBuildRevision({
       buildId: 'private-preset',

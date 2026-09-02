@@ -102,6 +102,26 @@ export const userInventory = table(
   },
 );
 
+export const buildDatasetReview = table(
+  {
+    name: 'build_dataset_review',
+    indexes: [
+      {
+        accessor: 'buildDatasetReviewOwner',
+        name: 'build_dataset_review_owner',
+        algorithm: 'btree',
+        columns: ['owner'],
+      },
+    ],
+  },
+  {
+    buildId: t.string().primaryKey(),
+    owner: t.identity(),
+    receiptJson: t.string(),
+    updatedAt: t.timestamp(),
+  },
+);
+
 export const buildRevision = table(
   {
     name: 'build_revision',
@@ -930,6 +950,7 @@ const spacetimedb = schema({
   buildPlanProgress,
   userPreference,
   userInventory,
+  buildDatasetReview,
 });
 
 export type AppSchema = (typeof spacetimedb)['schemaType'];
