@@ -192,3 +192,50 @@ direct-route recovery request were excluded from app-origin results.
 This release does not read Roblox telemetry, infer unverified drops/prices, add
 public progress sharing, or expose private wallet/notes/history in existing
 public build snapshots. Social OAuth providers remain separately configured.
+
+## QOL Release 2 Dataset Update Impact Reports local acceptance (2026-09-02)
+
+| # | Dataset update criterion | Proof | Status |
+|---|---|---|---|
+| 1 | One nonmodal global notice counts every unreviewed affected active, saved, preset, archived, local, cloud, or mirrored build exactly once. | `client/src/domain/datasetImpact/candidates.test.ts`, `client/src/app/providers/DatasetUpdatesProvider.test.tsx`, `client/src/features/updates/DatasetUpdateNotice.test.tsx` | Pass |
+| 2 | Reports require exact validated pinned/current snapshots and block rather than substituting an unavailable endpoint. | `client/src/domain/datasetImpact/releaseIndex.test.ts`, `client/src/domain/datasetImpact/report.test.ts`, `client/src/app/providers/DatasetUpdatesProvider.test.tsx` | Pass |
+| 3 | Verified build-relevant fact changes render before plan effects with explicit before/after values, stored wiki revisions, omissions, and unknowns. | `client/src/domain/datasetImpact/factProjection.test.ts`, `client/src/domain/datasetImpact/factDiff.test.ts`, `client/src/domain/datasetImpact/relevance.test.ts`, `client/src/features/updates/DatasetUpdatesScreen.test.tsx` | Pass |
+| 4 | The net plan diff covers immediate action, spend-now allocation, per-level rows, upgrades, shopping totals, warnings, unchanged results, and blockers; intermediate release details compute only when expanded. | `client/src/domain/datasetImpact/planDiff.test.ts`, `client/src/domain/datasetImpact/report.test.ts`, `client/src/features/updates/updateComponents.test.tsx` | Pass |
+| 5 | Keep pinned and both endpoint previews never replace or mutate the active draft. Editing a reviewed build or receiving a newer release invalidates only the matching receipt. | `client/src/domain/datasetImpact/reviewReceipt.test.ts`, `client/src/app/providers/DatasetUpdatesProvider.test.tsx`, `client/e2e/dataset-updates-flow.spec.ts` | Pass |
+| 6 | Apply changes only `datasetVersion`; existing normal builds and personal presets gain one kind-preserving child revision. | `client/src/domain/datasetImpact/apply.test.ts`, `client/src/infrastructure/storage/guestBuildStore.test.ts`, `client/e2e/dataset-updates-flow.spec.ts` | Pass |
+| 7 | An unsaved active draft is saved as a pinned recovery revision before its updated revision, and the in-memory draft changes only after commit. | `client/src/infrastructure/storage/guestBuildStore.test.ts`, `client/src/app/providers/BuildDraftProvider.test.tsx`, `client/e2e/dataset-updates-flow.spec.ts` | Pass |
+| 8 | Private review receipts and protected dataset-pin revisions are identity-scoped, bounded, stale-head safe, retryable offline, deterministic on merge, and convergent across same-account clients. | `spacetimedb/src/datasetReview.test.ts`, `client/src/infrastructure/cloud/buildRepository.test.ts`, `client/e2e/cloud-module.spec.ts` | Pass |
+| 9 | Public shares and portable backups expose no receipt, impact/report fingerprint, owner identity, or pending mutation. | `client/src/domain/build/portable.test.ts`, `client/src/features/share/SharedBuildScreen.test.tsx`, `client/e2e/sharing-module.spec.ts` | Pass |
+| 10 | IndexedDB v6 upgrades add the v7 receipt store without losing drafts, builds, inventory, progress, or revisions; corrupt receipts are quarantined. | `client/src/infrastructure/storage/plannerDatabase.test.ts`, `client/src/infrastructure/storage/datasetReviewStore.test.ts`, `client/e2e/reliability-flow.spec.ts` | Pass |
+| 11 | Notice, report, previews, release trail, and confirmation are keyboard/touch usable, width-safe at 1440×1000, 768×1024, 390×844, and 320×700, with zero serious/critical axe findings. | `client/e2e/qol-accessibility.spec.ts`, in-app browser QA | Pass |
+| 12 | Candidate discovery handles 250 builds across four pinned versions with zero optimizer calls; one selected report uses exactly two endpoint calls and a cached revisit uses none. | `client/src/app/providers/DatasetUpdatesProvider.test.tsx`, `scripts/run-reliability.mjs` | Pass |
+
+The final local six-layer `npm run test:reliability` summary passed on the
+feature branch: 103 client files / 652 tests, 9 SpacetimeDB module files / 91
+tests, 24 root script/schema tests, 6 wiki-tool tests, typecheck, verified
+fallback coverage, module build, all four isolated integration phases, and the
+Pages artifact. Core browser integration passed 37 cases with 13 intentional
+cross-project skips; the three heavy phases passed the 100-revision composite,
+atomic publication, and owner-free sharing checks. A separate final Pages run
+passed 7/7, including direct
+`/updates?build=proof-build&source=local` recovery.
+
+The production-shaped artifact keeps the workspace route-level split:
+`DatasetUpdatesScreen-BVMoX-vX.js` is 15,783 bytes. Generated TypeScript
+bindings were regenerated with SpacetimeDB 2.8.3 and produced zero diff.
+Measured final diagnostics were 698.9 ms for 1,000 deterministic optimizer
+serializations, 29.6 ms for 100 equipment queries over 1,000 records, and
+269.8 ms for 100 inventory queries over 1,000 records.
+
+In-app browser QA verified the local `/updates` identity, nonblank empty state,
+Create Build navigation, zero framework overlays, zero browser warnings/errors,
+and exact 390/390 px containment. Seeded Playwright QA covered the complete
+facts-first report, exact sources, temporary preview, release trail, Keep
+pinned invalidation, confirmation focus/Escape return, recoverable apply, and
+reload at all four target viewports.
+
+This evidence is local only at this point. No production dataset was published,
+no Maincloud or player data was mutated, and no GitHub Pages deployment or live
+smoke is claimed here. Mass update, public impact-report sharing, automatic
+Roblox telemetry, social OAuth configuration, and unverified wiki inference
+remain explicit non-goals.

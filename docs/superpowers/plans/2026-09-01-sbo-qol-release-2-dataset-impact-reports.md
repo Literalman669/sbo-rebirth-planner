@@ -48,7 +48,7 @@
 - Produces `fingerprintBuildInputs`, `fingerprintDatasetSnapshot`, `buildImpactKeyFingerprint`, `DatasetReleaseDescriptor`, and `DatasetContextValue.listReleases()`.
 - Existing `fingerprintRecommendationInput(profile, dataset)` retains its exact output.
 
-- [ ] **Step 1: Write failing canonical fingerprint tests**
+- [x] **Step 1: Write failing canonical fingerprint tests**
 
 ```ts
 const first = fingerprintDatasetSnapshot(snapshot);
@@ -66,7 +66,7 @@ expect(fingerprintBuildInputs({ ...profile, level: profile.level + 1 }))
 
 Prove the build-input fingerprint excludes `datasetVersion` but includes every other recommendation input. Lock the existing plan-fingerprint output for a known fixture.
 
-- [ ] **Step 2: Run fingerprint tests and verify RED**
+- [x] **Step 2: Run fingerprint tests and verify RED**
 
 ```bash
   cd optimizer-v2
@@ -75,7 +75,7 @@ Prove the build-input fingerprint excludes `datasetVersion` but includes every o
 
 Expected: FAIL because dataset-impact fingerprint functions do not exist.
 
-- [ ] **Step 3: Implement canonical values and hashes**
+- [x] **Step 3: Implement canonical values and hashes**
 
 ```ts
 export const DATASET_IMPACT_CONTRACT_VERSION = 1 as const;
@@ -90,7 +90,7 @@ export function buildImpactKeyFingerprint(input: {
 
 Canonicalize keys and sort entity arrays by stable IDs. Preserve zero and `null` distinctly. Refactor the shared build-input projection without changing the legacy plan hash.
 
-- [ ] **Step 4: Write failing release-index/cache tests**
+- [x] **Step 4: Write failing release-index/cache tests**
 
 Cover publication ordering, bundled/cached/live deduplication, invalid snapshots, content fingerprints, and `DatasetCache.list()`.
 
@@ -101,7 +101,7 @@ expect(index.map((release) => release.version)).toEqual([
 ]);
 ```
 
-- [ ] **Step 5: Implement the bounded release index**
+- [x] **Step 5: Implement the bounded release index**
 
 ```ts
 export interface DatasetReleaseDescriptor {
@@ -117,7 +117,7 @@ export interface DatasetReleaseDescriptor {
 
 Extend `DatasetCache` with `list()` and dataset/public providers with `listReleases()`. Order by publication timestamps, never lexical versions.
 
-- [ ] **Step 6: Run focused tests and commit**
+- [x] **Step 6: Run focused tests and commit**
 
 ```bash
   npm run test:unit --workspace @sbo/optimizer-client -- --run src/domain/datasetImpact src/domain/optimizer/planFingerprint.test.ts src/infrastructure/storage/datasetCache.test.ts src/app/providers/DatasetProvider.test.tsx
@@ -145,7 +145,7 @@ Extend `DatasetCache` with `list()` and dataset/public providers with `listRelea
 - Consumes Task 1 fingerprints.
 - Produces `DatasetReviewReceipt`, `DatasetReviewImpactKey`, `datasetReviewReceiptSchema`, `receiptMatchesImpact`, and `DatasetReviewStore`.
 
-- [ ] **Step 1: Write failing strict receipt tests**
+- [x] **Step 1: Write failing strict receipt tests**
 
 ```ts
 const receipt: DatasetReviewReceipt = {
@@ -165,13 +165,13 @@ expect(receiptMatchesImpact(receipt, matchingImpactKey)).toBe(true);
 
 Reject unknown keys, controls, invalid timestamps/enums, overlong IDs, mismatched build IDs, and unsupported versions.
 
-- [ ] **Step 2: Run receipt tests and verify RED**
+- [x] **Step 2: Run receipt tests and verify RED**
 
 ```bash
   npm run test:unit --workspace @sbo/optimizer-client -- --run src/domain/datasetImpact/reviewReceipt.test.ts
 ```
 
-- [ ] **Step 3: Implement receipt validation and matching**
+- [x] **Step 3: Implement receipt validation and matching**
 
 Match build ID, input fingerprint, pinned/target versions, and impact key. Require the report fingerprint for audit/apply validation without using it for notice counting.
 
@@ -196,7 +196,7 @@ export function receiptMatchesImpact(
 }
 ```
 
-- [ ] **Step 4: Write failing v6-to-v7/store tests**
+- [x] **Step 4: Write failing v6-to-v7/store tests**
 
 Test `dataset-review-receipts` creation while preserving every prior store. Cover list/load/save/delete, strict writes, corrupt-row quarantine, and one current receipt per build.
 
@@ -207,7 +207,7 @@ await store.save(receipt);
 await expect(store.load('build-a')).resolves.toEqual(receipt);
 ```
 
-- [ ] **Step 5: Add IndexedDB v7 and store**
+- [x] **Step 5: Add IndexedDB v7 and store**
 
 ```ts
 export interface DatasetReviewStore {
@@ -220,15 +220,15 @@ export interface DatasetReviewStore {
 
 Set `GUEST_DATABASE_VERSION = 7`, append the store, and leave old records unchanged.
 
-- [ ] **Step 6: Make build deletion remove its receipt atomically**
+- [x] **Step 6: Make build deletion remove its receipt atomically**
 
 Extend the build/revision/progress delete transaction to include the receipt. Prove all four record groups disappear together.
 
-- [ ] **Step 7: Extend browser migration coverage**
+- [x] **Step 7: Extend browser migration coverage**
 
 Seed v6 with build/progress/inventory/revisions, open the app, and assert v7 plus preserved records and the new store.
 
-- [ ] **Step 8: Run persistence tests and commit**
+- [x] **Step 8: Run persistence tests and commit**
 
 ```bash
   npm run test:unit --workspace @sbo/optimizer-client -- --run src/domain/datasetImpact/reviewReceipt.test.ts src/infrastructure/storage/datasetReviewStore.test.ts src/infrastructure/storage/plannerDatabase.test.ts src/infrastructure/storage/guestBuildStore.test.ts
@@ -251,7 +251,7 @@ Seed v6 with build/progress/inventory/revisions, open the app, and assert v7 plu
 - Consumes unified `BuildLibraryEntry`, Task 1 descriptors, and Task 2 receipts.
 - Produces `DatasetImpactCandidate` and `selectDatasetImpactCandidates(input)`.
 
-- [ ] **Step 1: Write failing candidate tests**
+- [x] **Step 1: Write failing candidate tests**
 
 Cover active unsaved draft, saved build, personal preset, archive, mirror dedupe, current exclusion, matching/invalid receipts, target/edit invalidation, unavailable pin, and stable ordering.
 
@@ -260,13 +260,13 @@ expect(candidates.find((item) => item.id === 'mirror')?.source)
   .toBe('local+cloud');
 ```
 
-- [ ] **Step 2: Run tests and verify RED**
+- [x] **Step 2: Run tests and verify RED**
 
 ```bash
   npm run test:unit --workspace @sbo/optimizer-client -- --run src/domain/datasetImpact/candidates.test.ts src/domain/build/library.test.ts
 ```
 
-- [ ] **Step 3: Implement selection without optimization**
+- [x] **Step 3: Implement selection without optimization**
 
 ```ts
 export interface DatasetImpactCandidate {
@@ -286,7 +286,7 @@ export interface DatasetImpactCandidate {
 
 Never call `optimizeBuild`. A missing pinned descriptor remains Blocked and counted as unreviewed.
 
-- [ ] **Step 4: Run and commit**
+- [x] **Step 4: Run and commit**
 
 ```bash
   npm run test:unit --workspace @sbo/optimizer-client -- --run src/domain/datasetImpact/candidates.test.ts src/domain/build/library.test.ts
@@ -308,7 +308,7 @@ Never call `optimizeBuild`. A missing pinned descriptor remains Blocked and coun
 - Consumes two validated `DatasetSnapshot` values.
 - Produces canonical `DatasetFactChange[]` across equipment, acquisitions, formulas, mechanics, gaps, policy, and sources.
 
-- [ ] **Step 1: Write failing normalized projection tests**
+- [x] **Step 1: Write failing normalized projection tests**
 
 Prove catalog-v2 rows are not double-counted through `equipment`, legacy rows map into the same shape, arrays sort deterministically, acquisition IDs retain cost/currency/source, and zero differs from null/missing.
 
@@ -319,7 +319,7 @@ expect(diffDatasetFacts(zeroSnapshot, missingSnapshot))
   .toContainEqual(expect.objectContaining({ before: 0, after: null }));
 ```
 
-- [ ] **Step 2: Define fact-change contracts**
+- [x] **Step 2: Define fact-change contracts**
 
 ```ts
 export type DatasetFactEntity =
@@ -339,13 +339,13 @@ export interface DatasetFactChange {
 }
 ```
 
-- [ ] **Step 3: Run projection/diff tests and verify RED**
+- [x] **Step 3: Run projection/diff tests and verify RED**
 
 ```bash
   npm run test:unit --workspace @sbo/optimizer-client -- --run src/domain/datasetImpact/factProjection.test.ts src/domain/datasetImpact/factDiff.test.ts
 ```
 
-- [ ] **Step 4: Implement complete field-path diffing**
+- [x] **Step 4: Implement complete field-path diffing**
 
 Compare raw stats, aliases, variants, slots, paths, requirements, acquisitions, access/availability, cost/currency, resistances, effects, verification, provenance, formulas, mechanics/parameters, known gaps, formula/policy versions, points per level, and dual-wield gate. Sort by entity/entityId/field.
 
@@ -361,7 +361,7 @@ export function diffDatasetFacts(
 }
 ```
 
-- [ ] **Step 5: Add matrix/no-mutation tests and commit**
+- [x] **Step 5: Add matrix/no-mutation tests and commit**
 
 ```bash
   npm run test:unit --workspace @sbo/optimizer-client -- --run src/domain/datasetImpact/factProjection.test.ts src/domain/datasetImpact/factDiff.test.ts
@@ -386,7 +386,7 @@ export function diffDatasetFacts(
 - Consumes Tasks 1, 3, and 4 plus `optimizeBuild`.
 - Produces `RecommendationPlanImpact`, `DatasetImpactReport`, and `buildDatasetImpactReport`.
 
-- [ ] **Step 1: Write failing plan-diff tests**
+- [x] **Step 1: Write failing plan-diff tests**
 
 Test immediate action, spend-now, future rows, upgrade order, price/unknown totals, warnings/requirements/eligibility, unchanged plans, and readiness blockers.
 
@@ -397,7 +397,7 @@ expect(diffRecommendationPlans(before, after)).toMatchObject({
 });
 ```
 
-- [ ] **Step 2: Implement typed plan projection/diff**
+- [x] **Step 2: Implement typed plan projection/diff**
 
 Project only user-visible deterministic fields. Represent optimizer failures as `{ status: 'blocked', explanation }` without discarding usable fact changes.
 
@@ -432,7 +432,7 @@ export function diffRecommendationPlans(
 ): RecommendationPlanImpact;
 ```
 
-- [ ] **Step 3: Write failing relevance/report tests**
+- [x] **Step 3: Write failing relevance/report tests**
 
 Cover equipped, owned, before/after recommended, eligible-at-either-endpoint, consumed formula/mechanic/policy facts, omitted counts, exact sources, direct summary, intermediate ordering/gaps, stable report fingerprints, and exactly two endpoint optimizer calls.
 
@@ -444,7 +444,7 @@ expect(report.facts.map((fact) => fact.entityId)).toContain('combat-armor');
 expect(report.omittedFactChangeCount).toBeGreaterThan(0);
 ```
 
-- [ ] **Step 4: Implement report generation**
+- [x] **Step 4: Implement report generation**
 
 ```ts
 export interface DatasetReleaseImpactStep {
@@ -481,11 +481,11 @@ export function buildDatasetImpactReport(input: {
 
 Clone the profile with only endpoint `datasetVersion` changed for optimizer calls. Filter relevance after both plans exist, then fingerprint the canonical report.
 
-- [ ] **Step 5: Prove filters/receipts do not invoke optimizer**
+- [x] **Step 5: Prove filters/receipts do not invoke optimizer**
 
 Use spies around report memoization. Sorting, disclosure, selected fact group, and receipt status reuse the report.
 
-- [ ] **Step 6: Run domain checkpoint and commit**
+- [x] **Step 6: Run domain checkpoint and commit**
 
 ```bash
   npm run test:unit --workspace @sbo/optimizer-client -- --run src/domain/datasetImpact src/domain/optimizer/optimizeBuild.test.ts
@@ -516,7 +516,7 @@ Use spies around report memoization. Sorting, disclosure, selected fact group, a
 - Produces private `build_dataset_review`, sender-filtered `my_dataset_reviews`, `upsertDatasetReview`, `deleteDatasetReview`, and `applyDatasetVersionUpdate`.
 - Apply accepts only `{ buildId, expectedHeadRevisionId, revisionId, targetDatasetVersion }`.
 
-- [ ] **Step 1: Write failing schema/validation tests**
+- [x] **Step 1: Write failing schema/validation tests**
 
 Append the private table after deployed tables. Validate exact v1 keys, byte limit, timestamps, hashes, target/build IDs, and ownership. Prove public shares expose no receipt.
 
@@ -527,7 +527,7 @@ expect(validateDatasetReviewJson(JSON.stringify({ ...receipt, buildId: 'other' }
 expect(schemaSource).not.toMatch(/shared_build.*receipt/is);
 ```
 
-- [ ] **Step 2: Write failing deterministic merge tests**
+- [x] **Step 2: Write failing deterministic merge tests**
 
 ```ts
 expect(mergeDatasetReview(older, newer)).toEqual(newer);
@@ -537,7 +537,7 @@ expect(mergeDatasetReview(sameTimeA, sameTimeB)).toEqual(canonicalTieWinner);
 
 Use `reviewedAt`, then canonical JSON for ties. Reject mismatched IDs and invalid payloads.
 
-- [ ] **Step 3: Write failing protected apply tests**
+- [x] **Step 3: Write failing protected apply tests**
 
 Prove foreign identity rejection, missing/stale head rejection, non-current target rejection, duplicate revision conflict, and exact copying of every head field/child row except `datasetVersion`. Build kind/name/archive remain unchanged.
 
@@ -550,7 +550,7 @@ await expect(userA.reducers.applyDatasetVersionUpdate({
 })).rejects.toThrow(/Build changed/);
 ```
 
-- [ ] **Step 4: Implement private schema/view/receipt reducers**
+- [x] **Step 4: Implement private schema/view/receipt reducers**
 
 Store `buildId`, owner, `receiptJson`, and server `updatedAt`. Upsert parses current/incoming and stores deterministic merge. Delete is owner-idempotent. Build deletion cascades.
 
@@ -574,7 +574,7 @@ export const buildDatasetReview = table(
 );
 ```
 
-- [ ] **Step 5: Implement `applyDatasetVersionUpdate`**
+- [x] **Step 5: Implement `applyDatasetVersionUpdate`**
 
 Inside one reducer transaction: assert owner/current head/current target release; read the head and child rows; insert a copied child revision with only identifiers/timestamp/dataset changed; copy equipment/owned rows; advance head. Never accept profile/stat/equipment values from the client.
 
@@ -590,11 +590,11 @@ export const applyDatasetVersionUpdate = spacetimedb.reducer(
 );
 ```
 
-- [ ] **Step 6: Extend real module integration**
+- [x] **Step 6: Extend real module integration**
 
 Use two same-account connections. Apply once, assert both receive head/receipt, reject stale expected head and foreign access, and verify all copied values.
 
-- [ ] **Step 7: Run server checkpoint and generate bindings**
+- [x] **Step 7: Run server checkpoint and generate bindings**
 
 ```bash
   npm run test:unit --workspace @sbo/optimizer-module
@@ -605,7 +605,7 @@ Use two same-account connections. Apply once, assert both receive head/receipt, 
   spacetime generate --lang typescript --out-dir ./client/src/module_bindings --module-path ./spacetimedb --yes
 ```
 
-- [ ] **Step 8: Commit protected server operations**
+- [x] **Step 8: Commit protected server operations**
 
 ```bash
   git add optimizer-v2/spacetimedb/src optimizer-v2/scripts/schema-migration.test.mjs optimizer-v2/client/e2e/cloud-module.spec.ts optimizer-v2/client/src/module_bindings
@@ -636,7 +636,7 @@ Use two same-account connections. Apply once, assert both receive head/receipt, 
 - Consumes Task 2 store and Task 6 bindings.
 - Adds `cloudDatasetReviews`, `saveDatasetReview`, `deleteDatasetReview`, and `applyDatasetVersionUpdate` to cloud state/repository.
 
-- [ ] **Step 1: Write failing mapper/provider tests**
+- [x] **Step 1: Write failing mapper/provider tests**
 
 Parse valid private rows, ignore malformed rows without replacing prior valid state, isolate accounts, and hydrate receipts without changing builds/progress.
 
@@ -646,7 +646,7 @@ expect(selector.select([malformedRow])).toEqual([receipt]);
 expect(otherIdentityState.datasetReviews).toEqual([]);
 ```
 
-- [ ] **Step 2: Extend pending mutation schema with tests**
+- [x] **Step 2: Extend pending mutation schema with tests**
 
 ```ts
 interface PendingMutationBase {
@@ -671,7 +671,7 @@ type PendingDatasetMutation = PendingMutationBase & (
 
 Use `dataset-review:<buildId>` and `dataset-update:<buildId>`. Prove review/delete coalescing and stable apply intent.
 
-- [ ] **Step 3: Implement repository sends and ordered replay**
+- [x] **Step 3: Implement repository sends and ordered replay**
 
 ```ts
 saveDatasetReview(receipt): Promise<'cloud' | 'cloud-pending'>;
@@ -684,7 +684,7 @@ applyDatasetVersionUpdate(input): Promise<{
 
 Reconnect replays ordinary pending build revisions before dataset updates, then receipts, so a new enrolled draft establishes its pinned head first.
 
-- [ ] **Step 4: Test offline/stale/conflict behavior**
+- [x] **Step 4: Test offline/stale/conflict behavior**
 
 Prove local receipt first, retained failed mutations, incremented attempts, idempotent reconnect, stale-head conflict retention, and explicit recalculation replacement.
 
@@ -696,7 +696,7 @@ expect(await pendingQueue.list(subject)).toContainEqual(
 );
 ```
 
-- [ ] **Step 5: Run client cloud checkpoint and commit**
+- [x] **Step 5: Run client cloud checkpoint and commit**
 
 ```bash
   npm run test:unit --workspace @sbo/optimizer-client -- --run src/infrastructure/cloud src/app/providers/CloudDataProvider.test.tsx src/app/providers/CloudBuildsProvider.test.tsx
@@ -724,7 +724,7 @@ expect(await pendingQueue.list(subject)).toContainEqual(
 - Produces `assertDatasetPinOnlyUpdate`, `GuestBuildStore.applyDatasetUpdate`, and provider `refreshSavedBuilds`.
 - Repository orchestrates guest/local, mirrored, and cloud-only candidates.
 
-- [ ] **Step 1: Write failing dataset-pin invariant tests**
+- [x] **Step 1: Write failing dataset-pin invariant tests**
 
 ```ts
 const updated = createDatasetPinnedProfile(profile, '2026.09.01.1');
@@ -733,7 +733,7 @@ expect(() => assertDatasetPinOnlyUpdate(profile, { ...updated, level: 99 }))
   .toThrow(/only datasetVersion may change/);
 ```
 
-- [ ] **Step 2: Write failing local transaction tests**
+- [x] **Step 2: Write failing local transaction tests**
 
 Cover existing normal build/preset (one child revision), unsaved active/cloud-only (pinned recovery then update), head/input mismatch (zero writes), injected rollback, and active draft update only after commit.
 
@@ -744,7 +744,7 @@ expect((await store.listBuildHistory(profile.id)).map((row) => row.profile.datas
 expect((await store.loadDraft())?.datasetVersion).toBe('2026.09.01.1');
 ```
 
-- [ ] **Step 3: Implement local apply request**
+- [x] **Step 3: Implement local apply request**
 
 ```ts
 export interface ApplyDatasetUpdateRequest {
@@ -762,7 +762,7 @@ export interface ApplyDatasetUpdateRequest {
 
 One transaction spans draft, builds, revisions, and receipts. Validate current state before inserting.
 
-- [ ] **Step 4: Add provider refresh/application hooks**
+- [x] **Step 4: Add provider refresh/application hooks**
 
 `refreshSavedBuilds()` reloads the library without replacing the draft. Replace the active draft only after successful application.
 
@@ -773,11 +773,11 @@ type BuildDraftContextValue = {
 };
 ```
 
-- [ ] **Step 5: Orchestrate cloud/local outcomes**
+- [x] **Step 5: Orchestrate cloud/local outcomes**
 
 Guest/local returns after atomic local apply. Cloud/mirrored revalidates subscribed head, calls the protected reducer, then writes/queues Applied receipt. Establish a pinned head before cloud apply when absent.
 
-- [ ] **Step 6: Run apply checkpoint and commit**
+- [x] **Step 6: Run apply checkpoint and commit**
 
 ```bash
   npm run test:unit --workspace @sbo/optimizer-client -- --run src/domain/datasetImpact/apply.test.ts src/infrastructure/storage/guestBuildStore.test.ts src/infrastructure/cloud/buildRepository.test.ts src/app/providers/BuildDraftProvider.test.tsx
@@ -804,7 +804,7 @@ Guest/local returns after atomic local apply. Cloud/mirrored revalidates subscri
 - Consumes Tasks 1–3 and 7–8.
 - Produces `useDatasetUpdates()` with candidates, report loading, receipt actions, apply, status, and unreviewed count.
 
-- [ ] **Step 1: Write failing provider tests**
+- [x] **Step 1: Write failing provider tests**
 
 Cover hydration order, active/saved/preset/archive inclusion, mirror dedupe, local/cloud receipt merge, zero eager optimizer calls, offline cached releases, blocked endpoints, and no draft replacement.
 
@@ -815,7 +815,7 @@ expect(result.current.unreviewedCount).toBe(3);
 expect(replaceDraft).not.toHaveBeenCalled();
 ```
 
-- [ ] **Step 2: Define provider contract**
+- [x] **Step 2: Define provider contract**
 
 ```ts
 export type DatasetImpactReportResult =
@@ -834,7 +834,7 @@ export interface DatasetUpdatesState {
 }
 ```
 
-- [ ] **Step 3: Implement provider orchestration/memoization**
+- [x] **Step 3: Implement provider orchestration/memoization**
 
 Place the provider inside `CloudBuildsProvider` and outside `RouterProvider`. Cache report promises by impact key. Receipt/filter/selection changes must not recompute reports.
 
@@ -846,7 +846,7 @@ Place the provider inside `CloudBuildsProvider` and outside `RouterProvider`. Ca
 </CloudBuildsProvider>
 ```
 
-- [ ] **Step 4: Write failing shell-notice tests**
+- [x] **Step 4: Write failing shell-notice tests**
 
 Assert zero-state absence, pluralized count, `/updates` link, nonmodal status semantics, disappearance after Keep pinned, and reappearance after build edit/new release.
 
@@ -858,7 +858,7 @@ expect(screen.getByRole('link', { name: 'Review changes' }))
   .toHaveAttribute('href', '/updates');
 ```
 
-- [ ] **Step 5: Render the notice**
+- [x] **Step 5: Render the notice**
 
 Place it below dataset status and above global navigation/content without blocking the current route. Do not add another primary navigation item.
 
@@ -868,7 +868,7 @@ Place it below dataset status and above global navigation/content without blocki
 ) : null}
 ```
 
-- [ ] **Step 6: Run and commit**
+- [x] **Step 6: Run and commit**
 
 ```bash
   npm run test:unit --workspace @sbo/optimizer-client -- --run src/app/providers/DatasetUpdatesProvider.test.tsx src/features/updates/DatasetUpdateNotice.test.tsx src/features/shell/shell.test.tsx
@@ -900,7 +900,7 @@ Place it below dataset status and above global navigation/content without blocki
 - Consumes Task 9 typed provider values only.
 - Produces lazy `/updates?build=<id>&source=<local|cloud>` plus preview/review/apply interactions.
 
-- [ ] **Step 1: Write failing router/screen tests**
+- [x] **Step 1: Write failing router/screen tests**
 
 Cover direct route, source query, first-unreviewed fallback, stale selection explanation, active/saved/mirror/preset/archive labels, empty/blocked/loading states, and no draft mutation.
 
@@ -911,7 +911,7 @@ expect(screen.getByLabelText('Review build')).toHaveValue('local:saved-a');
 expect(replaceDraft).not.toHaveBeenCalled();
 ```
 
-- [ ] **Step 2: Write failing component tests**
+- [x] **Step 2: Write failing component tests**
 
 Require facts before plan in DOM order; before/after/source values; omitted count; Plan unchanged; level/upgrades/shopping/warnings diffs; blocked plan; collapsed trail gaps; Keep pinned; previews; stale Apply; confirmation copy; focus trap/Escape/return; status messages.
 
@@ -922,7 +922,7 @@ expect(facts.compareDocumentPosition(plan) & Node.DOCUMENT_POSITION_FOLLOWING)
   .toBeTruthy();
 ```
 
-- [ ] **Step 3: Implement lazy route and selection**
+- [x] **Step 3: Implement lazy route and selection**
 
 ```tsx
 const DatasetUpdatesScreen = lazy(() =>
@@ -934,7 +934,7 @@ const DatasetUpdatesScreen = lazy(() =>
 
 Use existing route focus/scroll. Selection changes query/provider state only.
 
-- [ ] **Step 4: Implement facts-first sections**
+- [x] **Step 4: Implement facts-first sections**
 
 Render regions in this order: Impact summary, Verified facts changed, Effect on your plan, Release trail, Actions. Unknowns use explicit copy and exact stored URLs.
 
@@ -945,7 +945,7 @@ Render regions in this order: Impact summary, Verified facts changed, Effect on 
 <ReleaseTrailSection steps={report.trail} />
 ```
 
-- [ ] **Step 5: Implement previews/apply confirmation**
+- [x] **Step 5: Implement previews/apply confirmation**
 
 Dialog names build/from/to and says only dataset pin changes. Current preview is temporary. Apply revalidates report/provider state before Task 8.
 
@@ -957,7 +957,7 @@ Dialog names build/from/to and says only dataset pin changes. Current preview is
 />
 ```
 
-- [ ] **Step 6: Implement responsive styles**
+- [x] **Step 6: Implement responsive styles**
 
 Desktop list/detail; one-column mobile; labeled before/after card reflow; existing fantasy tokens, touch targets, focus, and reduced motion.
 
@@ -966,7 +966,7 @@ Desktop list/detail; one-column mobile; labeled before/after card reflow; existi
 @media (max-width: 48rem) { .dataset-updates-layout { grid-template-columns: 1fr; } }
 ```
 
-- [ ] **Step 7: Run rendered tests and commit**
+- [x] **Step 7: Run rendered tests and commit**
 
 ```bash
   npm run test:unit --workspace @sbo/optimizer-client -- --run src/features/updates src/app/App.test.tsx src/features/shell/shell.test.tsx
@@ -996,7 +996,7 @@ Desktop list/detail; one-column mobile; labeled before/after card reflow; existi
 - Registers `e2e/dataset-updates-flow.spec.ts` exactly once in core.
 - Adds Pages `/updates?build=proof-build&source=local`.
 
-- [ ] **Step 1: Write complete guest journey**
+- [x] **Step 1: Write complete guest journey**
 
 Seed pinned/current/intermediate snapshots and unsaved active draft. Verify notice count, facts-before-plan, trail, Keep pinned, edit invalidation, nonmutating preview, confirmation, two revisions, reload, and exact non-dataset equality.
 
@@ -1011,7 +1011,7 @@ await expect.poll(() => readRevisionVersions(page)).toEqual([
 ]);
 ```
 
-- [ ] **Step 2: Add saved/preset/mirror/cloud journeys**
+- [x] **Step 2: Add saved/preset/mirror/cloud journeys**
 
 Apply local build/preset, retain kind/history, dedupe mirror, queue offline review/update, reconnect, converge on second same-account connection, and reject foreign access.
 
@@ -1023,7 +1023,7 @@ await expect.poll(() => reviewsFor(userASecond)).toContainEqual(
 );
 ```
 
-- [ ] **Step 3: Add privacy regressions**
+- [x] **Step 3: Add privacy regressions**
 
 Export build/library and create public share after review. Assert no receipt, impact fingerprint, pending mutation, or owner identity enters either payload.
 
@@ -1033,7 +1033,7 @@ expect(JSON.stringify(portableRecord)).not.toMatch(
 );
 ```
 
-- [ ] **Step 4: Extend accessibility at four viewports**
+- [x] **Step 4: Extend accessibility at four viewports**
 
 Audit notice, list/detail, facts, Plan unchanged, blocked endpoint, trail, previews, and Apply dialog at 1440x1000, 768x1024, 390x844, and 320x700. Require zero serious/critical axe, focus return, reachable controls, and no overflow.
 
@@ -1043,7 +1043,7 @@ expect(await page.evaluate(() => document.documentElement.scrollWidth))
 expect(seriousOrCriticalViolations).toEqual([]);
 ```
 
-- [ ] **Step 5: Add stress and migration coverage**
+- [x] **Step 5: Add stress and migration coverage**
 
 Seed 250 builds across four pinned versions plus the complete catalog. Candidate counting performs zero optimizer calls; selected report performs exactly two; cached revisit performs zero additional calls; v6-to-v7 preserves all prior stores.
 
@@ -1055,11 +1055,11 @@ await openReport('stress-build-249');
 expect(reportOptimizeCalls).toBe(2);
 ```
 
-- [ ] **Step 6: Register integration/Pages/reliability contracts**
+- [x] **Step 6: Register integration/Pages/reliability contracts**
 
 Update exact phase arrays, add direct route, and record receipt schema, 250 candidates, four versions, two endpoint calls, four viewports, and Updates chunk size with tests.
 
-- [ ] **Step 7: Run integration and Pages**
+- [x] **Step 7: Run integration and Pages**
 
 ```bash
   npm run test:integration
@@ -1068,7 +1068,7 @@ Update exact phase arrays, add direct route, and record receipt schema, 250 cand
 
 Expected: core, convergence, publication, sharing, and Pages all pass.
 
-- [ ] **Step 8: Commit release evidence**
+- [x] **Step 8: Commit release evidence**
 
 ```bash
   git add optimizer-v2/client/e2e optimizer-v2/client/e2e-pages optimizer-v2/client/src/domain/build/portable.test.ts optimizer-v2/client/src/features/share/SharedBuildScreen.test.tsx optimizer-v2/scripts
@@ -1087,11 +1087,11 @@ Expected: core, convergence, publication, sharing, and Pages all pass.
 **Interfaces:**
 - Produces the final auditable release record and deployment.
 
-- [ ] **Step 1: Run browser visual QA before documentation**
+- [x] **Step 1: Run browser visual QA before documentation**
 
 Use Browser against local `/updates` at desktop and 390x844. Check identity, nonblank content, overlay/console health, hierarchy, facts-before-plan, trail, blocked/empty states, confirmation focus, sources, and containment. Add a focused regression before each evidence-backed correction.
 
-- [ ] **Step 2: Run the complete local reliability gate**
+- [x] **Step 2: Run the complete local reliability gate**
 
 ```bash
   cd optimizer-v2
@@ -1102,11 +1102,11 @@ Use Browser against local `/updates` at desktop and 390x844. Check identity, non
   git diff --exit-code -- client/src/module_bindings
 ```
 
-- [ ] **Step 3: Update acceptance/reliability ledgers**
+- [x] **Step 3: Update acceptance/reliability ledgers**
 
 Record exact counts, migration, candidate/report stress, optimizer-call bound, cloud evidence, viewports, Pages, chunks, and remaining non-goals. Do not claim deployment yet.
 
-- [ ] **Step 4: Commit the release record**
+- [x] **Step 4: Commit the release record**
 
 ```bash
   git add optimizer-v2/ACCEPTANCE.md optimizer-v2/RELIABILITY.md docs/superpowers/plans/2026-09-01-sbo-qol-release-2-dataset-impact-reports.md

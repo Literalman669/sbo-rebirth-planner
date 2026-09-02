@@ -550,3 +550,67 @@ or errors, a successful `12,345 Col` save, and the rendered affordability
 change. The remaining deliberate boundary is the same as the rest of the app:
 the dashboard trusts only verified bundled/cloud game data and cannot observe
 Roblox gameplay automatically.
+
+## Dataset Update Impact Reports branch gate (2026-09-02)
+
+Dataset Update Impact Reports add a local-first, reproducible review boundary
+between a build's pinned verified snapshot and the current verified snapshot.
+The cheap impact key hashes recommendation inputs plus both endpoint content
+fingerprints and does not run optimization. A full build-specific report runs
+the optimizer exactly once per endpoint, filters fact changes by equipment,
+path, access, eligibility, recommendation, formula, mechanic, and policy
+relevance, and memoizes by build ID plus impact key. The build ID is required:
+the real saved/preset journey caught and fixed a collision where two builds
+with identical inputs shared an impact key but not report ownership.
+
+IndexedDB v7 adds `dataset-review-receipts` additively. Reads strictly validate
+the v1 receipt, quarantine corrupt rows, and keep one current receipt per build.
+Local apply spans draft, build, revision history, and receipt stores in one
+transaction. Tests inject a pre-commit failure and prove every prepared write
+rolls back. Existing builds and presets receive one child revision; unsaved
+active or newly recovered cloud builds receive a pinned recovery revision and
+then the dataset-only revision. Structural invariants reject any hidden level,
+floor, stats, gear, inventory, name, path, or goal change.
+
+SpacetimeDB adds the private `build_dataset_review` table, sender-filtered
+`my_dataset_reviews` view, deterministic receipt merge, protected upsert/delete,
+and `applyDatasetVersionUpdate`. The apply reducer accepts only build ID,
+expected head, new revision ID, and target dataset version; it copies the
+authoritative head and child rows and rejects foreign identity, stale head,
+non-current target, and conflicting revision reuse. Offline replay sends normal
+build revisions first, blocks dependent work while a parent still fails, then
+sends dataset updates before receipts. Same-account subscriptions converge;
+public shares have no receipt surface.
+
+Rendered reliability covers active, local, cloud, mirrored, personal-preset,
+archived, blocked, empty, and stale-link states. The global notice is a separate
+status region, so older progress/inventory e2e selectors were tightened to
+their local status text rather than assuming only one status existed. Axe found
+and drove one semantic correction: source links now live inside their matching
+definition values, producing valid `<dl>` structure. The dedicated audit passes
+at 1440×1000, 768×1024, 390×844, and 320×700 with no document overflow and zero
+serious/critical violations, including preview, expanded trail, and modal focus
+return.
+
+The final clean `npm run test:reliability` invocation returned
+`{"kind":"sbo-rebirth-reliability-summary","status":"passed"}` for every
+layer. Counts were 103 client files / 652 tests, 9 module files / 91 tests, 24
+root script/schema tests, and 6 wiki tests. Coverage accepted fallback release
+`2026.08.30.1`; SpacetimeDB 2.8.3 built successfully. Core integration passed
+37 cases with 13 intentional skips, followed by the 100-revision composite,
+publication, and sharing phases. Pages passed 7/7 both inside the reliability
+runner and in the required separate rerun. Regenerated client bindings were
+byte-clean under `git diff --exit-code -- client/src/module_bindings`.
+
+The measured Pages chunks are `DatasetUpdatesScreen-BVMoX-vX.js` (15,783
+bytes), `ProgressScreen-kHFMmD95.js` (16,758 bytes),
+`BuildComparisonScreen-W4tADypl.js` (10,053 bytes),
+`BuildPresetsScreen-DxRobBog.js` (4,170 bytes), `index-CkwylbjW.js` (997,406
+bytes), and `index-BAcoWALv.css` (66,587 bytes). The main entry remains above
+Vite's advisory 500 kB threshold; the complete Updates screen remains outside
+the initial route.
+
+No deployment evidence is recorded in this section. The branch has not yet
+published a SpacetimeDB module, pushed `main`, changed the verified production
+dataset, or run a production smoke. Those steps remain gated by the approved
+branch-finish workflow.
