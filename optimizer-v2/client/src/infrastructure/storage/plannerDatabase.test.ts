@@ -84,6 +84,7 @@ describe('planner database', () => {
       'build-revisions',
       'builds',
       'dataset-releases',
+      'dataset-review-receipts',
       'draft',
       'inventory',
       'pending-planner-state',
@@ -102,6 +103,41 @@ describe('planner database', () => {
     await expect(database.get('plan-progress', profile().id)).resolves.toEqual(
       expect.objectContaining({ completedActionIds: ['level-9'] }),
     );
+    database.close();
+  });
+
+  it('upgrades a version six database additively for dataset review receipts', async () => {
+    const name = `planner-review-upgrade-${crypto.randomUUID()}`;
+    const legacy = await openDB(name, 6, {
+      upgrade(database) {
+        for (const store of [
+          'draft',
+          'builds',
+          'pending-revisions',
+          'dataset-releases',
+          'planner-preferences',
+          'plan-progress',
+          'pending-planner-state',
+          'quarantine',
+          'inventory',
+          'build-revisions',
+        ]) database.createObjectStore(store);
+      },
+    });
+    await legacy.put('draft', profile(), 'active');
+    await legacy.put('inventory', { schemaVersion: 1 }, 'primary');
+    legacy.close();
+
+    const database = await openPlannerDatabase(name);
+
+    expect(database.version).toBe(7);
+    expect(Array.from(database.objectStoreNames)).toContain(
+      'dataset-review-receipts',
+    );
+    await expect(database.get('draft', 'active')).resolves.toEqual(profile());
+    await expect(database.get('inventory', 'primary')).resolves.toEqual({
+      schemaVersion: 1,
+    });
     database.close();
   });
 

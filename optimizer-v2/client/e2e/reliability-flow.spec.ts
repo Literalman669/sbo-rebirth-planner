@@ -216,15 +216,15 @@ test('reloads direct routes with expected screens or guards and no framework ove
   await expectRuntimeHealth(failures);
 });
 
-test('upgrades a v5 browser database to v6 without losing its draft, saved build, or inventory', async ({
+test('upgrades a v6 browser database to v7 without losing its draft, saved build, or inventory', async ({
   page,
 }, testInfo) => {
   test.skip(testInfo.project.name !== 'desktop', 'Migration browser coverage runs once.');
   await page.addInitScript(() => {
     const profile = {
       schemaVersion: 2,
-      id: 'legacy-v3-build',
-      name: 'Legacy v3 route',
+      id: 'legacy-v6-build',
+      name: 'Legacy v6 route',
       level: 8,
       maxFloor: 2,
       weaponPath: 'two-handed',
@@ -234,7 +234,7 @@ test('upgrades a v5 browser database to v6 without losing its draft, saved build
       ownedItemIds: [],
       datasetVersion: 'bootstrap-0',
     };
-    const request = indexedDB.open('sbo-rebirth-optimizer-v2', 5);
+    const request = indexedDB.open('sbo-rebirth-optimizer-v2', 6);
     request.onupgradeneeded = () => {
       for (const store of [
         'draft',
@@ -246,6 +246,7 @@ test('upgrades a v5 browser database to v6 without losing its draft, saved build
         'pending-planner-state',
         'quarantine',
         'inventory',
+        'build-revisions',
       ]) {
         if (!request.result.objectStoreNames.contains(store)) request.result.createObjectStore(store);
       }
@@ -273,7 +274,7 @@ test('upgrades a v5 browser database to v6 without losing its draft, saved build
   await expect(page.getByRole('button', { name: 'Resume Build' })).toBeVisible();
   await page.getByRole('link', { name: 'Builds', exact: true }).click();
   await expect(page).toHaveURL(/\/builds$/);
-  await expect(page.getByRole('button', { name: 'Load Legacy v3 route' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Load Legacy v6 route' })).toBeVisible();
   expect(await page.evaluate(async () => {
     const request = indexedDB.open('sbo-rebirth-optimizer-v2');
     return new Promise<{ version: number; stores: string[] }>((resolve, reject) => {
@@ -287,8 +288,14 @@ test('upgrades a v5 browser database to v6 without losing its draft, saved build
       };
     });
   })).toEqual(expect.objectContaining({
-    version: 6,
-    stores: expect.arrayContaining(['draft', 'builds', 'inventory', 'build-revisions']),
+    version: 7,
+    stores: expect.arrayContaining([
+      'draft',
+      'builds',
+      'inventory',
+      'build-revisions',
+      'dataset-review-receipts',
+    ]),
   }));
   expect(await page.evaluate(async () => {
     const request = indexedDB.open('sbo-rebirth-optimizer-v2');

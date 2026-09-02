@@ -15,6 +15,7 @@ import {
   createGuestBuildStore,
   GUEST_DATABASE_VERSION,
 } from './guestBuildStore';
+import { createDatasetReviewStore } from './datasetReviewStore';
 
 function profile(id: string): CharacterProfile {
   return {
@@ -365,6 +366,18 @@ describe('GuestBuildStore', () => {
       revisionId: 'preset-revision',
     });
     await store.savePlanProgress(progress('preset'));
+    const reviewStore = createDatasetReviewStore({ databaseName: name });
+    await reviewStore.save({
+      schemaVersion: 1,
+      buildId: 'preset',
+      inputFingerprint: 'build-input-preset',
+      pinnedDatasetVersion: '2026.08.30.1',
+      targetDatasetVersion: '2026.09.01.1',
+      impactKeyFingerprint: 'impact-preset',
+      reportFingerprint: 'impact-report-preset',
+      status: 'reviewed',
+      reviewedAt: '2026-09-02T00:00:00.000Z',
+    });
 
     await store.duplicateBuild('preset', 'preset-copy', 'Preset copy');
     const copied = (await store.listBuilds()).find(
@@ -379,6 +392,7 @@ describe('GuestBuildStore', () => {
     await store.deleteBuild('preset');
     await expect(store.listBuildHistory('preset')).resolves.toEqual([]);
     await expect(store.loadPlanProgress('preset')).resolves.toBeNull();
+    await expect(reviewStore.load('preset')).resolves.toBeNull();
   });
 
   it('renames, duplicates deeply, and archives without changing the original identity', async () => {

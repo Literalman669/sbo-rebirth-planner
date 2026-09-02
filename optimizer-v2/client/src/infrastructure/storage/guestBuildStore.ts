@@ -575,7 +575,12 @@ export function createGuestBuildStore({
       const validId = storedIdSchema.parse(id);
       const database = await databasePromise;
       const transaction = database.transaction(
-        ['builds', 'build-revisions', 'plan-progress'],
+        [
+          'builds',
+          'build-revisions',
+          'plan-progress',
+          'dataset-review-receipts',
+        ],
         'readwrite',
       );
       const revisionKeys = await transaction
@@ -587,6 +592,7 @@ export function createGuestBuildStore({
         }
       }
       await transaction.objectStore('plan-progress').delete(validId);
+      await transaction.objectStore('dataset-review-receipts').delete(validId);
       await transaction.objectStore('builds').delete(validId);
       await transaction.done;
     },
