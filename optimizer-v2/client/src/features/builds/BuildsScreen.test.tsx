@@ -95,6 +95,11 @@ describe('BuildsScreen', () => {
 
     await user.click(screen.getByRole('button', { name: 'Delete Frontline Melee' }));
     expect(screen.getByRole('alertdialog', { name: 'Delete Frontline Melee?' })).toBeVisible();
+    expect(
+      screen.getByText(
+        'This permanently removes the saved copy and its progress history from this device. Export the build first if you need a recovery file.',
+      ),
+    ).toBeVisible();
     expect(screen.getByRole('button', { name: 'Cancel' })).toHaveFocus();
     await user.click(screen.getByRole('button', { name: 'Cancel' }));
     expect(screen.getByText('Frontline Melee')).toBeVisible();

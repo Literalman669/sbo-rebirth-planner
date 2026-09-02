@@ -1,6 +1,8 @@
 import { z } from 'zod';
 import type { PlanProgress } from '../planner/state';
-import { planProgressSchema } from '../planner/stateSchema';
+import {
+  migratePlanProgress,
+} from '../planner/stateSchema';
 import type { CharacterProfile } from './model';
 import type { BuildRevisionSnapshot, SavedBuildKind } from './record';
 import {
@@ -68,6 +70,18 @@ export interface CloudPortableBuildSource {
 
 const strictProfileSchema = characterProfileSchema.strict();
 
+const portablePlanProgressSchema = z.unknown().transform((value, context) => {
+  try {
+    return migratePlanProgress(value);
+  } catch {
+    context.addIssue({
+      code: 'custom',
+      message: 'Plan progress is invalid',
+    });
+    return z.NEVER;
+  }
+});
+
 const portableRevisionSchema = buildRevisionSnapshotSchema.superRefine(
   (revision, context) => {
     const strictProfile = strictProfileSchema.safeParse(revision.profile);
@@ -89,7 +103,7 @@ const portableRecordSchema = z
     createdAt: z.iso.datetime(),
     updatedAt: z.iso.datetime(),
     archivedAt: z.iso.datetime().optional(),
-    planProgress: planProgressSchema.optional(),
+    planProgress: portablePlanProgressSchema.optional(),
     revisions: z
       .array(portableRevisionSchema)
       .min(1)

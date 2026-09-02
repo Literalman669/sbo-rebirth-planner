@@ -409,7 +409,7 @@ export function BuildsScreen() {
             <p id="delete-build-description">
               {deleteTarget.source === 'cloud'
                 ? 'This permanently removes the cloud build and its revision history. Existing public snapshots remain separate.'
-                : 'This permanently removes the saved copy from this device. This cannot be undone.'}
+                : 'This permanently removes the saved copy and its progress history from this device. Export the build first if you need a recovery file.'}
             </p>
             <div className="dialog-actions">
               <button ref={cancelDeleteRef} type="button" onClick={() => setDeleteTarget(null)}>Cancel</button>

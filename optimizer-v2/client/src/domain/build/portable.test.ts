@@ -61,6 +61,33 @@ function record(id: string): PortableBuildRecord {
 }
 
 describe('portable build backups', () => {
+  it('normalizes nested version one progress while keeping the outer format stable', () => {
+    const envelope = createBuildBackup({
+      scope: 'single',
+      exportedAt: '2026-09-01T12:00:00.000Z',
+      records: [record('legacy-progress')],
+    });
+    const raw = structuredClone(envelope) as unknown as {
+      records: Array<{ planProgress: unknown }>;
+    };
+    raw.records[0]!.planProgress = {
+      schemaVersion: 1,
+      buildId: 'legacy-progress',
+      completedActionIds: ['level-9'],
+      dismissedRecommendationIds: [],
+    };
+
+    const parsed = parseBuildBackup(JSON.stringify(raw));
+
+    expect(parsed.schemaVersion).toBe(1);
+    expect(parsed.records[0]?.planProgress).toMatchObject({
+      schemaVersion: 2,
+      buildId: 'legacy-progress',
+      objectives: [{ actionKey: 'level-9', status: 'completed' }],
+      history: [{ actionKey: 'level-9', outcome: 'completed', source: 'legacy' }],
+    });
+  });
+
   it('round-trips deterministic sorted JSON with exactly one trailing newline', () => {
     const envelope = createBuildBackup({
       scope: 'library',
