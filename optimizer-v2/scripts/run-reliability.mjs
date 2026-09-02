@@ -9,7 +9,7 @@ const spacetimeModule = new URL('../spacetimedb/', import.meta.url);
 
 export const RELIABILITY_MEASUREMENTS = Object.freeze({
   optimizerDeterminismIterations: 1000,
-  optimizerDeterminismElapsedMs: 806.6,
+  optimizerDeterminismElapsedMs: 698.9,
   localBuilds: 250,
   datasetImpactCandidates: 250,
   datasetImpactPinnedVersions: 4,
@@ -30,11 +30,11 @@ export const RELIABILITY_MEASUREMENTS = Object.freeze({
   equipmentQueryRecords: 1000,
   equipmentQueryIterations: 100,
   equipmentQueryBudgetMs: 1000,
-  equipmentQueryElapsedMs: 26.1,
+  equipmentQueryElapsedMs: 29.6,
   inventoryQueryRecords: 1000,
   inventoryQueryIterations: 100,
   inventoryQueryBudgetMs: 1000,
-  inventoryQueryElapsedMs: 266.9,
+  inventoryQueryElapsedMs: 269.8,
   accessibilityGate: 'zero serious or critical axe violations',
   testDurations: {
     cloudRevisionDesktopStressMs: 9700,

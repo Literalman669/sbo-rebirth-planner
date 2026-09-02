@@ -4,6 +4,7 @@ import type { PropsWithChildren } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { fallbackRelease } from '../../data/fallbackRelease';
 import type { CharacterProfile } from '../../domain/build/model';
+import type { DatasetSnapshot } from '../../domain/dataset/model';
 import type { SavedBuildKind } from '../../domain/build/record';
 import { buildDatasetReleaseIndex } from '../../domain/datasetImpact/releaseIndex';
 import {
@@ -31,6 +32,12 @@ const target = {
   publishedAt: '2026-09-01T00:00:00.000Z',
   lastReviewedAt: '2026-09-01',
 };
+const pinnedVariants = Array.from({ length: 4 }, (_, index) => ({
+  ...structuredClone(pinned),
+  version: `2026.08.${String(27 + index).padStart(2, '0')}.1`,
+  publishedAt: `2026-08-${String(27 + index).padStart(2, '0')}T00:00:00.000Z`,
+  lastReviewedAt: `2026-08-${String(27 + index).padStart(2, '0')}`,
+}));
 const [pinnedDescriptor, targetDescriptor] = buildDatasetReleaseIndex([
   { snapshot: pinned, availability: 'cached' },
   { snapshot: target, availability: 'live' },
@@ -184,6 +191,7 @@ function testWrapper(options: {
   draftOverrides?: Partial<BuildDraftContextValue>;
   repository?: BuildRepository;
   optimize?: typeof optimizeBuild;
+  historicalSnapshots?: readonly DatasetSnapshot[];
 }) {
   const active = options.active ?? profile('active', 'Active route');
   const localReceipts = [...(options.localReceipts ?? [])];
@@ -215,7 +223,10 @@ function testWrapper(options: {
 
   function Wrapper({ children }: PropsWithChildren) {
     return (
-      <DatasetProvider snapshot={target} historicalSnapshots={[pinned]}>
+      <DatasetProvider
+        snapshot={target}
+        historicalSnapshots={options.historicalSnapshots ?? [pinned]}
+      >
         <BuildDraftContext.Provider value={draft}>
           <CloudBuildsContext.Provider value={{
             repository: cloudRepository,
@@ -254,13 +265,16 @@ function testWrapper(options: {
 describe('DatasetUpdatesProvider', () => {
   it('counts 250 candidates without optimizing and computes one cached report twice only', async () => {
     const optimize = vi.fn(optimizeBuild);
-    const saved = Array.from({ length: 250 }, (_, index) =>
-      localRecord(profile(`stress-${String(index).padStart(3, '0')}`)),
-    );
+    const saved = Array.from({ length: 250 }, (_, index) => {
+      const value = profile(`stress-${String(index).padStart(3, '0')}`);
+      value.datasetVersion = pinnedVariants[index % pinnedVariants.length]!.version;
+      return localRecord(value);
+    });
     const { Wrapper } = testWrapper({
       saved,
       draftOverrides: { hasActiveDraft: false },
       optimize,
+      historicalSnapshots: pinnedVariants,
     });
     const { result } = renderHook(() => useDatasetUpdates(), {
       wrapper: Wrapper,
@@ -268,6 +282,9 @@ describe('DatasetUpdatesProvider', () => {
 
     await waitFor(() => expect(result.current.candidates).toHaveLength(250));
     expect(result.current.unreviewedCount).toBe(250);
+    expect(new Set(result.current.candidates.map(
+      (candidate) => candidate.profile.datasetVersion,
+    )).size).toBe(4);
     expect(optimize).not.toHaveBeenCalled();
 
     await result.current.loadReport('stress-249');
