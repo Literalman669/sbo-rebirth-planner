@@ -12,6 +12,7 @@ import { CloudBuildsProvider } from './app/providers/CloudBuildsProvider';
 import { DatasetProvider } from './app/providers/DatasetProvider';
 import { PlannerStateProvider } from './app/providers/PlannerStateProvider';
 import { InventoryProvider } from './app/providers/InventoryProvider';
+import { DatasetUpdatesProvider } from './app/providers/DatasetUpdatesProvider';
 import { appRouter } from './app/router';
 import { PublicDataProvider } from './infrastructure/spacetime/PublicDataProvider';
 import './styles/global.css';
@@ -26,7 +27,9 @@ createRoot(document.getElementById('root')!).render(
               <InventoryProvider>
                 <PlannerStateProvider>
                   <CloudBuildsProvider>
-                    <RouterProvider router={appRouter} />
+                    <DatasetUpdatesProvider>
+                      <RouterProvider router={appRouter} />
+                    </DatasetUpdatesProvider>
                   </CloudBuildsProvider>
                 </PlannerStateProvider>
               </InventoryProvider>

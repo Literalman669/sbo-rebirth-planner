@@ -8,6 +8,8 @@ import { GlobalNavigation } from '../features/shell/GlobalNavigation';
 import { useBuildDraft } from './providers/BuildDraftContext';
 import { useOptionalInventory } from './providers/InventoryContext';
 import { useOptionalPlannerState } from './providers/PlannerStateContext';
+import { useOptionalDatasetUpdates } from './providers/DatasetUpdatesContext';
+import { DatasetUpdateNotice } from '../features/updates/DatasetUpdateNotice';
 
 type AppProps = {
   release: DatasetRelease;
@@ -25,6 +27,7 @@ export function App({
   storageWarning,
 }: AppProps) {
   const location = useLocation();
+  const updates = useOptionalDatasetUpdates();
 
   useEffect(() => {
     document.documentElement.scrollTop = 0;
@@ -48,6 +51,9 @@ export function App({
         </p>
         {warning && <p className="dataset-warning" role="status">{warning}</p>}
       </header>
+      {updates && updates.unreviewedCount > 0 ? (
+        <DatasetUpdateNotice count={updates.unreviewedCount} />
+      ) : null}
       <GlobalNavigation />
       {storageWarning ? (
         <aside className="dataset-warning local-storage-warning" role="alert">

@@ -10,6 +10,7 @@ import { DatasetProvider } from '../../app/providers/DatasetProvider';
 import { App } from '../../app/App';
 import { PlannerFrame } from '../planner/PlannerFrame';
 import { StickyPlannerActions } from './StickyPlannerActions';
+import { DatasetUpdatesContext } from '../../app/providers/DatasetUpdatesContext';
 
 const profile: CharacterProfile = {
   schemaVersion: 2,
@@ -77,6 +78,54 @@ async function renderRoute(path: string) {
 }
 
 describe('product shell', () => {
+  it('shows one global dataset-update notice without adding a primary-nav item', () => {
+    render(
+      <MemoryRouter>
+        <DatasetUpdatesContext.Provider value={{
+          candidates: [],
+          unreviewedCount: 3,
+          isHydrated: true,
+          storageError: null,
+          loadReport: vi.fn(),
+          keepPinned: vi.fn(),
+          applyUpdate: vi.fn(),
+          refresh: vi.fn(),
+        }}>
+          <Routes>
+            <Route
+              path="/"
+              element={
+                <App
+                  release={{
+                    version: '2026.09.01.1',
+                    formulaSetVersion: 'sbor-stats-v2',
+                    sourceSummary: 'Verified release',
+                    publishedAtMicros: 0n,
+                    lastReviewedAt: '2026-09-01',
+                  }}
+                  source="live"
+                />
+              }
+            >
+              <Route index element={<h2>Home workspace</h2>} />
+            </Route>
+          </Routes>
+        </DatasetUpdatesContext.Provider>
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByRole('status')).toHaveTextContent(
+      'Verified data update affects 3 builds',
+    );
+    expect(screen.getByRole('link', { name: 'Review changes' })).toHaveAttribute(
+      'href',
+      '/updates',
+    );
+    expect(
+      screen.getByRole('navigation', { name: 'Primary' }),
+    ).not.toContainElement(screen.getByRole('link', { name: 'Review changes' }));
+  });
+
   it('shows a global recovery notice for local storage failures', async () => {
     render(
       <MemoryRouter>
