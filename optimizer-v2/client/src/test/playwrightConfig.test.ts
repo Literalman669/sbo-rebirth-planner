@@ -105,14 +105,17 @@ test('cloud lifecycle keeps a strict local watchdog with a CI-only ceiling', () 
   );
 });
 
-test('the bounded multi-viewport accessibility audit owns its extended watchdog', () => {
+test('the bounded multi-viewport accessibility audits own explicit watchdogs', () => {
   const source = readFileSync(accessibilitySpecPath, 'utf8');
 
   expect(integrationConfig.timeout).toBeUndefined();
   expect(source).toMatch(
     /routes remain accessible and contained from desktop to 320px'[\s\S]*?test\.setTimeout\(120_000\);/,
   );
-  expect(source.match(/test\.setTimeout\(/g)).toHaveLength(1);
+  expect(source).toMatch(
+    /dataset update reports and confirmation remain accessible at four viewports'[\s\S]*?test\.setTimeout\(120_000\);/,
+  );
+  expect(source.match(/test\.setTimeout\(/g)).toHaveLength(2);
 });
 
 test('fixed-local integration rejects an occupied app port without using its owner', async () => {
