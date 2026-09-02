@@ -14,6 +14,8 @@ import {
   type CloudReducers,
 } from './buildRepository';
 import { progressFixture } from '../../test/progressFixtures';
+import { fingerprintBuildInputs } from '../../domain/datasetImpact/fingerprint';
+import type { ApplyDatasetUpdateRequest } from '../storage/guestBuildStore';
 
 function profile(id = 'build-a'): CharacterProfile {
   return {
@@ -89,6 +91,26 @@ describe('BuildRepository', () => {
     status: 'reviewed' as const,
     reviewedAt: '2026-09-01T12:00:00.000Z',
   };
+  const applyRequest = (
+    source: CharacterProfile,
+    overrides: Partial<ApplyDatasetUpdateRequest> = {},
+  ): ApplyDatasetUpdateRequest => ({
+    profile: source,
+    kind: 'build',
+    active: false,
+    expectedInputFingerprint: fingerprintBuildInputs(source),
+    targetDatasetVersion: '2026.09.01.1',
+    recoveryRevisionId: 'recovery-revision',
+    updateRevisionId: 'dataset-update-revision',
+    receipt: {
+      ...datasetReceipt,
+      buildId: source.id,
+      inputFingerprint: fingerprintBuildInputs(source),
+      pinnedDatasetVersion: source.datasetVersion,
+      status: 'applied',
+    },
+    ...overrides,
+  });
   it('keeps a guest save local', async () => {
     const storage = adapters('repository-guest');
     const repository = createBuildRepository({
@@ -242,6 +264,271 @@ describe('BuildRepository', () => {
     expect(await storage.pendingPlannerStateQueue.list(subject)).toMatchObject([
       { kind: 'dataset-version-update', attempts: 2 },
     ]);
+  });
+
+  it('applies a local dataset update through one atomic guest-store transaction', async () => {
+    const storage = adapters('repository-local-dataset-apply');
+    const source = profile();
+    await storage.guestStore.saveBuild(source, { revisionId: 'revision-1' });
+    await storage.guestStore.saveDraft(source);
+    const repository = createBuildRepository({ ...storage });
+
+    await expect(repository.applyDatasetUpdate(applyRequest(source, {
+      active: true,
+      expectedHeadRevisionId: 'revision-1',
+    }), { source: 'local' })).resolves.toEqual({
+      profile: { ...source, datasetVersion: '2026.09.01.1' },
+      revisionId: 'dataset-update-revision',
+      location: 'local',
+    });
+    expect((await storage.guestStore.listBuildHistory(source.id)).map(
+      (revision) => revision.id,
+    )).toEqual(['revision-1', 'dataset-update-revision']);
+  });
+
+  it('applies a cloud-only dataset update before writing its applied receipt', async () => {
+    const storage = adapters('repository-cloud-dataset-apply');
+    const source = profile();
+    const order: string[] = [];
+    const cloud = reducers();
+    cloud.applyDatasetVersionUpdate.mockImplementation(async () => {
+      order.push('dataset-update');
+    });
+    cloud.upsertDatasetReview.mockImplementation(async () => {
+      order.push('dataset-review');
+    });
+    const repository = createBuildRepository({
+      ...storage,
+      reducers: cloud,
+      accountSubject: subject,
+      getCloudSnapshot: () => ({
+        builds: [{
+          id: source.id,
+          name: source.name!,
+          headRevisionId: 'cloud-revision-1',
+          kind: 'build',
+        }],
+        revisions: [{
+          id: 'cloud-revision-1',
+          buildId: source.id,
+          schemaVersion: 2,
+          level: source.level,
+          maxFloor: source.maxFloor,
+          weaponPath: source.weaponPath,
+          goal: source.goal,
+          weaponSkill: source.weaponSkill,
+          ...source.stats,
+          datasetVersion: source.datasetVersion,
+          kind: 'build',
+        }],
+        equipment: [{
+          revisionId: 'cloud-revision-1',
+          slot: 'main-hand',
+          itemId: 'iron-greatsword',
+        }],
+        ownedItems: [{
+          revisionId: 'cloud-revision-1',
+          itemId: 'iron-greatsword',
+        }],
+      }),
+    });
+
+    await expect(repository.applyDatasetUpdate(applyRequest(source, {
+      expectedHeadRevisionId: 'cloud-revision-1',
+    }), { source: 'cloud' })).resolves.toEqual({
+      profile: { ...source, datasetVersion: '2026.09.01.1' },
+      revisionId: 'dataset-update-revision',
+      location: 'cloud',
+    });
+
+    expect(order).toEqual(['dataset-update', 'dataset-review']);
+    expect(cloud.applyDatasetVersionUpdate).toHaveBeenCalledWith({
+      buildId: source.id,
+      expectedHeadRevisionId: 'cloud-revision-1',
+      revisionId: 'dataset-update-revision',
+      targetDatasetVersion: '2026.09.01.1',
+    });
+    await expect(storage.datasetReviewStore.load(source.id)).resolves.toEqual(
+      applyRequest(source).receipt,
+    );
+  });
+
+  it('does not write an applied receipt when the cloud revision is pending', async () => {
+    const storage = adapters('repository-cloud-dataset-pending');
+    const source = profile();
+    const cloud = reducers();
+    cloud.applyDatasetVersionUpdate.mockRejectedValueOnce(new Error('offline'));
+    const repository = createBuildRepository({
+      ...storage,
+      reducers: cloud,
+      accountSubject: subject,
+      randomUUID: () => 'cloud-recovery-revision',
+    });
+
+    await expect(repository.applyDatasetUpdate(applyRequest(source), {
+      source: 'cloud',
+    })).resolves.toMatchObject({ location: 'cloud-pending' });
+
+    expect(cloud.saveBuildRevision).toHaveBeenCalledWith(
+      expect.objectContaining({
+        revisionId: 'cloud-recovery-revision',
+        profile: expect.objectContaining({ datasetVersion: 'bootstrap-0' }),
+      }),
+    );
+    expect(cloud.upsertDatasetReview).not.toHaveBeenCalled();
+    await expect(storage.datasetReviewStore.load(source.id)).resolves.toBeNull();
+  });
+
+  it('establishes distinct local and cloud recovery heads before a first cloud update', async () => {
+    const storage = adapters('repository-cloud-dataset-recovery');
+    const source = profile();
+    const cloud = reducers();
+    const repository = createBuildRepository({
+      ...storage,
+      reducers: cloud,
+      accountSubject: subject,
+      randomUUID: () => 'cloud-recovery-revision',
+    });
+
+    await expect(repository.applyDatasetUpdate(applyRequest(source), {
+      source: 'cloud',
+    })).resolves.toMatchObject({
+      location: 'cloud',
+      profile: { datasetVersion: '2026.09.01.1' },
+    });
+
+    expect(cloud.saveBuildRevision).toHaveBeenCalledWith(
+      expect.objectContaining({ revisionId: 'cloud-recovery-revision' }),
+    );
+    expect(cloud.applyDatasetVersionUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        expectedHeadRevisionId: 'cloud-recovery-revision',
+        revisionId: 'dataset-update-revision',
+      }),
+    );
+    expect((await storage.guestStore.listBuildHistory(source.id)).map(
+      (revision) => revision.id,
+    )).toEqual(['recovery-revision', 'dataset-update-revision']);
+  });
+
+  it('updates both sides of a mirrored preset while preserving its kind', async () => {
+    const storage = adapters('repository-mirrored-dataset-apply');
+    const source = profile();
+    await storage.guestStore.saveBuild(source, {
+      kind: 'personal-preset',
+      revisionId: 'local-revision-1',
+    });
+    const cloud = reducers();
+    const repository = createBuildRepository({
+      ...storage,
+      reducers: cloud,
+      accountSubject: subject,
+      getCloudSnapshot: () => ({
+        builds: [{
+          id: source.id,
+          name: source.name!,
+          headRevisionId: 'cloud-revision-1',
+          kind: 'personal-preset',
+        }],
+        revisions: [{
+          id: 'cloud-revision-1',
+          buildId: source.id,
+          schemaVersion: 2,
+          level: source.level,
+          maxFloor: source.maxFloor,
+          weaponPath: source.weaponPath,
+          goal: source.goal,
+          weaponSkill: source.weaponSkill,
+          ...source.stats,
+          datasetVersion: source.datasetVersion,
+          kind: 'personal-preset',
+        }],
+        equipment: [{
+          revisionId: 'cloud-revision-1',
+          slot: 'main-hand',
+          itemId: 'iron-greatsword',
+        }],
+        ownedItems: [{
+          revisionId: 'cloud-revision-1',
+          itemId: 'iron-greatsword',
+        }],
+      }),
+    });
+
+    await expect(repository.applyDatasetUpdate(applyRequest(source, {
+      kind: 'personal-preset',
+      expectedHeadRevisionId: 'local-revision-1',
+    }), { source: 'local+cloud' })).resolves.toMatchObject({
+      location: 'cloud',
+      profile: { datasetVersion: '2026.09.01.1' },
+    });
+
+    expect(cloud.applyDatasetVersionUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        expectedHeadRevisionId: 'cloud-revision-1',
+        revisionId: 'dataset-update-revision',
+      }),
+    );
+    expect((await storage.guestStore.listBuilds())[0]).toMatchObject({
+      ok: true,
+      value: {
+        kind: 'personal-preset',
+        headRevisionId: 'dataset-update-revision',
+        profile: { datasetVersion: '2026.09.01.1' },
+      },
+    });
+  });
+
+  it('rejects a cloud head edited after preview before any dataset write', async () => {
+    const storage = adapters('repository-cloud-dataset-stale');
+    const source = profile();
+    const cloud = reducers();
+    const repository = createBuildRepository({
+      ...storage,
+      reducers: cloud,
+      accountSubject: subject,
+      getCloudSnapshot: () => ({
+        builds: [{
+          id: source.id,
+          name: source.name!,
+          headRevisionId: 'cloud-revision-2',
+          kind: 'build',
+        }],
+        revisions: [{
+          id: 'cloud-revision-2',
+          buildId: source.id,
+          schemaVersion: 2,
+          level: source.level + 1,
+          maxFloor: source.maxFloor,
+          weaponPath: source.weaponPath,
+          goal: source.goal,
+          weaponSkill: source.weaponSkill,
+          str: source.stats.str + 3,
+          def: source.stats.def,
+          agi: source.stats.agi,
+          vit: source.stats.vit,
+          luk: source.stats.luk,
+          datasetVersion: source.datasetVersion,
+          kind: 'build',
+        }],
+        equipment: [{
+          revisionId: 'cloud-revision-2',
+          slot: 'main-hand',
+          itemId: 'iron-greatsword',
+        }],
+        ownedItems: [{
+          revisionId: 'cloud-revision-2',
+          itemId: 'iron-greatsword',
+        }],
+      }),
+    });
+
+    await expect(repository.applyDatasetUpdate(applyRequest(source, {
+      expectedHeadRevisionId: 'cloud-revision-1',
+    }), { source: 'cloud' })).rejects.toThrow(/Build changed/);
+
+    expect(cloud.applyDatasetVersionUpdate).not.toHaveBeenCalled();
+    expect(cloud.upsertDatasetReview).not.toHaveBeenCalled();
   });
 
   it('replays dataset updates before review receipts regardless of enqueue time', async () => {

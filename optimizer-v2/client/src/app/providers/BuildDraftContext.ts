@@ -50,6 +50,7 @@ export type BuildDraftContextValue = {
   savedBuilds: GuestBuildListResult[];
   loadSavedBuild(profile: CharacterProfile): void;
   deleteSavedBuild(id: string): Promise<void>;
+  refreshSavedBuilds(): Promise<void>;
   persistenceStatus: DraftPersistenceStatus;
   canUndo: boolean;
   undoLastChange(): void;

@@ -361,6 +361,10 @@ export function BuildDraftProvider({
     [store],
   );
 
+  const refreshSavedBuilds = useCallback(async () => {
+    setSavedBuilds(await store.listBuilds());
+  }, [store]);
+
   const resetDraft = useCallback(async () => {
     const nextDraft = createEmptyProfile(snapshot.version);
     draftRef.current = nextDraft;
@@ -399,6 +403,7 @@ export function BuildDraftProvider({
       savedBuilds,
       loadSavedBuild,
       deleteSavedBuild,
+      refreshSavedBuilds,
       persistenceStatus: cloudPersistenceStatus ?? persistenceStatus,
       canUndo,
       undoLastChange,
@@ -409,6 +414,7 @@ export function BuildDraftProvider({
       hasActiveDraft,
       isHydrated,
       deleteSavedBuild,
+      refreshSavedBuilds,
       canUndo,
       cloudPersistenceStatus,
       loadSavedBuild,

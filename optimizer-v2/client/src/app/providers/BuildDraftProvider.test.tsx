@@ -45,6 +45,8 @@ function Consumer() {
     quarantinedRecords,
     exportQuarantinedRecord,
     deleteQuarantinedRecord,
+    savedBuilds,
+    refreshSavedBuilds,
   } = useBuildDraft();
 
   if (!isHydrated) return <p>Loading draft</p>;
@@ -63,6 +65,7 @@ function Consumer() {
       </p>
       <p>{canUndo ? 'Undo available' : 'Nothing to undo'}</p>
       <p>{quarantinedRecords.length} recovered records</p>
+      <p>{savedBuilds.length} saved builds</p>
       <button type="button" onClick={() => updateDraft({ level: 13 })}>
         Raise level
       </button>
@@ -86,6 +89,9 @@ function Consumer() {
       </button>
       <button type="button" onClick={undoLastChange} disabled={!canUndo}>
         Undo last change
+      </button>
+      <button type="button" onClick={() => void refreshSavedBuilds()}>
+        Refresh saved builds
       </button>
       <button
         type="button"
@@ -234,6 +240,23 @@ describe('BuildDraftProvider', () => {
     expect(await screen.findByText('Level 12')).toBeVisible();
     expect(screen.getByText('Storage ready')).toBeVisible();
     expect(screen.getByText('Active draft')).toBeVisible();
+  });
+
+  it('refreshes the saved-build library without replacing the active draft', async () => {
+    const store = createGuestBuildStore({
+      databaseName: `provider-refresh-builds-${crypto.randomUUID()}`,
+    });
+    await store.saveDraft(profile());
+    renderProvider(store);
+    await screen.findByText('Level 12');
+    await store.saveBuild({ ...profile(), id: 'external-build' }, {
+      revisionId: 'external-revision',
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Refresh saved builds' }));
+
+    expect(await screen.findByText('1 saved builds')).toBeVisible();
+    expect(screen.getByText('Level 12')).toBeVisible();
   });
 
   it('persists edits and creates a named build through the adapter', async () => {
@@ -425,6 +448,7 @@ describe('BuildDraftProvider', () => {
       exportBuildRecords: async () => [],
       importBuildPlan: async () => undefined,
       deleteBuild: async () => undefined,
+      applyDatasetUpdate: async (request) => request.profile,
       renameBuild: async () => undefined,
       duplicateBuild: async () => profile(),
       setBuildArchived: async () => undefined,

@@ -16,6 +16,8 @@ import {
   GUEST_DATABASE_VERSION,
 } from './guestBuildStore';
 import { createDatasetReviewStore } from './datasetReviewStore';
+import { fingerprintBuildInputs } from '../../domain/datasetImpact/fingerprint';
+import type { ApplyDatasetUpdateRequest } from './guestBuildStore';
 
 function profile(id: string): CharacterProfile {
   return {
@@ -38,6 +40,33 @@ function profile(id: string): CharacterProfile {
 
 function databaseName(label: string) {
   return `sbo-rebirth-optimizer-v2-${label}-${crypto.randomUUID()}`;
+}
+
+function datasetUpdateRequest(
+  source: CharacterProfile,
+  overrides: Partial<ApplyDatasetUpdateRequest> = {},
+): ApplyDatasetUpdateRequest {
+  return {
+    profile: source,
+    kind: 'build',
+    active: true,
+    expectedInputFingerprint: fingerprintBuildInputs(source),
+    targetDatasetVersion: '2026.09.01.1',
+    recoveryRevisionId: 'recovery-revision',
+    updateRevisionId: 'dataset-update-revision',
+    receipt: {
+      schemaVersion: 1,
+      buildId: source.id,
+      inputFingerprint: fingerprintBuildInputs(source),
+      pinnedDatasetVersion: source.datasetVersion,
+      targetDatasetVersion: '2026.09.01.1',
+      impactKeyFingerprint: 'impact-a',
+      reportFingerprint: 'report-a',
+      status: 'applied',
+      reviewedAt: '2026-09-02T00:00:00.000Z',
+    },
+    ...overrides,
+  };
 }
 
 function progress(
@@ -393,6 +422,151 @@ describe('GuestBuildStore', () => {
     await expect(store.listBuildHistory('preset')).resolves.toEqual([]);
     await expect(store.loadPlanProgress('preset')).resolves.toBeNull();
     await expect(reviewStore.load('preset')).resolves.toBeNull();
+  });
+
+  it.each(['build', 'personal-preset'] as const)(
+    'adds one dataset-only child revision to an existing %s',
+    async (kind) => {
+      const name = databaseName(`dataset-update-${kind}`);
+      const timestamps = [
+        '2026-09-01T10:00:00.000Z',
+        '2026-09-02T10:00:00.000Z',
+      ];
+      const store = createGuestBuildStore({
+        databaseName: name,
+        now: () => timestamps.shift()!,
+      });
+      const source = profile('dataset-existing');
+      await store.saveBuild(source, { kind, revisionId: 'revision-1' });
+      await store.saveDraft(source);
+
+      const updated = await store.applyDatasetUpdate(datasetUpdateRequest(source, {
+        kind,
+        expectedHeadRevisionId: 'revision-1',
+      }));
+
+      expect(updated).toEqual({
+        ...source,
+        datasetVersion: '2026.09.01.1',
+      });
+      expect(await store.listBuildHistory(source.id)).toEqual([
+        expect.objectContaining({ id: 'revision-1', kind, profile: source }),
+        expect.objectContaining({
+          id: 'dataset-update-revision',
+          parentRevisionId: 'revision-1',
+          kind,
+          profile: updated,
+        }),
+      ]);
+      expect((await store.listBuilds())[0]).toMatchObject({
+        ok: true,
+        value: {
+          kind,
+          headRevisionId: 'dataset-update-revision',
+          profile: updated,
+        },
+      });
+      await expect(store.loadDraft()).resolves.toEqual(updated);
+      await expect(
+        createDatasetReviewStore({ databaseName: name }).load(source.id),
+      ).resolves.toEqual(datasetUpdateRequest(source, { kind }).receipt);
+    },
+  );
+
+  it.each([
+    ['unsaved active draft', true],
+    ['cloud-only local recovery', false],
+  ] as const)('creates a recovery snapshot before updating an %s', async (_label, active) => {
+    const name = databaseName(`dataset-update-recovery-${active}`);
+    const timestamps = [
+      '2026-09-02T10:00:00.000Z',
+      '2026-09-02T10:01:00.000Z',
+    ];
+    const store = createGuestBuildStore({
+      databaseName: name,
+      now: () => timestamps.shift()!,
+    });
+    const source = profile(`dataset-recovery-${active}`);
+    if (active) await store.saveDraft(source);
+
+    const updated = await store.applyDatasetUpdate(datasetUpdateRequest(source, {
+      active,
+    }));
+
+    expect(await store.listBuildHistory(source.id)).toEqual([
+      expect.objectContaining({
+        id: 'recovery-revision',
+        kind: 'build',
+        profile: source,
+      }),
+      expect.objectContaining({
+        id: 'dataset-update-revision',
+        parentRevisionId: 'recovery-revision',
+        profile: updated,
+      }),
+    ]);
+    await expect(store.loadDraft()).resolves.toEqual(active ? updated : null);
+  });
+
+  it('rejects a stale head without writing a revision or receipt', async () => {
+    const name = databaseName('dataset-update-stale-head');
+    const store = createGuestBuildStore({ databaseName: name });
+    const source = profile('dataset-stale');
+    await store.saveBuild(source, { revisionId: 'revision-1' });
+    const changed = {
+      ...source,
+      level: 9,
+      stats: { ...source.stats, str: 17 },
+    };
+    await store.saveBuild(changed, { revisionId: 'revision-2' });
+
+    await expect(store.applyDatasetUpdate(datasetUpdateRequest(source, {
+      expectedHeadRevisionId: 'revision-1',
+    }))).rejects.toThrow(/Build changed/);
+
+    expect((await store.listBuildHistory(source.id)).map((row) => row.id))
+      .toEqual(['revision-1', 'revision-2']);
+    await expect(
+      createDatasetReviewStore({ databaseName: name }).load(source.id),
+    ).resolves.toBeNull();
+  });
+
+  it('rejects an active draft changed after preview without writing', async () => {
+    const name = databaseName('dataset-update-stale-draft');
+    const store = createGuestBuildStore({ databaseName: name });
+    const source = profile('dataset-stale-draft');
+    await store.saveDraft({ ...source, name: 'Renamed after preview' });
+
+    await expect(store.applyDatasetUpdate(datasetUpdateRequest(source)))
+      .rejects.toThrow(/Build changed/);
+
+    await expect(store.listBuildHistory(source.id)).resolves.toEqual([]);
+    await expect(store.loadDraft()).resolves.toMatchObject({
+      name: 'Renamed after preview',
+      datasetVersion: 'bootstrap-0',
+    });
+  });
+
+  it('rolls back every prepared write when commit preparation fails', async () => {
+    const name = databaseName('dataset-update-rollback');
+    const source = profile('dataset-rollback');
+    const store = createGuestBuildStore({
+      databaseName: name,
+      beforeDatasetUpdateCommit: () => {
+        throw new Error('simulated storage failure');
+      },
+    });
+    await store.saveDraft(source);
+
+    await expect(store.applyDatasetUpdate(datasetUpdateRequest(source)))
+      .rejects.toThrow('simulated storage failure');
+
+    await expect(store.listBuildHistory(source.id)).resolves.toEqual([]);
+    await expect(store.listBuilds()).resolves.toEqual([]);
+    await expect(store.loadDraft()).resolves.toEqual(source);
+    await expect(
+      createDatasetReviewStore({ databaseName: name }).load(source.id),
+    ).resolves.toBeNull();
   });
 
   it('renames, duplicates deeply, and archives without changing the original identity', async () => {

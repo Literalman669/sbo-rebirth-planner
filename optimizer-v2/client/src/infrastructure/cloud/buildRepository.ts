@@ -1,13 +1,19 @@
 import type { CharacterProfile } from '../../domain/build/model';
 import type { SavedBuildKind } from '../../domain/build/record';
+import type { BuildLibrarySource } from '../../domain/build/library';
 import type { PortableBuildRecord } from '../../domain/build/portable';
 import type { InventoryState } from '../../domain/inventory/state';
 import type { DatasetReviewReceipt } from '../../domain/datasetImpact/reviewReceipt';
+import { fingerprintBuildInputs } from '../../domain/datasetImpact/fingerprint';
+import { createDatasetPinnedProfile } from '../../domain/datasetImpact/apply';
 import type {
   PlannerPreferences,
   PlanProgress,
 } from '../../domain/planner/state';
-import type { GuestBuildStore } from '../storage/guestBuildStore';
+import type {
+  ApplyDatasetUpdateRequest,
+  GuestBuildStore,
+} from '../storage/guestBuildStore';
 import {
   createDatasetReviewStore,
   type DatasetReviewStore,
@@ -213,9 +219,18 @@ export interface BuildRepository {
     buildId: string;
     expectedHeadRevisionId: string;
     targetDatasetVersion: string;
+    revisionId?: string;
   }): Promise<{
     revisionId: string;
     location: 'cloud' | 'cloud-pending';
+  }>;
+  applyDatasetUpdate(
+    request: ApplyDatasetUpdateRequest,
+    options: { source: BuildLibrarySource | 'active' },
+  ): Promise<{
+    profile: CharacterProfile;
+    revisionId: string;
+    location: 'local' | 'cloud' | 'cloud-pending';
   }>;
   rename(buildId: string, name: string): Promise<void>;
   archive(buildId: string, archived: boolean): Promise<void>;
@@ -596,17 +611,105 @@ export function createBuildRepository({
 
     async applyDatasetVersionUpdate(input) {
       if (!accountSubject) throw new Error('Sign in is required for cloud sync');
-      const revisionId = randomUUID();
+      const revisionId = input.revisionId ?? randomUUID();
       const location = await sendPlannerMutation({
         kind: 'dataset-version-update',
         subject: accountSubject,
         mutationId: `dataset-update:${input.buildId}`,
-        ...input,
+        buildId: input.buildId,
+        expectedHeadRevisionId: input.expectedHeadRevisionId,
+        targetDatasetVersion: input.targetDatasetVersion,
         revisionId,
         enqueuedAt: now(),
         attempts: 0,
       });
       return { revisionId, location };
+    },
+
+    async applyDatasetUpdate(request, { source }) {
+      const updated = createDatasetPinnedProfile(
+        request.profile,
+        request.targetDatasetVersion,
+      );
+      if (source === 'local' || source === 'active' || !reducers) {
+        const profile = await guestStore.applyDatasetUpdate(request);
+        return {
+          profile,
+          revisionId: request.updateRevisionId,
+          location: 'local' as const,
+        };
+      }
+
+      const snapshot = getCloudSnapshot();
+      const cloudBuild = snapshot.builds.find(
+        (build) => build.id === request.profile.id,
+      );
+      let cloudHeadRevisionId: string;
+      let createdLocalRecovery = false;
+      if (cloudBuild) {
+        const cloudRecord = createCloudBuildSelector()
+          .select(snapshot, {
+            archived: cloudBuild.archivedAt !== undefined,
+          })
+          .find((record) => record.profile.id === request.profile.id);
+        if (
+          !cloudRecord ||
+          cloudRecord.kind !== request.kind ||
+          fingerprintBuildInputs(cloudRecord.profile) !==
+            request.expectedInputFingerprint
+        ) {
+          if (source !== 'local+cloud') {
+            throw new Error('Build changed after the dataset preview was created');
+          }
+          const recovery = await save(request.profile, { kind: request.kind });
+          cloudHeadRevisionId = recovery.revisionId!;
+        } else {
+          if (
+            source === 'cloud' &&
+            request.expectedHeadRevisionId !== cloudRecord.headRevisionId
+          ) {
+            throw new Error('Build changed after the dataset preview was created');
+          }
+          cloudHeadRevisionId = cloudRecord.headRevisionId;
+        }
+      } else {
+        await guestStore.saveBuild(request.profile, {
+          kind: request.kind,
+          revisionId: request.recoveryRevisionId,
+        });
+        const recovery = await save(request.profile, { kind: request.kind });
+        cloudHeadRevisionId = recovery.revisionId!;
+        createdLocalRecovery = true;
+      }
+
+      const cloudUpdate = await this.applyDatasetVersionUpdate({
+        buildId: request.profile.id,
+        expectedHeadRevisionId: cloudHeadRevisionId,
+        targetDatasetVersion: request.targetDatasetVersion,
+        revisionId: request.updateRevisionId,
+      });
+      if (cloudUpdate.location === 'cloud-pending') {
+        return {
+          profile: structuredClone(request.profile),
+          revisionId: cloudUpdate.revisionId,
+          location: cloudUpdate.location,
+        };
+      }
+
+      if (source === 'local+cloud' || createdLocalRecovery) {
+        await guestStore.applyDatasetUpdate({
+          ...request,
+          expectedHeadRevisionId: createdLocalRecovery
+            ? request.recoveryRevisionId
+            : request.expectedHeadRevisionId,
+        });
+      }
+      const receiptLocation = await this.saveDatasetReview(request.receipt);
+      return {
+        profile: updated,
+        revisionId: cloudUpdate.revisionId,
+        location: receiptLocation,
+      };
     },
 
     async rename(buildId, name) {

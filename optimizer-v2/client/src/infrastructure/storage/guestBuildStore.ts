@@ -33,6 +33,14 @@ import {
   GUEST_DATABASE_VERSION,
   openPlannerDatabase,
 } from './plannerDatabase';
+import type { DatasetReviewReceipt } from '../../domain/datasetImpact/reviewReceipt';
+import { datasetReviewReceiptSchema } from '../../domain/datasetImpact/reviewReceipt';
+import { fingerprintBuildInputs } from '../../domain/datasetImpact/fingerprint';
+import {
+  assertDatasetPinOnlyUpdate,
+  createDatasetPinnedProfile,
+} from '../../domain/datasetImpact/apply';
+import { canonicalJson } from '../../domain/datasetImpact/canonical';
 
 export { DEFAULT_GUEST_DATABASE_NAME, GUEST_DATABASE_VERSION };
 const DRAFT_KEY = 'active';
@@ -59,6 +67,18 @@ export type GuestBuildListResult =
   | { ok: true; value: StoredGuestBuild }
   | { ok: false; id: string; error: string };
 
+export interface ApplyDatasetUpdateRequest {
+  profile: CharacterProfile;
+  kind: SavedBuildKind;
+  active: boolean;
+  expectedInputFingerprint: string;
+  expectedHeadRevisionId?: string;
+  targetDatasetVersion: string;
+  recoveryRevisionId: string;
+  updateRevisionId: string;
+  receipt: DatasetReviewReceipt;
+}
+
 export interface GuestBuildStore {
   loadDraft(): Promise<CharacterProfile | null>;
   saveDraft(profile: CharacterProfile): Promise<void>;
@@ -77,6 +97,9 @@ export interface GuestBuildStore {
   exportBuildRecords(ids?: readonly string[]): Promise<PortableBuildRecord[]>;
   importBuildPlan(plan: BuildImportPlan): Promise<void>;
   deleteBuild(id: string): Promise<void>;
+  applyDatasetUpdate(
+    request: ApplyDatasetUpdateRequest,
+  ): Promise<CharacterProfile>;
   renameBuild(id: string, name: string): Promise<void>;
   duplicateBuild(
     id: string,
@@ -97,6 +120,7 @@ export interface GuestBuildStore {
 type GuestBuildStoreOptions = {
   databaseName?: string;
   now?: () => string;
+  beforeDatasetUpdateCommit?: () => void;
 };
 
 const storedIdSchema = z.string().min(1).max(100);
@@ -199,6 +223,7 @@ function validateImportPlan(plan: BuildImportPlan) {
 export function createGuestBuildStore({
   databaseName = DEFAULT_GUEST_DATABASE_NAME,
   now = () => new Date().toISOString(),
+  beforeDatasetUpdateCommit = () => undefined,
 }: GuestBuildStoreOptions = {}): GuestBuildStore {
   const databasePromise = openPlannerDatabase(databaseName);
 
@@ -595,6 +620,141 @@ export function createGuestBuildStore({
       await transaction.objectStore('dataset-review-receipts').delete(validId);
       await transaction.objectStore('builds').delete(validId);
       await transaction.done;
+    },
+
+    async applyDatasetUpdate(request) {
+      const source = characterProfileSchema.parse(request.profile);
+      const kind = savedBuildKindSchema.parse(request.kind);
+      const expectedInputFingerprint = z.string().min(1).max(255).parse(
+        request.expectedInputFingerprint,
+      );
+      const recoveryRevisionId = storedIdSchema.parse(
+        request.recoveryRevisionId,
+      );
+      const updateRevisionId = storedIdSchema.parse(request.updateRevisionId);
+      if (recoveryRevisionId === updateRevisionId) {
+        throw new Error('Dataset update revision IDs must be distinct');
+      }
+      const expectedHeadRevisionId = request.expectedHeadRevisionId
+        ? storedIdSchema.parse(request.expectedHeadRevisionId)
+        : undefined;
+      if (fingerprintBuildInputs(source) !== expectedInputFingerprint) {
+        throw new Error('Build changed after the dataset preview was created');
+      }
+      const updated = createDatasetPinnedProfile(
+        source,
+        request.targetDatasetVersion,
+      );
+      assertDatasetPinOnlyUpdate(source, updated);
+      const receipt = datasetReviewReceiptSchema.parse(request.receipt);
+      if (
+        receipt.buildId !== source.id ||
+        receipt.inputFingerprint !== expectedInputFingerprint ||
+        receipt.pinnedDatasetVersion !== source.datasetVersion ||
+        receipt.targetDatasetVersion !== updated.datasetVersion ||
+        receipt.status !== 'applied'
+      ) {
+        throw new Error('Dataset review receipt does not match this update');
+      }
+
+      const database = await databasePromise;
+      const transaction = database.transaction(
+        [
+          'draft',
+          'builds',
+          'build-revisions',
+          'dataset-review-receipts',
+        ],
+        'readwrite',
+      );
+      try {
+        const buildStore = transaction.objectStore('builds');
+        const revisionStore = transaction.objectStore('build-revisions');
+        const rawExisting = await buildStore.get(source.id);
+        const existing = rawExisting === undefined
+          ? null
+          : migrateSavedBuildRecord(rawExisting);
+        if (
+          existing &&
+          (!savedBuildRecordSchema.safeParse(rawExisting).success ||
+            existing.headRevisionId !== expectedHeadRevisionId ||
+            existing.kind !== kind ||
+            canonicalJson(existing.profile) !== canonicalJson(source))
+        ) {
+          throw new Error('Build changed after the dataset preview was created');
+        }
+        if (!existing && expectedHeadRevisionId !== undefined) {
+          throw new Error('Build changed after the dataset preview was created');
+        }
+        if (request.active) {
+          const draft = characterProfileSchema.safeParse(
+            await transaction.objectStore('draft').get(DRAFT_KEY),
+          );
+          if (
+            !draft.success ||
+            canonicalJson(draft.data) !== canonicalJson(source)
+          ) {
+            throw new Error('Build changed after the dataset preview was created');
+          }
+        }
+
+        const updateKey = revisionKey(source.id, updateRevisionId);
+        if (await revisionStore.get(updateKey)) {
+          throw new Error('Revision ID already exists');
+        }
+        const timestamp = now();
+        let parentRevisionId = existing?.headRevisionId;
+        if (!existing) {
+          const recoveryKey = revisionKey(source.id, recoveryRevisionId);
+          if (await revisionStore.get(recoveryKey)) {
+            throw new Error('Revision ID already exists');
+          }
+          const recovery = buildRevisionSnapshotSchema.parse({
+            id: recoveryRevisionId,
+            buildId: source.id,
+            kind,
+            profile: structuredClone(source),
+            createdAt: timestamp,
+          });
+          await revisionStore.put(recovery, recoveryKey);
+          parentRevisionId = recoveryRevisionId;
+        }
+        const update = buildRevisionSnapshotSchema.parse({
+          id: updateRevisionId,
+          buildId: source.id,
+          parentRevisionId,
+          kind,
+          profile: updated,
+          createdAt: timestamp,
+        });
+        const stored = savedBuildRecordSchema.parse({
+          profile: updated,
+          kind,
+          headRevisionId: updateRevisionId,
+          createdAt: existing?.createdAt ?? timestamp,
+          updatedAt: timestamp,
+          ...(existing?.archivedAt ? { archivedAt: existing.archivedAt } : {}),
+        });
+        await revisionStore.put(update, updateKey);
+        await buildStore.put(stored, source.id);
+        await transaction
+          .objectStore('dataset-review-receipts')
+          .put(receipt, source.id);
+        if (request.active) {
+          await transaction.objectStore('draft').put(updated, DRAFT_KEY);
+        }
+        beforeDatasetUpdateCommit();
+        await transaction.done;
+        return updated;
+      } catch (error) {
+        try {
+          transaction.abort();
+        } catch {
+          // The transaction may already have aborted or completed.
+        }
+        await transaction.done.catch(() => undefined);
+        throw error;
+      }
     },
 
     async renameBuild(id, name) {

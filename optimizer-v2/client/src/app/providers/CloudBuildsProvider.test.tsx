@@ -37,6 +37,7 @@ const draftLifecycleActions = {
   quarantinedRecords: [],
   exportQuarantinedRecord: vi.fn(),
   deleteQuarantinedRecord: vi.fn(),
+  refreshSavedBuilds: vi.fn(async () => undefined),
 };
 
 const cloud = vi.hoisted(() => ({

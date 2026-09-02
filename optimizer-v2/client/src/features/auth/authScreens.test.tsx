@@ -79,6 +79,7 @@ function homeDraftContext(): BuildDraftContextValue {
     canUndo: false,
     undoLastChange: () => undefined,
     setCloudPersistenceStatus: () => undefined,
+    refreshSavedBuilds: async () => undefined,
   };
 }
 
