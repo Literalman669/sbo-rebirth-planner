@@ -234,8 +234,22 @@ facts-first report, exact sources, temporary preview, release trail, Keep
 pinned invalidation, confirmation focus/Escape return, recoverable apply, and
 reload at all four target viewports.
 
-This evidence is local only at this point. No production dataset was published,
-no Maincloud or player data was mutated, and no GitHub Pages deployment or live
-smoke is claimed here. Mass update, public impact-report sharing, automatic
-Roblox telemetry, social OAuth configuration, and unverified wiki inference
-remain explicit non-goals.
+The feature was fast-forwarded into `main` at `936c49f` after a second complete
+merged-tree reliability pass. [Optimizer V2 CI 33611090213](https://github.com/Literalman669/sbo-rebirth-planner/actions/runs/33611090213)
+passed in 5m30s. [Deploy Optimizer V2 33611090206](https://github.com/Literalman669/sbo-rebirth-planner/actions/runs/33611090206)
+passed in 7m04s through fixed-local reliability, additive Maincloud publication,
+production-auth verification, production build, all Pages checks, upload, and
+GitHub Pages deployment. The workflow did not publish a new verified game-data
+release or delete player data.
+
+The read-only production smoke opened
+`https://literalman669.github.io/sbo-rebirth-planner/updates` without signing in
+or writing review/build state. It verified the correct title, release badge,
+base-aware links, no framework overlay, zero console warnings/errors, and exact
+1280/1280 and 390/390 document containment. An already-open older SBO tab held
+IndexedDB open, so the deployed client correctly moved from loading to its
+actionable close-other-tabs recovery notice while retaining the Updates empty
+state; no user tab was closed or altered.
+
+Mass update, public impact-report sharing, automatic Roblox telemetry, social
+OAuth configuration, and unverified wiki inference remain explicit non-goals.

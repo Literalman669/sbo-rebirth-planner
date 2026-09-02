@@ -610,7 +610,19 @@ bytes), and `index-BAcoWALv.css` (66,587 bytes). The main entry remains above
 Vite's advisory 500 kB threshold; the complete Updates screen remains outside
 the initial route.
 
-No deployment evidence is recorded in this section. The branch has not yet
-published a SpacetimeDB module, pushed `main`, changed the verified production
-dataset, or run a production smoke. Those steps remain gated by the approved
-branch-finish workflow.
+The branch was fast-forwarded into local `main`, and the complete six-layer gate
+passed again on the merged checkout. Commit `936c49f` then passed
+[Optimizer V2 CI 33611090213](https://github.com/Literalman669/sbo-rebirth-planner/actions/runs/33611090213)
+in 5m30s and [Deploy Optimizer V2 33611090206](https://github.com/Literalman669/sbo-rebirth-planner/actions/runs/33611090206)
+in 7m04s. Deployment published the additive module without data deletion,
+re-locked and verified production authentication, passed the production build
+and seven Pages tests, and deployed GitHub Pages. The verified production
+dataset itself was not changed.
+
+Read-only live smoke loaded `/updates` at desktop and 390×844 with the correct
+app identity and base-aware links, no framework overlay, zero console
+warnings/errors, and equal viewport/document widths. An older open production
+tab intentionally blocked the v6-to-v7 IndexedDB upgrade; after the bounded
+wait, the app rendered its documented close-other-tabs recovery alert and the
+Updates empty state instead of hanging. No sign-in, receipt write, build update,
+tab closure, or player-data mutation was performed during smoke.

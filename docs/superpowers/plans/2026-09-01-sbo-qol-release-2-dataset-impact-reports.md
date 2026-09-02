@@ -1113,11 +1113,11 @@ Record exact counts, migration, candidate/report stress, optimizer-call bound, c
   git commit -m "docs: record dataset impact acceptance"
 ```
 
-- [ ] **Step 5: Finish the branch using the approved choice**
+- [x] **Step 5: Finish the branch using the approved choice**
 
 Invoke `superpowers:finishing-a-development-branch`. For local merge, merge to `main`, rerun `npm run test:reliability`, and clean only `.worktrees/dataset-impact-reports` after the merged gate passes.
 
-- [ ] **Step 6: Push and monitor both workflows**
+- [x] **Step 6: Push and monitor both workflows**
 
 ```bash
   git push origin main
@@ -1126,11 +1126,11 @@ Invoke `superpowers:finishing-a-development-branch`. For local merge, merge to `
 
 Wait for Optimizer V2 CI and Deploy Optimizer V2. On failure, inspect logs, reproduce, fix only evidenced behavior, rerun, and push.
 
-- [ ] **Step 7: Smoke deployed production without private mutation**
+- [x] **Step 7: Smoke deployed production without private mutation**
 
 Open live `/updates`. Verify release badge, empty/disposable-local report, sources, facts-before-plan, 390x844 containment, and zero app-origin warnings/errors. Delete disposable records only after explicit browser action-time confirmation.
 
-- [ ] **Step 8: Record workflow/live evidence only if needed**
+- [x] **Step 8: Record workflow/live evidence only if needed**
 
 If ledgers require run URLs/findings, commit documentation-only `[skip ci]`; do not redeploy identical code for prose.
 
