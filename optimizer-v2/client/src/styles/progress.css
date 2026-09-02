@@ -1,0 +1,286 @@
+.progress-screen {
+  display: grid;
+  width: min(calc(100% - 2rem), var(--content-width));
+  gap: 1rem;
+  margin: 2rem auto 4rem;
+}
+
+.progress-screen > header {
+  display: grid;
+  gap: 0.55rem;
+  padding: clamp(1rem, 3vw, 1.6rem);
+  border: 1px solid rgb(184 149 93 / 48%);
+  border-radius: 0.4rem;
+  background: rgb(8 14 19 / 94%);
+  box-shadow: var(--shadow-panel);
+}
+
+.progress-screen > header h2,
+.progress-screen > header p {
+  margin: 0;
+}
+
+.progress-build-switcher {
+  display: grid;
+  max-width: 32rem;
+  gap: 0.35rem;
+  color: var(--color-gold);
+  font-family: var(--font-display);
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.progress-build-switcher select,
+.progress-wallet input,
+.progress-task-note textarea {
+  width: 100%;
+  min-height: var(--touch-target);
+  padding: 0.55rem 0.7rem;
+  border: 1px solid rgb(184 149 93 / 58%);
+  border-radius: 0.25rem;
+  background: var(--color-ink-deep);
+  color: var(--color-parchment);
+}
+
+.progress-context,
+.progress-card {
+  min-width: 0;
+  padding: clamp(0.9rem, 2vw, 1.25rem);
+  border: 1px solid rgb(184 149 93 / 38%);
+  border-radius: 0.4rem;
+  background:
+    linear-gradient(145deg, rgb(85 214 194 / 4%), transparent 42%),
+    rgb(8 14 19 / 92%);
+  box-shadow: var(--shadow-panel);
+}
+
+.progress-context {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.progress-context > div {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.progress-context > div > span,
+.progress-card p,
+.progress-card li span {
+  color: var(--color-muted);
+}
+
+.progress-context dl {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin: 0;
+}
+
+.progress-context dl > div {
+  display: grid;
+  gap: 0.1rem;
+}
+
+.progress-context dt {
+  color: var(--color-gold);
+  font-family: var(--font-display);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+}
+
+.progress-context dd {
+  margin: 0;
+}
+
+.progress-next-move {
+  border-color: var(--color-aether);
+  box-shadow: 0 0 1.4rem rgb(85 214 194 / 10%);
+}
+
+.progress-card h3 {
+  margin-top: 0;
+  color: var(--color-parchment);
+  font-family: var(--font-display);
+  font-weight: 500;
+}
+
+.progress-card a {
+  color: var(--color-aether-bright);
+  text-underline-offset: 0.2em;
+}
+
+.progress-dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  align-items: start;
+}
+
+.progress-checklist ol,
+.progress-shopping ul,
+.progress-history ol {
+  display: grid;
+  gap: 0.65rem;
+  padding: 0;
+  list-style: none;
+}
+
+.progress-checklist li,
+.progress-shopping li,
+.progress-history li {
+  display: grid;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  border: 1px solid rgb(184 149 93 / 24%);
+  border-radius: 0.3rem;
+  background: rgb(5 10 14 / 62%);
+}
+
+.progress-checklist li > div:first-child,
+.progress-shopping li {
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+}
+
+.progress-checklist li > div:first-child {
+  display: grid;
+}
+
+.progress-task-actions,
+.progress-wallet {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+
+.progress-card button {
+  min-height: var(--touch-target);
+  padding: 0.5rem 0.8rem;
+  border: 1px solid rgb(184 149 93 / 54%);
+  border-radius: 0.25rem;
+  background: rgb(11 35 40 / 88%);
+  color: var(--color-parchment);
+  cursor: pointer;
+}
+
+.progress-wallet {
+  align-items: end;
+  margin-bottom: 0.8rem;
+}
+
+.progress-wallet label {
+  display: grid;
+  flex: 1 1 12rem;
+  gap: 0.3rem;
+  color: var(--color-gold);
+}
+
+.progress-task-note {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 0.55rem;
+}
+
+.progress-task-note label {
+  display: grid;
+  gap: 0.3rem;
+  color: var(--color-muted);
+}
+
+.progress-task-note textarea {
+  min-height: 4.5rem;
+  resize: vertical;
+}
+
+.progress-history li > span {
+  font-size: 0.85rem;
+}
+
+.progress-history__actions,
+.progress-history__filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+}
+
+.progress-history__filters {
+  margin-top: 0.85rem;
+}
+
+.progress-history__filters label {
+  display: grid;
+  flex: 1 1 12rem;
+  gap: 0.3rem;
+  color: var(--color-gold);
+  font-family: var(--font-display);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+}
+
+.progress-history__filters select {
+  min-height: var(--touch-target);
+  padding: 0.5rem 0.65rem;
+  border: 1px solid rgb(184 149 93 / 54%);
+  border-radius: 0.25rem;
+  background: var(--color-ink-deep);
+  color: var(--color-parchment);
+}
+
+.progress-history__group h4 {
+  margin: 1rem 0 0.35rem;
+  color: var(--color-aether-bright);
+  font-family: var(--font-display);
+  font-weight: 500;
+}
+
+.progress-history li small {
+  color: var(--color-muted);
+}
+
+.progress-dataset-unavailable {
+  padding: clamp(1rem, 3vw, 1.6rem);
+  border: 1px solid rgb(184 149 93 / 48%);
+  border-radius: 0.4rem;
+  background: rgb(8 14 19 / 94%);
+}
+
+@media (max-width: 48rem) {
+  .progress-screen {
+    width: min(calc(100% - 1rem), var(--content-width));
+    margin-top: 0.75rem;
+  }
+
+  .progress-dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .progress-context,
+  .progress-context dl {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .progress-checklist li > div:first-child,
+  .progress-shopping li,
+  .progress-task-note {
+    grid-template-columns: 1fr;
+  }
+
+  .progress-task-actions button,
+  .progress-task-note button {
+    flex: 1 1 9rem;
+  }
+}
+
+@media (max-width: 24rem) {
+  .progress-card button,
+  .progress-wallet button {
+    width: 100%;
+  }
+}

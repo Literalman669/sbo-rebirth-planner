@@ -118,6 +118,9 @@ describe('product shell', () => {
       await screen.findByRole('navigation', { name: 'Primary' }),
     ).toBeVisible();
     expect(
+      screen.getByRole('link', { name: 'Progress' }),
+    ).toHaveAttribute('href', '/progress');
+    expect(
       screen.getByRole('navigation', { name: 'Planner progress' }),
     ).toBeVisible();
   });

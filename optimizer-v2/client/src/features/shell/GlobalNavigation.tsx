@@ -16,10 +16,10 @@ export function GlobalNavigation() {
         <Package aria-hidden="true" />
         <span>Inventory</span>
       </NavLink>
-      <span aria-disabled="true" title="Planned for Release 2">
+      <NavLink to="/progress">
         <BarChart3 aria-hidden="true" />
         <span>Progress</span>
-      </span>
+      </NavLink>
     </nav>
   );
 }

@@ -30,6 +30,11 @@ const BuildPresetsScreen = lazy(() =>
     default: module.BuildPresetsScreen,
   })),
 );
+const ProgressScreen = lazy(() =>
+  import('../features/progress/ProgressScreen').then((module) => ({
+    default: module.ProgressScreen,
+  })),
+);
 
 function BuildToolRoute({ children }: { children: ReactNode }) {
   return (
@@ -67,6 +72,14 @@ export function createAppRoutes(
         { path: 'shared/:shareId', element: <SharedBuildScreen /> },
         { path: 'curation', element: <CurationScreen /> },
         { path: 'inventory', element: <InventoryScreen /> },
+        {
+          path: 'progress',
+          element: (
+            <Suspense fallback={<main className="progress-screen"><p>Loading progress…</p></main>}>
+              <ProgressScreen />
+            </Suspense>
+          ),
+        },
         { path: 'compare/equipment', element: <EquipmentComparisonScreen /> },
         { path: 'compare/builds', element: <LegacyBuildComparisonRedirect /> },
         {

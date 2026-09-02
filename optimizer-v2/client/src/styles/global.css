@@ -3,6 +3,7 @@
 @import './curation.css';
 @import './inventory.css';
 @import './builds.css';
+@import './progress.css';
 
 :root {
   color-scheme: dark;

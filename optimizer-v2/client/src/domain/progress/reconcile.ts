@@ -159,10 +159,13 @@ export function setManualTaskState(_input: {
   randomUUID(): string;
 }): PlanProgress {
   const input = _input;
-  const note = input.note?.trim() || undefined;
   const existing = input.progress.objectives.find(
     (objective) => objective.actionKey === input.task.actionKey,
   );
+  const note =
+    input.note === undefined
+      ? existing?.note
+      : input.note.trim() || undefined;
   if (
     existing?.status === input.status &&
     existing.note === note &&
