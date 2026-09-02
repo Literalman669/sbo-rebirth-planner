@@ -11,10 +11,16 @@ import { selectDatasetImpactCandidates } from '../../domain/datasetImpact/candid
 import { canonicalJson } from '../../domain/datasetImpact/canonical';
 import {
   buildDatasetImpactReport,
+  buildDatasetReleaseStepPlanImpact,
   type DatasetImpactReport,
 } from '../../domain/datasetImpact/report';
 import type { DatasetReleaseDescriptor } from '../../domain/datasetImpact/releaseIndex';
 import type { DatasetReviewReceipt } from '../../domain/datasetImpact/reviewReceipt';
+import type { RecommendationPlanImpact } from '../../domain/datasetImpact/planDiff';
+import {
+  optimizeBuild,
+  type RecommendationPlan,
+} from '../../domain/optimizer/optimizeBuild';
 import {
   createDatasetReviewStore,
   type DatasetReviewStore,
@@ -76,6 +82,12 @@ export function DatasetUpdatesProvider({
   const [storageError, setStorageError] = useState<string | null>(null);
   const reportPromises = useRef(
     new Map<string, Promise<DatasetImpactReportResult>>(),
+  );
+  const releaseStepPromises = useRef(
+    new Map<string, Promise<RecommendationPlanImpact | null>>(),
+  );
+  const previewPromises = useRef(
+    new Map<string, Promise<RecommendationPlan>>(),
   );
 
   const refresh = useCallback(async () => {
@@ -241,6 +253,62 @@ export function DatasetUpdatesProvider({
     [candidates, loadReport],
   );
 
+  const loadReleaseStepPlan = useCallback(
+    async (report: DatasetImpactReport, stepIndex: number) => {
+      const candidate = await revalidateReport(report);
+      const step = report.trail[stepIndex];
+      if (!step || step.status === 'gap') return null;
+      const cacheKey = `${report.impactKeyFingerprint}:${step.fromVersion}:${step.toVersion}`;
+      const cached = releaseStepPromises.current.get(cacheKey);
+      if (cached) return cached;
+      const promise = (async () => {
+        const [from, to] = await Promise.all([
+          dataset.getSnapshot(step.fromVersion),
+          dataset.getSnapshot(step.toVersion),
+        ]);
+        if (!from || !to) return null;
+        return buildDatasetReleaseStepPlanImpact({
+          profile: candidate.profile,
+          from,
+          to,
+          ...(optimize ? { optimize } : {}),
+        });
+      })();
+      releaseStepPromises.current.set(cacheKey, promise);
+      return promise;
+    },
+    [dataset, optimize, revalidateReport],
+  );
+
+  const loadPreview = useCallback(
+    async (
+      report: DatasetImpactReport,
+      endpoint: 'pinned' | 'current',
+    ) => {
+      const candidate = await revalidateReport(report);
+      const version =
+        endpoint === 'pinned' ? report.pinned.version : report.target.version;
+      const cacheKey = `${report.impactKeyFingerprint}:preview:${version}`;
+      const cached = previewPromises.current.get(cacheKey);
+      if (cached) return cached;
+      const promise = dataset.getSnapshot(version).then((snapshot) => {
+        if (!snapshot) {
+          throw new Error(`Dataset ${version} is unavailable for preview.`);
+        }
+        return (optimize ?? optimizeBuild)(
+          {
+            ...structuredClone(candidate.profile),
+            datasetVersion: version,
+          },
+          snapshot,
+        );
+      });
+      previewPromises.current.set(cacheKey, promise);
+      return promise;
+    },
+    [dataset, optimize, revalidateReport],
+  );
+
   const keepPinned = useCallback(
     async (report: DatasetImpactReport) => {
       const candidate = await revalidateReport(report);
@@ -331,6 +399,8 @@ export function DatasetUpdatesProvider({
       isHydrated,
       storageError,
       loadReport,
+      loadReleaseStepPlan,
+      loadPreview,
       keepPinned,
       applyUpdate,
       refresh,
@@ -341,6 +411,8 @@ export function DatasetUpdatesProvider({
       isHydrated,
       keepPinned,
       loadReport,
+      loadReleaseStepPlan,
+      loadPreview,
       refresh,
       storageError,
     ],

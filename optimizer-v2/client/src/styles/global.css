@@ -4,6 +4,7 @@
 @import './inventory.css';
 @import './builds.css';
 @import './progress.css';
+@import './updates.css';
 
 :root {
   color-scheme: dark;

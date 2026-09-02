@@ -87,6 +87,8 @@ describe('product shell', () => {
           isHydrated: true,
           storageError: null,
           loadReport: vi.fn(),
+          loadReleaseStepPlan: vi.fn(),
+          loadPreview: vi.fn(),
           keepPinned: vi.fn(),
           applyUpdate: vi.fn(),
           refresh: vi.fn(),

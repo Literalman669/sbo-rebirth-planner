@@ -35,6 +35,11 @@ const ProgressScreen = lazy(() =>
     default: module.ProgressScreen,
   })),
 );
+const DatasetUpdatesScreen = lazy(() =>
+  import('../features/updates/DatasetUpdatesScreen').then((module) => ({
+    default: module.DatasetUpdatesScreen,
+  })),
+);
 
 function BuildToolRoute({ children }: { children: ReactNode }) {
   return (
@@ -72,6 +77,12 @@ export function createAppRoutes(
         { path: 'shared/:shareId', element: <SharedBuildScreen /> },
         { path: 'curation', element: <CurationScreen /> },
         { path: 'inventory', element: <InventoryScreen /> },
+        {
+          path: 'updates',
+          element: (
+            <BuildToolRoute><DatasetUpdatesScreen /></BuildToolRoute>
+          ),
+        },
         {
           path: 'progress',
           element: (

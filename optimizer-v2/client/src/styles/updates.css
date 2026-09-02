@@ -1,0 +1,394 @@
+.dataset-update-notice {
+  display: flex;
+  min-height: 3.25rem;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 0.55rem clamp(1rem, 3vw, 3rem);
+  border-bottom: 1px solid rgb(85 214 194 / 35%);
+  background:
+    linear-gradient(90deg, transparent, rgb(85 214 194 / 10%), transparent),
+    rgb(8 18 22 / 94%);
+  color: var(--color-parchment);
+}
+
+.dataset-update-notice p {
+  margin: 0;
+}
+
+.dataset-update-notice a,
+.dataset-updates-screen a {
+  color: var(--color-aether-bright);
+  text-underline-offset: 0.2em;
+}
+
+.dataset-update-notice a {
+  min-height: var(--touch-target);
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--font-display);
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.dataset-updates-screen {
+  display: grid;
+  width: min(calc(100% - 2rem), 82rem);
+  gap: 1rem;
+  margin: 2rem auto 5rem;
+}
+
+.dataset-updates-heading,
+.dataset-update-build-list,
+.dataset-impact-report,
+.dataset-updates-empty,
+.dataset-selection-note {
+  border: 1px solid rgb(184 149 93 / 42%);
+  border-radius: 0.45rem;
+  background: rgb(8 14 19 / 94%);
+  box-shadow: var(--shadow-panel);
+}
+
+.dataset-updates-heading,
+.dataset-updates-empty {
+  padding: clamp(1rem, 3vw, 1.6rem);
+}
+
+.dataset-updates-heading h1,
+.dataset-updates-empty h2,
+.dataset-update-build-list h2,
+.dataset-impact-report h2,
+.dataset-impact-report h3 {
+  margin-top: 0;
+  font-family: var(--font-display);
+  font-weight: 500;
+}
+
+.dataset-updates-heading h1 {
+  margin-bottom: 0.4rem;
+  color: var(--color-parchment);
+  font-size: clamp(1.65rem, 4vw, 2.6rem);
+}
+
+.dataset-updates-heading > p:last-child,
+.dataset-updates-empty > p,
+.dataset-impact-summary > p:last-child,
+.dataset-impact-omitted {
+  color: var(--color-muted);
+}
+
+.eyebrow {
+  margin: 0 0 0.35rem;
+  color: var(--color-gold);
+  font-family: var(--font-display);
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.dataset-selection-note {
+  margin: 0;
+  padding: 0.7rem 0.9rem;
+  border-left: 3px solid var(--color-aether);
+  color: var(--color-parchment);
+}
+
+.dataset-updates-layout {
+  display: grid;
+  grid-template-columns: minmax(16rem, 0.7fr) minmax(0, 1.6fr);
+  align-items: start;
+  gap: 1rem;
+}
+
+.dataset-update-build-list {
+  position: sticky;
+  top: 1rem;
+  display: grid;
+  gap: 0.8rem;
+  min-width: 0;
+  padding: 1rem;
+}
+
+.dataset-update-build-list h2 {
+  margin-bottom: 0;
+  font-size: 1.05rem;
+}
+
+.dataset-update-build-list label {
+  display: grid;
+  gap: 0.35rem;
+  color: var(--color-gold);
+  font-family: var(--font-display);
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.dataset-update-build-list select {
+  width: 100%;
+  min-width: 0;
+  padding: 0.55rem 0.65rem;
+  border: 1px solid rgb(184 149 93 / 55%);
+  border-radius: 0.3rem;
+  background: var(--color-ink-deep);
+  color: var(--color-parchment);
+}
+
+.dataset-update-build-statuses {
+  display: grid;
+  gap: 0;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.dataset-update-build-statuses li {
+  display: grid;
+  gap: 0.15rem;
+  padding: 0.65rem 0;
+  border-top: 1px solid rgb(184 149 93 / 20%);
+}
+
+.dataset-update-build-statuses small {
+  color: var(--color-muted);
+}
+
+.dataset-impact-report {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.dataset-impact-summary,
+.dataset-impact-section,
+.dataset-impact-actions,
+.dataset-impact-preview,
+.dataset-report-blocked {
+  padding: clamp(1rem, 2.5vw, 1.4rem);
+  border-bottom: 1px solid rgb(184 149 93 / 28%);
+}
+
+.dataset-impact-summary {
+  background:
+    radial-gradient(circle at top right, rgb(85 214 194 / 10%), transparent 38%),
+    rgb(10 18 23 / 75%);
+}
+
+.dataset-impact-summary h2 {
+  margin-bottom: 0.45rem;
+  font-size: clamp(1.25rem, 3vw, 1.8rem);
+}
+
+.dataset-impact-summary p {
+  margin-block: 0.4rem;
+}
+
+.dataset-impact-section > h2,
+.dataset-impact-actions > h2 {
+  margin-bottom: 0.9rem;
+  color: var(--color-parchment);
+  font-size: 1.05rem;
+}
+
+.dataset-fact-grid,
+.dataset-plan-change-list {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.dataset-fact-change,
+.dataset-plan-change-list article,
+.dataset-release-trail details {
+  min-width: 0;
+  border: 1px solid rgb(184 149 93 / 28%);
+  border-radius: 0.35rem;
+  background: rgb(5 11 15 / 70%);
+}
+
+.dataset-fact-change > header,
+.dataset-plan-change-list article {
+  padding: 0.75rem;
+}
+
+.dataset-fact-change > header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.4rem 0.8rem;
+}
+
+.dataset-fact-change > header span {
+  color: var(--color-gold);
+  font-size: 0.82rem;
+}
+
+.dataset-fact-change dl,
+.dataset-plan-change-list dl {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: 0;
+  border-top: 1px solid rgb(184 149 93 / 20%);
+}
+
+.dataset-fact-change dl > div,
+.dataset-plan-change-list dl > div {
+  min-width: 0;
+  padding: 0.75rem;
+}
+
+.dataset-fact-change dl > div + div,
+.dataset-plan-change-list dl > div + div {
+  border-left: 1px solid rgb(184 149 93 / 20%);
+}
+
+.dataset-fact-change dt,
+.dataset-plan-change-list dt {
+  color: var(--color-muted);
+  font-size: 0.72rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.dataset-fact-change dd,
+.dataset-plan-change-list dd {
+  overflow-wrap: anywhere;
+  margin: 0.25rem 0 0.45rem;
+  color: var(--color-parchment);
+}
+
+.dataset-plan-change-list h3 {
+  margin-bottom: 0.55rem;
+  color: var(--color-gold);
+  font-size: 0.9rem;
+}
+
+.dataset-shopping-impact,
+.dataset-plan-blocked {
+  padding: 0.75rem;
+  border-left: 3px solid var(--color-aether);
+  background: rgb(85 214 194 / 7%);
+}
+
+.dataset-release-trail {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.dataset-release-trail summary {
+  padding: 0.65rem 0.75rem;
+  color: var(--color-gold);
+  cursor: pointer;
+}
+
+.dataset-release-trail details > :not(summary) {
+  margin: 0;
+  padding: 0.2rem 0.75rem 0.75rem;
+  color: var(--color-muted);
+}
+
+.dataset-impact-actions > div,
+.dataset-updates-empty > div,
+.dataset-update-dialog-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.dataset-impact-actions button,
+.dataset-report-blocked button,
+.dataset-update-dialog button,
+.dataset-updates-empty a {
+  display: inline-flex;
+  min-height: var(--touch-target);
+  align-items: center;
+  justify-content: center;
+  padding: 0.55rem 0.8rem;
+  border: 1px solid rgb(184 149 93 / 58%);
+  border-radius: 0.3rem;
+  background: rgb(11 24 30 / 94%);
+  color: var(--color-parchment);
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.dataset-impact-actions button:last-of-type,
+.dataset-update-dialog-actions button:last-child {
+  border-color: var(--color-aether);
+  background: rgb(11 55 60 / 78%);
+}
+
+.dataset-dialog-backdrop {
+  position: fixed;
+  z-index: 50;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgb(0 0 0 / 72%);
+}
+
+.dataset-update-dialog {
+  width: min(100%, 34rem);
+  max-height: calc(100vh - 2rem);
+  overflow-y: auto;
+  padding: clamp(1rem, 4vw, 1.6rem);
+  border: 1px solid var(--color-brass);
+  border-radius: 0.5rem;
+  background:
+    radial-gradient(circle at top right, rgb(85 214 194 / 10%), transparent 40%),
+    var(--color-ink-deep);
+  box-shadow: 0 30px 90px rgb(0 0 0 / 70%);
+}
+
+.dataset-update-dialog h2 {
+  margin: 0 0 0.8rem;
+  font-family: var(--font-display);
+  font-weight: 500;
+}
+
+@media (max-width: 48rem) {
+  .dataset-update-notice {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0.1rem;
+  }
+
+  .dataset-updates-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .dataset-update-build-list {
+    position: static;
+  }
+}
+
+@media (max-width: 32rem) {
+  .dataset-updates-screen {
+    width: min(calc(100% - 1rem), 82rem);
+    margin-top: 1rem;
+  }
+
+  .dataset-fact-change dl,
+  .dataset-plan-change-list dl {
+    grid-template-columns: 1fr;
+  }
+
+  .dataset-fact-change dl > div + div,
+  .dataset-plan-change-list dl > div + div {
+    border-top: 1px solid rgb(184 149 93 / 20%);
+    border-left: 0;
+  }
+
+  .dataset-impact-actions > div,
+  .dataset-updates-empty > div,
+  .dataset-update-dialog-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dataset-dialog-backdrop {
+    scroll-behavior: auto;
+  }
+}

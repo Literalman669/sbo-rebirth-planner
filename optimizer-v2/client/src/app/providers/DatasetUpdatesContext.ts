@@ -1,6 +1,8 @@
 import { createContext, useContext } from 'react';
 import type { DatasetImpactCandidate } from '../../domain/datasetImpact/candidates';
 import type { DatasetImpactReport } from '../../domain/datasetImpact/report';
+import type { RecommendationPlanImpact } from '../../domain/datasetImpact/planDiff';
+import type { RecommendationPlan } from '../../domain/optimizer/optimizeBuild';
 
 export type DatasetImpactReportResult =
   | { status: 'ready'; report: DatasetImpactReport }
@@ -12,6 +14,14 @@ export interface DatasetUpdatesState {
   isHydrated: boolean;
   storageError: string | null;
   loadReport(candidateId: string): Promise<DatasetImpactReportResult>;
+  loadReleaseStepPlan(
+    report: DatasetImpactReport,
+    stepIndex: number,
+  ): Promise<RecommendationPlanImpact | null>;
+  loadPreview(
+    report: DatasetImpactReport,
+    endpoint: 'pinned' | 'current',
+  ): Promise<RecommendationPlan>;
   keepPinned(report: DatasetImpactReport): Promise<void>;
   applyUpdate(report: DatasetImpactReport): Promise<void>;
   refresh(): Promise<void>;

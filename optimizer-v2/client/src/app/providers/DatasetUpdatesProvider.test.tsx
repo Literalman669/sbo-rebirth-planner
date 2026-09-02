@@ -299,6 +299,17 @@ describe('DatasetUpdatesProvider', () => {
       report: { buildId: 'active' },
     });
     expect(optimize).toHaveBeenCalledTimes(2);
+    const loaded = await result.current.loadReport('active');
+    if (loaded.status !== 'ready') throw new Error('report did not load');
+    await expect(result.current.loadReleaseStepPlan(loaded.report, 0))
+      .resolves.toMatchObject({ status: 'unchanged' });
+    await result.current.loadReleaseStepPlan(loaded.report, 0);
+    expect(optimize).toHaveBeenCalledTimes(4);
+    await expect(result.current.loadPreview(loaded.report, 'current'))
+      .resolves.toMatchObject({ datasetVersion: target.version });
+    await result.current.loadPreview(loaded.report, 'current');
+    expect(optimize).toHaveBeenCalledTimes(5);
+    expect(draft.replaceDraft).not.toHaveBeenCalled();
   });
 
   it('keeps a blocked build visible when its pinned snapshot is unavailable', async () => {
