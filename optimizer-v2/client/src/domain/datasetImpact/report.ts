@@ -111,6 +111,23 @@ function assertDescriptorMatches(
   }
 }
 
+export function buildDatasetReleaseStepPlanImpact({
+  profile,
+  from,
+  to,
+  optimize = optimizeBuild,
+}: {
+  profile: CharacterProfile;
+  from: DatasetSnapshot;
+  to: DatasetSnapshot;
+  optimize?: Optimize;
+}): RecommendationPlanImpact {
+  return diffRecommendationPlans(
+    endpoint(profile, from, optimize),
+    endpoint(profile, to, optimize),
+  );
+}
+
 export function buildDatasetImpactReport({
   profile,
   pinned,

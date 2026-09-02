@@ -5,6 +5,7 @@ import { optimizeBuild } from '../optimizer/optimizeBuild';
 import { buildDatasetReleaseIndex } from './releaseIndex';
 import {
   buildDatasetImpactReport,
+  buildDatasetReleaseStepPlanImpact,
   createDatasetImpactReportCache,
 } from './report';
 
@@ -185,6 +186,20 @@ describe('dataset impact report', () => {
 
     expect(afterDisclosureChange).toBe(first);
     expect(afterReceiptChange).toBe(first);
+    expect(optimize).toHaveBeenCalledTimes(2);
+  });
+
+  it('computes an intermediate plan impact only when that release step expands', () => {
+    const optimize = vi.fn(optimizeBuild);
+
+    const impact = buildDatasetReleaseStepPlanImpact({
+      profile,
+      from: pinned,
+      to: intermediate,
+      optimize,
+    });
+
+    expect(impact.status).not.toBe('blocked');
     expect(optimize).toHaveBeenCalledTimes(2);
   });
 });
