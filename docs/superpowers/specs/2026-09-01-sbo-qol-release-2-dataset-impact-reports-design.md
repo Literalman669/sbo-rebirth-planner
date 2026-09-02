@@ -87,7 +87,8 @@ published release. It is unreviewed when no current receipt matches all of:
 - Recommendation-input fingerprint.
 - Pinned dataset version.
 - Target dataset version.
-- Deterministic report fingerprint.
+- Deterministic impact-key fingerprint derived from the input fingerprint,
+  endpoint content fingerprints, and report-contract version.
 
 The global notice displays the count of unreviewed affected builds and one
 **Review changes** link. Opening a report does not acknowledge it. A report is
@@ -170,7 +171,9 @@ revisions continue through the existing local/cloud revision infrastructure.
 Dataset resolution gains a bounded release index containing published version,
 publication timestamp, review date, formula-set version, and availability. It
 contains only immutable published releases. Release ordering uses publication
-metadata, never lexical version comparison.
+metadata, never lexical version comparison. Each validated snapshot receives a
+canonical content fingerprint cached by version so impact-key matching does not
+rerun the optimizer or rehash the catalog for every build.
 
 The index supports:
 
@@ -338,6 +341,7 @@ interface DatasetReviewReceipt {
   inputFingerprint: string;
   pinnedDatasetVersion: string;
   targetDatasetVersion: string;
+  impactKeyFingerprint: string;
   reportFingerprint: string;
   status: 'reviewed' | 'applied';
   reviewedAt: string;
@@ -438,13 +442,16 @@ storage rows, or cloud rows.
 
 - Identical profile and endpoint snapshots produce byte-identical canonical
   reports and fingerprints.
+- The cheap impact-key fingerprint uses the build input, endpoint content
+  fingerprints, and report-contract version; it never runs the optimizer.
 - One report runs the optimizer exactly once per endpoint and memoizes by build
   input plus endpoint content fingerprints.
 - Filters, sorting, disclosures, route selection, and receipt writes do not
   rerun optimization.
-- Candidate discovery never optimizes every build eagerly. Compact list counts
-  use bounded metadata; detailed reports are generated on selection or an idle
-  prefetch budget.
+- Candidate discovery never optimizes every build eagerly. Compact notice
+  counts compare impact keys from bounded release metadata; detailed reports
+  and their full fingerprints are generated on selection or an idle prefetch
+  budget.
 - Release and equipment indexes are memoized by dataset version.
 - Reports remain responsive with 250 player-owned builds and the complete
   verified catalog.
