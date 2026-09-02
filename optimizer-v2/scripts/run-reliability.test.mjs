@@ -34,6 +34,10 @@ test('summarizes layer statuses with documented measured thresholds', () => {
   assert.equal(summary.status, 'failed');
   assert.equal(summary.thresholds.optimizerDeterminismIterations, 1000);
   assert.equal(summary.thresholds.localBuilds, 250);
+  assert.equal(summary.thresholds.datasetImpactCandidates, 250);
+  assert.equal(summary.thresholds.datasetImpactPinnedVersions, 4);
+  assert.equal(summary.thresholds.datasetImpactEndpointOptimizerCalls, 2);
+  assert.equal(summary.thresholds.datasetReviewReceiptSchema, 'v1');
   assert.equal(summary.thresholds.progressBuilds, 250);
   assert.equal(summary.thresholds.progressObjectives, 200);
   assert.equal(summary.thresholds.progressHistoryEvents, 1000);
@@ -52,11 +56,27 @@ test('summarizes layer statuses with documented measured thresholds', () => {
   assert.equal(summary.thresholds.inventoryQueryBudgetMs, 1000);
   assert.equal(
     summary.thresholds.indexedDbMigration,
-    'v5-to-v6-with-build-history-preservation',
+    'v6-to-v7-with-receipt-store-preservation',
   );
   assert.equal(summary.thresholds.cloudRevisions, 100);
-  assert.equal(summary.thresholds.builtChunks['BuildComparisonScreen-CbnpqN_s.js'], 10058);
-  assert.equal(summary.thresholds.builtChunks['BuildPresetsScreen-DOaBIp4w.js'], 4170);
+  assert.equal(
+    Object.entries(summary.thresholds.builtChunks).find(([name]) =>
+      name.startsWith('BuildComparisonScreen-'),
+    )?.[1],
+    10053,
+  );
+  assert.equal(
+    Object.entries(summary.thresholds.builtChunks).find(([name]) =>
+      name.startsWith('BuildPresetsScreen-'),
+    )?.[1],
+    4170,
+  );
+  assert.equal(
+    Object.keys(summary.thresholds.builtChunks).some((name) =>
+      name.startsWith('DatasetUpdatesScreen-') && name.endsWith('.js'),
+    ),
+    true,
+  );
 });
 
 test('emits a failed summary and rejects when a child exits nonzero', () => {

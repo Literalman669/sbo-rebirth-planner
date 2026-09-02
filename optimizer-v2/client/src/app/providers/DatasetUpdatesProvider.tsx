@@ -167,7 +167,8 @@ export function DatasetUpdatesProvider({
       }
       const pinnedDescriptor = candidate.pinned;
       const impactKeyFingerprint = candidate.impactKeyFingerprint;
-      const cached = reportPromises.current.get(impactKeyFingerprint);
+      const reportCacheKey = `${candidate.id}:${impactKeyFingerprint}`;
+      const cached = reportPromises.current.get(reportCacheKey);
       if (cached) return cached;
       const promise = (async (): Promise<DatasetImpactReportResult> => {
         const ordered = [...releases].sort(
@@ -232,7 +233,7 @@ export function DatasetUpdatesProvider({
           };
         }
       })();
-      reportPromises.current.set(impactKeyFingerprint, promise);
+      reportPromises.current.set(reportCacheKey, promise);
       return promise;
     },
     [candidates, dataset, optimize, releases],
@@ -258,7 +259,7 @@ export function DatasetUpdatesProvider({
       const candidate = await revalidateReport(report);
       const step = report.trail[stepIndex];
       if (!step || step.status === 'gap') return null;
-      const cacheKey = `${report.impactKeyFingerprint}:${step.fromVersion}:${step.toVersion}`;
+      const cacheKey = `${report.buildId}:${report.impactKeyFingerprint}:${step.fromVersion}:${step.toVersion}`;
       const cached = releaseStepPromises.current.get(cacheKey);
       if (cached) return cached;
       const promise = (async () => {
@@ -288,7 +289,7 @@ export function DatasetUpdatesProvider({
       const candidate = await revalidateReport(report);
       const version =
         endpoint === 'pinned' ? report.pinned.version : report.target.version;
-      const cacheKey = `${report.impactKeyFingerprint}:preview:${version}`;
+      const cacheKey = `${report.buildId}:${report.impactKeyFingerprint}:preview:${version}`;
       const cached = previewPromises.current.get(cacheKey);
       if (cached) return cached;
       const promise = dataset.getSnapshot(version).then((snapshot) => {

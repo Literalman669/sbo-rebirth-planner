@@ -7,6 +7,7 @@ export const INTEGRATION_PHASES = Object.freeze([
       'e2e/cloud-flow.spec.ts',
       'e2e/cloud-module.spec.ts',
       'e2e/curation-module.spec.ts',
+      'e2e/dataset-updates-flow.spec.ts',
       'e2e/foundation.spec.ts',
       'e2e/guest-flow.spec.ts',
       'e2e/inventory-flow.spec.ts',

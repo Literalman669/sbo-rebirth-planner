@@ -29,7 +29,7 @@ export function DatasetUpdatesScreen() {
     updates.candidates[0];
   const selected = requested ?? fallback;
   const staleSelection = Boolean(requestedBuild && !requested);
-  const [report, setReport] = useState<DatasetImpactReport | null>(null);
+  const [loadedReport, setReport] = useState<DatasetImpactReport | null>(null);
   const [reportError, setReportError] = useState<string | null>(null);
   const [reportLoading, setReportLoading] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -42,13 +42,22 @@ export function DatasetUpdatesScreen() {
   const updateTriggerRef = useRef<HTMLButtonElement>(null);
 
   const selectedValue = selected ? datasetCandidateValue(selected) : '';
+  const report =
+    selected && loadedReport?.buildId === selected.id ? loadedReport : null;
+  const selectionKey = selected
+    ? `${selectedValue}:${selected.impactKeyFingerprint ?? 'blocked'}`
+    : '';
+  const lastSelectionKey = useRef<string | null>(null);
   useEffect(() => {
     let active = true;
     setReport(null);
     setReportError(null);
-    setPreview(null);
-    setStatus(null);
-    setDialogOpen(false);
+    if (lastSelectionKey.current !== selectionKey) {
+      lastSelectionKey.current = selectionKey;
+      setPreview(null);
+      setStatus(null);
+      setDialogOpen(false);
+    }
     if (!updates.isHydrated || !selected) return () => { active = false; };
     setReportLoading(true);
     void updates.loadReport(selected.id).then((result) => {
@@ -63,7 +72,7 @@ export function DatasetUpdatesScreen() {
       if (active) setReportLoading(false);
     });
     return () => { active = false; };
-  }, [selected, updates.isHydrated, updates.loadReport]);
+  }, [selected, selectionKey, updates.isHydrated, updates.loadReport]);
 
   const buildName = useMemo(
     () => selected?.profile.name ?? (selected ? `Level ${selected.profile.level} build` : ''),

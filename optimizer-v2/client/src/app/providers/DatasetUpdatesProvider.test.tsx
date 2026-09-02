@@ -252,6 +252,55 @@ function testWrapper(options: {
 }
 
 describe('DatasetUpdatesProvider', () => {
+  it('counts 250 candidates without optimizing and computes one cached report twice only', async () => {
+    const optimize = vi.fn(optimizeBuild);
+    const saved = Array.from({ length: 250 }, (_, index) =>
+      localRecord(profile(`stress-${String(index).padStart(3, '0')}`)),
+    );
+    const { Wrapper } = testWrapper({
+      saved,
+      draftOverrides: { hasActiveDraft: false },
+      optimize,
+    });
+    const { result } = renderHook(() => useDatasetUpdates(), {
+      wrapper: Wrapper,
+    });
+
+    await waitFor(() => expect(result.current.candidates).toHaveLength(250));
+    expect(result.current.unreviewedCount).toBe(250);
+    expect(optimize).not.toHaveBeenCalled();
+
+    await result.current.loadReport('stress-249');
+    expect(optimize).toHaveBeenCalledTimes(2);
+    await result.current.loadReport('stress-249');
+    expect(optimize).toHaveBeenCalledTimes(2);
+  });
+
+  it('does not share a build-specific report across identical build inputs', async () => {
+    const first = profile('identical-a', 'Identical A');
+    const second = profile('identical-b', 'Identical B');
+    const optimize = vi.fn(optimizeBuild);
+    const { Wrapper } = testWrapper({
+      saved: [localRecord(first), localRecord(second)],
+      draftOverrides: { hasActiveDraft: false },
+      optimize,
+    });
+    const { result } = renderHook(() => useDatasetUpdates(), {
+      wrapper: Wrapper,
+    });
+    await waitFor(() => expect(result.current.isHydrated).toBe(true));
+
+    await expect(result.current.loadReport('identical-a')).resolves.toMatchObject({
+      status: 'ready',
+      report: { buildId: 'identical-a' },
+    });
+    await expect(result.current.loadReport('identical-b')).resolves.toMatchObject({
+      status: 'ready',
+      report: { buildId: 'identical-b' },
+    });
+    expect(optimize).toHaveBeenCalledTimes(4);
+  });
+
   it('hydrates every owned source once, merges receipts, and does no eager optimization', async () => {
     const saved = profile('saved', 'Saved route');
     const preset = profile('preset', 'Preset route');

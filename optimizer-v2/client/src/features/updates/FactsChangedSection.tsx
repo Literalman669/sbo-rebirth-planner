@@ -37,35 +37,39 @@ export function FactsChangedSection({
               <dl>
                 <div>
                   <dt>Before</dt>
-                  <dd>{factValue(change.before)}</dd>
-                  {change.beforeSourceUrl ? (
-                    <a
-                      href={change.beforeSourceUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      aria-label="Before source"
-                    >
-                      Before source{change.beforeSourceRevision
-                        ? ` · revision ${change.beforeSourceRevision}`
-                        : ''}
-                    </a>
-                  ) : null}
+                  <dd>
+                    <span>{factValue(change.before)}</span>
+                    {change.beforeSourceUrl ? (
+                      <a
+                        href={change.beforeSourceUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        aria-label="Before source"
+                      >
+                        Before source{change.beforeSourceRevision
+                          ? ` · revision ${change.beforeSourceRevision}`
+                          : ''}
+                      </a>
+                    ) : null}
+                  </dd>
                 </div>
                 <div>
                   <dt>After</dt>
-                  <dd>{factValue(change.after)}</dd>
-                  {change.afterSourceUrl ? (
-                    <a
-                      href={change.afterSourceUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      aria-label="After source"
-                    >
-                      After source{change.afterSourceRevision
-                        ? ` · revision ${change.afterSourceRevision}`
-                        : ''}
-                    </a>
-                  ) : null}
+                  <dd>
+                    <span>{factValue(change.after)}</span>
+                    {change.afterSourceUrl ? (
+                      <a
+                        href={change.afterSourceUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        aria-label="After source"
+                      >
+                        After source{change.afterSourceRevision
+                          ? ` · revision ${change.afterSourceRevision}`
+                          : ''}
+                      </a>
+                    ) : null}
+                  </dd>
                 </div>
               </dl>
             </article>

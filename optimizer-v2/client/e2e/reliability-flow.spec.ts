@@ -201,6 +201,7 @@ test('reloads direct routes with expected screens or guards and no framework ove
     { path: '/results', screen: /^Equipment$/, guard: /\/equipment$/ },
     { path: '/auth/callback', screen: /Sign-in was not completed|Completing sign in/ },
     { path: '/shared/missing', screen: /Loading shared build|This shared build is unavailable/ },
+    { path: '/updates', screen: /^Dataset Updates$/ },
   ];
 
   for (const route of routes) {

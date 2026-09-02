@@ -121,7 +121,9 @@ test('tracks a guest route, survives reload, switches builds safely, and resets'
   await page.getByLabel('Notes for Unlock Floor 3').fill('Guild clear on Friday');
   await page.getByRole('button', { name: 'Save note for Unlock Floor 3' }).click();
   await page.getByRole('button', { name: 'Complete Unlock Floor 3' }).click();
-  await expect(page.getByRole('status')).toContainText('Task completed');
+  await expect(
+    page.getByRole('status').filter({ hasText: 'Task completed' }),
+  ).toBeVisible();
 
   await page.reload();
   await page.getByRole('button', { name: 'Show journey history' }).click();
@@ -140,7 +142,9 @@ test('tracks a guest route, survives reload, switches builds safely, and resets'
   const resetDialog = page.getByRole('alertdialog', { name: 'Reset progress?' });
   await expect(resetDialog).toBeVisible();
   await resetDialog.getByRole('button', { name: 'Reset permanently' }).click();
-  await expect(page.getByRole('status')).toContainText('Progress reset');
+  await expect(
+    page.getByRole('status').filter({ hasText: 'Progress reset' }),
+  ).toBeVisible();
 });
 
 test('keeps 250 builds and capped progress recoverable without a framework crash', async ({

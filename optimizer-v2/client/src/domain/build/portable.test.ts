@@ -146,6 +146,11 @@ describe('portable build backups', () => {
       'shareId',
       'pendingQueue',
       'cloudRowId',
+      'datasetReview',
+      'receiptJson',
+      'impactKeyFingerprint',
+      'reportFingerprint',
+      'mutationId',
     ]) {
       expect(serialized).not.toContain(privateKey);
     }

@@ -256,6 +256,11 @@
   color: var(--color-parchment);
 }
 
+.dataset-fact-change dd {
+  display: grid;
+  gap: 0.45rem;
+}
+
 .dataset-plan-change-list h3 {
   margin-bottom: 0.55rem;
   color: var(--color-gold);

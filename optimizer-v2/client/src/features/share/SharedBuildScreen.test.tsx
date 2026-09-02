@@ -29,6 +29,25 @@ const profile: CharacterProfile = {
 };
 
 describe('SharedBuildView', () => {
+  it('does not render private dataset-review metadata from an untrusted profile object', () => {
+    const untrusted = {
+      ...profile,
+      datasetReview: { status: 'reviewed' },
+      impactKeyFingerprint: 'private-impact',
+      reportFingerprint: 'private-report',
+      ownerIdentity: 'private-owner',
+    } as CharacterProfile;
+    render(
+      <MemoryRouter>
+        <SharedBuildView profile={untrusted} snapshot={bootstrapRelease} />
+      </MemoryRouter>,
+    );
+
+    expect(document.body.textContent).not.toMatch(
+      /private-impact|private-report|private-owner|datasetReview/,
+    );
+  });
+
   it.each([
     [
       'overspent stats',

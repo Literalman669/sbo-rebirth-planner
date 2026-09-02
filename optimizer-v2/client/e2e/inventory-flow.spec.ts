@@ -80,7 +80,9 @@ test('inventory actions persist while UI-only state keeps the plan fingerprint s
   });
   await expect(inventorySummary).toContainText('saving');
   await details.getByRole('button', { name: 'Equip Steel Greatsword' }).click();
-  await expect(page.getByRole('status')).toContainText('equipped');
+  await expect(
+    page.getByRole('status').filter({ hasText: 'equipped' }),
+  ).toBeVisible();
   await expect(
     inventorySummary.getByText('saved-local'),
   ).toBeVisible();
