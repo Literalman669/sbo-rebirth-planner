@@ -11,6 +11,8 @@ import type {
 } from '../../domain/planner/state';
 import type { InventoryState } from '../../domain/inventory/state';
 import { migrateInventoryState } from '../../domain/inventory/stateSchema';
+import type { DatasetReviewReceipt } from '../../domain/datasetImpact/reviewReceipt';
+import { datasetReviewReceiptSchema } from '../../domain/datasetImpact/reviewReceipt';
 import {
   migratePlannerPreferences,
   migratePlanProgress,
@@ -56,6 +58,37 @@ export type CloudPlanProgressRowLike = {
 };
 export type CloudPreferenceRowLike = { preferencesJson: string };
 export type CloudInventoryRowLike = { inventoryJson: string };
+export type CloudDatasetReviewRowLike = {
+  buildId: string;
+  receiptJson: string;
+};
+
+export function createDatasetReviewSelector() {
+  let previous = new Map<string, DatasetReviewReceipt>();
+  return {
+    select(rows: readonly CloudDatasetReviewRowLike[]) {
+      const next = new Map<string, DatasetReviewReceipt>();
+      for (const row of rows) {
+        try {
+          const receipt = datasetReviewReceiptSchema.parse(
+            JSON.parse(row.receiptJson) as unknown,
+          );
+          if (receipt.buildId !== row.buildId) {
+            throw new Error('Cloud dataset review does not belong to the build');
+          }
+          next.set(row.buildId, receipt);
+        } catch {
+          const retained = previous.get(row.buildId);
+          if (retained) next.set(row.buildId, retained);
+        }
+      }
+      previous = next;
+      return [...next.values()].sort((left, right) =>
+        left.buildId.localeCompare(right.buildId),
+      );
+    },
+  };
+}
 
 export function createInventorySelector() {
   let previous: InventoryState | null = null;

@@ -24,6 +24,18 @@ const inventory = {
   notes: {},
 };
 
+const datasetReceipt = {
+  schemaVersion: 1 as const,
+  buildId: 'build-a',
+  inputFingerprint: 'input-a',
+  pinnedDatasetVersion: 'bootstrap-0',
+  targetDatasetVersion: '2026.09.01.1',
+  impactKeyFingerprint: 'impact-a',
+  reportFingerprint: 'report-a',
+  status: 'reviewed' as const,
+  reviewedAt: '2026-09-01T12:00:00.000Z',
+};
+
 describe('PendingPlannerStateQueue', () => {
   it('isolates stable mutation IDs between authenticated accounts', async () => {
     const queue = createPendingPlannerStateQueue({
@@ -174,5 +186,74 @@ describe('PendingPlannerStateQueue', () => {
       },
     ]);
     expect(await queue.list('account-b')).toEqual([]);
+  });
+
+  it('lets a dataset review delete replace an older queued receipt', async () => {
+    const queue = createPendingPlannerStateQueue({
+      databaseName: `planner-queue-dataset-review-${crypto.randomUUID()}`,
+    });
+    await queue.enqueue({
+      kind: 'dataset-review',
+      subject: 'account-a',
+      mutationId: 'dataset-review:build-a',
+      receipt: datasetReceipt,
+      enqueuedAt: '2026-09-01T12:00:00.000Z',
+      attempts: 1,
+    });
+    await queue.enqueue({
+      kind: 'dataset-review-delete',
+      subject: 'account-a',
+      mutationId: 'dataset-review:build-a',
+      buildId: 'build-a',
+      enqueuedAt: '2026-09-01T12:01:00.000Z',
+      attempts: 0,
+    });
+
+    expect(await queue.list('account-a')).toEqual([
+      expect.objectContaining({
+        kind: 'dataset-review-delete',
+        mutationId: 'dataset-review:build-a',
+        buildId: 'build-a',
+        attempts: 0,
+      }),
+    ]);
+  });
+
+  it('replaces one stable dataset apply intent only with explicit recalculation', async () => {
+    const queue = createPendingPlannerStateQueue({
+      databaseName: `planner-queue-dataset-update-${crypto.randomUUID()}`,
+    });
+    await queue.enqueue({
+      kind: 'dataset-version-update',
+      subject: 'account-a',
+      mutationId: 'dataset-update:build-a',
+      buildId: 'build-a',
+      expectedHeadRevisionId: 'revision-1',
+      revisionId: 'revision-update-1',
+      targetDatasetVersion: '2026.09.01.1',
+      enqueuedAt: '2026-09-01T12:00:00.000Z',
+      attempts: 3,
+    });
+    await queue.enqueue({
+      kind: 'dataset-version-update',
+      subject: 'account-a',
+      mutationId: 'dataset-update:build-a',
+      buildId: 'build-a',
+      expectedHeadRevisionId: 'revision-2',
+      revisionId: 'revision-update-2',
+      targetDatasetVersion: '2026.09.02.1',
+      enqueuedAt: '2026-09-02T12:00:00.000Z',
+      attempts: 0,
+    });
+
+    expect(await queue.list('account-a')).toEqual([
+      expect.objectContaining({
+        kind: 'dataset-version-update',
+        expectedHeadRevisionId: 'revision-2',
+        revisionId: 'revision-update-2',
+        targetDatasetVersion: '2026.09.02.1',
+        attempts: 0,
+      }),
+    ]);
   });
 });

@@ -25,6 +25,11 @@ import type {
   PlanProgress,
 } from '../../domain/planner/state';
 import type { InventoryState } from '../../domain/inventory/state';
+import type { DatasetReviewReceipt } from '../../domain/datasetImpact/reviewReceipt';
+import {
+  createDatasetReviewStore,
+  type DatasetReviewStore,
+} from '../storage/datasetReviewStore';
 import {
   createPendingPlannerStateQueue,
   type PendingPlannerStateQueue,
@@ -33,11 +38,13 @@ import {
 const defaultGuestStore = createGuestBuildStore();
 const defaultPendingQueue = createPendingRevisionQueue();
 const defaultPendingPlannerStateQueue = createPendingPlannerStateQueue();
+const defaultDatasetReviewStore = createDatasetReviewStore();
 
 type UseCloudBuildsOptions = {
   guestStore?: GuestBuildStore;
   pendingQueue?: PendingRevisionQueue;
   pendingPlannerStateQueue?: PendingPlannerStateQueue;
+  datasetReviewStore?: DatasetReviewStore;
 };
 
 export type CloudBuildsState = {
@@ -47,6 +54,7 @@ export type CloudBuildsState = {
   cloudPlanProgress: readonly PlanProgress[];
   cloudPreferences: PlannerPreferences | null;
   cloudInventory: InventoryState | null;
+  cloudDatasetReviews: readonly DatasetReviewReceipt[];
   isAuthenticated: boolean;
   isReady: boolean;
   needsGuestImport: boolean;
@@ -63,6 +71,7 @@ export function useCloudBuilds({
   guestStore = defaultGuestStore,
   pendingQueue = defaultPendingQueue,
   pendingPlannerStateQueue = defaultPendingPlannerStateQueue,
+  datasetReviewStore = defaultDatasetReviewStore,
 }: UseCloudBuildsOptions = {}): CloudBuildsState {
   const auth = useAuthSession();
   const cloud = useCloudData();
@@ -113,6 +122,12 @@ export function useCloudBuilds({
       renameBuild: (args) => connection.reducers.renameBuild(args),
       setBuildArchived: (args) =>
         connection.reducers.setBuildArchived(args),
+      upsertDatasetReview: (args) =>
+        connection.reducers.upsertDatasetReview(args),
+      deleteDatasetReview: (args) =>
+        connection.reducers.deleteDatasetReview(args),
+      applyDatasetVersionUpdate: (args) =>
+        connection.reducers.applyDatasetVersionUpdate(args),
     };
   }, [auth.status, auth.subject, connection, connectionState.isActive]);
 
@@ -122,6 +137,7 @@ export function useCloudBuilds({
         guestStore,
         pendingQueue,
         pendingPlannerStateQueue,
+        datasetReviewStore,
         accountSubject: reducers ? auth.subject : undefined,
         reducers,
         getCloudSnapshot: () => snapshotRef.current,
@@ -129,6 +145,7 @@ export function useCloudBuilds({
     [
       auth.subject,
       guestStore,
+      datasetReviewStore,
       pendingPlannerStateQueue,
       pendingQueue,
       reducers,
@@ -197,10 +214,7 @@ export function useCloudBuilds({
   useEffect(() => {
     if (!reducers || !connectionState.isActive) return;
     const retry = () => {
-      void Promise.all([
-        repository.retryPending(),
-        repository.retryPendingPlannerState(),
-      ])
+      void repository.retryAllPending()
         .catch(() => undefined)
         .then(() => refreshPending().catch(() => undefined));
     };
@@ -221,6 +235,7 @@ export function useCloudBuilds({
     cloudPlanProgress: cloud.planProgress,
     cloudPreferences: cloud.preferences,
     cloudInventory: cloud.inventory,
+    cloudDatasetReviews: cloud.datasetReviews,
     isAuthenticated: auth.status === 'authenticated',
     isReady: cloud.isReady,
     needsGuestImport:

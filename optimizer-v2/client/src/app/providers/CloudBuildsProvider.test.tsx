@@ -61,6 +61,7 @@ const cloud = vi.hoisted(() => ({
     compactWeaponPathsAfterFirstUse: boolean;
   },
   cloudInventory: null as InventoryState | null,
+  cloudDatasetReviews: [],
 }));
 
 vi.mock('../../infrastructure/cloud/useCloudBuilds', () => ({
@@ -75,7 +76,11 @@ vi.mock('../../infrastructure/cloud/useCloudBuilds', () => ({
       savePlanProgress: cloud.savePlanProgress,
       savePreferences: cloud.savePreferences,
       saveInventory: cloud.saveInventory,
+      saveDatasetReview: vi.fn(),
+      deleteDatasetReview: vi.fn(),
+      applyDatasetVersionUpdate: vi.fn(),
       retryPendingPlannerState: vi.fn(),
+      retryAllPending: vi.fn(),
       rename: vi.fn(),
       archive: vi.fn(),
     },
@@ -84,6 +89,7 @@ vi.mock('../../infrastructure/cloud/useCloudBuilds', () => ({
     cloudPlanProgress: cloud.cloudPlanProgress,
     cloudPreferences: cloud.cloudPreferences,
     cloudInventory: cloud.cloudInventory,
+    cloudDatasetReviews: cloud.cloudDatasetReviews,
     isAuthenticated: true,
     isReady: true,
     needsGuestImport: cloud.needsGuestImport,

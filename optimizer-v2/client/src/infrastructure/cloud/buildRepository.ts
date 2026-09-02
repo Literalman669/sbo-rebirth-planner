@@ -2,11 +2,16 @@ import type { CharacterProfile } from '../../domain/build/model';
 import type { SavedBuildKind } from '../../domain/build/record';
 import type { PortableBuildRecord } from '../../domain/build/portable';
 import type { InventoryState } from '../../domain/inventory/state';
+import type { DatasetReviewReceipt } from '../../domain/datasetImpact/reviewReceipt';
 import type {
   PlannerPreferences,
   PlanProgress,
 } from '../../domain/planner/state';
 import type { GuestBuildStore } from '../storage/guestBuildStore';
+import {
+  createDatasetReviewStore,
+  type DatasetReviewStore,
+} from '../storage/datasetReviewStore';
 import {
   createInventoryStore,
   type InventoryStore,
@@ -50,6 +55,17 @@ export interface CloudReducers {
   setBuildArchived(args: {
     buildId: string;
     archived: boolean;
+  }): Promise<void>;
+  upsertDatasetReview(args: {
+    buildId: string;
+    receiptJson: string;
+  }): Promise<void>;
+  deleteDatasetReview(args: { buildId: string }): Promise<void>;
+  applyDatasetVersionUpdate(args: {
+    buildId: string;
+    expectedHeadRevisionId: string;
+    revisionId: string;
+    targetDatasetVersion: string;
   }): Promise<void>;
 }
 
@@ -176,6 +192,7 @@ export interface BuildRepository {
   ): Promise<'cloud' | 'cloud-pending'>;
   retryPending(): Promise<void>;
   retryPendingPlannerState(): Promise<void>;
+  retryAllPending(): Promise<void>;
   savePlanProgress(
     progress: PlanProgress,
   ): Promise<'cloud' | 'cloud-pending'>;
@@ -186,6 +203,20 @@ export interface BuildRepository {
   saveInventory(
     inventory: InventoryState,
   ): Promise<'cloud' | 'cloud-pending'>;
+  saveDatasetReview(
+    receipt: DatasetReviewReceipt,
+  ): Promise<'cloud' | 'cloud-pending'>;
+  deleteDatasetReview(
+    buildId: string,
+  ): Promise<'cloud' | 'cloud-pending'>;
+  applyDatasetVersionUpdate(input: {
+    buildId: string;
+    expectedHeadRevisionId: string;
+    targetDatasetVersion: string;
+  }): Promise<{
+    revisionId: string;
+    location: 'cloud' | 'cloud-pending';
+  }>;
   rename(buildId: string, name: string): Promise<void>;
   archive(buildId: string, archived: boolean): Promise<void>;
   restore(buildId: string, revisionId: string): Promise<string>;
@@ -197,6 +228,7 @@ type BuildRepositoryOptions = {
   pendingQueue: PendingRevisionQueue;
   pendingPlannerStateQueue?: PendingPlannerStateQueue;
   inventoryStore?: InventoryStore;
+  datasetReviewStore?: DatasetReviewStore;
   accountSubject?: string;
   reducers?: CloudReducers;
   getCloudSnapshot?: () => CloudSnapshot;
@@ -209,6 +241,7 @@ export function createBuildRepository({
   pendingQueue,
   pendingPlannerStateQueue = createPendingPlannerStateQueue(),
   inventoryStore = createInventoryStore(),
+  datasetReviewStore = createDatasetReviewStore(),
   accountSubject,
   reducers,
   getCloudSnapshot = () => ({
@@ -302,22 +335,7 @@ export function createBuildRepository({
     const subject = accountSubject!;
     await pendingPlannerStateQueue.enqueue(mutation);
     try {
-      if (mutation.kind === 'progress') {
-        await reducers.upsertPlanProgress({
-          buildId: mutation.progress.buildId,
-          progressJson: JSON.stringify(mutation.progress),
-        });
-      } else if (mutation.kind === 'progress-reset') {
-        await reducers.deletePlanProgress({ buildId: mutation.buildId });
-      } else if (mutation.kind === 'preferences') {
-        await reducers.upsertUserPreferences({
-          preferencesJson: JSON.stringify(mutation.preferences),
-        });
-      } else {
-        await reducers.upsertUserInventory({
-          inventoryJson: JSON.stringify(mutation.inventory),
-        });
-      }
+      await dispatchPlannerMutation(mutation);
       await pendingPlannerStateQueue.acknowledge(subject, mutation.mutationId);
       return 'cloud';
     } catch {
@@ -326,6 +344,49 @@ export function createBuildRepository({
         mutation.mutationId,
       );
       return 'cloud-pending';
+    }
+  }
+
+  async function dispatchPlannerMutation(
+    mutation: PendingPlannerStateMutation,
+  ): Promise<void> {
+    if (!reducers) throw new Error('Sign in is required for cloud sync');
+    switch (mutation.kind) {
+      case 'progress':
+        await reducers.upsertPlanProgress({
+          buildId: mutation.progress.buildId,
+          progressJson: JSON.stringify(mutation.progress),
+        });
+        return;
+      case 'progress-reset':
+        await reducers.deletePlanProgress({ buildId: mutation.buildId });
+        return;
+      case 'preferences':
+        await reducers.upsertUserPreferences({
+          preferencesJson: JSON.stringify(mutation.preferences),
+        });
+        return;
+      case 'inventory':
+        await reducers.upsertUserInventory({
+          inventoryJson: JSON.stringify(mutation.inventory),
+        });
+        return;
+      case 'dataset-review':
+        await reducers.upsertDatasetReview({
+          buildId: mutation.receipt.buildId,
+          receiptJson: JSON.stringify(mutation.receipt),
+        });
+        return;
+      case 'dataset-review-delete':
+        await reducers.deleteDatasetReview({ buildId: mutation.buildId });
+        return;
+      case 'dataset-version-update':
+        await reducers.applyDatasetVersionUpdate({
+          buildId: mutation.buildId,
+          expectedHeadRevisionId: mutation.expectedHeadRevisionId,
+          revisionId: mutation.revisionId,
+          targetDatasetVersion: mutation.targetDatasetVersion,
+        });
     }
   }
 
@@ -415,24 +476,24 @@ export function createBuildRepository({
     async retryPendingPlannerState() {
       if (!reducers) return;
       const subject = accountSubject!;
-      for (const mutation of await pendingPlannerStateQueue.list(subject)) {
+      const mutations = await pendingPlannerStateQueue.list(subject);
+      mutations.sort((left, right) => {
+        const priority = (mutation: PendingPlannerStateMutation) =>
+          mutation.kind === 'dataset-version-update'
+            ? 0
+            : mutation.kind === 'dataset-review' ||
+                mutation.kind === 'dataset-review-delete'
+              ? 2
+              : 1;
+        return (
+          priority(left) - priority(right) ||
+          left.enqueuedAt.localeCompare(right.enqueuedAt) ||
+          left.mutationId.localeCompare(right.mutationId)
+        );
+      });
+      for (const mutation of mutations) {
         try {
-          if (mutation.kind === 'progress') {
-            await reducers.upsertPlanProgress({
-              buildId: mutation.progress.buildId,
-              progressJson: JSON.stringify(mutation.progress),
-            });
-          } else if (mutation.kind === 'progress-reset') {
-            await reducers.deletePlanProgress({ buildId: mutation.buildId });
-          } else if (mutation.kind === 'preferences') {
-            await reducers.upsertUserPreferences({
-              preferencesJson: JSON.stringify(mutation.preferences),
-            });
-          } else {
-            await reducers.upsertUserInventory({
-              inventoryJson: JSON.stringify(mutation.inventory),
-            });
-          }
+          await dispatchPlannerMutation(mutation);
           await pendingPlannerStateQueue.acknowledge(
             subject,
             mutation.mutationId,
@@ -445,6 +506,14 @@ export function createBuildRepository({
           break;
         }
       }
+    },
+
+    async retryAllPending() {
+      if (!reducers) return;
+      await this.retryPending();
+      const remainingRevisions = await pendingQueue.list(accountSubject!);
+      if (remainingRevisions.length > 0) return;
+      await this.retryPendingPlannerState();
     },
 
     async savePlanProgress(progress) {
@@ -499,6 +568,47 @@ export function createBuildRepository({
       });
     },
 
+    async saveDatasetReview(receipt) {
+      await datasetReviewStore.save(receipt);
+      if (!accountSubject) throw new Error('Sign in is required for cloud sync');
+      return sendPlannerMutation({
+        kind: 'dataset-review',
+        subject: accountSubject,
+        mutationId: `dataset-review:${receipt.buildId}`,
+        receipt,
+        enqueuedAt: now(),
+        attempts: 0,
+      });
+    },
+
+    async deleteDatasetReview(buildId) {
+      await datasetReviewStore.delete(buildId);
+      if (!accountSubject) throw new Error('Sign in is required for cloud sync');
+      return sendPlannerMutation({
+        kind: 'dataset-review-delete',
+        subject: accountSubject,
+        mutationId: `dataset-review:${buildId}`,
+        buildId,
+        enqueuedAt: now(),
+        attempts: 0,
+      });
+    },
+
+    async applyDatasetVersionUpdate(input) {
+      if (!accountSubject) throw new Error('Sign in is required for cloud sync');
+      const revisionId = randomUUID();
+      const location = await sendPlannerMutation({
+        kind: 'dataset-version-update',
+        subject: accountSubject,
+        mutationId: `dataset-update:${input.buildId}`,
+        ...input,
+        revisionId,
+        enqueuedAt: now(),
+        attempts: 0,
+      });
+      return { revisionId, location };
+    },
+
     async rename(buildId, name) {
       if (!reducers) throw new Error('Sign in is required to rename cloud builds');
       await reducers.renameBuild({ buildId, name });
@@ -526,6 +636,14 @@ export function createBuildRepository({
         await pendingPlannerStateQueue.acknowledge(
           accountSubject,
           `progress:${buildId}`,
+        );
+        await pendingPlannerStateQueue.acknowledge(
+          accountSubject,
+          `dataset-review:${buildId}`,
+        );
+        await pendingPlannerStateQueue.acknowledge(
+          accountSubject,
+          `dataset-update:${buildId}`,
         );
       }
       await guestStore.deleteBuild(buildId);

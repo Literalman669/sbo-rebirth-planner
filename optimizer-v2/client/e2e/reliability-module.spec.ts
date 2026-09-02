@@ -312,6 +312,12 @@ function liveReducers(testConnection: TestConnection): CloudReducers {
       testConnection.connection.reducers.renameBuild(args),
     setBuildArchived: (args) =>
       testConnection.connection.reducers.setBuildArchived(args),
+    upsertDatasetReview: (args) =>
+      testConnection.connection.reducers.upsertDatasetReview(args),
+    deleteDatasetReview: (args) =>
+      testConnection.connection.reducers.deleteDatasetReview(args),
+    applyDatasetVersionUpdate: (args) =>
+      testConnection.connection.reducers.applyDatasetVersionUpdate(args),
   };
 }
 

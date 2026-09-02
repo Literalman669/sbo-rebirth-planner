@@ -5,6 +5,7 @@ import type { InventoryState } from '../../domain/inventory/state';
 import type { PortableBuildRecord } from '../../domain/build/portable';
 import { createGuestBuildStore } from '../storage/guestBuildStore';
 import { createInventoryStore } from '../storage/inventoryStore';
+import { createDatasetReviewStore } from '../storage/datasetReviewStore';
 import { createPendingRevisionQueue } from './pendingRevisionQueue';
 import { createPendingPlannerStateQueue } from './pendingPlannerStateQueue';
 import {
@@ -38,6 +39,7 @@ function adapters(label: string) {
     pendingQueue: createPendingRevisionQueue({ databaseName }),
     pendingPlannerStateQueue: createPendingPlannerStateQueue({ databaseName }),
     inventoryStore: createInventoryStore({ databaseName }),
+    datasetReviewStore: createDatasetReviewStore({ databaseName }),
   };
 }
 
@@ -61,6 +63,9 @@ function reducers(
     upsertUserInventory: vi.fn(async () => undefined),
     renameBuild: vi.fn(async () => undefined),
     setBuildArchived: vi.fn(async () => undefined),
+    upsertDatasetReview: vi.fn(async () => undefined),
+    deleteDatasetReview: vi.fn(async () => undefined),
+    applyDatasetVersionUpdate: vi.fn(async () => undefined),
   };
 }
 
@@ -72,6 +77,17 @@ describe('BuildRepository', () => {
     favoriteItemIds: ['beginner-armor'],
     comparisonItemIds: [],
     notes: {},
+  };
+  const datasetReceipt = {
+    schemaVersion: 1 as const,
+    buildId: 'build-a',
+    inputFingerprint: 'input-a',
+    pinnedDatasetVersion: 'bootstrap-0',
+    targetDatasetVersion: '2026.09.01.1',
+    impactKeyFingerprint: 'impact-a',
+    reportFingerprint: 'report-a',
+    status: 'reviewed' as const,
+    reviewedAt: '2026-09-01T12:00:00.000Z',
   };
   it('keeps a guest save local', async () => {
     const storage = adapters('repository-guest');
@@ -132,6 +148,196 @@ describe('BuildRepository', () => {
 
     expect(cloud.upsertUserInventory).toHaveBeenCalledTimes(2);
     await expect(storage.pendingPlannerStateQueue.list(subject)).resolves.toEqual([]);
+  });
+
+  it('saves a review locally before queueing a failed private cloud write', async () => {
+    const storage = adapters('repository-dataset-review');
+    const cloud = reducers();
+    cloud.upsertDatasetReview.mockImplementationOnce(async () => {
+      expect(await storage.datasetReviewStore.load('build-a')).toEqual(
+        datasetReceipt,
+      );
+      throw new Error('offline');
+    });
+    const repository = createBuildRepository({
+      ...storage,
+      reducers: cloud,
+      accountSubject: subject,
+      now: () => '2026-09-01T12:00:00.000Z',
+    });
+
+    await expect(repository.saveDatasetReview(datasetReceipt)).resolves.toBe(
+      'cloud-pending',
+    );
+    expect(await storage.pendingPlannerStateQueue.list(subject)).toMatchObject([
+      {
+        kind: 'dataset-review',
+        mutationId: 'dataset-review:build-a',
+        attempts: 1,
+      },
+    ]);
+
+    await repository.retryPendingPlannerState();
+    expect(cloud.upsertDatasetReview).toHaveBeenLastCalledWith({
+      buildId: 'build-a',
+      receiptJson: JSON.stringify(datasetReceipt),
+    });
+    expect(await storage.pendingPlannerStateQueue.list(subject)).toEqual([]);
+  });
+
+  it('deletes a review locally before queueing a protected cloud delete', async () => {
+    const storage = adapters('repository-dataset-review-delete');
+    await storage.datasetReviewStore.save(datasetReceipt);
+    const cloud = reducers();
+    cloud.deleteDatasetReview.mockRejectedValueOnce(new Error('offline'));
+    const repository = createBuildRepository({
+      ...storage,
+      reducers: cloud,
+      accountSubject: subject,
+      now: () => '2026-09-01T12:01:00.000Z',
+    });
+
+    await expect(repository.deleteDatasetReview('build-a')).resolves.toBe(
+      'cloud-pending',
+    );
+    await expect(storage.datasetReviewStore.load('build-a')).resolves.toBeNull();
+    expect(await storage.pendingPlannerStateQueue.list(subject)).toMatchObject([
+      {
+        kind: 'dataset-review-delete',
+        mutationId: 'dataset-review:build-a',
+        attempts: 1,
+      },
+    ]);
+  });
+
+  it('queues a stable dataset-version apply and retains a stale-head conflict', async () => {
+    const storage = adapters('repository-dataset-update');
+    const cloud = reducers();
+    cloud.applyDatasetVersionUpdate.mockRejectedValue(new Error('Build changed'));
+    const repository = createBuildRepository({
+      ...storage,
+      reducers: cloud,
+      accountSubject: subject,
+      randomUUID: () => 'revision-dataset-update',
+      now: () => '2026-09-01T12:02:00.000Z',
+    });
+
+    await expect(repository.applyDatasetVersionUpdate({
+      buildId: 'build-a',
+      expectedHeadRevisionId: 'revision-1',
+      targetDatasetVersion: '2026.09.01.1',
+    })).resolves.toEqual({
+      revisionId: 'revision-dataset-update',
+      location: 'cloud-pending',
+    });
+    expect(await storage.pendingPlannerStateQueue.list(subject)).toMatchObject([
+      {
+        kind: 'dataset-version-update',
+        mutationId: 'dataset-update:build-a',
+        attempts: 1,
+      },
+    ]);
+
+    await repository.retryPendingPlannerState();
+    expect(await storage.pendingPlannerStateQueue.list(subject)).toMatchObject([
+      { kind: 'dataset-version-update', attempts: 2 },
+    ]);
+  });
+
+  it('replays dataset updates before review receipts regardless of enqueue time', async () => {
+    const storage = adapters('repository-dataset-replay-order');
+    await storage.pendingQueue.enqueue({
+      subject,
+      revisionId: 'revision-1',
+      buildId: 'build-a',
+      profile: profile(),
+      enqueuedAt: '2026-09-01T11:59:00.000Z',
+      attempts: 0,
+    });
+    await storage.pendingPlannerStateQueue.enqueue({
+      kind: 'dataset-review',
+      subject,
+      mutationId: 'dataset-review:build-a',
+      receipt: datasetReceipt,
+      enqueuedAt: '2026-09-01T12:00:00.000Z',
+      attempts: 0,
+    });
+    await storage.pendingPlannerStateQueue.enqueue({
+      kind: 'dataset-version-update',
+      subject,
+      mutationId: 'dataset-update:build-a',
+      buildId: 'build-a',
+      expectedHeadRevisionId: 'revision-1',
+      revisionId: 'revision-dataset-update',
+      targetDatasetVersion: '2026.09.01.1',
+      enqueuedAt: '2026-09-01T12:01:00.000Z',
+      attempts: 0,
+    });
+    const order: string[] = [];
+    const cloud = reducers();
+    cloud.saveBuildRevision.mockImplementation(async () => {
+      order.push('build-revision');
+    });
+    cloud.applyDatasetVersionUpdate.mockImplementation(async () => {
+      order.push('dataset-update');
+    });
+    cloud.upsertDatasetReview.mockImplementation(async () => {
+      order.push('dataset-review');
+    });
+    const repository = createBuildRepository({
+      ...storage,
+      reducers: cloud,
+      accountSubject: subject,
+    });
+
+    await repository.retryAllPending();
+
+    expect(order).toEqual([
+      'build-revision',
+      'dataset-update',
+      'dataset-review',
+    ]);
+  });
+
+  it('does not apply a dataset update while an earlier build revision is still failing', async () => {
+    const storage = adapters('repository-dataset-replay-blocked');
+    await storage.pendingQueue.enqueue({
+      subject,
+      revisionId: 'revision-1',
+      buildId: 'build-a',
+      profile: profile(),
+      enqueuedAt: '2026-09-01T11:59:00.000Z',
+      attempts: 0,
+    });
+    await storage.pendingPlannerStateQueue.enqueue({
+      kind: 'dataset-version-update',
+      subject,
+      mutationId: 'dataset-update:build-a',
+      buildId: 'build-a',
+      expectedHeadRevisionId: 'revision-1',
+      revisionId: 'revision-dataset-update',
+      targetDatasetVersion: '2026.09.01.1',
+      enqueuedAt: '2026-09-01T12:00:00.000Z',
+      attempts: 0,
+    });
+    const cloud = reducers(async () => {
+      throw new Error('offline');
+    });
+    const repository = createBuildRepository({
+      ...storage,
+      reducers: cloud,
+      accountSubject: subject,
+    });
+
+    await repository.retryAllPending();
+
+    expect(cloud.applyDatasetVersionUpdate).not.toHaveBeenCalled();
+    expect(await storage.pendingQueue.list(subject)).toMatchObject([
+      { revisionId: 'revision-1', attempts: 1 },
+    ]);
+    expect(await storage.pendingPlannerStateQueue.list(subject)).toMatchObject([
+      { kind: 'dataset-version-update', attempts: 0 },
+    ]);
   });
 
   it('stores failed revisions only in the authenticated account queue', async () => {

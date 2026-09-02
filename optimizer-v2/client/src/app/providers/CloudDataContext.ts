@@ -6,7 +6,9 @@ import MyProfileRow from '../../module_bindings/my_profile_table';
 import MyRevisionEquipmentRow from '../../module_bindings/my_revision_equipment_table';
 import MyRevisionOwnedItemsRow from '../../module_bindings/my_revision_owned_items_table';
 import MyUserInventoryRow from '../../module_bindings/my_user_inventory_table';
+import MyDatasetReviewsRow from '../../module_bindings/my_dataset_reviews_table';
 import type { InventoryState } from '../../domain/inventory/state';
+import type { DatasetReviewReceipt } from '../../domain/datasetImpact/reviewReceipt';
 import type {
   PlannerPreferences,
   PlanProgress,
@@ -24,6 +26,8 @@ export interface CloudDataState {
   preferences: PlannerPreferences | null;
   inventory: InventoryState | null;
   inventoryRows: readonly Infer<typeof MyUserInventoryRow>[];
+  datasetReviews: readonly DatasetReviewReceipt[];
+  datasetReviewRows: readonly Infer<typeof MyDatasetReviewsRow>[];
 }
 
 export const CloudDataContext = createContext<CloudDataState | null>(null);

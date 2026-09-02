@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type PropsWithChildren } from 'react';
 import type { GuestBuildStore } from '../../infrastructure/storage/guestBuildStore';
 import type { PendingRevisionQueue } from '../../infrastructure/cloud/pendingRevisionQueue';
 import type { PendingPlannerStateQueue } from '../../infrastructure/cloud/pendingPlannerStateQueue';
+import type { DatasetReviewStore } from '../../infrastructure/storage/datasetReviewStore';
 import { profileFingerprint } from '../../infrastructure/cloud/buildMappers';
 import { useCloudBuilds } from '../../infrastructure/cloud/useCloudBuilds';
 import { useBuildDraft } from './BuildDraftContext';
@@ -14,6 +15,7 @@ type CloudBuildsProviderProps = PropsWithChildren<{
   guestStore?: GuestBuildStore;
   pendingQueue?: PendingRevisionQueue;
   pendingPlannerStateQueue?: PendingPlannerStateQueue;
+  datasetReviewStore?: DatasetReviewStore;
 }>;
 
 export function CloudBuildsProvider({
@@ -21,11 +23,13 @@ export function CloudBuildsProvider({
   guestStore,
   pendingQueue,
   pendingPlannerStateQueue,
+  datasetReviewStore,
 }: CloudBuildsProviderProps) {
   const cloud = useCloudBuilds({
     guestStore,
     pendingQueue,
     pendingPlannerStateQueue,
+    datasetReviewStore,
   });
   const [legacyError, setLegacyError] = useState<string | null>(null);
   const {

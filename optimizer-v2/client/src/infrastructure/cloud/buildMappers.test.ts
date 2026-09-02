@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { CharacterProfile } from '../../domain/build/model';
 import {
   createInventorySelector,
+  createDatasetReviewSelector,
   createPreferenceSelector,
   createPlanProgressSelector,
   planProgressFromCloudRow,
@@ -31,6 +32,50 @@ const profile: CharacterProfile = {
 };
 
 describe('cloud build mappers', () => {
+  it('retains the last valid private dataset review when a row becomes malformed', () => {
+    const receipt = {
+      schemaVersion: 1 as const,
+      buildId: 'build-a',
+      inputFingerprint: 'input-a',
+      pinnedDatasetVersion: 'bootstrap-0',
+      targetDatasetVersion: '2026.09.01.1',
+      impactKeyFingerprint: 'impact-a',
+      reportFingerprint: 'report-a',
+      status: 'reviewed' as const,
+      reviewedAt: '2026-09-01T12:00:00.000Z',
+    };
+    const selector = createDatasetReviewSelector();
+
+    expect(selector.select([{
+      buildId: 'build-a',
+      receiptJson: JSON.stringify(receipt),
+    }])).toEqual([receipt]);
+    expect(selector.select([{
+      buildId: 'build-a',
+      receiptJson: '{"schemaVersion":99}',
+    }])).toEqual([receipt]);
+    expect(selector.select([])).toEqual([]);
+  });
+
+  it('rejects a private dataset review stored under another build ID', () => {
+    const selector = createDatasetReviewSelector();
+
+    expect(selector.select([{
+      buildId: 'build-b',
+      receiptJson: JSON.stringify({
+        schemaVersion: 1,
+        buildId: 'build-a',
+        inputFingerprint: 'input-a',
+        pinnedDatasetVersion: 'bootstrap-0',
+        targetDatasetVersion: '2026.09.01.1',
+        impactKeyFingerprint: 'impact-a',
+        reportFingerprint: 'report-a',
+        status: 'reviewed',
+        reviewedAt: '2026-09-01T12:00:00.000Z',
+      }),
+    }])).toEqual([]);
+  });
+
   it('preserves the last validated inventory row after malformed input', () => {
     const inventory = {
       schemaVersion: 1 as const,

@@ -5,6 +5,8 @@ import type {
 } from '../../domain/planner/state';
 import type { InventoryState } from '../../domain/inventory/state';
 import { inventoryStateSchema } from '../../domain/inventory/stateSchema';
+import type { DatasetReviewReceipt } from '../../domain/datasetImpact/reviewReceipt';
+import { datasetReviewReceiptSchema } from '../../domain/datasetImpact/reviewReceipt';
 import {
   plannerPreferencesSchema,
   planProgressSchema,
@@ -50,6 +52,30 @@ const pendingPlannerStateMutationSchema = z.discriminatedUnion('kind', [
       inventory: inventoryStateSchema,
     })
     .strict(),
+  z
+    .object({
+      ...mutationBase,
+      kind: z.literal('dataset-review'),
+      receipt: datasetReviewReceiptSchema,
+    })
+    .strict(),
+  z
+    .object({
+      ...mutationBase,
+      kind: z.literal('dataset-review-delete'),
+      buildId: z.string().min(1).max(255),
+    })
+    .strict(),
+  z
+    .object({
+      ...mutationBase,
+      kind: z.literal('dataset-version-update'),
+      buildId: z.string().min(1).max(255),
+      expectedHeadRevisionId: z.string().min(1).max(255),
+      revisionId: z.string().min(1).max(255),
+      targetDatasetVersion: z.string().min(1).max(255),
+    })
+    .strict(),
 ]);
 
 export type PendingPlannerStateMutation =
@@ -82,6 +108,33 @@ export type PendingPlannerStateMutation =
       subject: string;
       mutationId: string;
       inventory: InventoryState;
+      enqueuedAt: string;
+      attempts: number;
+    }
+  | {
+      kind: 'dataset-review';
+      subject: string;
+      mutationId: string;
+      receipt: DatasetReviewReceipt;
+      enqueuedAt: string;
+      attempts: number;
+    }
+  | {
+      kind: 'dataset-review-delete';
+      subject: string;
+      mutationId: string;
+      buildId: string;
+      enqueuedAt: string;
+      attempts: number;
+    }
+  | {
+      kind: 'dataset-version-update';
+      subject: string;
+      mutationId: string;
+      buildId: string;
+      expectedHeadRevisionId: string;
+      revisionId: string;
+      targetDatasetVersion: string;
       enqueuedAt: string;
       attempts: number;
     };

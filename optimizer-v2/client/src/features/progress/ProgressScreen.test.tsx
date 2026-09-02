@@ -166,6 +166,7 @@ describe('ProgressScreen', () => {
       cloudPlanProgress: [],
       cloudPreferences: null,
       cloudInventory: null,
+      cloudDatasetReviews: [],
       isAuthenticated: true,
       isReady: true,
       needsGuestImport: false,

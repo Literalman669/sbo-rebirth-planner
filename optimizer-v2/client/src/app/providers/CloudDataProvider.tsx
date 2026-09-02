@@ -6,6 +6,7 @@ import {
   createPlanProgressSelector,
   createPreferenceSelector,
   createInventorySelector,
+  createDatasetReviewSelector,
 } from '../../infrastructure/cloud/buildMappers';
 import { useAuthSession } from './AuthContext';
 import { CloudDataContext, type CloudDataState } from './CloudDataContext';
@@ -22,6 +23,8 @@ const guestCloudData: CloudDataState = {
   preferences: null,
   inventory: null,
   inventoryRows: [],
+  datasetReviews: [],
+  datasetReviewRows: [],
 };
 
 function PrivateCloudSubscription({ children }: PropsWithChildren) {
@@ -35,9 +38,13 @@ function PrivateCloudSubscription({ children }: PropsWithChildren) {
     tables.myUserPreferences,
   );
   const [inventoryRows, inventoryReady] = useTable(tables.myUserInventory);
+  const [datasetReviewRows, datasetReviewsReady] = useTable(
+    tables.myDatasetReviews,
+  );
   const progressSelectorRef = useRef(createPlanProgressSelector());
   const preferenceSelectorRef = useRef(createPreferenceSelector());
   const inventorySelectorRef = useRef(createInventorySelector());
+  const datasetReviewSelectorRef = useRef(createDatasetReviewSelector());
   const planProgress = useMemo(
     () => progressSelectorRef.current.select(progressRows),
     [progressRows],
@@ -50,6 +57,10 @@ function PrivateCloudSubscription({ children }: PropsWithChildren) {
     () => inventorySelectorRef.current.select(inventoryRows),
     [inventoryRows],
   );
+  const datasetReviews = useMemo(
+    () => datasetReviewSelectorRef.current.select(datasetReviewRows),
+    [datasetReviewRows],
+  );
   const value = useMemo<CloudDataState>(
     () => ({
       isAuthenticated: true,
@@ -61,7 +72,8 @@ function PrivateCloudSubscription({ children }: PropsWithChildren) {
         ownedItemsReady &&
         progressReady &&
         preferencesReady &&
-        inventoryReady,
+        inventoryReady &&
+        datasetReviewsReady,
       profiles,
       builds,
       revisions,
@@ -71,6 +83,8 @@ function PrivateCloudSubscription({ children }: PropsWithChildren) {
       preferences,
       inventory,
       inventoryRows,
+      datasetReviews,
+      datasetReviewRows,
     }),
     [
       builds,
@@ -85,6 +99,9 @@ function PrivateCloudSubscription({ children }: PropsWithChildren) {
       inventory,
       inventoryReady,
       inventoryRows,
+      datasetReviews,
+      datasetReviewRows,
+      datasetReviewsReady,
       profiles,
       profilesReady,
       revisions,
@@ -101,14 +118,16 @@ function PrivateCloudSubscription({ children }: PropsWithChildren) {
 }
 
 export function CloudDataProvider({ children }: PropsWithChildren) {
-  const { status, idToken } = useAuthSession();
+  const { status, subject, idToken } = useAuthSession();
   const builder = useMemo(() => createConnectionBuilder(idToken), [idToken]);
   const isAuthenticated = status === 'authenticated' && Boolean(idToken);
 
   return (
     <SpacetimeDBProvider connectionBuilder={builder}>
       {isAuthenticated ? (
-        <PrivateCloudSubscription>{children}</PrivateCloudSubscription>
+        <PrivateCloudSubscription key={subject ?? idToken}>
+          {children}
+        </PrivateCloudSubscription>
       ) : (
         <CloudDataContext.Provider value={guestCloudData}>
           {children}
