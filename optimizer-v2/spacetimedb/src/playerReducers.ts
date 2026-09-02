@@ -432,6 +432,23 @@ export const upsertPlanProgress = spacetimedb.reducer(
   },
 );
 
+export const deletePlanProgress = spacetimedb.reducer(
+  { buildId: t.string() },
+  (ctx, { buildId }) => {
+    assertAppUser(ctx);
+    assertText(buildId, 'Build ID', 100);
+    const ownershipErrors = validatePlanProgressOwnership(
+      ctx.db.build.id.find(buildId),
+      ctx.sender,
+    );
+    if (ownershipErrors[0]) throw new SenderError(ownershipErrors[0]);
+    const current = ctx.db.buildPlanProgress.buildId.find(buildId);
+    if (current && current.owner.equals(ctx.sender)) {
+      ctx.db.buildPlanProgress.buildId.delete(buildId);
+    }
+  },
+);
+
 export const upsertUserPreferences = spacetimedb.reducer(
   { preferencesJson: t.string() },
   (ctx, { preferencesJson }) => {

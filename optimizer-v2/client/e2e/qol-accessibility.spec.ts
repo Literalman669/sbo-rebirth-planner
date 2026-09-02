@@ -62,6 +62,29 @@ test('Release routes remain accessible and contained from desktop to 320px', asy
 
     await page.goto('/builds/presets');
     await expectAccessibleAndContained(page, 'build presets');
+
+    await page.goto('/progress');
+    await expect(page.getByRole('heading', { name: 'Progress' })).toBeVisible();
+    await expectAccessibleAndContained(page, 'progress default');
+    const showAllTasks = page.getByRole('button', { name: 'Show all tasks' });
+    if (await showAllTasks.count()) await showAllTasks.click();
+    await page.getByLabel('Current Col').fill('10000');
+    await page.getByRole('button', { name: 'Save Col balance' }).click();
+    const firstNote = page.locator('.progress-task-note textarea').first();
+    await firstNote.fill('Accessibility proof');
+    await page.locator('.progress-task-note button').first().click();
+    await page.getByRole('button', { name: /^Complete / }).first().click();
+    await page.getByRole('button', { name: 'Show journey history' }).click();
+    await page.getByLabel('History result').selectOption('completed');
+    await page.getByLabel('History category').selectOption('all');
+    await expectAccessibleAndContained(page, 'progress expanded');
+    const resetProgress = page.getByRole('button', { name: 'Reset progress' });
+    await resetProgress.click();
+    const resetDialog = page.getByRole('alertdialog', { name: 'Reset progress?' });
+    await expect(resetDialog.getByRole('button', { name: 'Cancel reset' })).toBeInViewport();
+    await expectAccessibleAndContained(page, 'progress reset confirmation');
+    await resetDialog.getByRole('button', { name: 'Cancel reset' }).click();
+    await expect(resetProgress).toBeFocused();
   }
 });
 

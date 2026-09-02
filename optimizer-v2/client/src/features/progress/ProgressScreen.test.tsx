@@ -36,6 +36,7 @@ async function renderProgress(
     savedDatasetVersion?: string;
     historicalSnapshots?: readonly DatasetSnapshot[];
     cloudState?: CloudBuildsState;
+    initialProgress?: PlanProgress;
   } = {},
 ) {
   const store = createGuestBuildStore({
@@ -49,6 +50,7 @@ async function renderProgress(
     level: 9,
     datasetVersion: options.savedDatasetVersion ?? fallbackRelease.version,
   });
+  if (options.initialProgress) await store.savePlanProgress(options.initialProgress);
   const router = createMemoryRouter(
     createAppRoutes(
       <App
@@ -131,6 +133,7 @@ describe('ProgressScreen', () => {
     const savePlanProgress = vi.fn(
       async (_progress: PlanProgress) => 'cloud' as const,
     );
+    const resetPlanProgress = vi.fn(async (_buildId: string) => 'cloud' as const);
     const cloudState = {
       repository: {
         save: vi.fn(),
@@ -139,6 +142,7 @@ describe('ProgressScreen', () => {
         retryPending: vi.fn(),
         retryPendingPlannerState: vi.fn(),
         savePlanProgress,
+        resetPlanProgress,
         savePreferences: vi.fn(),
         saveInventory: vi.fn(),
         rename: vi.fn(),
@@ -190,6 +194,49 @@ describe('ProgressScreen', () => {
         expect.objectContaining({ actionKey: 'floor:unlock:3', status: 'completed' }),
       ]),
     });
+    await user.click(screen.getByRole('button', { name: 'Reset progress' }));
+    await user.click(screen.getByRole('button', { name: 'Reset permanently' }));
+    await waitFor(() => expect(resetPlanProgress).toHaveBeenCalledWith('saved-progress-build'));
+  });
+
+  it('keeps capped progress recoverable instead of crashing reconciliation', async () => {
+    const user = userEvent.setup();
+    const occurredAt = '2026-09-01T12:00:00.000Z';
+    const initialProgress: PlanProgress = {
+      schemaVersion: 2,
+      buildId: profile.id,
+      objectives: Array.from({ length: 200 }, (_, index) => ({
+        actionKey: `manual:capped:${index}`,
+        category: 'manual-objective',
+        status: 'pending',
+        source: 'manual',
+        planFingerprint: 'capped-plan',
+        updatedAt: occurredAt,
+      })),
+      history: Array.from({ length: 1_000 }, (_, index) => ({
+        id: `capped-event-${index}`,
+        actionKey: `manual:history:${index}`,
+        category: 'manual-objective',
+        label: `History ${index}`,
+        outcome: 'completed',
+        source: 'manual',
+        planFingerprint: 'capped-plan',
+        occurredAt,
+      })),
+      currentPlanFingerprint: 'capped-plan',
+    };
+    await renderProgress('/progress', { initialProgress });
+
+    expect(
+      await screen.findByRole('heading', { name: 'Progress limit reached' }),
+    ).toBeVisible();
+    expect(screen.getByRole('link', { name: 'Export build backup' })).toHaveAttribute(
+      'href',
+      '/builds',
+    );
+    await user.click(screen.getByRole('button', { name: 'Reset progress' }));
+    await user.click(screen.getByRole('button', { name: 'Reset permanently' }));
+    expect(await screen.findByRole('heading', { name: 'Progress' })).toBeVisible();
   });
 
   it('tracks Col and manual progress through the focused dashboard sections', async () => {

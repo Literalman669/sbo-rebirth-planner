@@ -58,7 +58,7 @@ test('supports keyboard focus and reduced-motion preferences', async ({ page }) 
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/');
   const focusedLabels: string[] = [];
-  for (let index = 0; index < 6; index += 1) {
+  for (let index = 0; index < 8; index += 1) {
     await page.keyboard.press('Tab');
     const focused = page.locator(':focus');
     await expect(focused).toBeVisible();

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type {
   ProgressEventOutcome,
   ProgressHistoryEvent,
@@ -33,6 +33,11 @@ export function JourneyHistory({
   const [resultFilter, setResultFilter] = useState<HistoryResultFilter>('all');
   const [categoryFilter, setCategoryFilter] = useState<HistoryCategoryFilter>('all');
   const [resetOpen, setResetOpen] = useState(false);
+  const resetTriggerRef = useRef<HTMLButtonElement>(null);
+  const cancelResetRef = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    if (resetOpen) cancelResetRef.current?.focus();
+  }, [resetOpen]);
   const groups = useMemo(() => {
     const grouped = new Map<string, ProgressHistoryEvent[]>();
     for (const event of [...events].reverse()) {
@@ -52,7 +57,12 @@ export function JourneyHistory({
         <button type="button" onClick={() => setExpanded((current) => !current)}>
           {expanded ? 'Hide journey history' : 'Show journey history'}
         </button>
-        <button type="button" className="danger-button" onClick={() => setResetOpen(true)}>
+        <button
+          ref={resetTriggerRef}
+          type="button"
+          className="danger-button"
+          onClick={() => setResetOpen(true)}
+        >
           Reset progress
         </button>
       </div>
@@ -121,7 +131,16 @@ export function JourneyHistory({
               This permanently clears the wallet, notes, manual choices, and journey history for this build. The planner will detect current build facts again.
             </p>
             <div className="dialog-actions">
-              <button type="button" onClick={() => setResetOpen(false)}>Cancel reset</button>
+              <button
+                ref={cancelResetRef}
+                type="button"
+                onClick={() => {
+                  setResetOpen(false);
+                  queueMicrotask(() => resetTriggerRef.current?.focus());
+                }}
+              >
+                Cancel reset
+              </button>
               <button
                 type="button"
                 className="danger-button"

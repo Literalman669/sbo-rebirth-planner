@@ -102,6 +102,8 @@ export function useCloudBuilds({
       restoreBuildRevision: (args) =>
         connection.reducers.restoreBuildRevision(args),
       deleteBuild: (args) => connection.reducers.deleteBuild(args),
+      deletePlanProgress: (args) =>
+        connection.reducers.deletePlanProgress(args),
       upsertPlanProgress: (args) =>
         connection.reducers.upsertPlanProgress(args),
       upsertUserPreferences: (args) =>

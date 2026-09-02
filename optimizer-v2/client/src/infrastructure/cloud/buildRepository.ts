@@ -39,6 +39,7 @@ export interface CloudReducers {
     newRevisionId: string;
   }): Promise<void>;
   deleteBuild(args: { buildId: string }): Promise<void>;
+  deletePlanProgress(args: { buildId: string }): Promise<void>;
   upsertPlanProgress(args: {
     buildId: string;
     progressJson: string;
@@ -178,6 +179,7 @@ export interface BuildRepository {
   savePlanProgress(
     progress: PlanProgress,
   ): Promise<'cloud' | 'cloud-pending'>;
+  resetPlanProgress(buildId: string): Promise<'cloud' | 'cloud-pending'>;
   savePreferences(
     preferences: PlannerPreferences,
   ): Promise<'cloud' | 'cloud-pending'>;
@@ -305,6 +307,8 @@ export function createBuildRepository({
           buildId: mutation.progress.buildId,
           progressJson: JSON.stringify(mutation.progress),
         });
+      } else if (mutation.kind === 'progress-reset') {
+        await reducers.deletePlanProgress({ buildId: mutation.buildId });
       } else if (mutation.kind === 'preferences') {
         await reducers.upsertUserPreferences({
           preferencesJson: JSON.stringify(mutation.preferences),
@@ -418,6 +422,8 @@ export function createBuildRepository({
               buildId: mutation.progress.buildId,
               progressJson: JSON.stringify(mutation.progress),
             });
+          } else if (mutation.kind === 'progress-reset') {
+            await reducers.deletePlanProgress({ buildId: mutation.buildId });
           } else if (mutation.kind === 'preferences') {
             await reducers.upsertUserPreferences({
               preferencesJson: JSON.stringify(mutation.preferences),
@@ -449,6 +455,19 @@ export function createBuildRepository({
         subject: accountSubject,
         mutationId: `progress:${progress.buildId}`,
         progress,
+        enqueuedAt: now(),
+        attempts: 0,
+      });
+    },
+
+    async resetPlanProgress(buildId) {
+      await guestStore.deletePlanProgress(buildId);
+      if (!accountSubject) throw new Error('Sign in is required for cloud sync');
+      return sendPlannerMutation({
+        kind: 'progress-reset',
+        subject: accountSubject,
+        mutationId: `progress:${buildId}`,
+        buildId,
         enqueuedAt: now(),
         attempts: 0,
       });

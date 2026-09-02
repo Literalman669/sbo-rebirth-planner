@@ -340,6 +340,13 @@ test('enforces identity isolation and immutable revision recovery', async ({}, t
     ).rejects.toThrow(/history event ID conflict/i);
 
     await expect(
+      userB.connection.reducers.deletePlanProgress({ buildId: 'build-a' }),
+    ).rejects.toThrow(/Build not found for this identity/);
+    await userA.connection.reducers.deletePlanProgress({ buildId: 'build-a' });
+    await expect.poll(() => progressFor(userA)).toBeNull();
+    await expect.poll(() => progressFor(userASecond!)).toBeNull();
+
+    await expect(
       userB.connection.reducers.saveBuildRevision({
         buildId: 'build-a',
         revisionId: 'revision-b1',

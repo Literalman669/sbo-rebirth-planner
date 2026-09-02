@@ -300,6 +300,8 @@ function liveReducers(testConnection: TestConnection): CloudReducers {
     restoreBuildRevision: (args) =>
       testConnection.connection.reducers.restoreBuildRevision(args),
     deleteBuild: (args) => testConnection.connection.reducers.deleteBuild(args),
+    deletePlanProgress: (args) =>
+      testConnection.connection.reducers.deletePlanProgress(args),
     upsertPlanProgress: (args) =>
       testConnection.connection.reducers.upsertPlanProgress(args),
     upsertUserPreferences: (args) =>

@@ -511,3 +511,42 @@ data rendered on Compare. The mobile route remained width-contained. No
 application-origin warning or error was present; the only observed console
 noise came from a browser extension, while an isolated direct-route request
 showed GitHub Pages' expected 404-to-query recovery before the app loaded.
+
+## QOL Release 2 Progress Dashboard local gate (2026-09-01)
+
+The routed Progress workspace now turns the deterministic optimizer result into
+one persisted journey per build. It resolves the build's exact dataset, shows a
+single rule-based next move, limits the default route to five tasks, computes
+verified shopping totals and Col affordability, records manual notes and
+outcomes, groups/filter history, and keeps the active draft unchanged while a
+saved local or cloud build is inspected.
+
+Progress storage migrates nested and IndexedDB v1 records to strict v2. Client
+and server enforce 200 objectives, 1,000 immutable events, safe wallet values,
+unique IDs, bounded text, and build ownership. SpacetimeDB unions immutable
+events, resolves objective/wallet state by timestamps, rejects event-ID
+collisions, and now exposes a protected delete reducer so confirmed resets are
+local-first, retryable offline, identity-scoped, and convergent across devices.
+
+The final local evidence records 88 client files / 575 tests, 8 module files /
+87 tests, 23 root script tests, and 6 wiki-tool tests. The four-phase integration
+gate passed: core 34 passed / 10 intentional project skips, 100-revision
+convergence, atomic publication, and owner-free sharing. The core includes a
+complete guest progress journey, v1-to-v2 migration, two-device convergence,
+250 saved builds, 200 objectives, 1,000 events, 20 material plan changes, and
+confirmed recovery at the cap.
+
+Accessibility and containment passed at 1440x1000, 768x1024, 390x844, and
+320x700 with zero serious/critical axe findings and no horizontal overflow.
+Keyboard navigation includes the new global Progress stop, history filters,
+notes, wallet controls, and reset focus return. The production-shaped Pages
+suite passed 6/6, including direct
+`/progress?build=proof-build&source=local` recovery. The lazy Progress chunk is
+16,758 bytes; it does not enter the initial planner route.
+
+Browser QA at `http://127.0.0.1:4173/progress` verified page identity,
+non-blank content, no framework overlay, width containment, zero app warnings
+or errors, a successful `12,345 Col` save, and the rendered affordability
+change. The remaining deliberate boundary is the same as the rest of the app:
+the dashboard trusts only verified bundled/cloud game data and cannot observe
+Roblox gameplay automatically.

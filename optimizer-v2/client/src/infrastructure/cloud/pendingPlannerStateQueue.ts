@@ -32,6 +32,13 @@ const pendingPlannerStateMutationSchema = z.discriminatedUnion('kind', [
   z
     .object({
       ...mutationBase,
+      kind: z.literal('progress-reset'),
+      buildId: z.string().min(1).max(255),
+    })
+    .strict(),
+  z
+    .object({
+      ...mutationBase,
       kind: z.literal('preferences'),
       preferences: plannerPreferencesSchema,
     })
@@ -51,6 +58,14 @@ export type PendingPlannerStateMutation =
       subject: string;
       mutationId: string;
       progress: PlanProgress;
+      enqueuedAt: string;
+      attempts: number;
+    }
+  | {
+      kind: 'progress-reset';
+      subject: string;
+      mutationId: string;
+      buildId: string;
       enqueuedAt: string;
       attempts: number;
     }

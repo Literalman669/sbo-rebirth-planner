@@ -86,6 +86,36 @@ describe('PendingPlannerStateQueue', () => {
     ]);
   });
 
+  it('lets a reset replace an older queued progress save', async () => {
+    const queue = createPendingPlannerStateQueue({
+      databaseName: `planner-queue-reset-${crypto.randomUUID()}`,
+    });
+    await queue.enqueue({
+      kind: 'progress',
+      subject: 'account-a',
+      mutationId: 'progress:build-a',
+      progress: progress('build-a', 'level-2'),
+      enqueuedAt: '2026-09-01T10:00:00.000Z',
+      attempts: 1,
+    });
+    await queue.enqueue({
+      kind: 'progress-reset',
+      subject: 'account-a',
+      mutationId: 'progress:build-a',
+      buildId: 'build-a',
+      enqueuedAt: '2026-09-01T10:00:01.000Z',
+      attempts: 0,
+    });
+
+    expect(await queue.list('account-a')).toEqual([
+      expect.objectContaining({
+        kind: 'progress-reset',
+        buildId: 'build-a',
+        attempts: 0,
+      }),
+    ]);
+  });
+
   it('increments attempts, acknowledges one mutation, and ignores corrupt rows', async () => {
     const databaseName = `planner-queue-retry-${crypto.randomUUID()}`;
     const queue = createPendingPlannerStateQueue({ databaseName });

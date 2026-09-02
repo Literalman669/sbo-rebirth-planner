@@ -250,6 +250,29 @@
   background: rgb(8 14 19 / 94%);
 }
 
+.progress-limit-recovery {
+  padding: clamp(1rem, 3vw, 1.6rem);
+  border: 1px solid rgb(184 149 93 / 48%);
+  border-radius: 0.4rem;
+  background: rgb(8 14 19 / 94%);
+  box-shadow: var(--shadow-panel);
+}
+
+.progress-limit-recovery > h2,
+.progress-limit-recovery > p {
+  margin-block: 0;
+}
+
+.progress-limit-recovery a {
+  display: inline-flex;
+  min-height: var(--touch-target);
+  align-items: center;
+  padding: 0.5rem 0.8rem;
+  border: 1px solid rgb(184 149 93 / 54%);
+  border-radius: 0.25rem;
+  color: var(--color-aether-bright);
+}
+
 @media (max-width: 48rem) {
   .progress-screen {
     width: min(calc(100% - 1rem), var(--content-width));

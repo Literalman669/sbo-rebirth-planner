@@ -108,11 +108,13 @@ describe('progress dashboard components', () => {
     expect(screen.getByText('Unlock Floor 3 skipped')).toBeVisible();
     expect(screen.queryByText('Buy Combat Armor completed')).not.toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: 'Reset progress' }));
+    const resetTrigger = screen.getByRole('button', { name: 'Reset progress' });
+    await user.click(resetTrigger);
     expect(screen.getByRole('alertdialog', { name: 'Reset progress?' })).toBeVisible();
     await user.click(screen.getByRole('button', { name: 'Cancel reset' }));
     expect(onReset).not.toHaveBeenCalled();
-    await user.click(screen.getByRole('button', { name: 'Reset progress' }));
+    expect(resetTrigger).toHaveFocus();
+    await user.click(resetTrigger);
     await user.click(screen.getByRole('button', { name: 'Reset permanently' }));
     expect(onReset).toHaveBeenCalledOnce();
   });

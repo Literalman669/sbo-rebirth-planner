@@ -5,6 +5,7 @@ for (const directPath of [
   '/shared/proof-share?view=compact',
   '/builds/compare?left=proof-a&right=proof-b',
   '/builds/presets',
+  '/progress?build=proof-build&source=local',
 ]) {
   test(`recovers ${directPath} through the built GitHub Pages artifact`, async ({
     page,
@@ -35,9 +36,13 @@ for (const directPath of [
       await expect(
         page.getByRole('heading', { name: 'Compare Builds' }),
       ).toBeVisible();
-    } else {
+    } else if (directPath.startsWith('/builds/presets')) {
       await expect(
         page.getByRole('heading', { name: 'Build Presets' }),
+      ).toBeVisible();
+    } else {
+      await expect(
+        page.getByRole('heading', { name: 'Progress' }),
       ).toBeVisible();
     }
     expect(pageErrors).toEqual([]);

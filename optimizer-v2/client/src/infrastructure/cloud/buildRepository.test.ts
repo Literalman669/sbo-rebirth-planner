@@ -53,6 +53,9 @@ function reducers(
       async () => undefined,
     ),
     deleteBuild: vi.fn<CloudReducers['deleteBuild']>(async () => undefined),
+    deletePlanProgress: vi.fn<CloudReducers['deletePlanProgress']>(
+      async () => undefined,
+    ),
     upsertPlanProgress: vi.fn(async () => undefined),
     upsertUserPreferences: vi.fn(async () => undefined),
     upsertUserInventory: vi.fn(async () => undefined),
@@ -344,6 +347,38 @@ describe('BuildRepository', () => {
       buildId: 'build-a',
       progressJson: JSON.stringify(planProgress),
     });
+  });
+
+  it('deletes progress locally and queues a protected cloud reset for retry', async () => {
+    const storage = adapters('repository-progress-reset');
+    const cloud = reducers();
+    cloud.deletePlanProgress.mockRejectedValueOnce(new Error('offline'));
+    const repository = createBuildRepository({
+      ...storage,
+      reducers: cloud,
+      accountSubject: subject,
+      now: () => '2026-09-01T10:00:00.000Z',
+    });
+    await storage.guestStore.savePlanProgress(
+      progressFixture('build-a', ['level-21']),
+    );
+
+    await expect(repository.resetPlanProgress('build-a')).resolves.toBe(
+      'cloud-pending',
+    );
+    await expect(storage.guestStore.loadPlanProgress('build-a')).resolves.toBeNull();
+    await expect(storage.pendingPlannerStateQueue.list(subject)).resolves.toMatchObject([
+      {
+        kind: 'progress-reset',
+        mutationId: 'progress:build-a',
+        buildId: 'build-a',
+        attempts: 1,
+      },
+    ]);
+
+    await repository.retryPendingPlannerState();
+    expect(cloud.deletePlanProgress).toHaveBeenLastCalledWith({ buildId: 'build-a' });
+    await expect(storage.pendingPlannerStateQueue.list(subject)).resolves.toEqual([]);
   });
 
   it('renames and archives through protected reducers', async () => {

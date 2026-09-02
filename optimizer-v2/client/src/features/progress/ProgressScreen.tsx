@@ -26,6 +26,7 @@ import { JourneyHistory } from './JourneyHistory';
 import { NextMoveCard } from './NextMoveCard';
 import { ProgressChecklist } from './ProgressChecklist';
 import { ProgressContextHeader } from './ProgressContextHeader';
+import { ProgressLimitRecovery } from './ProgressLimitRecovery';
 import { ShoppingPlan } from './ShoppingPlan';
 
 export function ProgressScreen() {
@@ -117,21 +118,31 @@ export function ProgressScreen() {
         : [],
     [exactSnapshot, plan, planFingerprint, viewedProfile],
   );
-  const reconciliation = useMemo(
-    () =>
-      progress && exactSnapshot
-        ? reconcileProgress({
-        profile: viewedProfile,
-        progress,
-        tasks,
-        planFingerprint,
-        datasetVersion: exactSnapshot.version,
-        now: () => new Date().toISOString(),
-        randomUUID: () => crypto.randomUUID(),
-        })
-        : null,
+  const reconciliationState = useMemo(() => {
+    if (!progress || !exactSnapshot) return { result: null, error: null };
+    try {
+      return {
+        result: reconcileProgress({
+          profile: viewedProfile,
+          progress,
+          tasks,
+          planFingerprint,
+          datasetVersion: exactSnapshot.version,
+          now: () => new Date().toISOString(),
+          randomUUID: () => crypto.randomUUID(),
+        }),
+        error: null,
+      };
+    } catch (error) {
+      return {
+        result: null,
+        error: error instanceof Error ? error.message : 'Progress reconciliation failed',
+      };
+    }
+  },
     [exactSnapshot, planFingerprint, progress, tasks, viewedProfile],
   );
+  const reconciliation = reconciliationState.result;
   const saveViewedProgress = useCallback(
     async (next: PlanProgress) => {
       if (
@@ -161,6 +172,29 @@ export function ProgressScreen() {
     void saveViewedProgress(reconciliation.progress).catch(() => undefined);
   }, [planner.isHydrated, progress, reconciliation, saveViewedProgress, viewingActive]);
 
+  const resetProgress = async () => {
+    try {
+      await planner.resetProgressForBuild(viewedProfile.id);
+      const hasCloudTarget = Boolean(
+        cloud?.isAuthenticated &&
+        ((selectedEntry !== null && selectedEntry.source !== 'local') ||
+          cloud.cloudBuilds.some((record) => record.profile.id === viewedProfile.id) ||
+          cloud.archivedCloudBuilds.some((record) => record.profile.id === viewedProfile.id)),
+      );
+      if (hasCloudTarget && cloud) {
+        await cloud.repository.resetPlanProgress(viewedProfile.id);
+        await cloud.refreshPending();
+      }
+      const empty = await planner.loadProgressForBuild(viewedProfile.id);
+      if (!viewingActive) setViewedProgress(empty);
+      setStatusMessage('Progress reset');
+    } catch (error) {
+      setStatusMessage(
+        error instanceof Error ? error.message : 'Progress reset failed',
+      );
+    }
+  };
+
   if (!planner.isHydrated || !progress || exactSnapshot === undefined) {
     return <main className="progress-screen"><h2>Loading progress…</h2></main>;
   }
@@ -173,6 +207,14 @@ export function ProgressScreen() {
           Progress calculations are paused so the app does not substitute different game data.
         </p>
       </main>
+    );
+  }
+  if (reconciliationState.error) {
+    return (
+      <ProgressLimitRecovery
+        message={reconciliationState.error}
+        onReset={resetProgress}
+      />
     );
   }
   if (!reconciliation) {
@@ -190,12 +232,14 @@ export function ProgressScreen() {
   );
   const persistProgress = (next: PlanProgress, message: string) => {
     if (!viewingActive) setViewedProgress(next);
-    setStatusMessage(message);
-    void saveViewedProgress(next).catch((error: unknown) => {
-      setStatusMessage(
-        error instanceof Error ? error.message : 'Progress save failed',
-      );
-    });
+    setStatusMessage('Saving progress…');
+    void saveViewedProgress(next)
+      .then(() => setStatusMessage(message))
+      .catch((error: unknown) => {
+        setStatusMessage(
+          error instanceof Error ? error.message : 'Progress save failed',
+        );
+      });
   };
   const setTaskStatus = (
     task: (typeof reconciliation.activeTasks)[number],
@@ -230,18 +274,6 @@ export function ProgressScreen() {
     if (balance === undefined) delete next.wallet;
     else next.wallet = { balance, updatedAt: new Date().toISOString() };
     persistProgress(planProgressSchema.parse(next), 'Col balance saved');
-  };
-  const resetProgress = async () => {
-    try {
-      await planner.resetProgressForBuild(viewedProfile.id);
-      const empty = await planner.loadProgressForBuild(viewedProfile.id);
-      if (!viewingActive) setViewedProgress(empty);
-      setStatusMessage('Progress reset');
-    } catch (error) {
-      setStatusMessage(
-        error instanceof Error ? error.message : 'Progress reset failed',
-      );
-    }
   };
   const selectBuild = (value: string) => {
     if (value === 'active') {

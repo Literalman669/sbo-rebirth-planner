@@ -173,3 +173,22 @@ all four disposable records were then removed. The mobile comparison route had
 equal viewport and document widths. No application-origin console warning or
 error was captured; browser-extension output and GitHub Pages' expected initial
 direct-route recovery request were excluded from app-origin results.
+
+## QOL Release 2 Progress Dashboard local acceptance (2026-09-01)
+
+| # | Progress criterion | Proof | Status |
+|---|---|---|---|
+| 1 | Progress is a dedicated routed workspace for the active draft or a source-qualified saved local/cloud build; inspecting a saved build never replaces the draft. | `client/src/features/progress/ProgressScreen.test.tsx`, `client/e2e/progress-flow.spec.ts` | Pass |
+| 2 | Tasks, next move, shopping, floors, and completion percentage derive only from the deterministic current plan and its exact pinned dataset. Missing historical data pauses derived work instead of substituting current data. | `client/src/domain/progress`, `client/src/features/progress/ProgressScreen.test.tsx` | Pass |
+| 3 | Players can save Col, notes, complete/skip/reopen tasks, filter grouped history, and reset only after confirmation; success status is emitted after durable persistence. | `client/src/features/progress/progressComponents.test.tsx`, `client/e2e/progress-flow.spec.ts` | Pass |
+| 4 | v1 progress migrates to strict v2 locally, in portable backups, and on the server without invented timestamps; deletion warns that progress history is included. | `client/src/domain/progress/schema.test.ts`, `client/src/domain/build/portable.test.ts`, `client/src/features/builds/BuildsScreen.test.tsx` | Pass |
+| 5 | Private cloud progress merges immutable event histories across devices, rejects conflicting IDs and foreign identities, queues offline work, and uses a protected retryable reset reducer. | `spacetimedb/src/progressMerge.test.ts`, `client/src/infrastructure/cloud/buildRepository.test.ts`, `client/e2e/cloud-module.spec.ts` | Pass |
+| 6 | Limits are explicit and recoverable: 200 objectives and 1,000 events never crash the route or truncate silently; 250 builds remain switchable and export/reset recovery stays available. | `client/src/features/progress/ProgressScreen.test.tsx`, `client/e2e/progress-flow.spec.ts` | Pass |
+| 7 | Twenty material plan changes supersede unfinished work once, while wallet, notes, filters, disclosure, and manual state do not alter the recommendation fingerprint. | `client/src/domain/progress/reconcile.test.ts`, existing fingerprint regressions | Pass |
+| 8 | Progress is keyboard/touch usable, width-safe at all four target viewports, and produces zero serious/critical axe findings, including expanded history and reset confirmation. | `client/e2e/qol-accessibility.spec.ts` | Pass |
+| 9 | The built Pages artifact directly recovers the Progress query route and lazy-loads a 16,758-byte Progress chunk. | `client/e2e-pages/deep-links.spec.ts`, production-shaped build output | Pass |
+| 10 | Full local unit, module, typecheck, coverage, module-build, integration, stress, and Pages layers pass. | `npm run test:reliability`, `npm run test:pages` | Pass |
+
+This release does not read Roblox telemetry, infer unverified drops/prices, add
+public progress sharing, or expose private wallet/notes/history in existing
+public build snapshots. Social OAuth providers remain separately configured.

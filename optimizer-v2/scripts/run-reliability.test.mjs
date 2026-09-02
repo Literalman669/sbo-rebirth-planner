@@ -34,6 +34,12 @@ test('summarizes layer statuses with documented measured thresholds', () => {
   assert.equal(summary.status, 'failed');
   assert.equal(summary.thresholds.optimizerDeterminismIterations, 1000);
   assert.equal(summary.thresholds.localBuilds, 250);
+  assert.equal(summary.thresholds.progressBuilds, 250);
+  assert.equal(summary.thresholds.progressObjectives, 200);
+  assert.equal(summary.thresholds.progressHistoryEvents, 1000);
+  assert.equal(summary.thresholds.progressPlanChanges, 20);
+  assert.equal(summary.thresholds.progressSchemaMigration, 'v1-to-v2');
+  assert.equal(summary.thresholds.progressChunkBytes > 0, true);
   assert.deepEqual(summary.thresholds.browserViewports, [
     '1440x1000',
     '768x1024',

@@ -178,4 +178,48 @@ describe('progress reconciliation', () => {
     });
     expect(reopened.history.at(-1)?.outcome).toBe('reopened');
   });
+
+  it('reconciles twenty material plan changes without duplicate history', () => {
+    let progress = createEmptyPlanProgress(profile.id);
+    let finalTask: ProgressTask | undefined;
+    for (let index = 0; index < 20; index += 1) {
+      const fingerprint = `plan-change-${index}`;
+      finalTask = {
+        id: `manual:route:${index}`,
+        actionKey: `manual:route:${index}`,
+        group: 'next-floor',
+        kind: 'unlock',
+        category: 'manual-objective',
+        planFingerprint: fingerprint,
+        automatic: false,
+        title: `Route change ${index}`,
+        detail: 'Confirm in game',
+      };
+      progress = reconcileProgress({
+        profile,
+        progress,
+        tasks: [finalTask],
+        planFingerprint: fingerprint,
+        datasetVersion: profile.datasetVersion,
+        now: () => now,
+        randomUUID: () => `plan-change-event-${index}`,
+      }).progress;
+    }
+
+    expect(progress.objectives).toHaveLength(1);
+    expect(progress.objectives[0]?.actionKey).toBe('manual:route:19');
+    expect(progress.history).toHaveLength(19);
+    expect(new Set(progress.history.map((event) => event.id)).size).toBe(19);
+
+    const repeated = reconcileProgress({
+      profile,
+      progress,
+      tasks: [finalTask!],
+      planFingerprint: 'plan-change-19',
+      datasetVersion: profile.datasetVersion,
+      now: () => now,
+      randomUUID: () => 'unused-event',
+    });
+    expect(repeated.progress).toEqual(progress);
+  });
 });

@@ -5,6 +5,7 @@ export {
   completeGuestImport,
   configureAuth,
   deleteBuild,
+  deletePlanProgress,
   renameBuild,
   restoreBuildRevision,
   saveBuildRevision,
