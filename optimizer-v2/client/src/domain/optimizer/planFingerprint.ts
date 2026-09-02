@@ -1,5 +1,6 @@
 import type { CharacterProfile, EquipmentSlot } from '../build/model';
 import type { DatasetSnapshot } from '../dataset/model';
+import { hashString } from '../datasetImpact/canonical';
 
 const slots: EquipmentSlot[] = [
   'main-hand',
@@ -10,21 +11,9 @@ const slots: EquipmentSlot[] = [
   'lower-head',
 ];
 
-function hashString(value: string) {
-  let hash = 0x811c9dc5;
-  for (let index = 0; index < value.length; index += 1) {
-    hash ^= value.charCodeAt(index);
-    hash = Math.imul(hash, 0x01000193);
-  }
-  return (hash >>> 0).toString(16).padStart(8, '0');
-}
-
-export function fingerprintRecommendationInput(
-  profile: CharacterProfile,
-  dataset: DatasetSnapshot,
-) {
+export function projectRecommendationBuildInputs(profile: CharacterProfile) {
   const access = profile.accessPreferences;
-  const canonical = {
+  return {
     level: profile.level,
     maxFloor: profile.maxFloor,
     weaponPath: profile.weaponPath,
@@ -45,6 +34,15 @@ export function fingerprintRecommendationInput(
       access?.badge ?? false,
       access?.limited ?? false,
     ],
+  };
+}
+
+export function fingerprintRecommendationInput(
+  profile: CharacterProfile,
+  dataset: DatasetSnapshot,
+) {
+  const canonical = {
+    ...projectRecommendationBuildInputs(profile),
     datasetVersion: profile.datasetVersion,
     strategyPolicyVersion: dataset.strategyPolicyVersion,
   };

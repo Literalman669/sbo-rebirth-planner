@@ -29,6 +29,10 @@ describe('DatasetCache', () => {
     await expect(cache.getLatest()).resolves.toMatchObject({
       version: '2026.08.29.2',
     });
+    await expect(cache.list()).resolves.toEqual([
+      expect.objectContaining({ version: '2026.08.29.1' }),
+      expect.objectContaining({ version: '2026.08.29.2' }),
+    ]);
   });
 
   it('isolates a corrupt cached row instead of returning partial data', async () => {

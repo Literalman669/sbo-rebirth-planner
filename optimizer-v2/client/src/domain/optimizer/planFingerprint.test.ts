@@ -30,5 +30,8 @@ describe('fingerprintRecommendationInput', () => {
     expect(
       fingerprintRecommendationInput({ ...profile, level: 11 }, fallbackRelease),
     ).not.toBe(fingerprintRecommendationInput(profile, fallbackRelease));
+    expect(fingerprintRecommendationInput(profile, fallbackRelease)).toBe(
+      'plan-21ed5cab',
+    );
   });
 });

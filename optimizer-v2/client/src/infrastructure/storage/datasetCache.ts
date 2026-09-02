@@ -9,6 +9,7 @@ export interface DatasetCache {
   put(snapshot: DatasetSnapshot): Promise<void>;
   get(version: string): Promise<DatasetSnapshot | null>;
   getLatest(): Promise<DatasetSnapshot | null>;
+  list(): Promise<DatasetSnapshot[]>;
   pruneExcept(versionsToKeep: ReadonlySet<string>): Promise<void>;
 }
 
@@ -46,6 +47,22 @@ export function createDatasetCache({
             right.version.localeCompare(left.version),
         );
       return snapshots[0] ?? null;
+    },
+
+    async list() {
+      const database = await databasePromise;
+      return (await database.getAll('dataset-releases'))
+        .flatMap((row) => {
+          const parsed = datasetSnapshotSchema.safeParse(row);
+          return parsed.success ? [parsed.data] : [];
+        })
+        .sort(
+          (left, right) =>
+            left.publishedAt.localeCompare(right.publishedAt) ||
+            left.version.localeCompare(right.version, undefined, {
+              numeric: true,
+            }),
+        );
     },
 
     async pruneExcept(versionsToKeep) {

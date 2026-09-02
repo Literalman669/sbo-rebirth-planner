@@ -209,6 +209,7 @@ describe('SharedBuildView', () => {
             snapshot: current,
             source: 'bundled',
             getSnapshot,
+            listReleases: async () => [],
           }}
         >
           <ResolvedSharedBuild
@@ -276,7 +277,12 @@ describe('SharedBuildView', () => {
     render(
       <MemoryRouter>
         <DatasetContext.Provider
-          value={{ snapshot: current, source: 'bundled', getSnapshot }}
+          value={{
+            snapshot: current,
+            source: 'bundled',
+            getSnapshot,
+            listReleases: async () => [],
+          }}
         >
           <ResolvedSharedBuild
             shareId="missing-historical-release"

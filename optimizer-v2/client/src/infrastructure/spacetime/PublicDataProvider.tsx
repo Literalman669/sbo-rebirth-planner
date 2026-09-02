@@ -24,12 +24,17 @@ import {
   type DatasetSource,
 } from './datasetSelection';
 import type { DatasetRelease } from './releaseSelection';
+import {
+  buildDatasetReleaseIndex,
+  type DatasetReleaseDescriptor,
+} from '../../domain/datasetImpact/releaseIndex';
 
 export type PublicDatasetState = DatasetSelection & {
   release: DatasetRelease;
   isReady: boolean;
   warning: string | null;
   getSnapshot(version: string): Promise<DatasetSnapshot | null>;
+  listReleases(): Promise<DatasetReleaseDescriptor[]>;
 };
 
 const bundledSnapshot = datasetSnapshotSchema.parse(fallbackRelease);
@@ -198,6 +203,20 @@ function PublicDatasetSubscription({
     },
     [bundled, cache, liveSnapshots, selection.snapshot],
   );
+  const listReleases = useCallback(async () => {
+    const cached = await cache.list();
+    return buildDatasetReleaseIndex([
+      { snapshot: bundled, availability: 'bundled' },
+      ...cached.map((snapshot) => ({
+        snapshot,
+        availability: 'cached' as const,
+      })),
+      ...[...liveSnapshots.values()].map((snapshot) => ({
+        snapshot,
+        availability: 'live' as const,
+      })),
+    ]);
+  }, [bundled, cache, liveSnapshots]);
 
   const value = useMemo<PublicDatasetState>(
     () => ({
@@ -206,8 +225,9 @@ function PublicDatasetSubscription({
       isReady: allReady,
       warning,
       getSnapshot,
+      listReleases,
     }),
-    [allReady, getSnapshot, selection, warning],
+    [allReady, getSnapshot, listReleases, selection, warning],
   );
   return (
     <PublicDatasetContext.Provider value={value}>

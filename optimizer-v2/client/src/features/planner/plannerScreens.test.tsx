@@ -84,6 +84,7 @@ async function renderRoute(
             version === options.testOnlySnapshot?.version
               ? options.testOnlySnapshot
               : null,
+          listReleases: async () => [],
         }
       : undefined;
 

@@ -25,6 +25,21 @@ function HistoricalConsumer({ version }: { version: string }) {
   return <p>Historical: {resolved}</p>;
 }
 
+function ReleaseIndexConsumer() {
+  const { listReleases } = useDataset();
+  const [resolved, setResolved] = useState('loading');
+  useEffect(() => {
+    void listReleases().then((releases) =>
+      setResolved(
+        releases
+          .map((release) => `${release.version}:${release.availability}`)
+          .join(','),
+      ),
+    );
+  }, [listReleases]);
+  return <p>Releases: {resolved}</p>;
+}
+
 describe('DatasetProvider', () => {
   it('turns an unavailable cache adapter into an explicit missing snapshot', async () => {
     await expect(
@@ -73,6 +88,30 @@ describe('DatasetProvider', () => {
 
     expect(
       await screen.findByText('Historical: 2026.08.29.1'),
+    ).toBeVisible();
+  });
+
+  it('lists validated endpoint metadata in publication order', async () => {
+    const current = {
+      ...bootstrapRelease,
+      version: '2026.08.29.2',
+      publishedAt: '2026-08-29T12:00:00.000Z',
+    };
+    const historical = {
+      ...bootstrapRelease,
+      version: '2026.08.29.1',
+      publishedAt: '2026-08-29T11:00:00.000Z',
+    };
+    render(
+      <DatasetProvider snapshot={current} historicalSnapshots={[historical]}>
+        <ReleaseIndexConsumer />
+      </DatasetProvider>,
+    );
+
+    expect(
+      await screen.findByText(
+        'Releases: 2026.08.29.1:bundled,2026.08.29.2:bundled',
+      ),
     ).toBeVisible();
   });
 });

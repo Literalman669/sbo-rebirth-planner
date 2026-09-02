@@ -10,11 +10,17 @@ import type { DatasetSnapshot } from '../../domain/dataset/model';
 import { datasetSnapshotSchema } from '../../domain/dataset/schema';
 import { useOptionalPublicDataset } from '../../infrastructure/spacetime/PublicDataProvider';
 import type { DatasetSource } from '../../infrastructure/spacetime/datasetSelection';
+import {
+  buildDatasetReleaseIndex,
+  mergeDatasetReleaseDescriptors,
+  type DatasetReleaseDescriptor,
+} from '../../domain/datasetImpact/releaseIndex';
 
 export type DatasetContextValue = {
   snapshot: DatasetSnapshot;
   source: DatasetSource;
   getSnapshot(version: string): Promise<DatasetSnapshot | null>;
+  listReleases(): Promise<DatasetReleaseDescriptor[]>;
 };
 
 type DatasetProviderProps = PropsWithChildren<{
@@ -66,6 +72,21 @@ export function DatasetProvider({
     },
     [parsed, parsedHistorical, publicDataset],
   );
+  const listReleases = useCallback(async () => {
+    if (!parsed.success) return [];
+    const local = buildDatasetReleaseIndex([
+      { snapshot: parsed.data, availability: source },
+      ...parsedHistorical.map((snapshot) => ({
+        snapshot,
+        availability: 'bundled' as const,
+      })),
+    ]);
+    if (snapshot !== undefined || !publicDataset) return local;
+    return mergeDatasetReleaseDescriptors([
+      ...(await publicDataset.listReleases()),
+      ...local,
+    ]);
+  }, [parsed, parsedHistorical, publicDataset, snapshot, source]);
 
   if (!parsed.success) {
     return (
@@ -77,7 +98,7 @@ export function DatasetProvider({
 
   return (
     <DatasetContext.Provider
-      value={{ snapshot: parsed.data, source, getSnapshot }}
+      value={{ snapshot: parsed.data, source, getSnapshot, listReleases }}
     >
       {children}
     </DatasetContext.Provider>
